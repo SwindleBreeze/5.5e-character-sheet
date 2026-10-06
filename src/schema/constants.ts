@@ -34,6 +34,19 @@ export const SKILL_ABILITY: Readonly<Record<Skill, Ability>> = {
 
 export const SKILLS = Object.keys(SKILL_ABILITY) as Skill[];
 
+/** 5etools spell school codes and the names spells store. */
+export const SPELL_SCHOOLS: Readonly<Record<string, string>> = {
+  A: 'abjuration',
+  C: 'conjuration',
+  D: 'divination',
+  E: 'enchantment',
+  V: 'evocation',
+  I: 'illusion',
+  N: 'necromancy',
+  T: 'transmutation',
+  P: 'psionic',
+};
+
 export const MOVE_MODES: readonly MoveMode[] = ['walk', 'fly', 'swim', 'climb', 'burrow'];
 
 /** Proficiency bonus by character level (index 0 = level 1). */

@@ -2,10 +2,110 @@
   "_fixture": true,
   "tst": {
     "glitter burst": {
-      "class": { "TST": { "Gladiator": true } },
-      "subclass": { "TST": { "Gladiator": { "TST": { "Net": { "name": "School of the Net" } } } } }
+      "class": {
+        "TST": {
+          "Gladiator": true,
+          "Pactbinder": true
+        }
+      },
+      "subclass": {
+        "TST": {
+          "Gladiator": {
+            "TST": {
+              "Net": {
+                "name": "School of the Net"
+              }
+            }
+          }
+        }
+      }
     },
-    "dim lantern": { "class": { "TST": { "Gladiator": true } } }
+    "dim lantern": {
+      "class": {
+        "TST": {
+          "Gladiator": true,
+          "Lorekeeper": true
+        }
+      },
+      "subclass": {
+        "TST": {
+          "Brute": {
+            "TST": {
+              "Spark": {
+                "name": "Path of the Spark"
+              }
+            }
+          }
+        }
+      }
+    },
+    "spark bolt": {
+      "class": {
+        "TST": {
+          "Lorekeeper": true,
+          "Pactbinder": true
+        }
+      },
+      "subclass": {
+        "TST": {
+          "Brute": {
+            "TST": {
+              "Spark": {
+                "name": "Path of the Spark"
+              }
+            }
+          }
+        }
+      }
+    },
+    "ink cloud": {
+      "class": {
+        "TST": {
+          "Lorekeeper": true,
+          "Pactbinder": true
+        }
+      },
+      "subclass": {
+        "TST": {
+          "Brute": {
+            "TST": {
+              "Spark": {
+                "name": "Path of the Spark"
+              }
+            }
+          }
+        }
+      }
+    },
+    "mind ward": {
+      "class": {
+        "TST": {
+          "Lorekeeper": true
+        }
+      }
+    },
+    "rolling boom": {
+      "class": {
+        "TST": {
+          "Lorekeeper": true
+        }
+      }
+    },
+    "hex mark": {
+      "class": {
+        "TST": {
+          "Pactbinder": true
+        }
+      }
+    }
   },
-  "old": { "glitter burst": { "class": { "OLD": { "Gladiator": true } } } }
+  "old": {
+    "glitter burst": {
+      "class": {
+        "OLD": {
+          "Gladiator": true
+        }
+      }
+    }
+  }
 }

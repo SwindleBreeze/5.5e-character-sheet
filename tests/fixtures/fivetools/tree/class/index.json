@@ -1,1 +1,8 @@
-{ "_fixture": true, "gladiator": "class-gladiator.json" }
+{
+  "_fixture": true,
+  "brute": "class-brute.json",
+  "gladiator": "class-gladiator.json",
+  "lorekeeper": "class-lorekeeper.json",
+  "pactbinder": "class-pactbinder.json",
+  "wanderer": "class-wanderer.json"
+}

@@ -150,6 +150,26 @@ function spellcasting(raw: RawEntity): ClassSpellcasting | undefined {
   if (prepared.length) out.preparedByLevel = prepared;
   const cantrips = asArray(raw.cantripProgression).map((v) => num(v) ?? 0);
   if (cantrips.length) out.cantripsByLevel = cantrips;
+  const spellbook = asArray(raw.spellsKnownProgressionFixed).map((v) => num(v) ?? 0);
+  if (spellbook.length) out.spellbookByLevel = spellbook;
+  if (raw.preparedSpellsChange === 'level' || raw.preparedSpellsChange === 'restLong') {
+    out.preparedChange = raw.preparedSpellsChange;
+  }
+  if (isObject(raw.spellsKnownProgressionFixedByLevel)) {
+    const fixed: Record<number, Record<number, number>> = {};
+    for (const [level, bySpellLevel] of Object.entries(raw.spellsKnownProgressionFixedByLevel)) {
+      const l = num(level);
+      if (l === undefined || !isObject(bySpellLevel)) continue;
+      const counts: Record<number, number> = {};
+      for (const [spellLevel, n] of Object.entries(bySpellLevel)) {
+        const sl = num(spellLevel);
+        const count = num(n);
+        if (sl !== undefined && count !== undefined) counts[sl] = count;
+      }
+      fixed[l] = counts;
+    }
+    if (Object.keys(fixed).length) out.fixedByLevel = fixed;
+  }
   return out;
 }
 

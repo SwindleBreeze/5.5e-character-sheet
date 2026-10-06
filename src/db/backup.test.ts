@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { CHARACTER_SCHEMA_VERSION } from '../schema/index.ts';
 import type { PortraitRow } from './db.ts';
 import {
   applyRestore,
@@ -90,6 +91,14 @@ describe('backup', () => {
   ])('rejects %s', (_, text, message) => {
     expect(() => parseBackup(text)).toThrow(BackupError);
     expect(() => parseBackup(text)).toThrow(message);
+  });
+
+  it('upgrades characters from an older app', () => {
+    const c = { ...newCharacter('Old'), schemaVersion: 1 };
+    const text = JSON.stringify({ format: '5e-sheet-backup', version: 1, characters: [c] });
+    const [restored] = parseBackup(text).characters;
+    expect(restored?.schemaVersion).toBe(CHARACTER_SCHEMA_VERSION);
+    expect(restored?.state.turn).toEqual({ ridersUsed: [] });
   });
 
   it('rejects characters saved by a newer app', () => {

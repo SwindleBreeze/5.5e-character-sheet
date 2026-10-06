@@ -49,6 +49,13 @@ const KIND_BY_TYPE: Record<string, ItemKind> = {
   FD: 'gear',
 };
 
+const TOOL_TYPES: Record<string, NonNullable<Item['toolType']>> = {
+  AT: 'artisan',
+  INS: 'instrument',
+  GS: 'gamingSet',
+  T: 'other',
+};
+
 const ARMOR_CATEGORY: Record<string, 'light' | 'medium' | 'heavy'> = {
   LA: 'light',
   MA: 'medium',
@@ -118,6 +125,8 @@ function fill(item: Item, raw: RawEntity): Item {
   else if (typeof raw.reqAttune === 'string') item.attunement = raw.reqAttune;
 
   const code = typeCode(raw.type);
+  const toolType = TOOL_TYPES[code];
+  if (toolType) item.toolType = toolType;
   if (item.itemKind === 'weapon' && typeof raw.dmg1 === 'string') {
     const weapon: NonNullable<Item['weapon']> = {
       category: raw.weaponCategory === 'martial' ? 'martial' : 'simple',
@@ -132,6 +141,7 @@ function fill(item: Item, raw: RawEntity): Item {
         }),
     };
     if (typeof raw.dmg2 === 'string') weapon.versatile = raw.dmg2;
+    if (code === 'R') weapon.ranged = true;
     const mastery = asArray(raw.mastery)
       .map(uidOf)
       .find((u) => u !== null);

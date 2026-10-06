@@ -1,56 +1,24 @@
-import { CHARACTER_SCHEMA_VERSION, type Character } from '../schema/index.ts';
+import { newId } from '../engine/build/newCharacter.ts';
+import type { Character } from '../schema/index.ts';
+import { isNewerCharacter, migrateCharacter } from './characterMigrations.ts';
 import { getDb, type AppDb } from './db.ts';
 
-export function newId(): string {
-  return crypto.randomUUID();
-}
+export { newCharacter, newId } from '../engine/build/newCharacter.ts';
 
-/** A blank character with no build yet. The creation wizard fills in `log[0]`. */
-export function newCharacter(name = 'New character', now = Date.now()): Character {
-  return {
-    id: newId(),
-    schemaVersion: CHARACTER_SCHEMA_VERSION,
-    createdAt: now,
-    updatedAt: now,
-    name,
-    enabledSources: null,
-    baseScores: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
-    scoreMethod: 'standard',
-    log: [],
-    inventory: [],
-    currency: { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 },
-    state: {
-      damage: 0,
-      tempHp: 0,
-      deathSaves: { successes: 0, failures: 0 },
-      hitDiceUsed: {},
-      slotsUsed: [],
-      pactSlotsUsed: 0,
-      resourcesUsed: {},
-      conditions: [],
-      exhaustion: 0,
-      heroicInspiration: false,
-      concentration: null,
-      activeToggles: {},
-      prepared: {},
-    },
-    overrides: {},
-    details: {},
-    notes: '',
-    sessionLog: [],
-    snapshots: {},
-    ui: {},
-  };
+/** Upgrade on read; a character from a newer app is left as stored (the sheet refuses it). */
+function upgrade(c: Character): Character {
+  return isNewerCharacter(c) ? c : migrateCharacter(c);
 }
 
 export function createCharacterRepo(db: AppDb = getDb()) {
   return {
     async list(): Promise<Character[]> {
-      return db.characters.orderBy('updatedAt').reverse().toArray();
+      return (await db.characters.orderBy('updatedAt').reverse().toArray()).map(upgrade);
     },
 
     async get(id: string): Promise<Character | undefined> {
-      return db.characters.get(id);
+      const c = await db.characters.get(id);
+      return c && upgrade(c);
     },
 
     /** Insert or update; stamps `updatedAt`. Returns the saved character. */
@@ -72,8 +40,9 @@ export function createCharacterRepo(db: AppDb = getDb()) {
     /** Copy a character (and its portrait) under a new id. */
     async duplicate(id: string, now = Date.now()): Promise<Character | undefined> {
       return db.transaction('rw', db.characters, db.portraits, async () => {
-        const source = await db.characters.get(id);
-        if (!source) return undefined;
+        const stored = await db.characters.get(id);
+        if (!stored) return undefined;
+        const source = upgrade(stored);
         const copy: Character = {
           ...structuredClone(source),
           id: newId(),

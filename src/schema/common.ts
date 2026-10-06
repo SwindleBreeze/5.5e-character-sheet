@@ -73,11 +73,27 @@ export type Recharge = 'short' | 'long' | 'shortOne' | 'dawn' | 'none';
  */
 export type Formula = number | string;
 
+/**
+ * P10: option lists computed from the character when the choice is shown (plan §8.2 rule 1:
+ * from the previous derived sheet, never inside derive).
+ */
+export type OptionQuery =
+  | 'proficientSkills'
+  | 'proficientSkillsWithoutExpertise'
+  | 'savesNotProficient'
+  | 'proficientWeapons'
+  | 'knownCantrips'
+  | 'knownDamageCantrips';
+
+/** When a pick may be changed again outside of creation (plan §9.4, step 5.7). */
+export type Retrain = 'levelUp' | 'shortRest' | 'longRest';
+
 /** A choice offered by an entity. `slot` is a stable local name (plan §4.4). */
 export interface ChoiceSlot<T> {
   slot: string;
   count: Formula;
-  from: T[] | 'any';
+  from: T[] | 'any' | { query: OptionQuery };
+  retrain?: Retrain;
 }
 
 /** Rich text: a tree of blocks whose leaves are tagged strings. */

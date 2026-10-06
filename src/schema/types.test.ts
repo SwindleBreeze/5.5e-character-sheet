@@ -225,6 +225,8 @@ const character = {
     concentration: null,
     activeToggles: {},
     prepared: {},
+    wardHp: 0,
+    turn: { ridersUsed: [] },
   },
   overrides: { ac: 16, 'skill.stealth': 7 },
   details: {},

@@ -1,0 +1,233 @@
+{
+  "_fixture": true,
+  "class": [
+    {
+      "name": "Wanderer",
+      "source": "TST",
+      "page": 90,
+      "edition": "one",
+      "primaryAbility": [{ "dex": true, "wis": true }],
+      "hd": { "number": 1, "faces": 8 },
+      "proficiency": ["str", "dex"],
+      "startingProficiencies": {
+        "weapons": ["simple"],
+        "skills": [{ "choose": { "from": ["acrobatics", "stealth", "insight"], "count": 2 } }]
+      },
+      "startingEquipment": {
+        "defaultData": [
+          { "A": [{ "item": "walking staff|tst" }, { "value": 1100 }], "B": [{ "value": 4500 }] }
+        ]
+      },
+      "classTableGroups": [
+        {
+          "colLabels": ["Martial Arts", "Focus Points", "Unarmored Movement"],
+          "rows": [
+            [{ "type": "dice", "toRoll": [{ "number": 1, "faces": 4 }] }, "—", "—"],
+            [
+              { "type": "dice", "toRoll": [{ "number": 1, "faces": 4 }] },
+              2,
+              { "type": "bonusSpeed", "value": 5 }
+            ],
+            [
+              { "type": "dice", "toRoll": [{ "number": 1, "faces": 4 }] },
+              3,
+              { "type": "bonusSpeed", "value": 5 }
+            ],
+            [
+              { "type": "dice", "toRoll": [{ "number": 1, "faces": 4 }] },
+              4,
+              { "type": "bonusSpeed", "value": 5 }
+            ],
+            [
+              { "type": "dice", "toRoll": [{ "number": 1, "faces": 6 }] },
+              5,
+              { "type": "bonusSpeed", "value": 5 }
+            ],
+            [
+              { "type": "dice", "toRoll": [{ "number": 1, "faces": 6 }] },
+              6,
+              { "type": "bonusSpeed", "value": 5 }
+            ],
+            [
+              { "type": "dice", "toRoll": [{ "number": 1, "faces": 6 }] },
+              7,
+              { "type": "bonusSpeed", "value": 5 }
+            ],
+            [
+              { "type": "dice", "toRoll": [{ "number": 1, "faces": 6 }] },
+              8,
+              { "type": "bonusSpeed", "value": 5 }
+            ],
+            [
+              { "type": "dice", "toRoll": [{ "number": 1, "faces": 6 }] },
+              9,
+              { "type": "bonusSpeed", "value": 5 }
+            ],
+            [
+              { "type": "dice", "toRoll": [{ "number": 1, "faces": 6 }] },
+              10,
+              { "type": "bonusSpeed", "value": 10 }
+            ],
+            [
+              { "type": "dice", "toRoll": [{ "number": 1, "faces": 8 }] },
+              11,
+              { "type": "bonusSpeed", "value": 10 }
+            ],
+            [
+              { "type": "dice", "toRoll": [{ "number": 1, "faces": 8 }] },
+              12,
+              { "type": "bonusSpeed", "value": 10 }
+            ],
+            [
+              { "type": "dice", "toRoll": [{ "number": 1, "faces": 8 }] },
+              13,
+              { "type": "bonusSpeed", "value": 10 }
+            ],
+            [
+              { "type": "dice", "toRoll": [{ "number": 1, "faces": 8 }] },
+              14,
+              { "type": "bonusSpeed", "value": 10 }
+            ],
+            [
+              { "type": "dice", "toRoll": [{ "number": 1, "faces": 8 }] },
+              15,
+              { "type": "bonusSpeed", "value": 10 }
+            ],
+            [
+              { "type": "dice", "toRoll": [{ "number": 1, "faces": 8 }] },
+              16,
+              { "type": "bonusSpeed", "value": 10 }
+            ],
+            [
+              { "type": "dice", "toRoll": [{ "number": 1, "faces": 10 }] },
+              17,
+              { "type": "bonusSpeed", "value": 10 }
+            ],
+            [
+              { "type": "dice", "toRoll": [{ "number": 1, "faces": 10 }] },
+              18,
+              { "type": "bonusSpeed", "value": 10 }
+            ],
+            [
+              { "type": "dice", "toRoll": [{ "number": 1, "faces": 10 }] },
+              19,
+              { "type": "bonusSpeed", "value": 10 }
+            ],
+            [
+              { "type": "dice", "toRoll": [{ "number": 1, "faces": 10 }] },
+              20,
+              { "type": "bonusSpeed", "value": 10 }
+            ]
+          ]
+        }
+      ],
+      "classFeatures": [
+        "Unarmored Defense|Wanderer|TST|1",
+        "Martial Arts|Wanderer|TST|1",
+        "Focus|Wanderer|TST|2",
+        "Unarmored Movement|Wanderer|TST|2",
+        { "classFeature": "Wanderer Way|Wanderer|TST|3", "gainSubclassFeature": true },
+        "Ability Score Improvement|Wanderer|TST|4",
+        "Extra Attack|Wanderer|TST|5",
+        "Evasion|Wanderer|TST|7"
+      ],
+      "subclassTitle": "Wanderer Way"
+    }
+  ],
+  "subclass": [
+    {
+      "name": "Way of Mist",
+      "shortName": "Mist",
+      "source": "TST",
+      "className": "Wanderer",
+      "classSource": "TST",
+      "page": 92,
+      "edition": "one",
+      "subclassFeatures": ["Way of Mist|Wanderer|TST|Mist|TST|3"]
+    }
+  ],
+  "classFeature": [
+    {
+      "name": "Unarmored Defense",
+      "source": "TST",
+      "className": "Wanderer",
+      "classSource": "TST",
+      "level": 1,
+      "entries": [
+        "Without armor or a shield, your Armor Class equals 10 plus your Dexterity and Wisdom modifiers."
+      ]
+    },
+    {
+      "name": "Martial Arts",
+      "source": "TST",
+      "className": "Wanderer",
+      "classSource": "TST",
+      "level": 1,
+      "entries": [
+        "Your unarmed strikes and simple melee weapons use your Martial Arts die and Dexterity."
+      ]
+    },
+    {
+      "name": "Focus",
+      "source": "TST",
+      "className": "Wanderer",
+      "classSource": "TST",
+      "level": 2,
+      "entries": [
+        "You can spend a focus point to make two unarmed strikes as a {@variantrule Bonus Action|TST}."
+      ]
+    },
+    {
+      "name": "Unarmored Movement",
+      "source": "TST",
+      "className": "Wanderer",
+      "classSource": "TST",
+      "level": 2,
+      "entries": ["Without armor or a shield, your speed increases."]
+    },
+    {
+      "name": "Wanderer Way",
+      "source": "TST",
+      "className": "Wanderer",
+      "classSource": "TST",
+      "level": 3,
+      "entries": ["Choose a way."]
+    },
+    {
+      "name": "Ability Score Improvement",
+      "source": "TST",
+      "className": "Wanderer",
+      "classSource": "TST",
+      "level": 4,
+      "entries": ["You gain a feat."]
+    },
+    {
+      "name": "Extra Attack",
+      "source": "TST",
+      "className": "Wanderer",
+      "classSource": "TST",
+      "level": 5,
+      "entries": ["You attack twice when you take the Attack action."]
+    },
+    {
+      "name": "Evasion",
+      "source": "TST",
+      "className": "Wanderer",
+      "classSource": "TST",
+      "level": 7,
+      "entries": ["You dodge area effects."]
+    }
+  ],
+  "subclassFeature": [
+    {
+      "name": "Way of Mist",
+      "source": "TST",
+      "className": "Wanderer",
+      "classSource": "TST",
+      "subclassShortName": "Mist",
+      "subclassSource": "TST",
+      "level": 3,
+      "entries": ["You fade into mist."]
+    }
+  ]
+}

@@ -31,7 +31,7 @@ describe('importFivetools (fixture tree)', () => {
       '5etools-src-9/package.json': '{"version":"9.9.9"}',
     });
     expect(r.report.dataVersion).toBe('9.9.9');
-    expect(r.report.counts.class).toBe(1);
+    expect(r.report.counts.class).toBe(5);
   });
 
   it('fails clearly when there is no 5etools data', async () => {
@@ -43,17 +43,17 @@ describe('importFivetools (fixture tree)', () => {
   it('converts every kind and reports what it skipped', async () => {
     const r = await run();
     expect(r.report.counts).toEqual({
-      spell: 3,
-      class: 1,
-      classFeature: 6,
-      subclass: 3,
-      subclassFeature: 3,
+      spell: 8,
+      class: 5,
+      classFeature: 34,
+      subclass: 7,
+      subclassFeature: 7,
       background: 1,
       feat: 4,
       species: 6,
-      item: 8,
+      item: 13,
       optionalFeature: 2,
-      rule: 11,
+      rule: 16,
       deity: 5,
       reward: 4,
       facility: 3,
@@ -69,7 +69,7 @@ describe('importFivetools (fixture tree)', () => {
       ['OLD', 'Old Almanac', '2014'],
       ['TST', 'Test Handbook', '2024'],
     ]);
-    expect(r.sources[1]?.counts.class).toBe(1);
+    expect(r.sources[1]?.counts.class).toBe(5);
     // A spell without its own edition takes its source's.
     expect(get<Spell>(r, 'spell', 'glitter burst|old').edition).toBe('2014');
   });
@@ -198,7 +198,7 @@ describe('importFivetools (fixture tree)', () => {
   it('joins spell lists and reprints', async () => {
     const r = await run();
     const spell = get<Spell>(r, 'spell', 'glitter burst|tst');
-    expect(spell.classIds).toEqual(['gladiator|tst']);
+    expect(spell.classIds).toEqual(['gladiator|tst', 'pactbinder|tst']);
     expect(spell.subclassIds).toEqual(['net|gladiator|tst|tst']);
     expect(get(r, 'spell', 'glitter burst|old').supersededBy).toEqual(['glitter burst|tst']);
     expect(get<Spell>(r, 'spell', 'dim lantern|tst')).toMatchObject({
@@ -260,6 +260,22 @@ describe('importFivetools (fixture tree)', () => {
     });
   });
 
+  it('keeps spellcasting details: change timing, spellbooks and cantrip scaling', async () => {
+    const r = await run();
+    expect(get<ClassDef>(r, 'class', 'lorekeeper|tst').spellcasting).toMatchObject({
+      progression: 'full',
+      preparedChange: 'restLong',
+      spellbookByLevel: [5, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
+    });
+    expect(get<ClassDef>(r, 'class', 'pactbinder|tst').spellcasting).toMatchObject({
+      progression: 'pact',
+      preparedChange: 'level',
+    });
+    expect(get<Spell>(r, 'spell', 'spark bolt|tst').scaling).toEqual([
+      { label: 'fire damage', byLevel: { 1: '1d8', 5: '2d8', 11: '3d8', 17: '4d8' } },
+    ]);
+  });
+
   it('converts items, magic variants and rules', async () => {
     const r = await run();
     expect(get<Item>(r, 'item', 'net blade|tst').weapon).toEqual({
@@ -269,6 +285,10 @@ describe('importFivetools (fixture tree)', () => {
       damageType: 'slashing',
       properties: ['itemProperty/v|tst', 'itemProperty/f|tst'],
       masteryId: 'mastery/snare|tst',
+    });
+    expect(get<Item>(r, 'item', 'arc bow|tst').weapon).toMatchObject({
+      ranged: true,
+      range: [60, 240],
     });
     expect(get<Item>(r, 'item', 'arena mail|tst').armor).toEqual({
       category: 'heavy',

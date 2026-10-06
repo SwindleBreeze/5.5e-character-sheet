@@ -1,0 +1,221 @@
+{
+  "_fixture": true,
+  "class": [
+    {
+      "name": "Brute",
+      "source": "TST",
+      "page": 60,
+      "edition": "one",
+      "primaryAbility": [{ "str": true }],
+      "hd": { "number": 1, "faces": 12 },
+      "proficiency": ["str", "con"],
+      "startingProficiencies": {
+        "armor": ["light", "medium", "{@item buckler|tst|shields}"],
+        "weapons": ["simple", "martial"],
+        "skills": [
+          {
+            "choose": {
+              "from": ["athletics", "intimidation", "survival", "perception"],
+              "count": 2
+            }
+          }
+        ]
+      },
+      "startingEquipment": {
+        "defaultData": [
+          {
+            "A": [
+              { "item": "net blade|tst" },
+              { "item": "shiv|tst", "quantity": 2 },
+              { "value": 800 }
+            ],
+            "B": [{ "value": 6000 }]
+          }
+        ]
+      },
+      "multiclassing": {
+        "proficienciesGained": {
+          "armor": ["{@item buckler|tst|shields}"],
+          "weapons": ["martial"]
+        }
+      },
+      "classTableGroups": [
+        {
+          "colLabels": ["Furies", "Fury Damage", "Weapon Mastery"],
+          "rows": [
+            [1, "+1", 2],
+            [2, "+1", 2],
+            [2, "+1", 2],
+            [2, "+1", 3],
+            [3, "+1", 3],
+            [3, "+2", 3],
+            [3, "+2", 3],
+            [3, "+2", 3],
+            [4, "+2", 3],
+            [4, "+2", 3],
+            [4, "+2", 3],
+            [4, "+2", 4],
+            [4, "+3", 4],
+            [5, "+3", 4],
+            [5, "+3", 4],
+            [5, "+3", 4],
+            [5, "+3", 4],
+            [5, "+3", 4],
+            [6, "+3", 4],
+            [6, "+3", 4]
+          ]
+        }
+      ],
+      "classFeatures": [
+        "Fury|Brute|TST|1",
+        "Hardened Hide|Brute|TST|1",
+        "Weapon Mastery|Brute|TST|1",
+        "Catch Breath|Brute|TST|2",
+        { "classFeature": "Brute Path|Brute|TST|3", "gainSubclassFeature": true },
+        "Ability Score Improvement|Brute|TST|4",
+        "Extra Attack|Brute|TST|5",
+        "Swift Feet|Brute|TST|5",
+        "Ability Score Improvement|Brute|TST|8"
+      ],
+      "subclassTitle": "Brute Path"
+    }
+  ],
+  "subclass": [
+    {
+      "name": "Path of the Spark",
+      "shortName": "Spark",
+      "source": "TST",
+      "className": "Brute",
+      "classSource": "TST",
+      "page": 62,
+      "edition": "one",
+      "spellcastingAbility": "int",
+      "casterProgression": "1/3",
+      "preparedSpellsProgression": [0, 0, 2, 3, 3, 3, 4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7, 8, 8, 8],
+      "preparedSpellsChange": "level",
+      "cantripProgression": [0, 0, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
+      "subclassTableGroups": [
+        {
+          "subclasses": [{ "name": "Path of the Spark", "source": "TST" }],
+          "title": "Spell Slots per Spell Level",
+          "colLabels": ["{@filter 1st|spells|level=1}", "{@filter 2nd|spells|level=2}"],
+          "rowsSpellProgression": [
+            [0, 0],
+            [0, 0],
+            [1, 0],
+            [2, 0],
+            [2, 0],
+            [2, 0],
+            [3, 0],
+            [3, 0],
+            [3, 0],
+            [3, 1],
+            [3, 1],
+            [3, 1],
+            [3, 2],
+            [3, 2],
+            [3, 2],
+            [3, 2],
+            [3, 2],
+            [3, 2],
+            [3, 2],
+            [3, 2]
+          ]
+        }
+      ],
+      "subclassFeatures": ["Path of the Spark|Brute|TST|Spark|TST|3"]
+    }
+  ],
+  "classFeature": [
+    {
+      "name": "Fury",
+      "source": "TST",
+      "className": "Brute",
+      "classSource": "TST",
+      "level": 1,
+      "entries": [
+        "As a {@variantrule Bonus Action|TST} you can become furious. While furious you shrug off cuts and hit harder with Strength attacks."
+      ]
+    },
+    {
+      "name": "Hardened Hide",
+      "source": "TST",
+      "className": "Brute",
+      "classSource": "TST",
+      "level": 1,
+      "entries": [
+        "Without armor, your Armor Class equals 10 plus your Dexterity and Constitution modifiers."
+      ]
+    },
+    {
+      "name": "Weapon Mastery",
+      "source": "TST",
+      "className": "Brute",
+      "classSource": "TST",
+      "level": 1,
+      "entries": ["You can use the mastery properties of a few weapons."]
+    },
+    {
+      "name": "Catch Breath",
+      "source": "TST",
+      "className": "Brute",
+      "classSource": "TST",
+      "level": 2,
+      "entries": [
+        "As a {@variantrule Bonus Action|TST}, you regain {@dice 1d8} plus your Brute level hit points."
+      ]
+    },
+    {
+      "name": "Brute Path",
+      "source": "TST",
+      "className": "Brute",
+      "classSource": "TST",
+      "level": 3,
+      "entries": ["Choose a path."]
+    },
+    {
+      "name": "Ability Score Improvement",
+      "source": "TST",
+      "className": "Brute",
+      "classSource": "TST",
+      "level": 4,
+      "entries": ["You gain a feat."]
+    },
+    {
+      "name": "Extra Attack",
+      "source": "TST",
+      "className": "Brute",
+      "classSource": "TST",
+      "level": 5,
+      "entries": ["You attack twice when you take the Attack action."]
+    },
+    {
+      "name": "Swift Feet",
+      "source": "TST",
+      "className": "Brute",
+      "classSource": "TST",
+      "level": 5,
+      "entries": ["Your speed increases by 10 feet while you are not in heavy armor."]
+    },
+    {
+      "name": "Ability Score Improvement",
+      "source": "TST",
+      "className": "Brute",
+      "classSource": "TST",
+      "level": 8,
+      "entries": ["You gain a feat."]
+    }
+  ],
+  "subclassFeature": [
+    {
+      "name": "Path of the Spark",
+      "source": "TST",
+      "className": "Brute",
+      "classSource": "TST",
+      "subclassShortName": "Spark",
+      "subclassSource": "TST",
+      "level": 3,
+      "entries": ["You learn to cast a few sparking spells, using Intelligence."]
+    }
+  ]
+}

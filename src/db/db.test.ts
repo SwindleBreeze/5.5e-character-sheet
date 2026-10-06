@@ -1,6 +1,11 @@
 import { Dexie } from 'dexie';
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { ContentOrigin, SourceInfo, Spell } from '../schema/index.ts';
+import {
+  CHARACTER_SCHEMA_VERSION,
+  type ContentOrigin,
+  type SourceInfo,
+  type Spell,
+} from '../schema/index.ts';
 import { createCharacterRepo, newCharacter } from './characterRepo.ts';
 import { createContentRepo } from './contentRepo.ts';
 import { AppDb, resetDb } from './db.ts';
@@ -99,6 +104,14 @@ describe('characterRepo', () => {
 
     await repo.remove(b.id);
     expect(await repo.get(b.id)).toBeUndefined();
+  });
+
+  it('upgrades characters stored by an older app when reading them', async () => {
+    const old = { ...newCharacter('Old', 1), schemaVersion: 1 };
+    await db.characters.put(old);
+    const repo = createCharacterRepo(db);
+    expect((await repo.get(old.id))?.schemaVersion).toBe(CHARACTER_SCHEMA_VERSION);
+    expect((await repo.list())[0]?.state.wardHp).toBe(0);
   });
 
   it('duplicates a character with its portrait under new ids', async () => {

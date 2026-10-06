@@ -4,7 +4,17 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { DEFAULT_SETTINGS } from '../db/settingsRepo.ts';
 import { repos } from '../db/repos.ts';
-import type { EntityByKind, EntityKind, Ref, SourceCode, SourceInfo } from '../schema/index.ts';
+import { refsKey, type ContentIndex } from '../engine/content/contentIndex.ts';
+import { characterRefs } from '../engine/content/refs.ts';
+import type {
+  Character,
+  EntityByKind,
+  EntityKind,
+  Ref,
+  SourceCode,
+  SourceInfo,
+} from '../schema/index.ts';
+import { loadContentIndex } from './loadIndex.ts';
 
 /** `undefined` while loading, `null` when the entity is not imported. */
 export function useEntity<K extends EntityKind>(
@@ -28,5 +38,19 @@ export function useEnabledSources(): SourceCode[] {
   return (
     useLiveQuery(() => repos().settings.get('enabledSources'), []) ??
     DEFAULT_SETTINGS.enabledSources
+  );
+}
+
+/**
+ * The content a character uses (plan §9.2, step 3.1). Reloads when the set of refs the
+ * character holds changes, or when that content is re-imported; not on play changes like HP.
+ */
+export function useContentIndex(character: Character | null | undefined): ContentIndex | undefined {
+  const key = character ? refsKey(characterRefs(character)) : '';
+  return useLiveQuery(
+    () =>
+      character ? loadContentIndex(character, (refs) => repos().content.getMany(refs)) : undefined,
+    // The character is read through `key`: same refs, same content.
+    [key],
   );
 }

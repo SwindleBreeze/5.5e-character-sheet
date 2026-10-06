@@ -1,0 +1,138 @@
+{
+  "_fixture": true,
+  "class": [
+    {
+      "name": "Pactbinder",
+      "source": "TST",
+      "page": 80,
+      "edition": "one",
+      "primaryAbility": [{ "cha": true }],
+      "hd": { "number": 1, "faces": 8 },
+      "proficiency": ["wis", "cha"],
+      "spellcastingAbility": "cha",
+      "casterProgression": "pact",
+      "preparedSpellsProgression": [
+        2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15, 15
+      ],
+      "preparedSpellsChange": "level",
+      "cantripProgression": [2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4],
+      "startingProficiencies": {
+        "armor": ["light"],
+        "weapons": ["simple"],
+        "skills": [{ "choose": { "from": ["deception", "intimidation", "arcana"], "count": 2 } }]
+      },
+      "startingEquipment": {
+        "defaultData": [
+          { "A": [{ "item": "shiv|tst" }, { "value": 1000 }], "B": [{ "value": 5000 }] }
+        ]
+      },
+      "multiclassing": { "proficienciesGained": { "armor": ["light"] } },
+      "classTableGroups": [
+        {
+          "colLabels": [
+            "{@filter Cantrips|spells|level=0|class=Pactbinder}",
+            "{@filter Prepared Spells|spells|class=Pactbinder}",
+            "Spell Slots",
+            "Slot Level"
+          ],
+          "rows": [
+            [2, 2, 1, "1st"],
+            [2, 3, 2, "1st"],
+            [2, 4, 2, "2nd"],
+            [3, 5, 2, "2nd"],
+            [3, 6, 2, "3rd"],
+            [3, 7, 2, "3rd"],
+            [3, 8, 2, "4th"],
+            [3, 9, 2, "4th"],
+            [3, 10, 2, "5th"],
+            [4, 10, 2, "5th"],
+            [4, 11, 3, "5th"],
+            [4, 11, 3, "5th"],
+            [4, 12, 3, "5th"],
+            [4, 12, 3, "5th"],
+            [4, 13, 3, "5th"],
+            [4, 13, 3, "5th"],
+            [4, 14, 4, "5th"],
+            [4, 14, 4, "5th"],
+            [4, 15, 4, "5th"],
+            [4, 15, 4, "5th"]
+          ]
+        }
+      ],
+      "classFeatures": [
+        "Pact Magic|Pactbinder|TST|1",
+        "Hex Strike|Pactbinder|TST|1",
+        "Pact Blade|Pactbinder|TST|2",
+        { "classFeature": "Pactbinder Patron|Pactbinder|TST|3", "gainSubclassFeature": true },
+        "Ability Score Improvement|Pactbinder|TST|4"
+      ],
+      "subclassTitle": "Pactbinder Patron"
+    }
+  ],
+  "subclass": [
+    {
+      "name": "Patron of Ash",
+      "shortName": "Ash",
+      "source": "TST",
+      "className": "Pactbinder",
+      "classSource": "TST",
+      "page": 82,
+      "edition": "one",
+      "subclassFeatures": ["Patron of Ash|Pactbinder|TST|Ash|TST|3"]
+    }
+  ],
+  "classFeature": [
+    {
+      "name": "Pact Magic",
+      "source": "TST",
+      "className": "Pactbinder",
+      "classSource": "TST",
+      "level": 1,
+      "entries": ["Your patron grants you a few spell slots that return on a short rest."]
+    },
+    {
+      "name": "Hex Strike",
+      "source": "TST",
+      "className": "Pactbinder",
+      "classSource": "TST",
+      "level": 1,
+      "entries": ["Once per turn, a weapon hit can deal an extra {@damage 1d6} necrotic damage."]
+    },
+    {
+      "name": "Pact Blade",
+      "source": "TST",
+      "className": "Pactbinder",
+      "classSource": "TST",
+      "level": 2,
+      "entries": ["While your pact blade is bound, you attack with Charisma using melee weapons."]
+    },
+    {
+      "name": "Pactbinder Patron",
+      "source": "TST",
+      "className": "Pactbinder",
+      "classSource": "TST",
+      "level": 3,
+      "entries": ["Choose a patron."]
+    },
+    {
+      "name": "Ability Score Improvement",
+      "source": "TST",
+      "className": "Pactbinder",
+      "classSource": "TST",
+      "level": 4,
+      "entries": ["You gain a feat."]
+    }
+  ],
+  "subclassFeature": [
+    {
+      "name": "Patron of Ash",
+      "source": "TST",
+      "className": "Pactbinder",
+      "classSource": "TST",
+      "subclassShortName": "Ash",
+      "subclassSource": "TST",
+      "level": 3,
+      "entries": ["Ash drifts around you."]
+    }
+  ]
+}

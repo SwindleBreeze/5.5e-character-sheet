@@ -14,7 +14,8 @@ import type {
 } from './common.ts';
 import type { Effect } from './effects.ts';
 
-export const CHARACTER_SCHEMA_VERSION = 1;
+/** 2: drafts, deity, ward, once-per-turn reminders, item variants and charges (plan §9.1). */
+export const CHARACTER_SCHEMA_VERSION = 2;
 
 /** Identifies one choice: the entity offering it, its local slot, and an instance number. */
 export interface ChoiceKey {
@@ -52,7 +53,8 @@ export interface LevelEntry {
   choices: ChoiceRecord[];
 }
 
-export type EquipSlot = 'armor' | 'shield' | 'mainHand' | 'offHand' | 'bothHands';
+/** Where an item is in use. `worn`: rings, cloaks and other items that are not held. */
+export type EquipSlot = 'armor' | 'shield' | 'mainHand' | 'offHand' | 'bothHands' | 'worn';
 
 export interface InventoryItem {
   /** Stable id of this inventory row. */
@@ -66,6 +68,9 @@ export interface InventoryItem {
   containerUid?: string;
   notes?: string;
   custom?: { weightLb?: number; valueCp?: number };
+  /** A magic variant applied to this base item: `+1 Longsword` is longsword + `+1 weapon`. */
+  variantRef?: Ref;
+  chargesUsed?: number;
 }
 
 export interface Currency {
@@ -99,10 +104,18 @@ export interface PlayState {
   activeToggles: Record<string, ActiveToggle>;
   /** Prepared spell ids per caster key (e.g. class id). */
   prepared: Record<string, Id[]>;
+  /** P12: current ward hit points (Arcane Ward). */
+  wardHp: number;
+  /** Once-per-turn reminders: rider ids used this turn, cleared from the Actions tab. */
+  turn: { ridersUsed: string[] };
+  /** When a prepared spell was last swapped, for one-swap-per-rest casters (warning only). */
+  lastPrepSwapAt?: number;
 }
 
 export interface Details {
   alignment?: string;
+  /** A god from the library, or free text (no `ref`). Gods have no effects (plan §9.1). */
+  deity?: { ref?: Ref; name: string };
   appearance?: string;
   personality?: string;
   ideals?: string;
@@ -123,6 +136,8 @@ export interface Snapshot {
   name: string;
   entries: Entry[];
   effects: Effect[];
+  /** The entity's reprints when captured, so a missing owner can be aliased (plan §4.4). */
+  supersededBy?: Id[];
   capturedAt: number;
 }
 
@@ -155,6 +170,8 @@ export interface Character {
   scoreMethod: ScoreMethod;
   /** The build. log[0] is character level 1. */
   log: LevelEntry[];
+  /** Set while the character is still in the creation wizard. */
+  draft?: { step: string };
   inventory: InventoryItem[];
   currency: Currency;
   state: PlayState;

@@ -28,8 +28,8 @@ describe('ImportPage', () => {
 
     const result = await screen.findByRole('region', { name: 'Import finished' });
     expect(within(result).getByText(/Pack imported/)).toBeInTheDocument();
-    expect(within(result).getByText('Spells').nextSibling).toHaveTextContent('3');
-    expect(await repos().content.countByKind('class')).toBe(1);
+    expect(within(result).getByText('Spells').nextSibling).toHaveTextContent('8');
+    expect(await repos().content.countByKind('class')).toBe(5);
   });
 
   it('explains a file that is not a pack', async () => {

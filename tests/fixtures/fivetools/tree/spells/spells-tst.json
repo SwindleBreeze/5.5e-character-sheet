@@ -7,13 +7,35 @@
       "page": 20,
       "level": 0,
       "school": "V",
-      "time": [{ "number": 1, "unit": "action" }],
-      "range": { "type": "point", "distance": { "type": "feet", "amount": 30 } },
-      "components": { "v": true, "s": true },
-      "duration": [{ "type": "instant" }],
+      "time": [
+        {
+          "number": 1,
+          "unit": "action"
+        }
+      ],
+      "range": {
+        "type": "point",
+        "distance": {
+          "type": "feet",
+          "amount": 30
+        }
+      },
+      "components": {
+        "v": true,
+        "s": true
+      },
+      "duration": [
+        {
+          "type": "instant"
+        }
+      ],
       "entries": ["Sparkles deal {@damage 1d6} radiant damage."],
       "entriesHigherLevel": [
-        { "type": "entries", "name": "Cantrip Upgrade", "entries": ["More sparkles."] }
+        {
+          "type": "entries",
+          "name": "Cantrip Upgrade",
+          "entries": ["More sparkles."]
+        }
       ],
       "damageInflict": ["radiant"],
       "savingThrow": ["dexterity"]
@@ -24,22 +46,215 @@
       "page": 21,
       "level": 1,
       "school": "I",
-      "time": [{ "number": 1, "unit": "bonus" }],
-      "range": { "type": "point", "distance": { "type": "self" } },
+      "time": [
+        {
+          "number": 1,
+          "unit": "bonus"
+        }
+      ],
+      "range": {
+        "type": "point",
+        "distance": {
+          "type": "self"
+        }
+      },
       "components": {
         "v": true,
-        "m": { "text": "a candle worth 5 GP", "cost": 500, "consume": true }
+        "m": {
+          "text": "a candle worth 5 GP",
+          "cost": 500,
+          "consume": true
+        }
       },
       "duration": [
         {
           "type": "timed",
-          "duration": { "type": "minute", "amount": 10 },
+          "duration": {
+            "type": "minute",
+            "amount": 10
+          },
           "concentration": true
         }
       ],
-      "meta": { "ritual": true },
+      "meta": {
+        "ritual": true
+      },
       "entries": ["The light dims."],
       "spellAttack": ["R"]
+    },
+    {
+      "name": "Spark Bolt",
+      "source": "TST",
+      "page": 22,
+      "level": 0,
+      "school": "V",
+      "time": [
+        {
+          "number": 1,
+          "unit": "action"
+        }
+      ],
+      "range": {
+        "type": "point",
+        "distance": {
+          "type": "feet",
+          "amount": 60
+        }
+      },
+      "components": {
+        "v": true,
+        "s": true
+      },
+      "duration": [
+        {
+          "type": "instant"
+        }
+      ],
+      "entries": ["A spark flies at a target and deals {@damage 1d8} fire damage."],
+      "scalingLevelDice": {
+        "label": "fire damage",
+        "scaling": {
+          "1": "1d8",
+          "5": "2d8",
+          "11": "3d8",
+          "17": "4d8"
+        }
+      },
+      "damageInflict": ["fire"],
+      "spellAttack": ["R"]
+    },
+    {
+      "name": "Ink Cloud",
+      "source": "TST",
+      "page": 23,
+      "level": 1,
+      "school": "C",
+      "time": [
+        {
+          "number": 1,
+          "unit": "action"
+        }
+      ],
+      "range": {
+        "type": "point",
+        "distance": {
+          "type": "feet",
+          "amount": 60
+        }
+      },
+      "components": {
+        "v": true,
+        "s": true
+      },
+      "duration": [
+        {
+          "type": "instant"
+        }
+      ],
+      "entries": ["A cloud of ink deals {@damage 2d6} poison damage."],
+      "damageInflict": ["poison"],
+      "savingThrow": ["constitution"]
+    },
+    {
+      "name": "Mind Ward",
+      "source": "TST",
+      "page": 24,
+      "level": 2,
+      "school": "A",
+      "time": [
+        {
+          "number": 1,
+          "unit": "action"
+        }
+      ],
+      "range": {
+        "type": "point",
+        "distance": {
+          "type": "self"
+        }
+      },
+      "components": {
+        "v": true,
+        "s": true
+      },
+      "duration": [
+        {
+          "type": "timed",
+          "duration": {
+            "type": "minute",
+            "amount": 1
+          },
+          "concentration": true
+        }
+      ],
+      "entries": ["Your thoughts are shielded."]
+    },
+    {
+      "name": "Rolling Boom",
+      "source": "TST",
+      "page": 25,
+      "level": 3,
+      "school": "V",
+      "time": [
+        {
+          "number": 1,
+          "unit": "action"
+        }
+      ],
+      "range": {
+        "type": "point",
+        "distance": {
+          "type": "feet",
+          "amount": 60
+        }
+      },
+      "components": {
+        "v": true,
+        "s": true
+      },
+      "duration": [
+        {
+          "type": "instant"
+        }
+      ],
+      "entries": ["A boom deals {@damage 4d6} thunder damage."],
+      "damageInflict": ["thunder"],
+      "savingThrow": ["dexterity"]
+    },
+    {
+      "name": "Hex Mark",
+      "source": "TST",
+      "page": 26,
+      "level": 1,
+      "school": "E",
+      "time": [
+        {
+          "number": 1,
+          "unit": "bonus"
+        }
+      ],
+      "range": {
+        "type": "point",
+        "distance": {
+          "type": "feet",
+          "amount": 60
+        }
+      },
+      "components": {
+        "v": true,
+        "s": true
+      },
+      "duration": [
+        {
+          "type": "timed",
+          "duration": {
+            "type": "hour",
+            "amount": 1
+          },
+          "concentration": true
+        }
+      ],
+      "entries": ["You mark a target with a hex."]
     }
   ]
 }

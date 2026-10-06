@@ -114,6 +114,8 @@ export interface Spell extends BaseEntity {
   damageTypes?: string[];
   saves?: Ability[];
   attack?: 'melee' | 'ranged';
+  /** Cantrip damage by character level, e.g. `{ 1: '1d10', 5: '2d10' }` (adapter 3). */
+  scaling?: { label: string; byLevel: Record<number, string> }[];
 }
 
 export interface ClassSpellcasting {
@@ -121,7 +123,15 @@ export interface ClassSpellcasting {
   progression: 'full' | 'half' | 'third' | 'pact' | 'artificer';
   preparedByLevel?: number[];
   cantripsByLevel?: number[];
+  /** Spells added to a spellbook at each class level (Wizard: 6, then 2). */
   spellbookByLevel?: number[];
+  /**
+   * When prepared spells can change (plan §9.1): `level` on gaining a level (they work like
+   * known spells, so they are choices), `restLong` after a Long Rest (play state).
+   */
+  preparedChange?: 'level' | 'restLong';
+  /** Spells gained at fixed levels outside the table, by class level then spell level (Mystic Arcanum). */
+  fixedByLevel?: Record<number, Record<number, number>>;
 }
 
 export interface ClassDef extends BaseEntity {
@@ -253,6 +263,8 @@ export interface Item extends BaseEntity {
     properties: Id[];
     masteryId?: Id;
     range?: [number, number];
+    /** A ranged weapon (5etools type `R`); thrown melee weapons are not. Missing before adapter 3. */
+    ranged?: boolean;
   };
   armor?: {
     category: 'light' | 'medium' | 'heavy';
@@ -268,6 +280,8 @@ export interface Item extends BaseEntity {
   recharge?: string;
   /** For magic items built on a base item, e.g. `longsword|xphb`. */
   baseItemId?: Id;
+  /** For tools: which "any …" picks they fill (adapter 3). */
+  toolType?: 'artisan' | 'instrument' | 'gamingSet' | 'other';
   variant?: MagicVariant;
   /** For an item group (Arcane Focus, Artisan's Tools): the items it stands for. */
   groupItemIds?: Id[];

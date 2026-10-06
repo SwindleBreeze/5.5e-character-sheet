@@ -40,6 +40,75 @@
       "weight": 1,
       "value": 1,
       "entries": ["A torch burns for 1 hour."]
+    },
+    {
+      "name": "Shiv",
+      "source": "TST",
+      "page": 45,
+      "type": "M|TST",
+      "rarity": "none",
+      "weight": 1,
+      "value": 200,
+      "weaponCategory": "simple",
+      "weapon": true,
+      "dmg1": "1d4",
+      "dmgType": "P",
+      "property": ["F|TST", "L|TST", "T|TST"],
+      "range": "20/60",
+      "mastery": ["Quickcut|TST"]
+    },
+    {
+      "name": "Walking Staff",
+      "source": "TST",
+      "page": 45,
+      "type": "M|TST",
+      "rarity": "none",
+      "weight": 4,
+      "value": 20,
+      "weaponCategory": "simple",
+      "weapon": true,
+      "dmg1": "1d6",
+      "dmg2": "1d8",
+      "dmgType": "B",
+      "property": ["V|TST"],
+      "mastery": ["Snare|TST"]
+    },
+    {
+      "name": "Arc Bow",
+      "source": "TST",
+      "page": 46,
+      "type": "R|TST",
+      "rarity": "none",
+      "weight": 2,
+      "value": 2500,
+      "weaponCategory": "martial",
+      "weapon": true,
+      "dmg1": "1d6",
+      "dmgType": "P",
+      "property": ["A|TST", "2H|TST"],
+      "range": "60/240",
+      "mastery": ["Quickcut|TST"]
+    },
+    {
+      "name": "Padded Vest",
+      "source": "TST",
+      "page": 47,
+      "type": "LA|TST",
+      "rarity": "none",
+      "weight": 8,
+      "value": 500,
+      "ac": 11,
+      "armor": true
+    },
+    {
+      "name": "Buckler",
+      "source": "TST",
+      "page": 47,
+      "type": "S|TST",
+      "rarity": "none",
+      "weight": 6,
+      "value": 1000,
+      "ac": 2
     }
   ],
   "itemProperty": [
@@ -48,19 +117,94 @@
       "source": "TST",
       "page": 43,
       "entries": [
-        { "type": "entries", "name": "Versatile", "entries": ["Two hands, more damage."] }
+        {
+          "type": "entries",
+          "name": "Versatile",
+          "entries": ["Two hands, more damage."]
+        }
       ]
     },
     {
       "abbreviation": "F",
       "source": "TST",
       "page": 43,
-      "entries": [{ "type": "entries", "name": "Finesse", "entries": ["Use Dexterity."] }]
+      "entries": [
+        {
+          "type": "entries",
+          "name": "Finesse",
+          "entries": ["Use Dexterity."]
+        }
+      ]
+    },
+    {
+      "abbreviation": "L",
+      "source": "TST",
+      "page": 43,
+      "entries": [
+        {
+          "type": "entries",
+          "name": "Light",
+          "entries": ["Easy to wield in either hand."]
+        }
+      ]
+    },
+    {
+      "abbreviation": "T",
+      "source": "TST",
+      "page": 43,
+      "entries": [
+        {
+          "type": "entries",
+          "name": "Thrown",
+          "entries": ["You can throw it."]
+        }
+      ]
+    },
+    {
+      "abbreviation": "A",
+      "source": "TST",
+      "page": 43,
+      "entries": [
+        {
+          "type": "entries",
+          "name": "Ammunition",
+          "entries": ["Needs ammunition."]
+        }
+      ]
+    },
+    {
+      "abbreviation": "2H",
+      "source": "TST",
+      "page": 43,
+      "entries": [
+        {
+          "type": "entries",
+          "name": "Two-Handed",
+          "entries": ["Needs both hands."]
+        }
+      ]
     }
   ],
-  "itemType": [{ "abbreviation": "M", "source": "TST", "name": "Melee Weapon" }],
+  "itemType": [
+    {
+      "abbreviation": "M",
+      "source": "TST",
+      "name": "Melee Weapon"
+    }
+  ],
   "itemMastery": [
-    { "name": "Snare", "source": "TST", "page": 44, "entries": ["The target is slowed."] }
+    {
+      "name": "Snare",
+      "source": "TST",
+      "page": 44,
+      "entries": ["The target is slowed."]
+    },
+    {
+      "name": "Quickcut",
+      "source": "TST",
+      "page": 44,
+      "entries": ["A second quick strike."]
+    }
   ],
   "itemEntry": [
     {

@@ -1,20 +1,10 @@
-import { nameSourceId, type Ability, type Spell } from '../../../schema/index.ts';
+import { nameSourceId, SPELL_SCHOOLS, type Ability, type Spell } from '../../../schema/index.ts';
 import { normalizeEntries } from '../entries.ts';
 import { asArray, isObject, num, strArray, type RawEntity } from '../raw.ts';
 import { uidToId } from '../uid.ts';
 import { baseFields, type ConvertContext } from './common.ts';
 
-const SCHOOLS: Record<string, string> = {
-  A: 'abjuration',
-  C: 'conjuration',
-  D: 'divination',
-  E: 'enchantment',
-  V: 'evocation',
-  I: 'illusion',
-  N: 'necromancy',
-  T: 'transmutation',
-  P: 'psionic',
-};
+const SCHOOLS = SPELL_SCHOOLS;
 
 const SAVE_ABILITY: Record<string, Ability> = {
   strength: 'str',
@@ -102,5 +92,17 @@ export function convertSpell(raw: RawEntity, ctx: ConvertContext): Spell {
   const attack = strArray(raw.spellAttack)[0];
   if (attack === 'M') spell.attack = 'melee';
   else if (attack === 'R') spell.attack = 'ranged';
+  const scaling = asArray(raw.scalingLevelDice)
+    .filter(isObject)
+    .flatMap((s) => {
+      if (!isObject(s.scaling)) return [];
+      const byLevel: Record<number, string> = {};
+      for (const [level, dice] of Object.entries(s.scaling)) {
+        const l = num(level);
+        if (l !== undefined && typeof dice === 'string') byLevel[l] = dice;
+      }
+      return [{ label: typeof s.label === 'string' ? s.label : 'damage', byLevel }];
+    });
+  if (scaling.length) spell.scaling = scaling;
   return spell;
 }

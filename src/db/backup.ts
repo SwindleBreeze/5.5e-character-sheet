@@ -4,6 +4,7 @@
 // rebuilt from the group's pack.
 
 import { CHARACTER_SCHEMA_VERSION, type Character } from '../schema/index.ts';
+import { migrateCharacter } from './characterMigrations.ts';
 import { getDb, type AppDb } from './db.ts';
 
 export const BACKUP_FORMAT = '5e-sheet-backup';
@@ -114,7 +115,7 @@ export function parseBackup(text: string): BackupFile {
     version: BACKUP_VERSION,
     exportedAt: typeof b.exportedAt === 'number' ? b.exportedAt : 0,
     appVersion: typeof b.appVersion === 'string' ? b.appVersion : '',
-    characters: b.characters,
+    characters: b.characters.map(migrateCharacter),
     portraits: Array.isArray(b.portraits) ? (b.portraits as BackupPortrait[]) : [],
   };
 }

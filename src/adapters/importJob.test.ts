@@ -51,7 +51,7 @@ describe('runImportJob', () => {
     );
     expect(stages).toEqual(['locate', 'read', 'resolve', 'convert', 'finish', 'write']);
     expect(summary.sources.map((s) => s.code)).toEqual(['OLD', 'TST']);
-    expect(await createContentRepo(db).countByKind('spell')).toBe(3);
+    expect(await createContentRepo(db).countByKind('spell')).toBe(8);
     expect(await createSettingsRepo(db).get('lastImport')).toEqual(summary);
   });
 

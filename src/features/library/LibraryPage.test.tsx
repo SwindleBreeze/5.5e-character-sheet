@@ -31,7 +31,17 @@ describe('LibraryPage', () => {
   it('lists available spells; 2014 and reprinted content stay hidden', async () => {
     await seedFixtureContent();
     renderApp('/library');
-    await waitFor(async () => expect(await names()).toEqual(['Dim Lantern', 'Glitter Burst']));
+    await waitFor(async () =>
+      expect(await names()).toEqual([
+        'Dim Lantern',
+        'Glitter Burst',
+        'Hex Mark',
+        'Ink Cloud',
+        'Mind Ward',
+        'Rolling Boom',
+        'Spark Bolt',
+      ]),
+    );
     expect(screen.getByText(/1 hidden by source settings/)).toBeInTheDocument();
   });
 
@@ -41,14 +51,16 @@ describe('LibraryPage', () => {
     renderApp('/library');
 
     await user.click(await screen.findByRole('tab', { name: 'Items' }));
-    await waitFor(async () => expect(await names()).toHaveLength(8));
+    await waitFor(async () => expect(await names()).toHaveLength(13));
 
     await user.type(screen.getByRole('searchbox', { name: 'Search' }), 'torch');
     await waitFor(async () => expect(await names()).toEqual(['Everburning Torch', 'Torch']));
 
     await user.clear(screen.getByRole('searchbox', { name: 'Search' }));
     await user.selectOptions(screen.getByRole('combobox', { name: 'Type' }), 'weapon');
-    await waitFor(async () => expect(await names()).toEqual(['Net Blade']));
+    await waitFor(async () =>
+      expect(await names()).toEqual(['Arc Bow', 'Net Blade', 'Shiv', 'Walking Staff']),
+    );
   });
 
   it('opens an entry in the rule sheet', async () => {
