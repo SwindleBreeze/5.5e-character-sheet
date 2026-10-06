@@ -1,6 +1,7 @@
 import { Route, Routes, useParams } from 'react-router';
 import { CharactersPage } from '../features/characters/CharactersPage.tsx';
 import { DesignGallery } from '../features/dev/DesignGallery.tsx';
+import { ImportPage } from '../features/import/ImportPage.tsx';
 import { LibraryPage } from '../features/library/LibraryPage.tsx';
 import { Placeholder } from '../features/Placeholder.tsx';
 import { SettingsPage } from '../features/settings/SettingsPage.tsx';
@@ -24,14 +25,7 @@ export function AppRoutes() {
           }
         />
         <Route path="library" element={<LibraryPage />} />
-        <Route
-          path="library/import"
-          element={
-            <Placeholder title="Import" backTo="/library">
-              Importing arrives in phase 2.
-            </Placeholder>
-          }
-        />
+        <Route path="library/import" element={<ImportPage />} />
         <Route path="settings" element={<SettingsPage />} />
         {import.meta.env.DEV && <Route path="dev/design" element={<DesignGallery />} />}
         <Route

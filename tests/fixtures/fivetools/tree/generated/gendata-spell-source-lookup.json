@@ -1,0 +1,11 @@
+{
+  "_fixture": true,
+  "tst": {
+    "glitter burst": {
+      "class": { "TST": { "Gladiator": true } },
+      "subclass": { "TST": { "Gladiator": { "TST": { "Net": { "name": "School of the Net" } } } } }
+    },
+    "dim lantern": { "class": { "TST": { "Gladiator": true } } }
+  },
+  "old": { "glitter burst": { "class": { "OLD": { "Gladiator": true } } } }
+}

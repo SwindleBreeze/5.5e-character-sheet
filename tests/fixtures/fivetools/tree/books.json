@@ -1,0 +1,19 @@
+{
+  "_fixture": true,
+  "book": [
+    {
+      "name": "Test Handbook",
+      "id": "TST",
+      "source": "TST",
+      "group": "core",
+      "published": "2025-01-01"
+    },
+    {
+      "name": "Old Almanac",
+      "id": "OLD",
+      "source": "OLD",
+      "group": "core",
+      "published": "2015-01-01"
+    }
+  ]
+}

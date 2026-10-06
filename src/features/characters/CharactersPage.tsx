@@ -3,12 +3,14 @@ import { useMemo } from 'react';
 import { Link } from 'react-router';
 import { TopBar } from '../../app/TopBar.tsx';
 import page from '../../app/Page.module.css';
+import { useSources } from '../../content/hooks.ts';
 import { repos } from '../../db/repos.ts';
 import { detectEnv, shouldShowInstallGuide } from '../../db/storage.ts';
 import type { Character } from '../../schema/index.ts';
 import { Button } from '../../ui/Button.tsx';
 import { useSheet } from '../../ui/sheetContext.ts';
 import { InstallGuide } from '../settings/InstallGuide.tsx';
+import { BackupReminder } from './BackupReminder.tsx';
 import styles from './CharactersPage.module.css';
 
 function summary(character: Character): string {
@@ -18,6 +20,7 @@ function summary(character: Character): string {
 
 export function CharactersPage() {
   const characters = useLiveQuery(() => repos().characters.list(), []);
+  const sources = useSources();
   const showInstallGuide = useMemo(() => shouldShowInstallGuide(detectEnv()), []);
   const sheet = useSheet();
 
@@ -70,6 +73,21 @@ export function CharactersPage() {
       <TopBar title="Characters" />
       <div className={page.content}>
         {showInstallGuide && <InstallGuide compact />}
+        {characters && characters.length > 0 && <BackupReminder characters={characters} />}
+        {sources !== undefined && sources.length === 0 && (
+          <section className={page.card} aria-labelledby="first-run-title">
+            <h2 id="first-run-title" className={page.cardTitle}>
+              Import your group’s pack
+            </h2>
+            <p className={page.muted}>
+              This app comes without game content. Open the content pack your group shared to get
+              classes, spells and items.
+            </p>
+            <p>
+              <Link to="/library/import">Import content</Link>
+            </p>
+          </section>
+        )}
         {characters === undefined ? null : characters.length === 0 ? (
           <div className={page.empty}>
             <p>No characters yet.</p>

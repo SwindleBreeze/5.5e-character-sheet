@@ -1,7 +1,10 @@
 import '@testing-library/jest-dom/vitest';
 import 'fake-indexeddb/auto';
-import { cleanup } from '@testing-library/react';
+import { cleanup, configure } from '@testing-library/react';
 import { afterEach } from 'vitest';
+
+// IndexedDB-backed screens can take a moment when the whole suite runs in parallel.
+configure({ asyncUtilTimeout: 4000 });
 
 afterEach(() => {
   cleanup();
@@ -32,3 +35,6 @@ if (!Element.prototype.setPointerCapture) {
   Element.prototype.releasePointerCapture = () => {};
   Element.prototype.hasPointerCapture = () => false;
 }
+
+// jsdom does not scroll; the window virtualizer calls scrollTo.
+window.scrollTo = () => {};

@@ -1,0 +1,6 @@
+{
+  "_fixture": true,
+  "variantrule": [
+    { "name": "Bonus Action", "source": "TST", "page": 53, "entries": ["A quick action."] }
+  ]
+}

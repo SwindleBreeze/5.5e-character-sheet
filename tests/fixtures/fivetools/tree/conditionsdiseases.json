@@ -1,0 +1,6 @@
+{
+  "_fixture": true,
+  "condition": [{ "name": "Dazzled", "source": "TST", "page": 50, "entries": ["You see poorly."] }],
+  "disease": [{ "name": "Sand Fever", "source": "TST", "page": 51, "entries": ["Hot."] }],
+  "status": [{ "name": "Cheered", "source": "TST", "page": 52, "entries": ["Feeling good."] }]
+}

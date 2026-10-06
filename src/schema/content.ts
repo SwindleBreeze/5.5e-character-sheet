@@ -30,6 +30,8 @@ export interface BaseEntity {
   edition: Edition;
   /** Ids of entities that reprint this one (from 5etools `reprintedAs`). */
   supersededBy?: Id[];
+  /** Set on `_versions` variants (species lineages, feat versions, 2014 subraces). */
+  variantOf?: Id;
   entries: Entry[];
   /** Effects derived automatically from structured data. */
   effects: Effect[];
@@ -59,12 +61,22 @@ export interface OptionalFeatureProgression extends Progression {
 }
 
 export type Prereq =
-  | { type: 'level'; level: number; classId?: Id }
+  | { type: 'level'; level: number; classId?: Id; subclassId?: Id }
   | { type: 'ability'; anyOf: Partial<Record<Ability, number>>[] }
   | { type: 'proficiency'; category: string; value: string }
   | { type: 'spellcasting' }
   | { type: 'feature'; ref: Ref }
-  | { type: 'other'; text: string };
+  | { type: 'feat'; ref: Ref }
+  | { type: 'other'; text: TaggedString };
+
+/** Prerequisites as any-of groups of all-of requirements; empty means none. */
+export type Prereqs = Prereq[][];
+
+/** What using a feature spends, e.g. one Superiority Die (P14; becomes an action cost). */
+export interface Consumes {
+  name: string;
+  amount?: number;
+}
 
 export interface EquipmentItemGrant {
   itemId?: Id;
@@ -76,6 +88,8 @@ export interface EquipmentItemGrant {
 /** One lettered option of a starting-equipment choice (A/B/C…). */
 export interface EquipmentOption {
   key: string;
+  /** Option group, for sources with several independent choices (2014 classes). */
+  group?: number;
   items: EquipmentItemGrant[];
   /** Coins in copper pieces. */
   valueCp: number;
@@ -142,6 +156,7 @@ export interface ClassFeature extends BaseEntity {
   kind: 'classFeature';
   classId: Id;
   level: number;
+  consumes?: Consumes;
 }
 
 export interface Subclass extends BaseEntity {
@@ -152,6 +167,7 @@ export interface Subclass extends BaseEntity {
   table?: TableColumn[];
   slotTable?: number[][];
   spellcasting?: ClassSpellcasting;
+  featProgression?: FeatProgression[];
   optionalFeatureProgression?: OptionalFeatureProgression[];
 }
 
@@ -160,6 +176,7 @@ export interface SubclassFeature extends BaseEntity {
   classId: Id;
   subclassId: Id;
   level: number;
+  consumes?: Consumes;
 }
 
 export interface Background extends BaseEntity {
@@ -174,7 +191,7 @@ export interface Feat extends BaseEntity {
   kind: 'feat';
   /** Normalized category: origin, general, fightingStyle, epicBoon, or the raw code. */
   category: string;
-  prerequisites: Prereq[];
+  prerequisites: Prereqs;
   repeatable: boolean;
 }
 
@@ -183,8 +200,6 @@ export interface Species extends BaseEntity {
   size: Size[];
   speed: Partial<Record<MoveMode, number>>;
   creatureType: string;
-  /** Set on `_versions` variants (lineages, ancestries). */
-  variantOf?: Id;
 }
 
 export type ItemKind =
@@ -197,7 +212,31 @@ export type ItemKind =
   | 'ammo'
   | 'focus'
   | 'wondrous'
+  | 'variant'
   | 'other';
+
+export type ItemBonus =
+  | 'weapon'
+  | 'weaponAttack'
+  | 'weaponDamage'
+  | 'ac'
+  | 'spellAttack'
+  | 'spellSaveDc'
+  | 'savingThrow'
+  | 'abilityCheck';
+
+/**
+ * A generic magic variant (`+1 Weapon`), applied to a base item on demand (plan §1).
+ * `requires`/`excludes` are 5etools item filters, kept as data.
+ */
+export interface MagicVariant {
+  requires: Record<string, unknown>[];
+  excludes?: Record<string, unknown>;
+  namePrefix?: string;
+  nameSuffix?: string;
+  /** Item fields the variant sets, e.g. rarity, bonuses, attunement. */
+  inherits: Record<string, unknown>;
+}
 
 export interface Item extends BaseEntity {
   kind: 'item';
@@ -224,12 +263,19 @@ export interface Item extends BaseEntity {
   shieldAc?: number;
   packContents?: { itemId: Id; quantity: number }[];
   containerCapacityLb?: number;
+  bonuses?: Partial<Record<ItemBonus, number>>;
+  charges?: number;
+  recharge?: string;
+  /** For magic items built on a base item, e.g. `longsword|xphb`. */
+  baseItemId?: Id;
+  variant?: MagicVariant;
 }
 
 export interface OptionalFeature extends BaseEntity {
   kind: 'optionalFeature';
   featureTypes: string[];
-  prerequisites: Prereq[];
+  prerequisites: Prereqs;
+  consumes?: Consumes;
 }
 
 export type RuleKind =
@@ -241,11 +287,18 @@ export type RuleKind =
   | 'status'
   | 'itemProperty'
   | 'condition'
+  | 'disease'
   | 'mastery';
 
 export interface Rule extends BaseEntity {
   kind: 'rule';
   ruleKind: RuleKind;
+  /** Item properties: the short code used by items, e.g. `V`. */
+  abbreviation?: string;
+  /** Skills: the ability they use. */
+  ability?: Ability;
+  /** Languages: `standard`, `rare`, `secret`… */
+  languageType?: string;
 }
 
 export type Condition = Rule & { ruleKind: 'condition' };
@@ -266,3 +319,6 @@ export interface EntityByKind {
 }
 
 export type ContentEntity = EntityByKind[EntityKind];
+
+/** Entities grouped by kind, as produced by an import and stored in a pack. */
+export type EntitiesByKind = { [K in EntityKind]?: EntityByKind[K][] };

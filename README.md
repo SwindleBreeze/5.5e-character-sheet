@@ -25,6 +25,17 @@ Optional checks against a local 5etools data folder (never committed):
 FIVETOOLS_DATA=./5etools-src-2.36.1/5etools-src-2.36.1/data npm run test:smoke
 ```
 
+## Content
+
+Content is imported in the app under Library → Import:
+
+- **Content pack** (`*.pack.json.gz`): the main way to get content onto phones. Make one on a
+  desktop with Library → Import → Export pack after importing 5etools data, then share the file
+  with your group. Packs hold game content: keep them private and out of the repo.
+- **5etools data**: pick the 5etools folder, its `data` folder, or the release zip. Every source is
+  imported; Settings → Sources chooses which ones the app offers (2014 sources stay locked until
+  a later phase).
+
 Test fixtures under `tests/fixtures/` must be small, hand-written, invented examples, and every
 JSON fixture must include `"_fixture": true`.
 

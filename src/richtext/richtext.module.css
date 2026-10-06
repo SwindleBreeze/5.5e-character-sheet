@@ -1,0 +1,167 @@
+/* Rules text. Readable line length, compact headings; the final type scale comes in phase 3. */
+
+.entries {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.p {
+  margin: 0;
+}
+
+.h3 {
+  font-size: var(--font-size-lg);
+}
+
+.h4 {
+  font-size: var(--font-size-md);
+}
+
+.h5 {
+  font-size: var(--font-size-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.inset {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-left: 3px solid var(--color-accent);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-2);
+}
+
+.list,
+.plainList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding-left: var(--space-5);
+}
+
+.plainList {
+  padding-left: 0;
+  list-style: none;
+}
+
+.item {
+  margin: 0;
+}
+
+.tableWrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+
+.table caption {
+  padding-bottom: var(--space-1);
+  font-weight: 700;
+  text-align: left;
+}
+
+.table th,
+.table td {
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.quote {
+  margin: 0;
+  padding-left: var(--space-3);
+  border-left: 3px solid var(--color-border);
+  font-style: italic;
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.link {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-accent);
+  font: inherit;
+  text-align: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+.roll {
+  font-weight: 600;
+  color: var(--color-accent);
+}
+
+.note {
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.missing {
+  color: var(--color-text-muted);
+}
+
+.entity {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.entityHeader {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.entityName {
+  font-size: var(--font-size-xl);
+}
+
+.subtitle {
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.facts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+}
+
+.fact {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.fact dt {
+  flex: none;
+  font-weight: 700;
+}
+
+.fact dd {
+  margin: 0;
+}

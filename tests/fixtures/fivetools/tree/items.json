@@ -1,0 +1,26 @@
+{
+  "_fixture": true,
+  "item": [
+    {
+      "name": "Cloak of Cheers",
+      "source": "TST",
+      "page": 45,
+      "rarity": "rare",
+      "reqAttune": true,
+      "wondrous": true,
+      "bonusAc": "+1",
+      "resist": ["thunder"],
+      "entries": ["The crowd protects you."]
+    },
+    {
+      "_copy": {
+        "name": "Torch",
+        "source": "TST",
+        "_mod": { "entries": { "mode": "appendArr", "items": "It never goes out." } }
+      },
+      "name": "Everburning Torch",
+      "source": "TST",
+      "rarity": "common"
+    }
+  ]
+}

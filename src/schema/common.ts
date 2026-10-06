@@ -85,5 +85,7 @@ export type EntryBlock =
   | { type: 'table'; caption?: string; colLabels: TaggedString[]; rows: Entry[][] }
   | { type: 'item'; name: string; entries: Entry[] }
   | { type: 'quote'; entries: Entry[]; by?: string }
+  /** "Choose N of the following"; options are usually refs to features. */
+  | { type: 'options'; count?: number; entries: Entry[] }
   | { type: 'ref'; ref: Ref }
   | { type: 'unknown'; raw: unknown };

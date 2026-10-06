@@ -115,7 +115,7 @@ const feat = {
   id: 'keen eye|test',
   name: 'Keen Eye',
   category: 'origin',
-  prerequisites: [{ type: 'level', level: 4 }],
+  prerequisites: [[{ type: 'level', level: 4 }]],
   repeatable: false,
 } satisfies Feat;
 

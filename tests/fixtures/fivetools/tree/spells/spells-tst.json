@@ -1,0 +1,45 @@
+{
+  "_fixture": true,
+  "spell": [
+    {
+      "name": "Glitter Burst",
+      "source": "TST",
+      "page": 20,
+      "level": 0,
+      "school": "V",
+      "time": [{ "number": 1, "unit": "action" }],
+      "range": { "type": "point", "distance": { "type": "feet", "amount": 30 } },
+      "components": { "v": true, "s": true },
+      "duration": [{ "type": "instant" }],
+      "entries": ["Sparkles deal {@damage 1d6} radiant damage."],
+      "entriesHigherLevel": [
+        { "type": "entries", "name": "Cantrip Upgrade", "entries": ["More sparkles."] }
+      ],
+      "damageInflict": ["radiant"],
+      "savingThrow": ["dexterity"]
+    },
+    {
+      "name": "Dim Lantern",
+      "source": "TST",
+      "page": 21,
+      "level": 1,
+      "school": "I",
+      "time": [{ "number": 1, "unit": "bonus" }],
+      "range": { "type": "point", "distance": { "type": "self" } },
+      "components": {
+        "v": true,
+        "m": { "text": "a candle worth 5 GP", "cost": 500, "consume": true }
+      },
+      "duration": [
+        {
+          "type": "timed",
+          "duration": { "type": "minute", "amount": 10 },
+          "concentration": true
+        }
+      ],
+      "meta": { "ritual": true },
+      "entries": ["The light dims."],
+      "spellAttack": ["R"]
+    }
+  ]
+}

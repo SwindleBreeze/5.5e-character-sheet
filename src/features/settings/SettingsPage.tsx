@@ -1,9 +1,12 @@
 import { useMemo } from 'react';
+import { Link } from 'react-router';
 import { TopBar } from '../../app/TopBar.tsx';
 import page from '../../app/Page.module.css';
 import { useTheme } from '../../app/theme/useTheme.ts';
 import type { ThemePref } from '../../app/theme/theme.ts';
 import { detectEnv, shouldShowInstallGuide } from '../../db/storage.ts';
+import { SourceToggles } from '../sources/SourceToggles.tsx';
+import { BackupCard } from './BackupCard.tsx';
 import { InstallGuide } from './InstallGuide.tsx';
 import { StorageCard } from './StorageCard.tsx';
 import styles from './SettingsPage.module.css';
@@ -42,7 +45,22 @@ export function SettingsPage() {
           </div>
         </section>
 
+        <section className={page.card} aria-labelledby="sources-title">
+          <h2 id="sources-title" className={page.cardTitle}>
+            Sources
+          </h2>
+          <p className={page.muted}>
+            Choose which imported books the library and character builder offer. 2014 books are
+            listed but can’t be switched on yet.
+          </p>
+          <SourceToggles />
+          <p>
+            <Link to="/library/import">Import or share content</Link>
+          </p>
+        </section>
+
         {showInstallGuide && <InstallGuide />}
+        <BackupCard />
         <StorageCard />
 
         <section className={page.card} aria-labelledby="about-title">

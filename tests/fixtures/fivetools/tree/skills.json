@@ -1,0 +1,12 @@
+{
+  "_fixture": true,
+  "skill": [
+    {
+      "name": "Performance",
+      "source": "TST",
+      "page": 56,
+      "ability": "cha",
+      "entries": ["Entertain."]
+    }
+  ]
+}

@@ -1,0 +1,3 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Entries > renders the entry union 1`] = `"<div class="entries"><p class="p">Deal <span class="roll">2d6</span> damage, as <strong>bold <em>nested</em></strong> text.</p><section class="block"><h3 class="h3">Section</h3><ul class="list"><li>one</li><li><div class="item"><strong>Two.</strong> second</div></li></ul><div class="tableWrap"><table class="table"><caption>Roll</caption><thead><tr><th scope="col">d4</th><th scope="col">Result</th></tr></thead><tbody><tr><td>1</td><td>Low</td></tr></tbody></table></div><aside class="inset"><h4 class="h4">Sidebar</h4><p class="p">aside</p></aside><blockquote class="quote"><p class="p">Hello.</p><footer>— Someone</footer></blockquote></section></div>"`;

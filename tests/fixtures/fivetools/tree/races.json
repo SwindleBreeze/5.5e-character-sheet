@@ -1,0 +1,87 @@
+{
+  "_fixture": true,
+  "race": [
+    {
+      "name": "Mossling",
+      "source": "TST",
+      "page": 3,
+      "edition": "one",
+      "size": ["S", "M"],
+      "speed": { "walk": 30, "climb": true },
+      "darkvision": 60,
+      "resist": ["poison"],
+      "entries": [
+        { "type": "entries", "name": "Moss Lineage", "entries": ["Choose a lineage."] },
+        {
+          "type": "entries",
+          "name": "Spores",
+          "entries": ["You release spores at {@spell Glitter Burst|TST|spores}."]
+        }
+      ],
+      "additionalSpells": [
+        {
+          "name": "Green",
+          "ability": { "choose": ["int", "wis"] },
+          "known": { "1": ["glitter burst|tst#c"] }
+        },
+        {
+          "name": "Grey",
+          "ability": "wis",
+          "innate": { "3": { "daily": { "1": ["dim lantern|tst"] } } }
+        }
+      ],
+      "_versions": [
+        {
+          "name": "Mossling; Deep Lineage",
+          "source": "TST",
+          "_mod": {
+            "entries": {
+              "mode": "replaceArr",
+              "replace": "Moss Lineage",
+              "items": {
+                "type": "entries",
+                "name": "Deep Lineage",
+                "entries": ["Your darkvision is 120 feet."]
+              }
+            }
+          },
+          "darkvision": 120,
+          "additionalSpells": null
+        },
+        {
+          "_abstract": {
+            "name": "Mossling ({{hue}})",
+            "source": "TST",
+            "_mod": {
+              "entries": { "mode": "replaceTxt", "replace": "spores", "with": "{{hue}} spores" }
+            }
+          },
+          "_implementations": [
+            { "_variables": { "hue": "red" }, "resist": ["fire"] },
+            { "_variables": { "hue": "blue" }, "resist": ["cold"] }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Stoneborn",
+      "source": "OLD",
+      "page": 10,
+      "size": ["M"],
+      "speed": 25,
+      "ability": [{ "con": 2 }],
+      "entries": [{ "type": "entries", "name": "Stone Skin", "entries": ["Tough."] }],
+      "reprintedAs": ["Mossling|TST"]
+    }
+  ],
+  "subrace": [
+    {
+      "name": "Quarry",
+      "source": "OLD",
+      "raceName": "Stoneborn",
+      "raceSource": "OLD",
+      "ability": [{ "str": 1 }],
+      "entries": [{ "type": "entries", "name": "Quarry Strength", "entries": ["Strong."] }]
+    }
+  ]
+}

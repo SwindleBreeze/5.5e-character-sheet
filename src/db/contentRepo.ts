@@ -5,6 +5,7 @@ import type { Table } from 'dexie';
 import { ENTITY_KINDS, refKey } from '../schema/index.ts';
 import type {
   ContentEntity,
+  EntitiesByKind,
   EntityByKind,
   EntityKind,
   Id,
@@ -14,8 +15,6 @@ import type {
   SourceInfo,
 } from '../schema/index.ts';
 import { TABLE_BY_KIND, getDb, type AppDb } from './db.ts';
-
-export type EntitiesByKind = { [K in EntityKind]?: EntityByKind[K][] };
 
 function table<K extends EntityKind>(db: AppDb, kind: K): Table<EntityByKind[K], Id> {
   return db[TABLE_BY_KIND[kind]] as unknown as Table<EntityByKind[K], Id>;
@@ -96,3 +95,4 @@ export function createContentRepo(db: AppDb = getDb()) {
 }
 
 export type ContentRepo = ReturnType<typeof createContentRepo>;
+export type { EntitiesByKind };

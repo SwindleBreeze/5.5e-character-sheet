@@ -1,3 +1,4 @@
+import type { ImportSummary } from '../adapters/importJob.ts';
 import type { SourceCode } from '../schema/index.ts';
 import { getDb, type AppDb } from './db.ts';
 
@@ -5,14 +6,17 @@ import { getDb, type AppDb } from './db.ts';
 export interface Settings {
   enabledSources: SourceCode[];
   lastBackupAt: number | null;
-  /** Last time any character changed; drives the backup reminder. */
-  lastCharacterChangeAt: number | null;
+  /** Desktop Chromium: file that backups are saved to automatically (plan §6.9). */
+  autoBackupHandle: FileSystemFileHandle | null;
+  /** What the last content import did, shown on the import screen. */
+  lastImport: ImportSummary | null;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
   enabledSources: ['XPHB', 'XDMG'],
   lastBackupAt: null,
-  lastCharacterChangeAt: null,
+  autoBackupHandle: null,
+  lastImport: null,
 };
 
 export function createSettingsRepo(db: AppDb = getDb()) {

@@ -1,0 +1,18 @@
+{
+  "_fixture": true,
+  "spell": [
+    {
+      "name": "Glitter Burst",
+      "source": "OLD",
+      "page": 30,
+      "level": 0,
+      "school": "V",
+      "time": [{ "number": 1, "unit": "action" }],
+      "range": { "type": "point", "distance": { "type": "feet", "amount": 30 } },
+      "components": { "v": true },
+      "duration": [{ "type": "instant" }],
+      "entries": ["Old sparkles."],
+      "reprintedAs": ["Glitter Burst|TST"]
+    }
+  ]
+}

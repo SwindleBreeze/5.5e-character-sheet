@@ -1,0 +1,65 @@
+{
+  "_fixture": true,
+  "baseitem": [
+    {
+      "name": "Net Blade",
+      "source": "TST",
+      "page": 40,
+      "edition": "one",
+      "type": "M|TST",
+      "rarity": "none",
+      "weight": 3,
+      "value": 1500,
+      "weaponCategory": "martial",
+      "weapon": true,
+      "dmg1": "1d8",
+      "dmg2": "1d10",
+      "dmgType": "S",
+      "property": ["V|TST", "F|TST"],
+      "mastery": ["Snare|TST"]
+    },
+    {
+      "name": "Arena Mail",
+      "source": "TST",
+      "page": 41,
+      "type": "HA|TST",
+      "rarity": "none",
+      "weight": 50,
+      "value": 7500,
+      "ac": 17,
+      "strength": "15",
+      "stealth": true,
+      "armor": true
+    },
+    {
+      "name": "Torch",
+      "source": "TST",
+      "page": 42,
+      "type": "G|TST",
+      "rarity": "none",
+      "weight": 1,
+      "value": 1,
+      "entries": ["A torch burns for 1 hour."]
+    }
+  ],
+  "itemProperty": [
+    {
+      "abbreviation": "V",
+      "source": "TST",
+      "page": 43,
+      "entries": [
+        { "type": "entries", "name": "Versatile", "entries": ["Two hands, more damage."] }
+      ]
+    },
+    {
+      "abbreviation": "F",
+      "source": "TST",
+      "page": 43,
+      "entries": [{ "type": "entries", "name": "Finesse", "entries": ["Use Dexterity."] }]
+    }
+  ],
+  "itemType": [{ "abbreviation": "M", "source": "TST", "name": "Melee Weapon" }],
+  "itemMastery": [
+    { "name": "Snare", "source": "TST", "page": 44, "entries": ["The target is slowed."] }
+  ]
+}

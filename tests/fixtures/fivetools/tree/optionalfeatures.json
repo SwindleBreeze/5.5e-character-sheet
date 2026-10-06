@@ -1,0 +1,23 @@
+{
+  "_fixture": true,
+  "optionalfeature": [
+    {
+      "name": "Taunt",
+      "source": "TST",
+      "page": 8,
+      "featureType": ["CT"],
+      "consumes": { "name": "Bravado", "amount": 1 },
+      "entries": ["You taunt a foe."]
+    },
+    {
+      "name": "Encore",
+      "source": "TST",
+      "page": 8,
+      "featureType": ["CT"],
+      "prerequisite": [
+        { "level": { "level": 3, "class": { "name": "Gladiator", "source": "TST" } } }
+      ],
+      "entries": ["Once more!"]
+    }
+  ]
+}

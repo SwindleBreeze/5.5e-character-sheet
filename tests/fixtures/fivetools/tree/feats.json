@@ -1,0 +1,47 @@
+{
+  "_fixture": true,
+  "feat": [
+    {
+      "name": "Arena Veteran",
+      "source": "TST",
+      "page": 4,
+      "category": "G",
+      "prerequisite": [{ "level": 4, "ability": [{ "str": 13 }, { "cha": 13 }] }],
+      "ability": [{ "choose": { "from": ["str", "cha"] } }],
+      "skillProficiencies": [{ "choose": { "from": ["athletics", "performance"] } }],
+      "entries": ["You have fought many times."]
+    },
+    {
+      "name": "Spark Initiate",
+      "source": "TST",
+      "page": 5,
+      "category": "O",
+      "repeatable": true,
+      "additionalSpells": [
+        {
+          "name": "Gladiator Spells",
+          "ability": { "choose": ["int", "wis", "cha"] },
+          "known": { "_": [{ "choose": "level=0|class=Gladiator", "count": 2 }] }
+        }
+      ],
+      "entries": [
+        { "type": "entries", "name": "Two Cantrips", "entries": ["Learn two cantrips."] }
+      ],
+      "_versions": [
+        {
+          "name": "Spark Initiate; Gladiator",
+          "source": "TST",
+          "_mod": { "entries": { "mode": "appendArr", "items": "Gladiator version." } }
+        }
+      ]
+    },
+    {
+      "name": "Net Style",
+      "source": "TST",
+      "page": 6,
+      "category": "FS",
+      "prerequisite": [{ "feature": ["Arena Style"] }],
+      "entries": ["You wield a net well."]
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "_fixture": true,
+  "magicvariant": [
+    {
+      "name": "+1 Arena Weapon",
+      "type": "GV|TST",
+      "requires": [{ "weapon": true }],
+      "excludes": { "net": true },
+      "inherits": {
+        "namePrefix": "+1 ",
+        "source": "TST",
+        "page": 46,
+        "rarity": "uncommon",
+        "bonusWeapon": "+1",
+        "entries": ["{=bonusWeapon} to hit."]
+      }
+    }
+  ]
+}

@@ -2,7 +2,17 @@
 // is built from the owning entity (plan §4.4). Phase 3 extends this union with the primitives
 // listed in plan §8.1.
 
-import type { Ability, ChoiceSlot, Formula, Id, MoveMode, Recharge, Ref, Skill } from './common.ts';
+import type {
+  Ability,
+  ChoiceSlot,
+  EntityKind,
+  Formula,
+  Id,
+  MoveMode,
+  Recharge,
+  Ref,
+  Skill,
+} from './common.ts';
 
 export type ProficiencyCategory = 'skill' | 'save' | 'armor' | 'weapon' | 'tool' | 'language';
 
@@ -20,24 +30,48 @@ export interface ActionDef {
   description?: string;
 }
 
-/** A spell granted outside normal class preparation (from 5etools `additionalSpells`). */
+/**
+ * A spell granted outside normal class preparation (from 5etools `additionalSpells`).
+ * `expanded` adds the spell to the class's list rather than granting it.
+ */
 export interface SpellGrant {
-  /** Fixed spell, or a choice of spells matching a filter. */
-  spell: { id: Id } | { choose: string; count: number; slot: string };
-  mode: 'known' | 'alwaysPrepared' | 'innate';
-  /** Character level at which the grant applies. */
+  /**
+   * Fixed spell, or a choice: `choose` is a 5etools spell filter (`level=0|class=Wizard`),
+   * `from` a fixed list of spell ids.
+   */
+  spell:
+    | { id: Id }
+    | { choose?: string; from?: Id[]; count: number; slot: string }
+    /** Every spell matching the filter (expanded spell lists). */
+    | { all: string };
+  mode: 'known' | 'alwaysPrepared' | 'innate' | 'expanded';
+  /** Level at which the grant applies: class level for class content, else character level. */
   atLevel?: number;
-  uses?: { count: Formula; recharge: Recharge };
-  ability?: Ability | { slot: string; from: Ability[] };
+  /** Applies once the character can cast spells of this level (5etools `s<N>` keys). */
+  atSpellLevel?: number;
+  /** Free casts. Omitted means the spell is cast normally. */
+  uses?: { count: Formula; recharge: Recharge } | 'atWill' | 'ritual';
+  /** Casts paid from a named resource, e.g. Ki. */
+  resourceName?: string;
+  /** Spellcasting ability: fixed, a choice, or the ability this entity increased. */
+  ability?: Ability | { slot: string; from: Ability[] } | 'inherit';
 }
 
 export type Effect =
   | { type: 'abilityBonus'; ability: Ability; value: number; max?: number }
   | { type: 'abilityChoice'; choice: ChoiceSlot<Ability>; value: number; max?: number }
   | { type: 'proficiency'; category: ProficiencyCategory; value: string }
-  | { type: 'proficiencyChoice'; category: ProficiencyCategory; choice: ChoiceSlot<string> }
+  | {
+      type: 'proficiencyChoice';
+      /** Several categories when one pick may come from any of them (skill or tool). */
+      category: ProficiencyCategory | ProficiencyCategory[];
+      choice: ChoiceSlot<string>;
+      /** Narrows `from: 'any'`, e.g. `standard` languages or `artisan` tools. */
+      filter?: string;
+    }
   | { type: 'expertise'; skill: Skill }
-  | { type: 'expertiseChoice'; choice: ChoiceSlot<Skill> }
+  | { type: 'expertiseChoice'; choice: ChoiceSlot<Skill>; filter?: 'proficient' }
+  | { type: 'abilitySet'; ability: Ability; value: number }
   | { type: 'acFormula'; name: string; base: number; addAbilities: Ability[]; shield: boolean }
   | { type: 'acBonus'; value: Formula }
   | { type: 'speed'; mode: MoveMode; value: Formula | 'walk' }
@@ -58,10 +92,17 @@ export type Effect =
   | { type: 'hpBonus'; perLevel?: Formula; flat?: Formula }
   | { type: 'initiativeBonus'; value: Formula }
   | { type: 'weaponMasteryCount'; value: Formula }
-  | { type: 'featChoice'; slot: string; categories: string[] }
+  | { type: 'featChoice'; slot: string; categories: string[]; count?: Formula }
   | { type: 'optionalFeatureChoice'; slot: string; featureTypes: string[]; count: Formula }
   | { type: 'grantFeat'; feat: Ref }
   | { type: 'toggle'; toggleId: string; name: string; effects: Effect[] }
-  | { type: 'note'; text: string };
+  | { type: 'note'; text: string }
+  /** Pick one of several named alternatives; `ifChoice` effects depend on the pick. */
+  | { type: 'optionChoice'; choice: ChoiceSlot<string>; labels: string[] }
+  | { type: 'ifChoice'; slot: string; value: string; effects: Effect[] }
+  /** Pick entities offered as options (5etools `type: options` entries, plan P14). */
+  | { type: 'featureOptions'; optionKind: EntityKind; choice: ChoiceSlot<Id> }
+  /** Effects that start at a level: class level for class content, else character level. */
+  | { type: 'atLevel'; level: number; effects: Effect[] };
 
 export type EffectType = Effect['type'];

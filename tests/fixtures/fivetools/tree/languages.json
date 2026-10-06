@@ -1,0 +1,7 @@
+{
+  "_fixture": true,
+  "language": [
+    { "name": "Arenic", "source": "TST", "page": 57, "type": "standard", "entries": ["Shouted."] }
+  ],
+  "languageScript": [{ "name": "Arenic Script" }]
+}

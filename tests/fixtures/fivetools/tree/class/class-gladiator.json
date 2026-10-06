@@ -1,0 +1,212 @@
+{
+  "_fixture": true,
+  "_meta": { "internalCopies": ["subclass"] },
+  "class": [
+    {
+      "name": "Gladiator",
+      "source": "TST",
+      "page": 1,
+      "edition": "one",
+      "primaryAbility": [{ "str": true }, { "cha": true }],
+      "hd": { "number": 1, "faces": 10 },
+      "proficiency": ["str", "cha"],
+      "spellcastingAbility": "cha",
+      "casterProgression": "1/2",
+      "preparedSpellsProgression": [2, 3, 4],
+      "featProgression": [
+        { "name": "Arena Style", "category": ["FS"], "progression": { "1": 1, "6": 2 } }
+      ],
+      "optionalfeatureProgression": [
+        { "name": "Crowd Tricks", "featureType": ["CT"], "progression": [0, 2, 2, 3] }
+      ],
+      "startingProficiencies": {
+        "armor": ["light", "{@item shield|tst|shields}"],
+        "weapons": ["simple", "martial"],
+        "skills": [
+          { "choose": { "from": ["athletics", "performance", "intimidation"], "count": 2 } }
+        ]
+      },
+      "startingEquipment": {
+        "defaultData": [
+          {
+            "A": [
+              { "item": "net blade|tst" },
+              { "item": "torch|tst", "quantity": 3 },
+              { "value": 500 }
+            ],
+            "B": [{ "value": 5000 }]
+          }
+        ]
+      },
+      "classTableGroups": [
+        {
+          "colLabels": [
+            "{@filter Crowd Tricks|optionalfeatures|feature type=ct}",
+            "Bravado",
+            "Brávado",
+            "Roar Dice"
+          ],
+          "rows": [
+            ["—", "2", "1", { "type": "dice", "toRoll": [{ "number": 1, "faces": 6 }] }],
+            [2, "2", "1", { "type": "dice", "toRoll": [{ "number": 1, "faces": 6 }] }],
+            [
+              2,
+              { "type": "bonus", "value": 3 },
+              "+1",
+              { "type": "dice", "toRoll": [{ "number": 2, "faces": 6 }] }
+            ]
+          ]
+        },
+        {
+          "title": "Spell Slots per Spell Level",
+          "colLabels": ["{@filter 1st|spells|level=1}", "{@filter 2nd|spells|level=2}"],
+          "rowsSpellProgression": [
+            [0, 0],
+            [2, 0],
+            [3, 0]
+          ]
+        }
+      ],
+      "classFeatures": [
+        "Showmanship|Gladiator|TST|1",
+        "Arena Training|Gladiator|TST|1",
+        { "classFeature": "Gladiator School|Gladiator|TST|3", "gainSubclassFeature": true },
+        "Ability Score Improvement|Gladiator|TST|4"
+      ],
+      "subclassTitle": "Gladiator School"
+    }
+  ],
+  "subclass": [
+    {
+      "name": "School of the Net",
+      "shortName": "Net",
+      "source": "TST",
+      "className": "Gladiator",
+      "classSource": "TST",
+      "page": 2,
+      "edition": "one",
+      "additionalSpells": [{ "prepared": { "3": ["glitter burst|tst"] } }],
+      "subclassFeatures": ["School of the Net|Gladiator|TST|Net|TST|3"],
+      "reprintedAs": []
+    },
+    {
+      "name": "School of the Old Trident",
+      "shortName": "Trident",
+      "source": "OLD",
+      "className": "Gladiator",
+      "classSource": "OLD",
+      "page": 9,
+      "subclassFeatures": ["Trident Lunge|Gladiator|OLD|Trident|OLD|3"],
+      "reprintedAs": ["Trident|Gladiator|TST|TST"]
+    },
+    {
+      "_copy": {
+        "name": "School of the Old Trident",
+        "shortName": "Trident",
+        "source": "OLD",
+        "className": "Gladiator",
+        "classSource": "OLD",
+        "_preserve": { "page": true }
+      },
+      "className": "Gladiator",
+      "classSource": "TST",
+      "subclassFeatures": ["Trident Lunge|Gladiator|OLD|Trident|OLD|3"]
+    }
+  ],
+  "classFeature": [
+    {
+      "name": "Showmanship",
+      "source": "TST",
+      "className": "Gladiator",
+      "classSource": "TST",
+      "level": 1,
+      "entries": [
+        "You can spend a {@variantrule Bonus Action|TST} to flourish.",
+        {
+          "type": "options",
+          "count": 1,
+          "entries": [
+            { "type": "refClassFeature", "classFeature": "Crowd Pleaser|Gladiator|TST|1" },
+            { "type": "refClassFeature", "classFeature": "Intimidator|Gladiator|TST|1" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Crowd Pleaser",
+      "source": "TST",
+      "className": "Gladiator",
+      "classSource": "TST",
+      "level": 1,
+      "entries": ["You bow."]
+    },
+    {
+      "name": "Intimidator",
+      "source": "TST",
+      "className": "Gladiator",
+      "classSource": "TST",
+      "level": 1,
+      "entries": ["You glare."]
+    },
+    {
+      "name": "Arena Training",
+      "source": "TST",
+      "className": "Gladiator",
+      "classSource": "TST",
+      "level": 1,
+      "entries": ["You train."],
+      "consumes": { "name": "Bravado" }
+    },
+    {
+      "name": "Gladiator School",
+      "source": "TST",
+      "className": "Gladiator",
+      "classSource": "TST",
+      "level": 3,
+      "entries": ["Choose a school."]
+    },
+    {
+      "name": "Ability Score Improvement",
+      "source": "TST",
+      "className": "Gladiator",
+      "classSource": "TST",
+      "level": 4,
+      "entries": ["You gain a feat."]
+    }
+  ],
+  "subclassFeature": [
+    {
+      "name": "School of the Net",
+      "source": "TST",
+      "className": "Gladiator",
+      "classSource": "TST",
+      "subclassShortName": "Net",
+      "subclassSource": "TST",
+      "level": 3,
+      "entries": [
+        "You fight with a net.",
+        { "type": "refSubclassFeature", "subclassFeature": "Tangle|Gladiator|TST|Net|TST|3" }
+      ]
+    },
+    {
+      "name": "Tangle",
+      "source": "TST",
+      "className": "Gladiator",
+      "classSource": "TST",
+      "subclassShortName": "Net",
+      "subclassSource": "TST",
+      "level": 3,
+      "entries": ["Your net tangles foes."]
+    },
+    {
+      "name": "Trident Lunge",
+      "source": "OLD",
+      "className": "Gladiator",
+      "classSource": "OLD",
+      "subclassShortName": "Trident",
+      "subclassSource": "OLD",
+      "level": 3,
+      "entries": ["You lunge."]
+    }
+  ]
+}
