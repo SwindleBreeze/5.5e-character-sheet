@@ -1,0 +1,104 @@
+/* Plain developer screens: the quick-builder and the derived-sheet view. */
+
+.derived {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.num {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.num summary {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
+  cursor: pointer;
+}
+
+.value {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.marks {
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
+.parts {
+  margin: 0 0 var(--space-2);
+  padding: 0 0 0 var(--space-4);
+  list-style: none;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.parts li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.field input,
+.field select {
+  min-height: var(--tap-min);
+  max-width: 100%;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  font-weight: 400;
+}
+
+.classRow {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 2fr) 72px auto;
+  align-items: end;
+  gap: var(--space-2);
+}
+
+@media (max-width: 520px) {
+  .classRow {
+    grid-template-columns: minmax(0, 1fr) 72px;
+  }
+}
+
+.error {
+  color: var(--color-danger);
+}
+
+.plainList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}

@@ -1,0 +1,135 @@
+Level 7: Lorekeeper 5 (d6, Circle of Ink) / Pactbinder 2 (d8); size S
+Proficiency bonus +3  [Level 7 3]
+AC 11 (Unarmored)  [Base 10, DEX modifier +1]
+HP max 53  [Hit dice 32, CON modifier × 7 +21]
+Glyph Ward max 12  [Glyph Ward +12]
+Hit dice 2d8 + 5d6
+Speed walk 30  [Mossling 30]
+Speed climb 30  [Mossling (equal to Speed) 30]
+Initiative +1  [DEX modifier +1]
+Concentration +3  [CON modifier +3]
+Death saves +0
+Attacks per Attack action 1  [Attack action 1]
+
+## Abilities
+str 14 (+2)  [Base score 12, Arena Hand +1, Arena Veteran +1]
+dex 13 (+1)  [Base score 13]
+con 16 (+3)  [Base score 14, Arena Hand +1, Arena Hand +1]
+int 15 (+2)  [Base score 15]
+wis 10 (+0)  [Base score 10]
+cha 8 (-1)  [Base score 8]
+
+## Saves and checks
+save str +2  [STR modifier +2]
+save dex +1  [DEX modifier +1]
+save con +3  [CON modifier +3]
+save int +5 (proficient)  [INT modifier +2, Proficiency +3]
+save wis +3 (proficient)  [WIS modifier +0, Proficiency +3]
+save cha -1  [CHA modifier -1]
+check str +2  [STR modifier +2]
+check dex +1  [DEX modifier +1]
+check con +3  [CON modifier +3]
+check int +2  [INT modifier +2]
+check wis +0  [WIS modifier +0]
+check cha -1  [CHA modifier -1]
+
+## Skills
+acrobatics +1  [DEX modifier +1]
+animal handling +0  [WIS modifier +0]
+arcana +5 (proficient)  [INT modifier +2, Proficiency +3]
+athletics +5 (proficient)  [STR modifier +2, Proficiency +3]
+deception -1  [CHA modifier -1]
+history +5 (proficient)  [INT modifier +2, Proficiency +3]
+insight +0  [WIS modifier +0]
+intimidation -1  [CHA modifier -1]
+investigation +2  [INT modifier +2]
+medicine +0  [WIS modifier +0]
+nature +2  [INT modifier +2]
+perception +0  [WIS modifier +0]
+performance +2 (proficient)  [CHA modifier -1, Proficiency +3]
+persuasion -1  [CHA modifier -1]
+religion +2  [INT modifier +2]
+sleight of hand +1  [DEX modifier +1]
+stealth +1  [DEX modifier +1]
+survival +0  [WIS modifier +0]
+passive perception 10  [Base 10, WIS modifier +0]
+passive insight 10  [Base 10, WIS modifier +0]
+passive investigation 12  [Base 10, INT modifier +2]
+
+## Proficiencies and defenses
+armor: light (Pactbinder)
+weapons: simple (Lorekeeper)
+tools: –
+languages: arenic (Arena Hand)
+masteries: –
+resistances: poison (Mossling)
+immunities: –
+condition immunities: –
+senses: darkvision 60 ft. (Mossling)
+
+## Attacks
+Walking Staff [item:0-0-0] ready, melee 5 ft., str, proficient, crit 20
+  to hit +5 (proficient)  [STR modifier +2, Proficiency +3]
+  damage 1d6 +2 bludgeoning, versatile 1d8  [STR modifier +2]
+  rider Hex Strike 1d6 necrotic, opt-in, once per turn
+  notes: Versatile
+Unarmed Strike [unarmed] ready, melee 5 ft., str, proficient, crit 20
+  to hit +5 (proficient)  [STR modifier +2, Proficiency +3]
+  damage – +3 bludgeoning  [Unarmed Strike 1, STR modifier +2]
+Spark Bolt [spell:lorekeeper|tst:spark bolt|tst] ready, ranged 60 ft., int, proficient, crit 20
+  to hit +5 (proficient)  [INT modifier +2, Proficiency +3]
+  damage 2d8 +2 fire  [Keen Mind +2]
+Glitter Burst [spell:species:mossling|tst:glitter burst|tst] ready, ranged 30 ft., int, proficient, crit 20
+  save dex DC 13  [Spell save DC +13]
+  damage – +0 radiant
+
+## Spellcasting
+Lorekeeper [lorekeeper|tst] level 5, full, int, prepares on restLong, up to spell level 3
+  DC 13  [Base 8, Proficiency +3, INT modifier +2]
+  attack +5 (proficient)  [INT modifier +2, Proficiency +3]
+  cantrips 1/3: spark bolt|tst
+  prepared 4/7: dim lantern|tst, ink cloud|tst, mind ward|tst, rolling boom|tst
+  spellbook 4: dim lantern|tst, ink cloud|tst, mind ward|tst, rolling boom|tst
+  list: class=Lorekeeper
+Pactbinder [pactbinder|tst] level 2, pact, cha, prepares on level, up to spell level 1
+  DC 10  [Base 8, Proficiency +3, CHA modifier -1]
+  attack +2 (proficient)  [CHA modifier -1, Proficiency +3]
+  cantrips 0/2: –
+  prepared 1/3: hex mark|tst
+  list: class=Pactbinder
+slots: 1:4 2:2 3:1
+pact slots: 2 at level 1
+granted glitter burst|tst (known, Mossling, int, DC 13)
+
+## Resources
+Lore Recovery [classFeature:lore recovery|lorekeeper|tst|1|tst#lore-recovery] max 1, long  [Lore Recovery +1]
+
+## Actions
+other: Lore Recovery (Lore Recovery); costs 1 Lore Recovery; regain slot ≤ 3
+action: Attack (Rules); attacks item:0-0-0, unarmed
+action: Dash (Rules)
+action: Disengage (Rules)
+action: Dodge (Rules)
+action: Help (Rules)
+action: Hide (Rules)
+action: Influence (Rules)
+action: Magic (Rules)
+action: Ready (Rules)
+action: Search (Rules)
+action: Study (Rules)
+action: Utilize (Rules)
+toggle: Pact Blade off (Pact Blade)
+
+## Choices and issues
+pending Lorekeeper cantrips.1 1/2
+pending Lorekeeper spellbook.1 2/5
+pending Lorekeeper spellbook.2 0/2
+pending Lorekeeper spellbook.3 1/2
+pending Lorekeeper cantrips.4 0/1
+pending Lorekeeper spellbook.4 0/2
+pending Lorekeeper spellbook.5 1/2
+pending Pactbinder cantrips.1 0/2
+pending Pactbinder spells.1 1/2
+pending Pactbinder spells.2 0/1
+pending Arena Hand tools 0/1
+pending Spark Initiate; Gladiator spells.0.known.0 0/2

@@ -12,7 +12,7 @@
       "proficiency": ["str", "cha"],
       "spellcastingAbility": "cha",
       "casterProgression": "1/2",
-      "preparedSpellsProgression": [2, 3, 4],
+      "preparedSpellsProgression": [2, 3, 4, 4, 5, 5],
       "featProgression": [
         { "name": "Arena Style", "category": ["FS"], "progression": { "1": 1, "6": 2 } }
       ],
@@ -54,7 +54,10 @@
               { "type": "bonus", "value": 3 },
               "+1",
               { "type": "dice", "toRoll": [{ "number": 2, "faces": 6 }] }
-            ]
+            ],
+            [3, "3", "+1", { "type": "dice", "toRoll": [{ "number": 2, "faces": 6 }] }],
+            [3, "3", "+2", { "type": "dice", "toRoll": [{ "number": 2, "faces": 6 }] }],
+            [3, "4", "+2", { "type": "dice", "toRoll": [{ "number": 3, "faces": 6 }] }]
           ]
         },
         {
@@ -63,7 +66,10 @@
           "rowsSpellProgression": [
             [0, 0],
             [2, 0],
-            [3, 0]
+            [3, 0],
+            [3, 0],
+            [4, 2],
+            [4, 2]
           ]
         }
       ],

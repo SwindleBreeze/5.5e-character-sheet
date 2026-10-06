@@ -1,5 +1,5 @@
 // Opt-in invariants against a real local 5etools checkout (never committed):
-//   FIVETOOLS_DATA=./5etools-src-2.36.1/5etools-src-2.36.1 npm run test:smoke
+//   FIVETOOLS_DATA=./5etools-src-2.36.1 npm run test:smoke
 // Checks shapes and counts only; it never prints or stores content.
 
 import { beforeAll, describe, expect, it } from 'vitest';

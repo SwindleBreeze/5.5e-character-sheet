@@ -215,7 +215,21 @@
       "subclassShortName": "Spark",
       "subclassSource": "TST",
       "level": 3,
-      "entries": ["You learn to cast a few sparking spells, using Intelligence."]
+      "entries": [
+        "You learn to cast a few sparking spells, using Intelligence.",
+        { "type": "refSubclassFeature", "subclassFeature": "Static Charge|Brute|TST|Spark|TST|3" }
+      ]
+    },
+    {
+      "name": "Static Charge",
+      "source": "TST",
+      "className": "Brute",
+      "classSource": "TST",
+      "subclassShortName": "Spark",
+      "subclassSource": "TST",
+      "level": 3,
+      "header": 1,
+      "entries": ["Crackling energy wraps you. You have Resistance to Lightning damage."]
     }
   ]
 }

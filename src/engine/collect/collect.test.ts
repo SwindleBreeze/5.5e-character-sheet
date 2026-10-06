@@ -68,6 +68,8 @@ describe('collectEffects', () => {
       'Swift Feet',
       'Path of the Spark',
       'Path of the Spark',
+      // Written inside Path of the Spark's text (5etools `refSubclassFeature`).
+      'Static Charge',
       'Mossling',
       'Arena Hand',
       'Spark Initiate; Gladiator',
@@ -77,7 +79,12 @@ describe('collectEffects', () => {
     expect(c.owners.filter((o) => o.subclassId).map((o) => o.ref.kind)).toEqual([
       'subclass',
       'subclassFeature',
+      'subclassFeature',
     ]);
+    // A mapping on the nested feature applies.
+    expect(c.effects.filter((a) => a.source.name === 'Static Charge').map((a) => a.effect)).toEqual(
+      [{ type: 'rollMode', target: 'skill:arcana', mode: 'advantage' }],
+    );
     expect(c.missing).toEqual([]);
   });
 

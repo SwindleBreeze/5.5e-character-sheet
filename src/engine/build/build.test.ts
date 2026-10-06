@@ -194,11 +194,20 @@ describe('automatic picks and the quick-builder', () => {
         ['pactbinder|tst', ['glitter burst|tst'], undefined],
       ],
     );
+    // The fixture lists are short: the Lorekeeper has two level 1 spells for a spellbook of 5,
+    // nothing new at level 2 (still level 1 spells only) and Mind Ward at level 3; the
+    // Pactbinder's level 1 list is Ink Cloud (already in the spellbook) and Hex Mark.
     expect(
       sheet.choices.pending.map((p) => [p.offer.key.owner.id, p.offer.key.slot, p.have, p.count]),
     ).toEqual([
       ['lorekeeper|tst', 'cantrips.1', 1, 2],
+      ['lorekeeper|tst', 'spellbook.1', 2, 5],
+      ['lorekeeper|tst', 'spellbook.2', 0, 2],
+      ['lorekeeper|tst', 'spellbook.3', 1, 2],
       ['pactbinder|tst', 'cantrips.1', 1, 2],
+      ['pactbinder|tst', 'spells.1', 1, 2],
+      ['pactbinder|tst', 'spells.2', 0, 1],
     ]);
+    expect(sheet.choices.attention).toEqual([]);
   });
 });

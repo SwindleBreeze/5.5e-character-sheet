@@ -63,6 +63,26 @@ export function SettingsPage() {
         <BackupCard />
         <StorageCard />
 
+        <details className={page.card}>
+          <summary className={page.cardTitle}>Developer tools</summary>
+          <p className={page.muted}>
+            For checking the rules engine before the character sheet is finished.
+          </p>
+          <ul>
+            <li>
+              <Link to="/dev/build">Quick builder</Link>
+            </li>
+            <li>
+              <Link to="/dev/coverage">Mapping coverage</Link>
+            </li>
+            {import.meta.env.DEV && (
+              <li>
+                <Link to="/dev/design">Design gallery</Link>
+              </li>
+            )}
+          </ul>
+        </details>
+
         <section className={page.card} aria-labelledby="about-title">
           <h2 id="about-title" className={page.cardTitle}>
             About

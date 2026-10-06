@@ -4,15 +4,18 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { DEFAULT_SETTINGS } from '../db/settingsRepo.ts';
 import { repos } from '../db/repos.ts';
-import { refsKey, type ContentIndex } from '../engine/content/contentIndex.ts';
+import { createCatalog, type Catalog } from '../engine/build/catalog.ts';
+import { createContentIndex, refsKey, type ContentIndex } from '../engine/content/contentIndex.ts';
 import { characterRefs } from '../engine/content/refs.ts';
-import type {
-  Character,
-  EntityByKind,
-  EntityKind,
-  Ref,
-  SourceCode,
-  SourceInfo,
+import {
+  ENTITY_KINDS,
+  type Character,
+  type ContentEntity,
+  type EntityByKind,
+  type EntityKind,
+  type Ref,
+  type SourceCode,
+  type SourceInfo,
 } from '../schema/index.ts';
 import { loadContentIndex } from './loadIndex.ts';
 
@@ -53,4 +56,25 @@ export function useContentIndex(character: Character | null | undefined): Conten
     // The character is read through `key`: same refs, same content.
     [key],
   );
+}
+
+export interface AllContent {
+  /** Every imported entity, whatever its source. */
+  index: ContentIndex;
+  /** What pickers may offer: the enabled sources only. */
+  catalog: Catalog;
+}
+
+/**
+ * All imported content at once, for building characters from scratch (the quick-builder now,
+ * the creation wizard later). Heavier than `useContentIndex`; reloads after an import or a
+ * source change.
+ */
+export function useAllContent(): AllContent | undefined {
+  const enabled = useEnabledSources();
+  return useLiveQuery(async () => {
+    const lists = await Promise.all(ENTITY_KINDS.map((k) => repos().content.listByKind(k)));
+    const all = lists.flat() as ContentEntity[];
+    return { index: createContentIndex(all), catalog: createCatalog(all, new Set(enabled)) };
+  }, [enabled.join()]);
 }

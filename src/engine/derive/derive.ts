@@ -169,7 +169,12 @@ export function derive(
     exhaustion: character.state.exhaustion,
     choices: {
       pending: ctx.recon.pending,
-      attention: ctx.recon.records.filter((r) => r.status !== 'ok'),
+      // A record with too few picks is an unfinished choice: it is listed under pending only.
+      attention: ctx.recon.records.filter(
+        (r) =>
+          r.status !== 'ok' &&
+          !(r.status === 'countMismatch' && r.at.record.values.length < (r.expected ?? 0)),
+      ),
     },
     issues: dedupeIssues(issues),
   };

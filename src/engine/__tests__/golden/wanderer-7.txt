@@ -1,0 +1,105 @@
+Level 7: Wanderer 7 (d8, Way of Mist); size S
+Proficiency bonus +3  [Level 7 3]
+AC 14 (Unarmored Defense)  [Unarmored Defense 10, DEX modifier +2, WIS modifier +2]
+HP max 52  [Hit dice 38, CON modifier × 7 +14]
+Hit dice 7d8
+Speed walk 35  [Mossling 30, Unarmored Movement +5]
+Speed climb 35  [Mossling (equal to Speed) 35]
+Initiative +2  [DEX modifier +2]
+Concentration +2  [CON modifier +2]
+Death saves +0
+Attacks per Attack action 2  [Extra Attack 2 (set)]
+
+## Abilities
+str 14 (+2)  [Base score 12, Arena Hand +1, Arena Veteran +1]
+dex 15 (+2)  [Base score 15]
+con 15 (+2)  [Base score 13, Arena Hand +1, Arena Hand +1]
+int 10 (+0)  [Base score 10]
+wis 14 (+2)  [Base score 14]
+cha 8 (-1)  [Base score 8]
+
+## Saves and checks
+save str +5 (proficient)  [STR modifier +2, Proficiency +3]
+save dex +5 (proficient)  [DEX modifier +2, Proficiency +3]
+save con +2  [CON modifier +2]
+save int +0  [INT modifier +0]
+save wis +2  [WIS modifier +2]
+save cha -1  [CHA modifier -1]
+check str +2  [STR modifier +2]
+check dex +2  [DEX modifier +2]
+check con +2  [CON modifier +2]
+check int +0  [INT modifier +0]
+check wis +2  [WIS modifier +2]
+check cha -1  [CHA modifier -1]
+
+## Skills
+acrobatics +5 (proficient)  [DEX modifier +2, Proficiency +3]
+animal handling +2  [WIS modifier +2]
+arcana +0  [INT modifier +0]
+athletics +5 (proficient)  [STR modifier +2, Proficiency +3]
+deception -1  [CHA modifier -1]
+history +0  [INT modifier +0]
+insight +2  [WIS modifier +2]
+intimidation -1  [CHA modifier -1]
+investigation +0  [INT modifier +0]
+medicine +2  [WIS modifier +2]
+nature +0  [INT modifier +0]
+perception +2  [WIS modifier +2]
+performance +2 (proficient)  [CHA modifier -1, Proficiency +3]
+persuasion -1  [CHA modifier -1]
+religion +0  [INT modifier +0]
+sleight of hand +2  [DEX modifier +2]
+stealth +5 (proficient)  [DEX modifier +2, Proficiency +3]
+survival +2  [WIS modifier +2]
+passive perception 12  [Base 10, WIS modifier +2]
+passive insight 12  [Base 10, WIS modifier +2]
+passive investigation 10  [Base 10, INT modifier +0]
+
+## Proficiencies and defenses
+armor: –
+weapons: simple (Wanderer)
+tools: –
+languages: arenic (Arena Hand)
+masteries: –
+resistances: poison (Mossling)
+immunities: –
+condition immunities: –
+senses: darkvision 60 ft. (Mossling)
+
+## Attacks
+Walking Staff [item:0-0-0] ready, melee 5 ft., dex, proficient, crit 20
+  to hit +5 (proficient)  [DEX modifier +2, Proficiency +3]
+  damage 1d6 +2 bludgeoning, versatile 1d8  [DEX modifier +2]
+  notes: Versatile
+Unarmed Strike [unarmed] ready, melee 5 ft., dex, proficient, crit 20
+  to hit +5 (proficient)  [DEX modifier +2, Proficiency +3]
+  damage 1d6 +2 bludgeoning  [DEX modifier +2]
+  notes: Martial Arts die
+Glitter Burst [spell:species:mossling|tst:glitter burst|tst] ready, ranged 30 ft., wis, proficient, crit 20
+  save dex DC 13  [Spell save DC +13]
+  damage – +0 radiant
+
+## Spellcasting
+granted glitter burst|tst (known, Mossling, wis, DC 13)
+
+## Resources
+Focus Points [classFeature:focus|wanderer|tst|2|tst#focus-points] max 7, short  [Focus +7]
+
+## Actions
+bonus: Flurry of Strikes (Focus); costs 1 Focus Points; attacks unarmed
+action: Attack (Rules); attacks item:0-0-0, unarmed
+action: Dash (Rules)
+action: Disengage (Rules)
+action: Dodge (Rules)
+action: Help (Rules)
+action: Hide (Rules)
+action: Influence (Rules)
+action: Magic (Rules)
+action: Ready (Rules)
+action: Search (Rules)
+action: Study (Rules)
+action: Utilize (Rules)
+
+## Choices and issues
+pending Arena Hand tools 0/1
+pending Spark Initiate; Gladiator spells.0.known.0 0/2

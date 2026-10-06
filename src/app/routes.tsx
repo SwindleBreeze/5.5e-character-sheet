@@ -1,6 +1,8 @@
 import { Route, Routes, useParams } from 'react-router';
 import { CharactersPage } from '../features/characters/CharactersPage.tsx';
+import { CoverageScreen } from '../features/dev/CoverageScreen.tsx';
 import { DesignGallery } from '../features/dev/DesignGallery.tsx';
+import { QuickBuilder } from '../features/dev/QuickBuilder.tsx';
 import { ImportPage } from '../features/import/ImportPage.tsx';
 import { LibraryPage } from '../features/library/LibraryPage.tsx';
 import { Placeholder } from '../features/Placeholder.tsx';
@@ -28,6 +30,8 @@ export function AppRoutes() {
         <Route path="library/import" element={<ImportPage />} />
         <Route path="settings" element={<SettingsPage />} />
         {import.meta.env.DEV && <Route path="dev/design" element={<DesignGallery />} />}
+        <Route path="dev/build" element={<QuickBuilder />} />
+        <Route path="dev/coverage" element={<CoverageScreen />} />
         <Route
           path="*"
           element={

@@ -98,6 +98,11 @@ export const FIXTURE_FEATURE_EFFECTS: FeatureEffectsMap = {
     ],
   },
 
+  'subclassFeature:static charge|brute|tst|spark|tst|3|tst': {
+    level: 'A',
+    effects: [{ type: 'rollMode', target: 'skill:arcana', mode: 'advantage' }],
+  },
+
   // ---- Gladiator (half caster) ----
   'classFeature:arena training|gladiator|tst|1|tst': {
     level: 'A',

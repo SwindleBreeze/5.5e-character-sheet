@@ -23,7 +23,7 @@ npm run build        # production build with service worker, output in dist/
 Optional checks against a local 5etools data folder (never committed):
 
 ```sh
-FIVETOOLS_DATA=./5etools-src-2.36.1/5etools-src-2.36.1/data npm run test:smoke
+FIVETOOLS_DATA=./5etools-src-2.36.1 npm run test:smoke
 ```
 
 ## Content

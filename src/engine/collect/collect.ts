@@ -20,6 +20,8 @@ import {
   type Subclass,
 } from '../../schema/index.ts';
 import type { ContentIndex } from '../content/contentIndex.ts';
+import { nestedFeatureRefs } from '../content/refs.ts';
+import { childEffects } from '../effects/walk.ts';
 import type { FeatureEffectsMap } from '../featureEffects/types.ts';
 import { spellChoiceEffects } from '../spells/casters.ts';
 import type { ClassLevel, Collected, EffectSource, Offer, RecordAt } from './types.ts';
@@ -362,6 +364,22 @@ export function collectEffects(
     );
   }
 
+  /** A class or subclass feature, and the features written inside it (plan §9.2, 3.11). */
+  function addFeature(ref: Ref, ctx: OwnerCtx, classLevel: number) {
+    addOwner(ref, ctx);
+    const entity = index.get(ref);
+    if (!entity) return;
+    for (const nested of nestedFeatureRefs(entity)) {
+      // Only loaded ones: a nested ref that doesn't resolve is text, not a lost feature.
+      const feature = index.get(nested);
+      if (
+        (feature?.kind === 'classFeature' || feature?.kind === 'subclassFeature') &&
+        feature.level <= classLevel
+      )
+        addFeature(nested, ctx, classLevel);
+    }
+  }
+
   // 1. Classes, each with its features and subclass, in the order they were taken.
   for (const c of classes) {
     const classRef: Ref = { kind: 'class', id: c.classId };
@@ -376,7 +394,7 @@ export function collectEffects(
     if (c.cls) {
       for (const f of c.cls.features) {
         if (f.level <= c.level)
-          addOwner({ kind: 'classFeature', id: f.featureId }, { classId: c.classId });
+          addFeature({ kind: 'classFeature', id: f.featureId }, { classId: c.classId }, c.level);
       }
       if (c.isFirst) {
         const source = out.owners.find((o) => o.ref.kind === 'class' && o.ref.id === c.classId);
@@ -389,7 +407,8 @@ export function collectEffects(
         e.kind === 'subclass' && e.spellcasting ? spellChoiceEffects(e.spellcasting, e) : [],
       );
       for (const f of (c.subclass as Subclass | undefined)?.features ?? []) {
-        if (f.level <= c.level) addOwner({ kind: 'subclassFeature', id: f.featureId }, ctx);
+        if (f.level <= c.level)
+          addFeature({ kind: 'subclassFeature', id: f.featureId }, ctx, c.level);
       }
     }
   }
@@ -440,10 +459,11 @@ export function collectEffects(
 }
 
 /** Choice slots an entity can offer at any level, for aliasing a missing owner (plan §4.4). */
-export function entityOfferSlots(entity: ContentEntity): Set<string> {
-  const slots = new Set<string>();
-  const visit = (effects: readonly Effect[]) => {
-    for (const e of effects) {
+/** Choice slots a list of effects declares, nested ones included, in order; repeats kept. */
+export function effectSlots(effects: readonly Effect[]): string[] {
+  const slots: string[] = [];
+  const visit = (list: readonly Effect[]) => {
+    for (const e of list) {
       switch (e.type) {
         case 'abilityChoice':
         case 'proficiencyChoice':
@@ -452,33 +472,30 @@ export function entityOfferSlots(entity: ContentEntity): Set<string> {
         case 'weaponMasteryChoice':
         case 'featureOptions':
         case 'optionChoice':
-          slots.add(e.choice.slot);
+          slots.push(e.choice.slot);
           break;
         case 'featChoice':
         case 'optionalFeatureChoice':
-          slots.add(e.slot);
+          slots.push(e.slot);
           break;
         case 'grantSpells':
           for (const g of e.spells) {
-            if (typeof g.ability === 'object') slots.add(g.ability.slot);
-            if ('slot' in g.spell) slots.add(g.spell.slot);
+            if (typeof g.ability === 'object') slots.push(g.ability.slot);
+            if ('slot' in g.spell) slots.push(g.spell.slot);
           }
-          break;
-        case 'atLevel':
-        case 'ifChoice':
-        case 'when':
-          visit(e.effects);
-          break;
-        case 'toggle':
-          visit(e.effects);
-          for (const o of e.options ?? []) visit(o.effects);
           break;
         default:
           break;
       }
+      visit(childEffects(e));
     }
   };
-  visit(entity.effects);
+  visit(effects);
+  return slots;
+}
+
+export function entityOfferSlots(entity: ContentEntity): Set<string> {
+  const slots = new Set<string>(effectSlots(entity.effects));
   if (entity.kind === 'class') {
     if (entity.startingProficiencies.skills) slots.add(entity.startingProficiencies.skills.slot);
     if (entity.multiclass.gains.skills) slots.add(entity.multiclass.gains.skills.slot);

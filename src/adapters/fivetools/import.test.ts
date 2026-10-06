@@ -47,7 +47,7 @@ describe('importFivetools (fixture tree)', () => {
       class: 5,
       classFeature: 34,
       subclass: 7,
-      subclassFeature: 7,
+      subclassFeature: 8,
       background: 1,
       feat: 4,
       species: 6,
@@ -83,13 +83,16 @@ describe('importFivetools (fixture tree)', () => {
       'bravado-2',
       'roar-dice',
     ]);
-    expect(cls.table[0]?.values).toEqual([0, 2, 2]);
-    expect(cls.table[1]?.values).toEqual([2, 2, 3]);
-    expect(cls.table[3]?.values).toEqual(['1d6', '1d6', '2d6']);
+    expect(cls.table[0]?.values).toEqual([0, 2, 2, 3, 3, 3]);
+    expect(cls.table[1]?.values).toEqual([2, 2, 3, 3, 3, 4]);
+    expect(cls.table[3]?.values).toEqual(['1d6', '1d6', '2d6', '2d6', '2d6', '3d6']);
     expect(cls.slotTable).toEqual([
       [0, 0],
       [2, 0],
       [3, 0],
+      [3, 0],
+      [4, 2],
+      [4, 2],
     ]);
     expect(cls.subclassLevel).toBe(3);
     expect(cls.multiclass.prereq).toEqual([['str'], ['cha']]);
@@ -105,7 +108,7 @@ describe('importFivetools (fixture tree)', () => {
     expect(cls.spellcasting).toEqual({
       ability: 'cha',
       progression: 'half',
-      preparedByLevel: [2, 3, 4],
+      preparedByLevel: [2, 3, 4, 4, 5, 5],
     });
     expect(cls.features.find((f) => f.gainSubclassFeature)?.featureId).toBe(
       'gladiator school|gladiator|tst|3|tst',

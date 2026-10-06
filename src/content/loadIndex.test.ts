@@ -61,6 +61,10 @@ describe('loadContentIndex', () => {
     expect(
       index.get({ kind: 'subclassFeature', id: 'path of the spark|brute|tst|spark|tst|3|tst' }),
     ).toBeDefined();
+    // A feature written inside another feature's text.
+    expect(
+      index.get({ kind: 'subclassFeature', id: 'static charge|brute|tst|spark|tst|3|tst' }),
+    ).toBeDefined();
     expect(index.get({ kind: 'feat', id: 'spark initiate; gladiator|tst' })).toBeDefined();
     expect(index.get({ kind: 'feat', id: 'arena veteran|tst' })).toBeDefined();
     expect(index.get({ kind: 'item', id: 'net blade|tst' })).toBeDefined();

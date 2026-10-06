@@ -1,0 +1,118 @@
+Level 6: Gladiator 6 (d10, School of the Net); size S
+Proficiency bonus +3  [Level 6 3]
+AC 11 (Unarmored)  [Base 10, DEX modifier +1]
+HP max 52  [Hit dice 40, CON modifier × 6 +12]
+Hit dice 6d10
+Speed walk 30  [Mossling 30]
+Speed climb 30  [Mossling (equal to Speed) 30]
+Initiative +1  [DEX modifier +1]
+Concentration +2  [CON modifier +2]
+Death saves +0
+Attacks per Attack action 1  [Attack action 1]
+
+## Abilities
+str 18 (+4)  [Base score 15, Arena Hand +1, Arena Hand +1, Arena Veteran +1]
+dex 13 (+1)  [Base score 13]
+con 15 (+2)  [Base score 14, Arena Hand +1]
+int 12 (+1)  [Base score 12]
+wis 10 (+0)  [Base score 10]
+cha 8 (-1)  [Base score 8]
+
+## Saves and checks
+save str +7 (proficient)  [STR modifier +4, Proficiency +3]
+save dex +1  [DEX modifier +1]
+save con +2  [CON modifier +2]
+save int +1  [INT modifier +1]
+save wis +0  [WIS modifier +0]
+save cha +2 (proficient)  [CHA modifier -1, Proficiency +3]
+check str +4  [STR modifier +4]
+check dex +1  [DEX modifier +1]
+check con +2  [CON modifier +2]
+check int +1  [INT modifier +1]
+check wis +0  [WIS modifier +0]
+check cha -1  [CHA modifier -1]
+
+## Skills
+acrobatics +1  [DEX modifier +1]
+animal handling +0  [WIS modifier +0]
+arcana +1  [INT modifier +1]
+athletics +7 (proficient)  [STR modifier +4, Proficiency +3]
+deception -1  [CHA modifier -1]
+history +1  [INT modifier +1]
+insight +0  [WIS modifier +0]
+intimidation -1  [CHA modifier -1]
+investigation +1  [INT modifier +1]
+medicine +0  [WIS modifier +0]
+nature +1  [INT modifier +1]
+perception +0  [WIS modifier +0]
+performance +2 (proficient)  [CHA modifier -1, Proficiency +3]
+persuasion -1  [CHA modifier -1]
+religion +1  [INT modifier +1]
+sleight of hand +1  [DEX modifier +1]
+stealth +1  [DEX modifier +1]
+survival +0  [WIS modifier +0]
+passive perception 10  [Base 10, WIS modifier +0]
+passive insight 10  [Base 10, WIS modifier +0]
+passive investigation 11  [Base 10, INT modifier +1]
+
+## Proficiencies and defenses
+armor: light (Gladiator); shield|tst (Gladiator)
+weapons: simple (Gladiator); martial (Gladiator)
+tools: –
+languages: arenic (Arena Hand)
+masteries: –
+resistances: poison (Mossling)
+immunities: –
+condition immunities: –
+senses: darkvision 60 ft. (Mossling)
+
+## Attacks
+Net Blade [item:0-0-0] ready, melee 5 ft., str, proficient, crit 20
+  to hit +7 (proficient)  [STR modifier +4, Proficiency +3]
+  damage 1d8 +4 slashing, versatile 1d10  [STR modifier +4]
+  notes: Versatile, Finesse
+Unarmed Strike [unarmed] ready, melee 5 ft., str, proficient, crit 20
+  to hit +7 (proficient)  [STR modifier +4, Proficiency +3]
+  damage – +5 bludgeoning  [Unarmed Strike 1, STR modifier +4]
+Glitter Burst [spell:gladiator|tst:glitter burst|tst] ready, ranged 30 ft., cha, proficient, crit 20
+  save dex DC 10  [Spell save DC +10]
+  damage – +0 radiant
+Glitter Burst [spell:species:mossling|tst:glitter burst|tst] ready, ranged 30 ft., int, proficient, crit 20
+  save dex DC 12  [Spell save DC +12]
+  damage – +0 radiant
+
+## Spellcasting
+Gladiator [gladiator|tst] level 6, half, cha, prepares on restLong, up to spell level 2
+  DC 10  [Base 8, Proficiency +3, CHA modifier -1]
+  attack +2 (proficient)  [CHA modifier -1, Proficiency +3]
+  cantrips 0/0: –
+  prepared 1/5: dim lantern|tst
+  always prepared: glitter burst|tst
+  list: class=Gladiator
+slots: 1:4 2:2
+granted glitter burst|tst (known, Mossling, int, DC 12)
+
+## Resources
+Bravado [classFeature:arena training|gladiator|tst|1|tst#bravado] max 4, long  [Arena Training +4]
+
+## Actions
+other: Taunt (Taunt); costs 1 Bravado
+other: Arena Training (Arena Training); costs 1 Bravado
+action: Attack (Rules); attacks item:0-0-0, unarmed
+action: Dash (Rules)
+action: Disengage (Rules)
+action: Dodge (Rules)
+action: Help (Rules)
+action: Hide (Rules)
+action: Influence (Rules)
+action: Magic (Rules)
+action: Ready (Rules)
+action: Search (Rules)
+action: Study (Rules)
+action: Utilize (Rules)
+
+## Choices and issues
+pending Gladiator featProgression.arena-style.6 0/1
+pending Gladiator optfeat.crowd-tricks.4 0/1
+pending Arena Hand tools 0/1
+pending Spark Initiate; Gladiator spells.0.known.0 0/2
