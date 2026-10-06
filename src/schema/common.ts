@@ -21,6 +21,10 @@ export const ENTITY_KINDS = [
   'item',
   'optionalFeature',
   'rule',
+  'deity',
+  'reward',
+  'facility',
+  'charOption',
 ] as const;
 
 export type EntityKind = (typeof ENTITY_KINDS)[number];

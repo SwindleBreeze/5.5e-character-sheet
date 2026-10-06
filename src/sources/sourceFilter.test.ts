@@ -6,6 +6,7 @@ import {
   groupSources,
   isAvailable,
   presetSources,
+  sourceOffersKind,
 } from './sourceFilter.ts';
 
 function spell(id: string, source: string, edition: Edition, supersededBy?: string[]): Spell {
@@ -47,6 +48,30 @@ describe('sourceFilter', () => {
     ];
     expect(availableOf(list, enabled).map((s) => s.id)).toEqual(['glow|tst', 'dim|sup']);
     expect(availableOf(list, new Set(['SUP'])).map((s) => s.id)).toEqual(['glow|sup', 'dim|sup']);
+  });
+
+  it('deities follow the source switches like any other kind', () => {
+    const deity = (id: string, source: string, edition: Edition, supersededBy?: string[]) =>
+      ({ ...spell(id, source, edition, supersededBy), kind: 'deity' }) as unknown as Spell;
+    const list = [
+      deity('mirela|faerûnian|sup', 'SUP', '2024', ['mirela|faerûnian|tst']),
+      deity('mirela|faerûnian|tst', 'TST', '2024'),
+      deity('brask|seafolk|old', 'OLD', '2014'),
+    ];
+    expect(availableOf(list, new Set(['SUP', 'TST', 'OLD'])).map((d) => d.id)).toEqual([
+      'mirela|faerûnian|tst',
+    ]);
+    expect(availableOf(list, new Set(['SUP'])).map((d) => d.id)).toEqual(['mirela|faerûnian|sup']);
+  });
+
+  it('a kind has a library tab only when a usable source has some', () => {
+    const withCounts = (s: SourceInfo, counts: SourceInfo['counts']) => ({ ...s, counts });
+    const old = withCounts(info('OLD', '2014', 'core'), { charOption: 3, deity: 2 });
+    const tst = withCounts(info('TST', '2024', 'core'), { reward: 1 });
+    expect(sourceOffersKind(old, 'charOption')).toBe(false);
+    expect(sourceOffersKind(old, 'deity')).toBe(false);
+    expect(sourceOffersKind(tst, 'reward')).toBe(true);
+    expect(sourceOffersKind(tst, 'facility')).toBe(false);
   });
 
   it('a character override replaces the global list', () => {

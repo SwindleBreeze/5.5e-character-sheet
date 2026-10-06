@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type {
+  CharOption,
   ClassDef,
   ContentEntity,
+  Deity,
   EntityKind,
+  Facility,
   Item,
+  Reward,
   Species,
   Spell,
 } from '../../schema/index.ts';
@@ -47,9 +51,13 @@ describe('importFivetools (fixture tree)', () => {
       background: 1,
       feat: 4,
       species: 6,
-      item: 7,
+      item: 8,
       optionalFeature: 2,
       rule: 11,
+      deity: 5,
+      reward: 4,
+      facility: 3,
+      charOption: 1,
     });
     expect(r.report.ignored).toEqual({ itemType: 1, languageScript: 1 });
     expect(r.report.warnings.map((w) => w.code)).toEqual(['tableKeyCollision']);
@@ -286,6 +294,130 @@ describe('importFivetools (fixture tree)', () => {
     expect(get<Item>(r, 'item', 'ring of loud shouting|tst').entries).toEqual([
       'You resist thunder and psychic damage. The ring is set with a tiny bell.',
     ]);
+    // Item groups are items that list their members.
+    const group = get<Item>(r, 'item', 'lantern focus|tst');
+    expect(group).toMatchObject({
+      itemKind: 'focus',
+      groupItemIds: ['torch|tst', 'everburning torch|tst'],
+    });
+    expect(JSON.stringify(group.entries)).toContain('{@item Everburning Torch|TST}');
+  });
+
+  it('keys deities by pantheon and links later printings of the same god (plan §6.12)', async () => {
+    const r = await run();
+    const ids = (r.entities.deity ?? []).map((d) => d.id);
+    expect(ids).toEqual([
+      'mirela|forgotten realms|old',
+      'mirela|faerûnian|tst',
+      'mirela|seafolk|old',
+      'brask|seafolk|old',
+      'brask|seafolk|tst',
+    ]);
+    // Forgotten Realms and Faerûnian are one pantheon; the Seafolk Mirela is another goddess.
+    expect(get<Deity>(r, 'deity', 'mirela|forgotten realms|old').supersededBy).toEqual([
+      'mirela|faerûnian|tst',
+    ]);
+    expect(get<Deity>(r, 'deity', 'mirela|seafolk|old').supersededBy).toBeUndefined();
+    expect(get<Deity>(r, 'deity', 'mirela|faerûnian|tst')).toMatchObject({
+      pantheon: 'Faerûnian',
+      alignment: ['N', 'G'],
+      domains: ['Life', 'Light'],
+      category: 'The Bright Court',
+      altNames: ['The Morning Lady'],
+    });
+    // A copy found by name, pantheon and source.
+    const brask = get<Deity>(r, 'deity', 'brask|seafolk|tst');
+    expect(brask).toMatchObject({ domains: ['Knowledge'], province: 'Tides, patience' });
+    expect(brask.entries).toEqual([
+      'Brask counts the waves.',
+      'Sailors leave him a coin at the harbor.',
+    ]);
+    expect(get<Deity>(r, 'deity', 'brask|seafolk|old').supersededBy).toEqual(['brask|seafolk|tst']);
+  });
+
+  it('gives each charm one counter that its spells are paid from', async () => {
+    const r = await run();
+    const charm = get<Reward>(r, 'reward', 'charm of sparks|tst');
+    expect(charm).toMatchObject({ rewardType: 'Charm', facilityIds: ['spark forge|tst'] });
+    // "Cast one of these once": one use, from the spell data.
+    const once = { resource: 'uses', cost: 1 };
+    expect(charm.effects).toEqual([
+      { type: 'resource', resourceId: 'uses', name: 'Uses', max: 1, recharge: 'none' },
+      {
+        type: 'grantSpells',
+        spells: [
+          { mode: 'innate', uses: once, spell: { id: 'glitter burst|tst' }, castAtLevel: 3 },
+          { mode: 'innate', uses: once, spell: { id: 'dim lantern|tst' } },
+        ],
+      },
+    ]);
+    // Charges and per-spell costs come from the text.
+    expect(get<Reward>(r, 'reward', 'charm of embers|tst').effects).toEqual([
+      { type: 'resource', resourceId: 'uses', name: 'Charges', max: 3, recharge: 'none' },
+      {
+        type: 'grantSpells',
+        spells: [
+          {
+            mode: 'innate',
+            uses: { resource: 'uses', cost: 2 },
+            spell: { id: 'glitter burst|tst' },
+          },
+          { mode: 'innate', uses: { resource: 'uses', cost: 1 }, spell: { id: 'dim lantern|tst' } },
+        ],
+      },
+    ]);
+    expect(get<Reward>(r, 'reward', 'blessing of the crowd|tst').effects).toEqual([
+      {
+        type: 'grantSpells',
+        spells: [
+          {
+            mode: 'innate',
+            ability: 'cha',
+            uses: { count: 'max(1,mod.cha)', recharge: 'long' },
+            spell: { id: 'dim lantern|tst' },
+          },
+        ],
+      },
+    ]);
+    // A reprint as another kind (a feat) is left out.
+    expect(get<Reward>(r, 'reward', 'boon of applause|old')).toMatchObject({
+      edition: '2014',
+      supersededBy: ['blessing of the crowd|tst'],
+    });
+  });
+
+  it('converts Bastion facilities and character options', async () => {
+    const r = await run();
+    expect(get<Facility>(r, 'facility', 'spark forge|tst')).toMatchObject({
+      facilityType: 'special',
+      level: 5,
+      space: ['roomy', 'vast'],
+      hirelings: [
+        { exact: 1, space: 'roomy' },
+        { exact: 2, space: 'vast' },
+      ],
+      orders: ['craft'],
+      prerequisites: [
+        [
+          {
+            type: 'other',
+            text: 'Ability to use an {@item Arcane Focus|XPHB} or tool as a {@variantrule Spellcasting Focus|XPHB}',
+          },
+        ],
+      ],
+    });
+    expect(get<Facility>(r, 'facility', 'guild hall|tst')).toMatchObject({
+      hirelings: [{ min: 2 }],
+      prerequisites: [[{ type: 'other', text: 'Membership in the Lantern Guild or Net Menders' }]],
+    });
+    const yard = get<Facility>(r, 'facility', 'practice yard|tst');
+    expect(yard).toMatchObject({ facilityType: 'basic', hirelings: [], orders: [] });
+    expect(yard.level).toBeUndefined();
+    expect(get<CharOption>(r, 'charOption', 'gift of echoes|old')).toMatchObject({
+      edition: '2014',
+      optionTypes: ['SG'],
+      prerequisites: [[{ type: 'other', text: 'Stoneborn or Mossling' }]],
+    });
   });
 
   it('is deterministic, so re-importing keeps every id and slot', async () => {
@@ -297,6 +429,14 @@ describe('importFivetools (fixture tree)', () => {
   it('can keep only some sources', async () => {
     const r = await importFivetools(fixtureSource(), { now: 1, onlySources: ['OLD'] });
     expect(r.sources.map((s) => s.code)).toEqual(['OLD']);
-    expect(r.report.counts).toEqual({ spell: 1, subclass: 2, subclassFeature: 1, species: 2 });
+    expect(r.report.counts).toEqual({
+      spell: 1,
+      subclass: 2,
+      subclassFeature: 1,
+      species: 2,
+      deity: 3,
+      reward: 1,
+      charOption: 1,
+    });
   });
 });

@@ -15,6 +15,10 @@ const KIND_LABELS: Record<EntityKind, string> = {
   item: 'Items',
   optionalFeature: 'Optional features',
   rule: 'Rules',
+  deity: 'Deities',
+  reward: 'Supernatural gifts',
+  facility: 'Bastion facilities',
+  charOption: 'Character options',
 };
 
 const MAX_LISTED = 50;

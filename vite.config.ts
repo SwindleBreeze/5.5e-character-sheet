@@ -47,5 +47,7 @@ export default defineConfig({
     include: ['src/**/*.test.{ts,tsx}', 'scripts/**/*.test.mjs'],
     css: { modules: { classNameStrategy: 'non-scoped' } },
     restoreMocks: true,
+    // UI tests that import content take a few seconds when every file runs in parallel.
+    testTimeout: 15_000,
   },
 });

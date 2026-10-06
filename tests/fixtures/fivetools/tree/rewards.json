@@ -1,0 +1,55 @@
+{
+  "_fixture": true,
+  "reward": [
+    {
+      "name": "Charm of Sparks",
+      "source": "TST",
+      "page": 70,
+      "type": "Charm",
+      "seeAlsoFacility": ["Spark Forge|TST"],
+      "additionalSpells": [
+        { "innate": { "_": { "limited": { "1": ["glitter burst|tst#3", "dim lantern|tst"] } } } }
+      ],
+      "entries": [
+        "You can cast {@spell Glitter Burst|TST} (level 3 version) or {@spell Dim Lantern|TST} once. The charm then fades."
+      ]
+    },
+    {
+      "name": "Charm of Embers",
+      "source": "TST",
+      "page": 70,
+      "type": "Charm",
+      "additionalSpells": [
+        {
+          "innate": {
+            "_": { "limited": { "1e": ["glitter burst|tst"], "3e": ["dim lantern|tst"] } }
+          },
+          "resourceName": "Charges"
+        }
+      ],
+      "entries": [
+        "This charm has 3 charges. You can expend them to cast {@spell Glitter Burst|TST} (2 charges) or {@spell Dim Lantern|TST} (1 charge). Once all its charges are spent, the charm vanishes."
+      ]
+    },
+    {
+      "name": "Blessing of the Crowd",
+      "source": "TST",
+      "page": 71,
+      "type": "Blessing",
+      "additionalSpells": [
+        { "innate": { "_": { "daily": { "cha": ["dim lantern|tst"] } } }, "ability": "cha" }
+      ],
+      "entries": [
+        "You can cast {@spell Dim Lantern|TST} a number of times equal to your Charisma modifier (minimum of once) per {@variantrule Long Rest|TST}."
+      ]
+    },
+    {
+      "name": "Boon of Applause",
+      "source": "OLD",
+      "page": 40,
+      "type": "Boon",
+      "reprintedAs": [{ "uid": "Applause|TST", "tag": "feat" }, "Blessing of the Crowd|TST"],
+      "entries": ["The crowd loves you."]
+    }
+  ]
+}

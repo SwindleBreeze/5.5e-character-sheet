@@ -16,6 +16,7 @@ export type WarningCode =
   | 'convertFailed'
   | 'duplicateId'
   | 'tableKeyCollision'
+  | 'kindUnknown'
   | 'unknownShape';
 
 export interface ImportWarning {

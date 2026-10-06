@@ -1,15 +1,19 @@
-// Dexie database (plan §5, "Dexie v1"). Only the repos in this folder touch it directly.
+// Dexie database (plan §5, "Dexie v1"; v2 in plan §6.12). Only the repos in this folder touch it directly.
 
 import { Dexie, type EntityTable } from 'dexie';
 import type {
   Background,
+  CharOption,
   Character,
   ClassDef,
   ClassFeature,
+  Deity,
   EntityKind,
+  Facility,
   Feat,
   Item,
   OptionalFeature,
+  Reward,
   Rule,
   SourceInfo,
   Species,
@@ -43,6 +47,10 @@ export class AppDb extends Dexie {
   items!: EntityTable<Item, 'id'>;
   optionalFeatures!: EntityTable<OptionalFeature, 'id'>;
   rules!: EntityTable<Rule, 'id'>;
+  deities!: EntityTable<Deity, 'id'>;
+  rewards!: EntityTable<Reward, 'id'>;
+  facilities!: EntityTable<Facility, 'id'>;
+  charOptions!: EntityTable<CharOption, 'id'>;
   sources!: EntityTable<SourceInfo, 'code'>;
   characters!: EntityTable<Character, 'id'>;
   portraits!: EntityTable<PortraitRow, 'id'>;
@@ -67,6 +75,13 @@ export class AppDb extends Dexie {
       portraits: 'id',
       settings: 'key',
     });
+    // Phase 2b (plan §6.12): player extras. New tables only, so no upgrade function.
+    this.version(2).stores({
+      deities: 'id, source, pantheon',
+      rewards: 'id, source, rewardType',
+      facilities: 'id, source, facilityType, level',
+      charOptions: 'id, source',
+    });
   }
 }
 
@@ -83,6 +98,10 @@ export const TABLE_BY_KIND = {
   item: 'items',
   optionalFeature: 'optionalFeatures',
   rule: 'rules',
+  deity: 'deities',
+  reward: 'rewards',
+  facility: 'facilities',
+  charOption: 'charOptions',
 } as const satisfies Record<EntityKind, keyof AppDb>;
 
 let instance: AppDb | null = null;

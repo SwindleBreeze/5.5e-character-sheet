@@ -59,8 +59,13 @@ export async function encodePack(pack: Pack): Promise<Uint8Array> {
   return gzip(new TextEncoder().encode(JSON.stringify(pack)));
 }
 
-/** Read a pack file (gzipped or plain JSON) and check its shape. */
-export async function decodePack(bytes: Uint8Array): Promise<Pack> {
+/**
+ * Read a pack file (gzipped or plain JSON) and check its shape. `skippedKinds` lists entity
+ * kinds from a newer app that this one cannot use.
+ */
+export async function readPack(
+  bytes: Uint8Array,
+): Promise<{ pack: Pack; skippedKinds: Record<string, number> }> {
   let text: string;
   try {
     text = new TextDecoder().decode(isGzip(bytes) ? await gunzip(bytes) : bytes);
@@ -75,6 +80,10 @@ export async function decodePack(bytes: Uint8Array): Promise<Pack> {
   }
   const { validatePack } = await import('./packSchema.ts');
   return validatePack(json);
+}
+
+export async function decodePack(bytes: Uint8Array): Promise<Pack> {
+  return (await readPack(bytes)).pack;
 }
 
 export function packFileName(now: number): string {

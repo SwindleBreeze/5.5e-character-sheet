@@ -24,12 +24,22 @@ export function editionOf(raw: RawEntity, ctx: ConvertContext, parentId?: Id): E
   );
 }
 
-/** Ids from `reprintedAs` (strings or `{ uid }` objects), parsed with the kind's UID rules. */
-export function supersededBy(raw: RawEntity, toId: (uid: string) => Id): Id[] | undefined {
+/**
+ * Ids from `reprintedAs` (strings or `{ uid, tag }` objects), parsed with the kind's UID rules.
+ * With `tag`, reprints as another kind (a reward reprinted as a feat) are left out, since the
+ * source filter only compares entities of one kind.
+ */
+export function supersededBy(
+  raw: RawEntity,
+  toId: (uid: string) => Id,
+  tag?: string,
+): Id[] | undefined {
   const ids = asArray(raw.reprintedAs)
-    .map((r) =>
-      typeof r === 'string' ? r : isObject(r) && typeof r.uid === 'string' ? r.uid : null,
-    )
+    .map((r) => {
+      if (typeof r === 'string') return r;
+      if (!isObject(r) || typeof r.uid !== 'string') return null;
+      return tag !== undefined && typeof r.tag === 'string' && r.tag !== tag ? null : r.uid;
+    })
     .filter((r): r is string => r !== null)
     .map(toId);
   return ids.length ? ids : undefined;
@@ -44,6 +54,8 @@ export function baseFields<K extends EntityKind>(
   opts: {
     edition?: Edition;
     reprintId?: (uid: string) => Id;
+    /** The kind's 5etools tag, to skip reprints as another kind. */
+    reprintTag?: string;
     variantOfId?: (name: string, source: string) => Id;
   } = {},
 ): BaseEntity & { kind: K } {
@@ -60,7 +72,7 @@ export function baseFields<K extends EntityKind>(
   const page = num(raw.page);
   if (page !== undefined) out.page = page;
   if (opts.reprintId) {
-    const sup = supersededBy(raw, opts.reprintId);
+    const sup = supersededBy(raw, opts.reprintId, opts.reprintTag);
     if (sup) out.supersededBy = sup;
   }
   const versionOf = raw[VERSION_OF];

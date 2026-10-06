@@ -1,0 +1,64 @@
+{
+  "_fixture": true,
+  "deity": [
+    {
+      "name": "Mirela",
+      "source": "OLD",
+      "page": 30,
+      "pantheon": "Forgotten Realms",
+      "alignment": ["N", "G"],
+      "title": "Goddess of dawn",
+      "domains": ["Life", "Light"],
+      "symbol": "A rising sun"
+    },
+    {
+      "name": "Mirela",
+      "source": "TST",
+      "page": 60,
+      "pantheon": "Faerûnian",
+      "alignment": ["N", "G"],
+      "title": "Goddess of dawn and second chances",
+      "category": "The Bright Court",
+      "domains": ["Life", "Light"],
+      "symbol": "A rising sun over a road",
+      "altNames": ["The Morning Lady"],
+      "entries": ["Mirela's priests greet every sunrise with a song."]
+    },
+    {
+      "name": "Mirela",
+      "source": "OLD",
+      "page": 31,
+      "pantheon": "Seafolk",
+      "alignment": ["C", "N"],
+      "title": "Goddess of storms",
+      "domains": ["Tempest"],
+      "symbol": "A broken oar"
+    },
+    {
+      "name": "Brask",
+      "source": "OLD",
+      "page": 31,
+      "pantheon": "Seafolk",
+      "alignment": ["L", "N"],
+      "title": "God of tides",
+      "domains": ["Knowledge"],
+      "province": "Tides, patience",
+      "symbol": "Two waves",
+      "entries": ["Brask counts the waves."]
+    },
+    {
+      "name": "Brask",
+      "source": "TST",
+      "page": 61,
+      "_copy": {
+        "name": "Brask",
+        "source": "OLD",
+        "pantheon": "Seafolk",
+        "_mod": {
+          "entries": { "mode": "appendArr", "items": "Sailors leave him a coin at the harbor." }
+        }
+      },
+      "pantheon": "Seafolk"
+    }
+  ]
+}

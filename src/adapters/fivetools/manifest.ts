@@ -23,6 +23,14 @@ export const ROOT_FILES = [
   'languages.json',
 ];
 
+/** Player extras (plan §6.12). Optional: older 5etools versions lack some of them. */
+export const OPTIONAL_ROOT_FILES = [
+  'deities.json',
+  'rewards.json',
+  'bastions.json',
+  'charcreationoptions.json',
+];
+
 /** Folders with an `index.json` mapping keys to file names. */
 export const INDEXED_FOLDERS = ['class', 'spells'];
 
@@ -45,6 +53,7 @@ export const IMPORTED_PROPS = [
   'baseitem',
   'item',
   'magicvariant',
+  'itemGroup',
   'itemProperty',
   'itemMastery',
   // Not entities: shared item text, merged into items before conversion.
@@ -58,6 +67,10 @@ export const IMPORTED_PROPS = [
   'sense',
   'skill',
   'language',
+  'deity',
+  'reward',
+  'facility',
+  'charoption',
 ] as const;
 
 export type ImportedProp = (typeof IMPORTED_PROPS)[number];
@@ -169,6 +182,10 @@ export async function readManifest(
 
   for (const file of files) {
     const json = await readJson(fs, root + file, report, true);
+    if (json) collect(json, records, report);
+  }
+  for (const file of OPTIONAL_ROOT_FILES) {
+    const json = await readJson(fs, root + file, report, false);
     if (json) collect(json, records, report);
   }
 

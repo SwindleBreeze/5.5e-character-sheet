@@ -49,10 +49,21 @@ export interface SpellGrant {
   atLevel?: number;
   /** Applies once the character can cast spells of this level (5etools `s<N>` keys). */
   atSpellLevel?: number;
-  /** Free casts. Omitted means the spell is cast normally. */
-  uses?: { count: Formula; recharge: Recharge } | 'atWill' | 'ritual';
-  /** Casts paid from a named resource, e.g. Ki. */
-  resourceName?: string;
+  /**
+   * Free casts. Omitted means the spell is cast normally.
+   * - `count` and `recharge`: the grant's own counter.
+   * - `resource` and `cost`: paid from a `resource` effect of the same entity: a charm's
+   *   charges, or one counter several spells share ("cast one of these once").
+   * - `resourceName` and `cost`: paid from a resource defined elsewhere, e.g. Focus Points.
+   */
+  uses?:
+    | { count: Formula; recharge: Recharge }
+    | { resource: string; cost: number }
+    | { resourceName: string; cost: number }
+    | 'atWill'
+    | 'ritual';
+  /** The spell is cast at this level (5etools `#3` suffix). */
+  castAtLevel?: number;
   /** Spellcasting ability: fixed, a choice, or the ability this entity increased. */
   ability?: Ability | { slot: string; from: Ability[] } | 'inherit';
 }

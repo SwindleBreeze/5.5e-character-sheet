@@ -23,6 +23,7 @@ const CONTENT_KEYS = new Set([
   'item',
   'baseitem',
   'magicvariant',
+  'itemGroup',
   'optionalfeature',
   'condition',
   'disease',
@@ -35,6 +36,10 @@ const CONTENT_KEYS = new Set([
   'sense',
   'itemProperty',
   'itemMastery',
+  'deity',
+  'reward',
+  'facility',
+  'charoption',
   'entities',
 ]);
 

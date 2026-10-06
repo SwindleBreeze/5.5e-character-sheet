@@ -11,7 +11,7 @@ import {
   type ItemKind,
 } from '../../../schema/index.ts';
 import { defenseEffects } from '../effectsFromData.ts';
-import { asArray, isObject, num, type RawEntity } from '../raw.ts';
+import { asArray, isObject, num, strArray, type RawEntity } from '../raw.ts';
 import { uidToId } from '../uid.ts';
 import { baseFields, type ConvertContext } from './common.ts';
 
@@ -184,10 +184,36 @@ export function convertItem(raw: RawEntity, ctx: ConvertContext): Item {
   const item: Item = {
     ...baseFields(raw, 'item', nameSourceId(String(raw.name), String(raw.source)), ctx, {
       reprintId: (uid) => uidToId.nameSource(uid, 'DMG'),
+      reprintTag: 'item',
     }),
     itemKind: itemKind(raw),
   };
   return fill(item, raw);
+}
+
+/**
+ * An item group: a name that stands for several items, such as Arcane Focus or Artisan's Tools.
+ * Its members are listed at the end of its text, unless 5etools hides them.
+ */
+export function convertItemGroup(raw: RawEntity, ctx: ConvertContext): Item {
+  const members = strArray(raw.items);
+  const listed: RawEntity =
+    members.length && raw.itemsHidden !== true
+      ? {
+          ...raw,
+          entries: [
+            ...asArray(raw.entries),
+            {
+              type: 'entries',
+              name: 'Items in this group',
+              entries: [{ type: 'list', items: members.map((m) => `{@item ${m}}`) }],
+            },
+          ],
+        }
+      : raw;
+  const item = convertItem(listed, ctx);
+  if (members.length) item.groupItemIds = members.map((m) => uidToId.nameSource(m, 'DMG'));
+  return item;
 }
 
 /** A generic variant. Its source, page and text live in `inherits`. */
@@ -203,6 +229,7 @@ export function convertMagicVariant(raw: RawEntity, ctx: ConvertContext): Item {
   const item: Item = {
     ...baseFields(flat, 'item', nameSourceId(String(flat.name), String(flat.source)), ctx, {
       reprintId: (uid) => uidToId.nameSource(uid, 'DMG'),
+      reprintTag: 'item',
     }),
     itemKind: 'variant',
     variant: {

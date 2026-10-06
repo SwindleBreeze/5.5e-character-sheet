@@ -58,6 +58,15 @@ describe('UIDs', () => {
     expect(uidToId.nameSource('Torch', 'DMG')).toBe('torch|dmg');
   });
 
+  it('deities: name|pantheon|source, defaulting to Forgotten Realms and PHB', () => {
+    expect(uidToId.deity('Mirela')).toBe('mirela|forgotten realms|phb');
+    expect(uidToId.deity('Brask|Seafolk')).toBe('brask|seafolk|phb');
+    expect(uidToId.deity('Brask|Seafolk|TST')).toBe('brask|seafolk|tst');
+    expect(identityKey('deity', { name: 'Brask', pantheon: 'Seafolk', source: 'TST' })).toBe(
+      'brask|seafolk|tst',
+    );
+  });
+
   it('identity keys follow the type UID fields', () => {
     expect(
       identityKey('subclass', {

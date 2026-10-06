@@ -11,7 +11,7 @@ import type { FileSource } from './fivetools/fs/types.ts';
 import { zipFileSource } from './fivetools/fs/zip.ts';
 import { importFivetools, type ImportStage } from './fivetools/index.ts';
 import type { ImportReport } from './fivetools/report.ts';
-import { decodePack } from './pack/packFile.ts';
+import { readPack } from './pack/packFile.ts';
 
 export type FivetoolsInput =
   | { type: 'files'; files: File[] }
@@ -40,6 +40,16 @@ async function fileSourceFor(input: FivetoolsInput): Promise<FileSource> {
     case 'zip':
       return zipFileSource(await input.file.arrayBuffer());
   }
+}
+
+/** What a pack import actually stored per source, so the registry never claims skipped kinds. */
+function sourceCounts(entities: EntitiesByKind, code: string): SourceInfo['counts'] {
+  const out: SourceInfo['counts'] = {};
+  for (const kind of ENTITY_KINDS) {
+    const n = (entities[kind] ?? []).filter((e) => e.source === code).length;
+    if (n) out[kind] = n;
+  }
+  return out;
 }
 
 function counts(entities: EntitiesByKind): ImportReport['counts'] {
@@ -71,11 +81,22 @@ export async function runImportJob(
     ({ entities, sources, report } = result);
   } else {
     onProgress('unpack');
-    const pack = await decodePack(new Uint8Array(await job.file.arrayBuffer()));
+    const { pack, skippedKinds } = await readPack(new Uint8Array(await job.file.arrayBuffer()));
     const importedAt = now();
     entities = pack.entities;
-    sources = pack.sources.map((s) => ({ ...s, origin: 'pack', importedAt }));
+    sources = pack.sources.map((s) => ({
+      ...s,
+      counts: sourceCounts(entities, s.code),
+      origin: 'pack',
+      importedAt,
+    }));
     report = { filesRead: 1, counts: counts(entities), ignored: {}, warnings: [] };
+    for (const [kind, n] of Object.entries(skippedKinds)) {
+      report.warnings.push({
+        code: 'kindUnknown',
+        message: `Skipped ${n} ${kind} entries: this pack was made by a newer version of the app. Update the app, then import the pack again to get them.`,
+      });
+    }
   }
 
   onProgress('write');

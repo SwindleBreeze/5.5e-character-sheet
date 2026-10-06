@@ -1,7 +1,7 @@
 // Library search and filters (plan §6.5). Pure, so it is tested without the UI.
 
 import type { ContentEntity, EntityKind } from '../../schema/index.ts';
-import { nameFromId } from '../../richtext/entityMeta.ts';
+import { CHAR_OPTION_TYPES, alignmentText, nameFromId } from '../../richtext/entityMeta.ts';
 
 export const LIBRARY_KINDS: { kind: EntityKind; label: string }[] = [
   { kind: 'spell', label: 'Spells' },
@@ -11,7 +11,11 @@ export const LIBRARY_KINDS: { kind: EntityKind; label: string }[] = [
   { kind: 'background', label: 'Backgrounds' },
   { kind: 'feat', label: 'Feats' },
   { kind: 'item', label: 'Items' },
+  { kind: 'reward', label: 'Gifts' },
   { kind: 'optionalFeature', label: 'Options' },
+  { kind: 'deity', label: 'Deities' },
+  { kind: 'facility', label: 'Bastion' },
+  { kind: 'charOption', label: 'Creation options' },
   { kind: 'rule', label: 'Rules' },
 ];
 
@@ -97,6 +101,54 @@ const FILTERS: Partial<Record<EntityKind, FilterDef[]>> = {
       key: 'type',
       label: 'Type',
       values: (e) => (e.kind === 'optionalFeature' ? e.featureTypes : []),
+    },
+  ],
+  reward: [
+    {
+      key: 'type',
+      label: 'Type',
+      values: (e) => (e.kind === 'reward' ? [e.rewardType] : []),
+    },
+  ],
+  deity: [
+    {
+      key: 'pantheon',
+      label: 'Pantheon',
+      values: (e) => (e.kind === 'deity' ? [e.pantheon] : []),
+    },
+    {
+      key: 'domain',
+      label: 'Domain',
+      values: (e) => (e.kind === 'deity' ? e.domains : []),
+    },
+    {
+      key: 'alignment',
+      label: 'Alignment',
+      values: (e) => (e.kind === 'deity' && e.alignment.length ? [e.alignment.join('')] : []),
+      labelOf: (v) => alignmentText(v.split('')),
+    },
+  ],
+  facility: [
+    {
+      key: 'type',
+      label: 'Type',
+      values: (e) => (e.kind === 'facility' ? [e.facilityType] : []),
+      labelOf: cap,
+    },
+    {
+      key: 'level',
+      label: 'Level',
+      values: (e) => (e.kind === 'facility' && e.level !== undefined ? [String(e.level)] : []),
+      labelOf: (v) => `Level ${v}`,
+      numeric: true,
+    },
+  ],
+  charOption: [
+    {
+      key: 'type',
+      label: 'Type',
+      values: (e) => (e.kind === 'charOption' ? e.optionTypes : []),
+      labelOf: (v) => CHAR_OPTION_TYPES[v] ?? v,
     },
   ],
   rule: [

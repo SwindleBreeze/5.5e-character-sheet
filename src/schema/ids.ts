@@ -1,7 +1,8 @@
 // Entity id builders (plan §4.1). Ids are lowercased and use one format per kind:
 //
 //   most kinds        name|source
-//   subclass          shortName|className|classSource|source
+//   deity             name|pantheon|source
+//   subclass         shortName|className|classSource|source
 //   classFeature      name|className|classSource|level|source
 //   subclassFeature   name|className|classSource|subclassShortName|subclassSource|level|source
 //   rule              <ruleKind>/name|source   (rule kinds share one table, so the kind is part
@@ -54,6 +55,13 @@ export function subclassFeatureId(
   source: SourceCode,
 ): Id {
   return join([name, className, classSource, subclassShortName, subclassSource, level, source]);
+}
+
+/** 5etools leaves the pantheon out of deity references to Forgotten Realms gods. */
+export const DEFAULT_PANTHEON = 'Forgotten Realms';
+
+export function deityId(name: string, pantheon: string, source: SourceCode): Id {
+  return join([name, pantheon, source]);
 }
 
 export function ruleId(ruleKind: RuleKind, name: string, source: SourceCode): Id {

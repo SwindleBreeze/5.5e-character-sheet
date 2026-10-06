@@ -32,5 +32,16 @@
       "detail1": "a tiny bell",
       "entries": ["{#itemEntry Ring of Shouting|TST}"]
     }
+  ],
+  "itemGroup": [
+    {
+      "name": "Lantern Focus",
+      "source": "TST",
+      "page": 48,
+      "type": "SCF|TST",
+      "rarity": "none",
+      "entries": ["Any light you carry can channel your spells."],
+      "items": ["Torch|TST", "Everburning Torch|TST"]
+    }
   ]
 }

@@ -2,6 +2,11 @@ import type { Edition, EntityKind, SourceCode } from './common.ts';
 import type { EntitiesByKind } from './content.ts';
 
 export const PACK_FORMAT = '5e-sheet-pack';
+/**
+ * The pack format. It goes up only for a change an older app would misread. New entity kinds do
+ * not change it: an app imports the kinds it knows and skips the rest (this one reports them),
+ * so packs work across app versions in both directions.
+ */
 export const PACK_VERSION = 1;
 
 export type SourceGroup = 'core' | 'supplement' | 'adventure' | 'other';
@@ -23,7 +28,8 @@ export interface SourceInfo {
 
 export interface Pack {
   format: typeof PACK_FORMAT;
-  version: typeof PACK_VERSION;
+  /** 1 up to PACK_VERSION. */
+  version: number;
   adapterVersion: number;
   exportedAt: number;
   sources: SourceInfo[];

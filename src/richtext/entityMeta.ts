@@ -5,6 +5,7 @@ import {
   ABILITY_NAMES,
   type Ability,
   type ContentEntity,
+  type FacilityHirelings,
   type Prereq,
   type Prereqs,
   type Spell,
@@ -132,6 +133,38 @@ const RULE_KINDS: Record<string, string> = {
   mastery: 'Weapon mastery property',
 };
 
+const ALIGNMENT_WORDS: Record<string, string> = {
+  L: 'lawful',
+  N: 'neutral',
+  C: 'chaotic',
+  G: 'good',
+  E: 'evil',
+  U: 'unaligned',
+  A: 'any alignment',
+};
+
+/** `['L', 'G']` → `Lawful good`; `['N']` → `Neutral`. */
+export function alignmentText(codes: string[]): string {
+  return cap(codes.map((c) => ALIGNMENT_WORDS[c] ?? c).join(' '));
+}
+
+function hirelingsText(list: FacilityHirelings[]): string {
+  return list
+    .map((h) => {
+      const n = h.exact !== undefined ? String(h.exact) : h.min !== undefined ? `${h.min}+` : '';
+      return h.space ? `${n} (${h.space})` : n;
+    })
+    .filter(Boolean)
+    .join(', ');
+}
+
+export const CHAR_OPTION_TYPES: Record<string, string> = {
+  SG: 'Supernatural Gift',
+  DG: 'Dark Gift',
+  CS: 'Character Secret',
+  'RF:B': 'Replacement background feature',
+};
+
 export function entityMeta(e: ContentEntity): EntityMeta {
   const facts: EntityMeta['facts'] = [];
   const fact = (label: string, value: string | undefined) => {
@@ -213,5 +246,34 @@ export function entityMeta(e: ContentEntity): EntityMeta {
       return { subtitle: 'Background', facts };
     case 'rule':
       return { subtitle: RULE_KINDS[e.ruleKind] ?? 'Rule', facts };
+    case 'deity':
+      fact('Pantheon', e.category ? `${e.pantheon} (${e.category})` : e.pantheon);
+      fact('Alignment', alignmentText(e.alignment));
+      fact('Domains', e.domains.join(', '));
+      fact('Province', e.province);
+      fact('Symbol', e.symbol);
+      fact('Also called', e.altNames?.join(', '));
+      return { subtitle: e.title ? cap(e.title) : `${e.pantheon} deity`, facts };
+    case 'reward':
+      fact('Bastion facility', e.facilityIds?.map(nameFromId).join(', '));
+      return { subtitle: e.rarity ? `${e.rewardType}, ${e.rarity}` : e.rewardType, facts };
+    case 'facility':
+      fact('Prerequisite', prereqsText(e.prerequisites));
+      fact('Space', e.space.map(cap).join(', '));
+      fact('Hirelings', hirelingsText(e.hirelings));
+      fact('Orders', e.orders.map(cap).join(', '));
+      return {
+        subtitle:
+          e.facilityType === 'basic'
+            ? 'Basic facility'
+            : `Special facility${e.level ? `, level ${e.level}` : ''}`,
+        facts,
+      };
+    case 'charOption':
+      fact('Prerequisite', prereqsText(e.prerequisites));
+      return {
+        subtitle: e.optionTypes.map((t) => CHAR_OPTION_TYPES[t] ?? t).join(', '),
+        facts,
+      };
   }
 }

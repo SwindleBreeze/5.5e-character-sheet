@@ -107,6 +107,60 @@ describe('packs', () => {
     ).toBe(true);
   });
 
+  it('imports a pack from an older app (made before the player extras)', async () => {
+    await runImportJob(filesJob(fixtureFiles()), deps());
+    const { bytes } = await exportPack(createContentRepo(db), { now: 0 });
+    const current = await decodePack(bytes);
+    expect(current.version).toBe(1);
+    expect(current.entities.deity?.length).toBe(5);
+    const newKinds = new Set(['deity', 'reward', 'facility', 'charOption']);
+    const older = {
+      ...current,
+      adapterVersion: 1,
+      entities: Object.fromEntries(
+        Object.entries(current.entities).filter(([kind]) => !newKinds.has(kind)),
+      ),
+    };
+
+    db = await resetDb('test-import-job-older');
+    await runImportJob(
+      { kind: 'pack', file: new Blob([new TextEncoder().encode(JSON.stringify(older))]) },
+      deps(),
+    );
+    const after = await allEntities();
+    expect(after.spell?.length).toBe(current.entities.spell?.length);
+    expect(after.deity).toBeUndefined();
+  });
+
+  it('imports what it knows from a pack made by a newer app, and says what it skipped', async () => {
+    await runImportJob(filesJob(fixtureFiles()), deps());
+    const { bytes } = await exportPack(createContentRepo(db), { now: 0 });
+    const current = await decodePack(bytes);
+    const tst = current.sources.find((s) => s.code === 'TST')!;
+    const newer = {
+      ...current,
+      sources: current.sources.map((s) =>
+        s === tst ? { ...s, counts: { ...s.counts, monster: 1 } } : s,
+      ),
+      entities: { ...current.entities, monster: [{ id: 'grub|tst', kind: 'monster' }] },
+    };
+
+    db = await resetDb('test-import-job-newer');
+    const summary = await runImportJob(
+      { kind: 'pack', file: new Blob([new TextEncoder().encode(JSON.stringify(newer))]) },
+      deps(),
+    );
+    expect(summary.report.warnings).toEqual([
+      expect.objectContaining({
+        code: 'kindUnknown',
+        message: expect.stringMatching(/^Skipped 1 monster entries/),
+      }),
+    ]);
+    expect((await allEntities()).spell?.length).toBe(current.entities.spell?.length);
+    const stored = await createContentRepo(db).listSources();
+    expect(stored.find((s) => s.code === 'TST')?.counts).toEqual(tst.counts);
+  });
+
   it('reads plain (not gzipped) pack JSON too', async () => {
     const pack = buildPack({}, [], 1, 5);
     const plain = new TextEncoder().encode(JSON.stringify(pack));

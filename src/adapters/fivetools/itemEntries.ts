@@ -73,7 +73,7 @@ export function resolveItemEntries(records: Record<string, RawEntity[]>, report:
     });
   };
 
-  for (const prop of ['baseitem', 'item']) {
+  for (const prop of ['baseitem', 'item', 'itemGroup']) {
     for (const item of records[prop] ?? []) {
       expand(item, item);
       const extra = byType.get(typeUid(item.type) ?? '');

@@ -267,6 +267,79 @@ describe('spellEffects', () => {
       ],
     });
   });
+
+  it('reads one-off, ability-based, PB and shared uses, and cast levels', () => {
+    const effects = spellEffects({
+      name: 'Gift',
+      additionalSpells: [
+        {
+          innate: {
+            _: {
+              limited: { '2e': ['spark|tst#4'] },
+              daily: { int: ['glow|tst'], pb: ['dim|tst'] },
+              rest: { 1: ['dark|tst', 'shine|tst'] },
+            },
+          },
+        },
+      ],
+    });
+    expect(effects).toEqual([
+      // "Cast one of these once per Short Rest": one counter the two spells share.
+      {
+        type: 'resource',
+        resourceId: 'spells.0.innate._.rest.1',
+        name: 'Gift',
+        max: 1,
+        recharge: 'short',
+      },
+      {
+        type: 'grantSpells',
+        spells: [
+          {
+            mode: 'innate',
+            uses: { count: 2, recharge: 'none' },
+            spell: { id: 'spark|tst' },
+            castAtLevel: 4,
+          },
+          {
+            mode: 'innate',
+            uses: { count: 'max(1,mod.int)', recharge: 'long' },
+            spell: { id: 'glow|tst' },
+          },
+          { mode: 'innate', uses: { count: 'pb', recharge: 'long' }, spell: { id: 'dim|tst' } },
+          {
+            mode: 'innate',
+            uses: { resource: 'spells.0.innate._.rest.1', cost: 1 },
+            spell: { id: 'dark|tst' },
+          },
+          {
+            mode: 'innate',
+            uses: { resource: 'spells.0.innate._.rest.1', cost: 1 },
+            spell: { id: 'shine|tst' },
+          },
+        ],
+      },
+    ]);
+  });
+
+  it('casts paid from a named resource keep their cost', () => {
+    const [effect] = spellEffects({
+      additionalSpells: [
+        { innate: { 3: { resource: { 2: ['dim|tst'] } } }, resourceName: 'Focus Point' },
+      ],
+    });
+    expect(effect).toEqual({
+      type: 'grantSpells',
+      spells: [
+        {
+          mode: 'innate',
+          atLevel: 3,
+          uses: { resourceName: 'Focus Point', cost: 2 },
+          spell: { id: 'dim|tst' },
+        },
+      ],
+    });
+  });
 });
 
 describe('progressions', () => {

@@ -2,7 +2,14 @@
 // app is 2024-only: 2014 content is hidden, and so is anything reprinted by content that is
 // itself available. The filter never applies to refs a character already has.
 
-import type { ContentEntity, Id, SourceCode, SourceGroup, SourceInfo } from '../schema/index.ts';
+import type {
+  ContentEntity,
+  EntityKind,
+  Id,
+  SourceCode,
+  SourceGroup,
+  SourceInfo,
+} from '../schema/index.ts';
 
 export interface FilterContext {
   enabled: ReadonlySet<SourceCode>;
@@ -21,6 +28,15 @@ export function effectiveSources(
 /** Basic availability: enabled source and not 2014. Ignores reprints. */
 export function isOffered(entity: ContentEntity, enabled: ReadonlySet<SourceCode>): boolean {
   return enabled.has(entity.source) && entity.edition !== '2014';
+}
+
+/**
+ * Whether a source can offer entities of `kind` right now: it has some, and it is not a locked
+ * 2014 source. Used to hide library tabs with nothing to show.
+ */
+export function sourceOffersKind(source: SourceInfo, kind: EntityKind): boolean {
+  if (!source.counts[kind]) return false;
+  return isSelectable(source);
 }
 
 export function isAvailable(entity: ContentEntity, ctx: FilterContext): boolean {

@@ -38,6 +38,7 @@ export function convertBackground(raw: RawEntity, ctx: ConvertContext): Backgrou
   const bg: Background = {
     ...baseFields(raw, 'background', nameSourceId(String(raw.name), String(raw.source)), ctx, {
       reprintId: nameSource('PHB'),
+      reprintTag: 'background',
       variantOfId: nameSourceId,
     }),
     abilityOptions: weightedAbilityOptions(raw),
@@ -126,6 +127,33 @@ function prereqGroup(raw: RawObject): Prereq[] {
           out.push({ type: 'other', text: value.entrySummary });
         }
         break;
+      case 'membership':
+        out.push({ type: 'other', text: `Membership in the ${joinOr(strArray(value))}` });
+        break;
+      case 'spellcastingFocus':
+        out.push({ type: 'other', text: spellcastingFocusText(value) });
+        break;
+      case 'expertise':
+        for (const e of asArray(value).filter(isObject)) {
+          const skill = e.skill;
+          out.push({
+            type: 'other',
+            text:
+              skill === true ? 'Expertise in a skill' : `Expertise in ${titleCase(String(skill))}`,
+          });
+        }
+        break;
+      case 'race': {
+        const names = asArray(value)
+          .filter(isObject)
+          .map((r) =>
+            typeof r.displayEntry === 'string'
+              ? r.displayEntry
+              : `${titleCase(String(r.name))}${typeof r.subrace === 'string' ? ` (${r.subrace})` : ''}`,
+          );
+        out.push({ type: 'other', text: joinOr(names) });
+        break;
+      }
       case 'note':
         break;
       default:
@@ -133,6 +161,36 @@ function prereqGroup(raw: RawObject): Prereq[] {
     }
   }
   return out;
+}
+
+function titleCase(s: string): string {
+  return s.replace(/(^|[\s-])(\p{L})/gu, (_, sep: string, c: string) => sep + c.toUpperCase());
+}
+
+/** `a`, `a or b`, `a, b, or c`. */
+function joinOr(values: string[]): string {
+  if (values.length <= 2) return values.join(' or ');
+  return `${values.slice(0, -1).join(', ')}, or ${values.at(-1)}`;
+}
+
+const FOCUS_ITEMS: Record<string, string> = {
+  arcane: 'Arcane Focus',
+  druid: 'Druidic Focus',
+  holy: 'Holy Symbol',
+  artisansTool: "Artisan's Tools",
+};
+
+/** As 5etools words it: "Ability to use an Arcane Focus or tool as a Spellcasting Focus". */
+function spellcastingFocusText(value: unknown): string {
+  const focus = '{@variantrule Spellcasting Focus|XPHB}';
+  if (!Array.isArray(value)) return `Ability to use a ${focus}`;
+  const names = strArray(value).map((v) => {
+    const item = FOCUS_ITEMS[v];
+    return item ? `{@item ${item}|XPHB}` : v;
+  });
+  const first = strArray(value)[0] ?? '';
+  const article = /^[aeiou]/i.test(FOCUS_ITEMS[first] ?? first) ? 'an' : 'a';
+  return `Ability to use ${article} ${joinOr(names)} as a ${focus}`;
 }
 
 function describe(value: unknown): string {
@@ -161,6 +219,7 @@ export function convertFeat(raw: RawEntity, ctx: ConvertContext): Feat {
   const feat: Feat = {
     ...baseFields(raw, 'feat', nameSourceId(String(raw.name), String(raw.source)), ctx, {
       reprintId: nameSource('PHB'),
+      reprintTag: 'feat',
       variantOfId: nameSourceId,
     }),
     category: featCategory(typeof raw.category === 'string' ? raw.category : ''),
@@ -177,6 +236,7 @@ export function convertSpecies(raw: RawEntity, ctx: ConvertContext): Species {
   const species: Species = {
     ...baseFields(raw, 'species', nameSourceId(String(raw.name), String(raw.source)), ctx, {
       reprintId: nameSource('PHB'),
+      reprintTag: 'race',
       variantOfId: nameSourceId,
     }),
     size: strArray(raw.size).filter((s): s is Size => SIZES.has(s)),

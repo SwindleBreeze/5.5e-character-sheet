@@ -1,8 +1,9 @@
+import { Dexie } from 'dexie';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { ContentOrigin, SourceInfo, Spell } from '../schema/index.ts';
 import { createCharacterRepo, newCharacter } from './characterRepo.ts';
 import { createContentRepo } from './contentRepo.ts';
-import { resetDb, type AppDb } from './db.ts';
+import { AppDb, resetDb } from './db.ts';
 import { DEFAULT_SETTINGS, createSettingsRepo } from './settingsRepo.ts';
 
 const origin: ContentOrigin = { adapter: 'homebrew', adapterVersion: 1, importedAt: 0 };
@@ -128,5 +129,53 @@ describe('settingsRepo', () => {
     await repo.set('enabledSources', ['XPHB']);
     expect(await repo.get('enabledSources')).toEqual(['XPHB']);
     expect(await repo.get('lastBackupAt')).toBeNull();
+  });
+});
+
+describe('schema upgrades', () => {
+  it('version 2 opens a version 1 database, keeping content and adding the extras tables', async () => {
+    const name = 'test-upgrade';
+    await Dexie.delete(name);
+    // The version 1 schema as it shipped in phase 2.
+    const v1 = new Dexie(name);
+    v1.version(1).stores({
+      spells: 'id, source, level, *classIds, *subclassIds, name',
+      classes: 'id, source',
+      classFeatures: 'id, classId, level, source',
+      subclasses: 'id, classId, source',
+      subclassFeatures: 'id, subclassId, level, source',
+      backgrounds: 'id, source',
+      feats: 'id, source, category',
+      species: 'id, source, variantOf',
+      items: 'id, source, itemKind',
+      optionalFeatures: 'id, source, *featureTypes',
+      rules: 'id, ruleKind, source',
+      sources: 'code',
+      characters: 'id, updatedAt',
+      portraits: 'id',
+      settings: 'key',
+    });
+    await v1.table('spells').put(spell('Glow', 'TST'));
+    v1.close();
+
+    const upgraded = new AppDb(name);
+    expect(await upgraded.spells.get('glow|tst')).toMatchObject({ name: 'Glow' });
+    expect(await upgraded.deities.count()).toBe(0);
+    const repo = createContentRepo(upgraded);
+    await repo.replaceSources([source('TST')], {
+      deity: [
+        {
+          ...spell('Mirela', 'TST'),
+          kind: 'deity',
+          id: 'mirela|seafolk|tst',
+          pantheon: 'Seafolk',
+          alignment: ['N'],
+          domains: ['Tempest'],
+        } as never,
+      ],
+    });
+    expect(await upgraded.deities.where('pantheon').equals('Seafolk').count()).toBe(1);
+    upgraded.close();
+    await Dexie.delete(name);
   });
 });

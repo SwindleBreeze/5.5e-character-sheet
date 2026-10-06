@@ -6,7 +6,7 @@ import { useEnabledSources, useEntitiesOfKind, useSources } from '../../content/
 import { EntitySheet } from '../../richtext/EntitySheet.tsx';
 import { entityMeta } from '../../richtext/entityMeta.ts';
 import { refKey, type ContentEntity, type EntityKind } from '../../schema/index.ts';
-import { availableOf } from '../../sources/sourceFilter.ts';
+import { availableOf, sourceOffersKind } from '../../sources/sourceFilter.ts';
 import { Badge } from '../../ui/Badge.tsx';
 import { useSheet } from '../../ui/sheetContext.ts';
 import { VirtualList } from '../../ui/VirtualList.tsx';
@@ -44,6 +44,18 @@ function Results({
   const filterDefs = filtersFor(kind);
 
   if (all === undefined) return null;
+  // The tab exists because a source lists this kind, yet none are stored: an older version of
+  // the app imported a newer pack and skipped kinds it did not know.
+  if (all.length === 0) {
+    return (
+      <div className={page.empty}>
+        <p>None of these are loaded. Your pack was imported by an older version of the app.</p>
+        <p>
+          <Link to="/library/import">Import the pack again</Link>
+        </p>
+      </div>
+    );
+  }
 
   const setFilter = (key: string, value: string) =>
     setParams(
@@ -117,8 +129,16 @@ export function LibraryPage() {
   const [params, setParams] = useSearchParams();
   const sheet = useSheet();
 
+  // Tabs for kinds no imported source can offer (2014-only ones, until phase 8) are hidden.
+  const tabs = useMemo(
+    () => LIBRARY_KINDS.filter((k) => sources?.some((s) => sourceOffersKind(s, k.kind))),
+    [sources],
+  );
   const kindParam = params.get('kind');
-  const kind: EntityKind = isLibraryKind(kindParam) ? kindParam : 'spell';
+  const kind: EntityKind =
+    isLibraryKind(kindParam) && tabs.some((t) => t.kind === kindParam)
+      ? kindParam
+      : (tabs[0]?.kind ?? 'spell');
   const query = params.get('q') ?? '';
   const selected = useMemo(() => {
     const out: Record<string, string> = {};
@@ -189,7 +209,7 @@ export function LibraryPage() {
               />
             </label>
             <div className={styles.kinds} role="tablist" aria-label="Kind">
-              {LIBRARY_KINDS.map((k) => (
+              {tabs.map((k) => (
                 <button
                   key={k.kind}
                   type="button"

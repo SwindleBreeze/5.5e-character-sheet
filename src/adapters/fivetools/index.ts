@@ -2,7 +2,7 @@
 // registry and a report. Writing to the database is the caller's job (plan §6.2).
 //
 // Pipeline: locate → read manifest → resolve `_copy` → expand `_versions` → merge subraces →
-// work out editions → convert → spell lists → filter sources → build the registry.
+// shared item text → deity reprints → work out editions → convert → spell lists → filter sources → build the registry.
 
 import {
   ENTITY_KINDS,
@@ -20,7 +20,14 @@ import {
   convertSubclassFeature,
 } from './convert/class.ts';
 import type { ConvertContext } from './convert/common.ts';
-import { convertItem, convertMagicVariant } from './convert/item.ts';
+import {
+  convertCharOption,
+  convertDeity,
+  convertFacility,
+  convertReward,
+  linkDeityReprints,
+} from './convert/extras.ts';
+import { convertItem, convertItemGroup, convertMagicVariant } from './convert/item.ts';
 import { convertBackground, convertFeat, convertSpecies } from './convert/origin.ts';
 import { convertOptionalFeature, convertRule, RULE_KIND_BY_PROP } from './convert/rules.ts';
 import { convertSpell } from './convert/spell.ts';
@@ -73,6 +80,11 @@ const CONVERTERS: [string, EntityKind, Converter][] = [
   ['baseitem', 'item', convertItem],
   ['item', 'item', convertItem],
   ['magicvariant', 'item', convertMagicVariant],
+  ['itemGroup', 'item', convertItemGroup],
+  ['deity', 'deity', convertDeity],
+  ['reward', 'reward', convertReward],
+  ['facility', 'facility', convertFacility],
+  ['charoption', 'charOption', convertCharOption],
   ...Object.entries(RULE_KIND_BY_PROP).map(([prop, ruleKind]): [string, EntityKind, Converter] => [
     prop,
     'rule',
@@ -145,6 +157,7 @@ export async function importFivetools(
   records.subrace = [];
   expandAllVersions(records, ['race'], report);
   resolveItemEntries(records, report);
+  linkDeityReprints(records.deity ?? [], manifest.sources);
 
   const editions = sourceEditions(Object.values(records).flat(), manifest.sources);
   const ctx: ConvertContext = {

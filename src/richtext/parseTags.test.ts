@@ -112,6 +112,31 @@ describe('tag categories and refs', () => {
     expect(refFromTag(tag('{@b bold}'))).toBeNull();
   });
 
+  it('links player extras (plan §6.12)', () => {
+    expect(refFromTag(tag('{@deity Mirela}'))).toEqual({
+      kind: 'deity',
+      id: 'mirela|forgotten realms|phb',
+    });
+    expect(refFromTag(tag('{@deity Brask|Seafolk|TST|the Tide God}'))).toEqual({
+      kind: 'deity',
+      id: 'brask|seafolk|tst',
+    });
+    expect(tagDisplay(tag('{@deity Brask|Seafolk|TST|the Tide God}'))).toBe('the Tide God');
+    expect(refFromTag(tag('{@reward Charm of Sparks|TST|Charm}'))).toEqual({
+      kind: 'reward',
+      id: 'charm of sparks|tst',
+    });
+    expect(refFromTag(tag('{@reward Blessing}'))?.id).toBe('blessing|dmg');
+    expect(refFromTag(tag('{@facility Spark Forge}'))).toEqual({
+      kind: 'facility',
+      id: 'spark forge|xdmg',
+    });
+    expect(refFromTag(tag('{@charoption Gift of Echoes}'))).toEqual({
+      kind: 'charOption',
+      id: 'gift of echoes|mot',
+    });
+  });
+
   it('builds feature refs from their UID fields and defaults', () => {
     expect(refFromTag(tag('{@classFeature Rage|Barbarian|TST|1}'))).toEqual({
       kind: 'classFeature',

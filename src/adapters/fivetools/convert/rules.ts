@@ -25,6 +25,7 @@ export function convertOptionalFeature(raw: RawEntity, ctx: ConvertContext): Opt
   const feature: OptionalFeature = {
     ...baseFields(raw, 'optionalFeature', nameSourceId(String(raw.name), String(raw.source)), ctx, {
       reprintId: (uid) => uidToId.nameSource(uid, 'PHB'),
+      reprintTag: 'optfeature',
     }),
     featureTypes: strArray(raw.featureType),
     prerequisites: prerequisites(raw),

@@ -34,7 +34,12 @@ Content is imported in the app under Library → Import:
   with your group. Packs hold game content: keep them private and out of the repo.
 - **5etools data**: pick the 5etools folder, its `data` folder, or the release zip. Every source is
   imported; Settings → Sources chooses which ones the app offers (2014 sources stay locked until
-  a later phase).
+  a later phase). Besides rules content, this includes deities, supernatural gifts (charms,
+  blessings, boons), Bastion facilities and character creation options.
+
+Packs work across app versions: the app imports the kinds of content it knows and skips the
+rest. If the app on a phone is older than the pack, it says so (or, for versions before the
+player extras, shows the new library tabs as empty); update the app and import the pack again.
 
 Test fixtures under `tests/fixtures/` must be small, hand-written, invented examples, and every
 JSON fixture must include `"_fixture": true`.

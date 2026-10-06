@@ -1,0 +1,42 @@
+{
+  "_fixture": true,
+  "facility": [
+    {
+      "name": "Spark Forge",
+      "source": "TST",
+      "page": 80,
+      "facilityType": "special",
+      "level": 5,
+      "prerequisite": [{ "spellcastingFocus": ["arcane", "tool"] }],
+      "space": ["roomy", "vast"],
+      "hirelings": [
+        { "exact": 1, "space": "roomy" },
+        { "exact": 2, "space": "vast" }
+      ],
+      "orders": ["craft"],
+      "entries": [
+        "After a {@variantrule Long Rest|TST} here, you gain a {@reward Charm of Sparks|TST|Charm}."
+      ]
+    },
+    {
+      "name": "Guild Hall",
+      "source": "TST",
+      "page": 81,
+      "facilityType": "special",
+      "level": 9,
+      "prerequisite": [{ "membership": ["Lantern Guild", "Net Menders"] }],
+      "space": ["vast"],
+      "hirelings": [{ "min": 2 }],
+      "orders": ["recruit"],
+      "entries": ["Guild members meet here."]
+    },
+    {
+      "name": "Practice Yard",
+      "source": "TST",
+      "page": 79,
+      "facilityType": "basic",
+      "space": ["cramped", "roomy"],
+      "entries": ["A patch of packed earth for drills."]
+    }
+  ]
+}

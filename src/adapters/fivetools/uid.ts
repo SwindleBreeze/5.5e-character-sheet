@@ -5,6 +5,8 @@
 import {
   classFeatureId,
   classId,
+  DEFAULT_PANTHEON,
+  deityId,
   nameSourceId,
   subclassFeatureId,
   subclassId,
@@ -127,6 +129,11 @@ export const uidToId = {
     const u = parseNameSourceUid(uid, PHB);
     return classId(u.name, u.source);
   },
+  /** `name|pantheon|source`; pantheon defaults to Forgotten Realms, source to PHB. */
+  deity(uid: string): Id {
+    const [name = '', pantheon, source] = fields(uid);
+    return deityId(name, orDefault(pantheon, DEFAULT_PANTHEON), orDefault(source, PHB));
+  },
 };
 
 function s(value: unknown): string {
@@ -163,6 +170,9 @@ export function identityKey(prop: string, e: RawEntity): string {
     case 'itemProperty':
     case 'itemType':
       parts = [e.abbreviation, e.source];
+      break;
+    case 'deity':
+      parts = [e.name, e.pantheon ?? DEFAULT_PANTHEON, e.source ?? PHB];
       break;
     case 'magicvariant':
       // A variant's source lives in `inherits`.

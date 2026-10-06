@@ -269,6 +269,8 @@ export interface Item extends BaseEntity {
   /** For magic items built on a base item, e.g. `longsword|xphb`. */
   baseItemId?: Id;
   variant?: MagicVariant;
+  /** For an item group (Arcane Focus, Artisan's Tools): the items it stands for. */
+  groupItemIds?: Id[];
 }
 
 export interface OptionalFeature extends BaseEntity {
@@ -304,6 +306,60 @@ export interface Rule extends BaseEntity {
 export type Condition = Rule & { ruleKind: 'condition' };
 export type WeaponMastery = Rule & { ruleKind: 'mastery' };
 
+/** A god. Ids are `name|pantheon|source`, since names repeat across pantheons (plan §6.12). */
+export interface Deity extends BaseEntity {
+  kind: 'deity';
+  pantheon: string;
+  /** Alignment codes, e.g. `['L', 'G']`. */
+  alignment: string[];
+  domains: string[];
+  /** Epithet, e.g. "Goddess of the moon". */
+  title?: string;
+  /** Group within the pantheon, e.g. "The Seldarine". */
+  category?: string;
+  province?: string;
+  symbol?: string;
+  altNames?: string[];
+}
+
+/** A supernatural gift a DM hands out: charm, blessing, boon, piety trait… */
+export interface Reward extends BaseEntity {
+  kind: 'reward';
+  /** As in the data: `Charm`, `Blessing`, `Boon`, `Piety Trait`, `Draconic Gift`… */
+  rewardType: string;
+  rarity?: string;
+  /** Bastion facilities that grant this reward. */
+  facilityIds?: Id[];
+}
+
+/** Hirelings a facility comes with; `space` limits the count to one facility size. */
+export interface FacilityHirelings {
+  exact?: number;
+  min?: number;
+  space?: string;
+}
+
+/** A Bastion facility (2024 DMG). Basic facilities have no level. */
+export interface Facility extends BaseEntity {
+  kind: 'facility';
+  facilityType: 'basic' | 'special';
+  level?: number;
+  prerequisites: Prereqs;
+  /** Allowed sizes: `cramped`, `roomy`, `vast`. */
+  space: string[];
+  hirelings: FacilityHirelings[];
+  /** Orders the facility accepts: `craft`, `empower`, `harvest`, `recruit`, `research`, `trade`. */
+  orders: string[];
+}
+
+/** A 2014-era character creation option (Supernatural Gift, Dark Gift, Character Secret…). */
+export interface CharOption extends BaseEntity {
+  kind: 'charOption';
+  /** 5etools codes: `SG`, `DG`, `CS`, `RF:B`. */
+  optionTypes: string[];
+  prerequisites: Prereqs;
+}
+
 export interface EntityByKind {
   spell: Spell;
   class: ClassDef;
@@ -316,6 +372,10 @@ export interface EntityByKind {
   item: Item;
   optionalFeature: OptionalFeature;
   rule: Rule;
+  deity: Deity;
+  reward: Reward;
+  facility: Facility;
+  charOption: CharOption;
 }
 
 export type ContentEntity = EntityByKind[EntityKind];

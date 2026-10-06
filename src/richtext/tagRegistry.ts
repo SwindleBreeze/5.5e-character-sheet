@@ -5,6 +5,8 @@ import type { EntityKind, Ref, RuleKind } from '../schema/index.ts';
 import {
   classFeatureId,
   classId,
+  DEFAULT_PANTHEON,
+  deityId,
   nameSourceId,
   ruleId,
   subclassFeatureId,
@@ -46,6 +48,10 @@ const ENTITY_TAGS: Record<string, EntityTag> = {
   language: { kind: 'rule', ruleKind: 'language', defaultSource: 'PHB' },
   itemProperty: { kind: 'rule', ruleKind: 'itemProperty', defaultSource: 'PHB' },
   itemMastery: { kind: 'rule', ruleKind: 'mastery', defaultSource: 'XPHB' },
+  deity: { kind: 'deity', defaultSource: 'PHB' },
+  reward: { kind: 'reward', defaultSource: 'DMG' },
+  facility: { kind: 'facility', defaultSource: 'XDMG' },
+  charoption: { kind: 'charOption', defaultSource: 'MOT' },
 };
 
 /** Default source per 5etools tag, for tags that refer to entities by `name|source`. */
@@ -287,6 +293,9 @@ export function refFromTag(token: TagToken): Ref | null {
         ),
       };
     }
+    case 'deity':
+      // name|pantheon|source
+      return { kind: 'deity', id: deityId(name, part(token, 1) ?? DEFAULT_PANTHEON, src(2)) };
     case 'rule':
       return { kind: 'rule', id: ruleId(info.ruleKind ?? 'variantrule', name, src(1)) };
     default:

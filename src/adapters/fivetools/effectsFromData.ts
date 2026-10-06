@@ -9,7 +9,9 @@ import {
   type Ability,
   type ChoiceSlot,
   type Effect,
+  type Formula,
   type FeatProgression,
+  type Id,
   type MoveMode,
   type OptionalFeatureProgression,
   type ProficiencyCategory,
@@ -392,21 +394,52 @@ const GRANT_MODE: Record<SpellMode, SpellGrant['mode']> = {
   expanded: 'expanded',
 };
 
+/** `fireball|xphb#3` → the spell id and the level it is cast at; `#c` only marks a cantrip. */
+function spellRef(ref: string): { id: string; castAtLevel?: number } {
+  const [uid = '', suffix = ''] = ref.split('#');
+  const [name = '', source = 'PHB'] = uid.split('|');
+  const out: { id: string; castAtLevel?: number } = { id: nameSourceId(name, source || 'PHB') };
+  if (/^\d$/.test(suffix)) out.castAtLevel = Number(suffix);
+  return out;
+}
+
 function spellId(ref: string): string {
-  const [name = '', source = 'PHB'] = ref.split('#')[0]!.split('|');
-  return nameSourceId(name, source || 'PHB');
+  return spellRef(ref).id;
+}
+
+/** Sends every `limited` use to one counter of the entity, e.g. a charm's charges. */
+export interface LimitedUses {
+  resourceId: string;
+  /** What one cast of this spell costs; 1 when not given. */
+  cost?: (spellId: Id) => number | undefined;
+}
+
+export interface SpellEffectOptions {
+  limited?: LimitedUses;
 }
 
 interface GrantContext {
   base: Omit<SpellGrant, 'spell'>;
   nextSlot: () => string;
+  /** Prefix for shared-use resource ids, e.g. `spells.0.innate._`. */
+  poolPrefix: string;
+  /** Display name of shared-use resources: the entity's, or the alternative's. */
+  poolName: string;
+  /** Collects the `resource` effects that shared uses create. */
+  resources: Effect[];
+  /** 5etools `resourceName`: what `resource` uses are paid from (Ki, Focus Point). */
+  resourceName?: string;
+  limited?: LimitedUses;
 }
 
 function grantsFromItems(items: unknown, ctx: GrantContext): SpellGrant[] {
   const out: SpellGrant[] = [];
   for (const item of asArray(items)) {
     if (typeof item === 'string') {
-      out.push({ ...ctx.base, spell: { id: spellId(item) } });
+      const ref = spellRef(item);
+      const grant: SpellGrant = { ...ctx.base, spell: { id: ref.id } };
+      if (ref.castAtLevel !== undefined) grant.castAtLevel = ref.castAtLevel;
+      out.push(grant);
     } else if (isObject(item) && typeof item.all === 'string') {
       out.push({ ...ctx.base, spell: { all: item.all } });
     } else if (isObject(item) && item.choose !== undefined) {
@@ -428,25 +461,65 @@ function grantsFromItems(items: unknown, ctx: GrantContext): SpellGrant[] {
   return out;
 }
 
-/** `{daily: {"1": [...]}, rest: {...}, will: [...], ritual: [...], resource: {...}, _: [...]}` */
-function grantsFromUses(value: unknown, ctx: GrantContext, resourceName?: string): SpellGrant[] {
+const USE_RECHARGE: Record<string, Recharge> = { daily: 'long', rest: 'short', limited: 'none' };
+
+/** Use count keys: `1`, `1e` (each), `wis` (that modifier, at least 1) or `pb`. */
+function usesCount(key: string): Formula {
+  const n = num(key.replace(/e$/, ''));
+  if (n !== undefined) return n;
+  if (isAbility(key)) return `max(1,mod.${key})`;
+  if (key === 'pb') return 'pb';
+  return 1;
+}
+
+/**
+ * `{daily: {"1": [...]}, rest: {...}, limited: {...}, will: [...], ritual: [...], resource:
+ * {...}, _: [...]}`. `limited` uses never recharge (charms). A count without the `e` ("each")
+ * suffix over several spells is one counter they share: "cast one of these once". `resource`
+ * keys are what one cast costs.
+ */
+function grantsFromUses(value: unknown, ctx: GrantContext): SpellGrant[] {
   if (!isObject(value)) return grantsFromItems(value, ctx);
+  const withUses = (items: unknown, uses: NonNullable<SpellGrant['uses']>) =>
+    grantsFromItems(items, { ...ctx, base: { ...ctx.base, uses } });
   const out: SpellGrant[] = [];
   for (const [key, inner] of Object.entries(value)) {
     if (key === '_') out.push(...grantsFromItems(inner, ctx));
-    else if (key === 'will')
-      out.push(...grantsFromItems(inner, { ...ctx, base: { ...ctx.base, uses: 'atWill' } }));
-    else if (key === 'ritual')
-      out.push(...grantsFromItems(inner, { ...ctx, base: { ...ctx.base, uses: 'ritual' } }));
-    else if ((key === 'daily' || key === 'rest' || key === 'resource') && isObject(inner)) {
-      const recharge: Recharge = key === 'daily' ? 'long' : key === 'rest' ? 'short' : 'none';
+    else if (key === 'will') out.push(...withUses(inner, 'atWill'));
+    else if (key === 'ritual') out.push(...withUses(inner, 'ritual'));
+    else if (key === 'resource' && isObject(inner)) {
+      for (const [cost, items] of Object.entries(inner)) {
+        out.push(
+          ...(ctx.resourceName
+            ? withUses(items, { resourceName: ctx.resourceName, cost: num(cost) ?? 1 })
+            : grantsFromItems(items, ctx)),
+        );
+      }
+    } else if (key === 'limited' && ctx.limited && isObject(inner)) {
+      const { resourceId, cost } = ctx.limited;
+      for (const items of Object.values(inner)) {
+        for (const grant of grantsFromItems(items, ctx)) {
+          const c = 'id' in grant.spell ? cost?.(grant.spell.id) : undefined;
+          out.push({ ...grant, uses: { resource: resourceId, cost: c ?? 1 } });
+        }
+      }
+    } else if (USE_RECHARGE[key] && isObject(inner)) {
+      const recharge = USE_RECHARGE[key];
       for (const [countKey, items] of Object.entries(inner)) {
-        const count = num(countKey.replace(/e$/, '')) ?? 1;
-        const base: Omit<SpellGrant, 'spell'> =
-          key === 'resource'
-            ? { ...ctx.base, ...(resourceName ? { resourceName } : {}) }
-            : { ...ctx.base, uses: { count, recharge } };
-        out.push(...grantsFromItems(items, { ...ctx, base }));
+        const count = usesCount(countKey);
+        if (!countKey.endsWith('e') && asArray(items).length > 1) {
+          const resourceId = `${ctx.poolPrefix}.${key}.${countKey}`;
+          ctx.resources.push({
+            type: 'resource',
+            resourceId,
+            name: ctx.poolName,
+            max: count,
+            recharge,
+          });
+          out.push(...withUses(items, { resource: resourceId, cost: 1 }));
+        } else {
+          out.push(...withUses(items, { count, recharge }));
+        }
       }
     }
   }
@@ -463,10 +536,21 @@ function spellAbility(block: RawObject, slot: string): SpellGrant['ability'] | u
   return undefined;
 }
 
-function spellBlock(block: unknown, slot: string): Effect[] {
+function spellBlock(
+  block: unknown,
+  slot: string,
+  name: string,
+  opts: SpellEffectOptions,
+): Effect[] {
   if (!isObject(block)) return [];
   const ability = spellAbility(block, slot);
-  const resourceName = typeof block.resourceName === 'string' ? block.resourceName : undefined;
+  const resources: Effect[] = [];
+  const shared = {
+    poolName: typeof block.name === 'string' ? block.name : name,
+    resources,
+    ...(typeof block.resourceName === 'string' ? { resourceName: block.resourceName } : {}),
+    ...(opts.limited ? { limited: opts.limited } : {}),
+  };
   const grants: SpellGrant[] = [];
   for (const mode of SPELL_MODES) {
     const byLevel = block[mode];
@@ -481,16 +565,24 @@ function spellBlock(block: unknown, slot: string): Effect[] {
       if (level !== undefined) base.atLevel = level;
       if (spellLevel !== undefined) base.atSpellLevel = Number(spellLevel);
       if (ability !== undefined) base.ability = ability;
-      grants.push(...grantsFromUses(value, { base, nextSlot: next }, resourceName));
+      grants.push(
+        ...grantsFromUses(value, {
+          ...shared,
+          base,
+          nextSlot: next,
+          poolPrefix: `${slot}.${mode}.${levelKey}`,
+        }),
+      );
     }
   }
-  return grants.length ? [{ type: 'grantSpells', spells: grants }] : [];
+  return grants.length ? [...resources, { type: 'grantSpells', spells: grants }] : [];
 }
 
 /** `additionalSpells`. Several blocks are alternatives (Magic Initiate: Cleric, Druid, Wizard). */
-export function spellEffects(raw: RawEntity): Effect[] {
+export function spellEffects(raw: RawEntity, opts: SpellEffectOptions = {}): Effect[] {
   const blocks = asArray(raw.additionalSpells);
-  if (blocks.length <= 1) return spellBlock(blocks[0], 'spells.0');
+  const name = typeof raw.name === 'string' ? raw.name : 'Uses';
+  if (blocks.length <= 1) return spellBlock(blocks[0], 'spells.0', name, opts);
   return [
     {
       type: 'optionChoice',
@@ -503,7 +595,7 @@ export function spellEffects(raw: RawEntity): Effect[] {
       type: 'ifChoice',
       slot: 'spellsSet',
       value: String(i),
-      effects: spellBlock(b, `spells.${i}`),
+      effects: spellBlock(b, `spells.${i}`, name, opts),
     })),
   ];
 }
@@ -610,13 +702,13 @@ export function progressionEffects(
 }
 
 /** Everything above that applies to the record. */
-export function effectsFromData(raw: RawEntity): Effect[] {
+export function effectsFromData(raw: RawEntity, opts: SpellEffectOptions = {}): Effect[] {
   return [
     ...abilityEffects(raw),
     ...proficiencyEffects(raw),
     ...defenseEffects(raw),
     ...senseEffects(raw),
     ...featEffects(raw),
-    ...spellEffects(raw),
+    ...spellEffects(raw, opts),
   ];
 }

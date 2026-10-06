@@ -1,0 +1,13 @@
+{
+  "_fixture": true,
+  "charoption": [
+    {
+      "name": "Gift of Echoes",
+      "source": "OLD",
+      "page": 50,
+      "prerequisite": [{ "race": [{ "name": "stoneborn" }, { "name": "mossling" }] }],
+      "optionType": ["SG"],
+      "entries": ["Your voice echoes a moment after you speak."]
+    }
+  ]
+}

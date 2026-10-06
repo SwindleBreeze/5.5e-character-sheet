@@ -10,6 +10,7 @@ import { useSources } from '../../content/hooks.ts';
 import { repos } from '../../db/repos.ts';
 import { detectEnv, shouldShowInstallGuide } from '../../db/storage.ts';
 import { Button } from '../../ui/Button.tsx';
+import { fileAccept } from '../../ui/fileAccept.ts';
 import { InstallGuide } from '../settings/InstallGuide.tsx';
 import { ImportReportView } from './ImportReportView.tsx';
 import styles from './ImportPage.module.css';
@@ -128,7 +129,7 @@ export function ImportPage() {
           <label className={styles.fileButton} data-disabled={busy || undefined}>
             <input
               type="file"
-              accept=".gz,.json,application/gzip,application/json"
+              accept={fileAccept('.gz,.json,application/gzip,application/json')}
               disabled={busy}
               onChange={onPack}
             />
@@ -162,7 +163,12 @@ export function ImportPage() {
               </label>
             )}
             <label className={styles.fileButton} data-disabled={busy || undefined}>
-              <input type="file" accept=".zip,application/zip" disabled={busy} onChange={onZip} />
+              <input
+                type="file"
+                accept={fileAccept('.zip,application/zip')}
+                disabled={busy}
+                onChange={onZip}
+              />
               Choose zip
             </label>
           </div>

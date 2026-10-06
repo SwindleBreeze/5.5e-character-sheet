@@ -18,6 +18,7 @@ import {
 import { repos } from '../../db/repos.ts';
 import { Badge } from '../../ui/Badge.tsx';
 import { Button } from '../../ui/Button.tsx';
+import { fileAccept } from '../../ui/fileAccept.ts';
 import { useSheet } from '../../ui/sheetContext.ts';
 import styles from './SettingsPage.module.css';
 
@@ -192,7 +193,7 @@ export function BackupCard() {
         <label className={styles.fileButton}>
           <input
             type="file"
-            accept=".json,application/json"
+            accept={fileAccept('.json,application/json')}
             onChange={(e) => void onRestoreFile(e)}
           />
           Restore…

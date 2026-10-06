@@ -1,6 +1,7 @@
 // Pack validation with zod, loaded only when a pack is opened. It checks the envelope, the
 // source registry and every entity's base fields; kind-specific fields are trusted, since
-// packs are made by this app.
+// packs are made by this app. Entity kinds this version does not know (from a newer app) are
+// dropped and counted, not refused.
 
 import { z } from 'zod';
 import { ENTITY_KINDS, PACK_FORMAT, PACK_VERSION, type Pack } from '../../schema/index.ts';
@@ -39,7 +40,7 @@ function entity(kind: string) {
 
 const packSchema = z.object({
   format: z.literal(PACK_FORMAT),
-  version: z.literal(PACK_VERSION),
+  version: z.number().int().min(1).max(PACK_VERSION),
   adapterVersion: z.number(),
   exportedAt: z.number(),
   sources: z.array(sourceInfo),
@@ -48,7 +49,13 @@ const packSchema = z.object({
   ),
 });
 
-export function validatePack(json: unknown): Pack {
+export interface ValidatedPack {
+  pack: Pack;
+  /** Entity kinds this version of the app does not know, with their entry counts. */
+  skippedKinds: Record<string, number>;
+}
+
+export function validatePack(json: unknown): ValidatedPack {
   const head = typeof json === 'object' && json !== null ? (json as Record<string, unknown>) : {};
   if (head.format !== PACK_FORMAT) throw new PackError('This file is not a content pack.');
   if (typeof head.version === 'number' && head.version > PACK_VERSION) {
@@ -61,5 +68,11 @@ export function validatePack(json: unknown): Pack {
       `This pack is damaged (${issue?.path.join('.') || 'root'}: ${issue?.message}).`,
     );
   }
-  return parsed.data as unknown as Pack;
+  const known = new Set<string>(ENTITY_KINDS);
+  const skippedKinds: Record<string, number> = {};
+  const entities = (head.entities ?? {}) as Record<string, unknown>;
+  for (const [kind, list] of Object.entries(entities)) {
+    if (!known.has(kind)) skippedKinds[kind] = Array.isArray(list) ? list.length : 0;
+  }
+  return { pack: parsed.data as unknown as Pack, skippedKinds };
 }
