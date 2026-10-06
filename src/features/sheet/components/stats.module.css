@@ -1,0 +1,183 @@
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-height: 32px;
+}
+
+.sectionTitle {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-sm);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+[data-dir='b'] .sectionTitle {
+  color: var(--color-text);
+  font-size: var(--font-size-md);
+  letter-spacing: var(--heading-tracking);
+  text-transform: none;
+}
+
+/* ---- Ability cards ---- */
+
+.ability {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-1) var(--space-3);
+  border: var(--card-border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--card-shadow);
+}
+
+.abilityAbbr {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.abilityScore {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 44px;
+  min-height: 28px;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-stat);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  justify-content: center;
+}
+
+.abilityHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: var(--line-height-xs);
+}
+
+/* ---- Stat pills ---- */
+
+.pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-width: 0;
+  min-height: 84px;
+  padding: var(--space-2);
+  border: var(--card-border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--card-shadow);
+  color: var(--color-text);
+  text-align: center;
+}
+
+button.pill:active {
+  background: var(--color-surface-2);
+}
+
+.pill[data-pressed='true'] {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+
+.pillLabel,
+.pillLabelButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: var(--line-height-xs);
+  text-transform: uppercase;
+}
+
+.pillLabelButton {
+  min-height: 24px;
+  padding: 0 var(--space-1);
+  border: 0;
+  background: transparent;
+}
+
+.pillValue {
+  font-family: var(--font-stat);
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  line-height: var(--line-height-2xl);
+}
+
+.pillSub {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-xs);
+}
+
+/* ---- Save, skill and value rows ---- */
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--row-height);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.row:last-child {
+  border-bottom: 0;
+}
+
+.rowLabel {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  min-height: var(--row-height);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  text-align: left;
+}
+
+.rowName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowAbility {
+  color: var(--color-text-subtle);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.rowValue,
+.passive {
+  min-width: 32px;
+  font-family: var(--font-stat);
+  font-weight: 600;
+  text-align: right;
+}
+
+.passive {
+  color: var(--color-text-subtle);
+  font-size: var(--font-size-sm);
+}

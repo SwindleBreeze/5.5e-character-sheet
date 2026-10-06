@@ -52,8 +52,9 @@ describe('QuickBuilder', () => {
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Quick build' }),
     ).toBeInTheDocument();
-    // The sheet's Main tab shows the same values, from the character's own content.
-    expect(await screen.findByText(/Level 5: Brute 5 \(Path of the Spark\)/)).toBeInTheDocument();
+    // The sheet shows it, from the character's own content.
+    expect(await screen.findByText('Brute 5 (Path of the Spark)')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Strength score 18/ })).toBeInTheDocument();
     const [saved] = await repos().characters.list();
     expect(saved?.log).toHaveLength(5);
   });

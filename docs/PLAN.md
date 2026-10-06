@@ -798,7 +798,9 @@ Effect +=
 
 Engine subtotal: about 34 days.
 
-#### 3B: Visual system and Main tab (design gate)
+#### 3B: Visual system and Main tab (design gate) (3.13–3.15 done; waiting at the gate)
+
+How to review at the gate: Settings → Theme → **Design (trying out)** switches the whole app between direction A (Parchment) and B (Slate); Settings → Developer tools → **Design gallery** shows both in light and dark side by side at phone, tablet and desktop width (tokens, components, or a saved character's Main tab). Build characters with the quick builder. After the pick, the other direction's tokens and the switch are deleted.
 
 | Step | Work                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Est. |
 | ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- |

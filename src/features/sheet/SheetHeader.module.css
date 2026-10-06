@@ -1,0 +1,121 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-header);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--safe-top) var(--space-3) var(--space-2) var(--space-1);
+  background: var(--color-bg);
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--topbar-height);
+}
+
+.back {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--tap-min);
+  height: var(--tap-min);
+  color: var(--color-accent);
+  font-size: 1.75rem;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.identity {
+  flex: 1;
+  min-width: 0;
+}
+
+.name {
+  overflow: hidden;
+  font-size: var(--font-size-xl);
+  line-height: var(--line-height-xl);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.summary {
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stats {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ac {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  font-family: var(--font-stat);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.acLabel {
+  color: var(--color-text-muted);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-xs);
+  letter-spacing: 0.06em;
+}
+
+.status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  padding-left: calc(var(--tap-min) + var(--space-2));
+}
+
+.condition {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+}
+
+.attentionList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.attentionList h3 {
+  margin-bottom: var(--space-1);
+  font-size: var(--font-size-md);
+}
+
+.attentionList ul {
+  margin: 0;
+  padding-left: var(--space-5);
+}
+
+.muted {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}

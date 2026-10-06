@@ -17,6 +17,7 @@ import {
   type SourceCode,
   type SourceInfo,
 } from '../schema/index.ts';
+import { availableOf } from '../sources/sourceFilter.ts';
 import { loadContentIndex } from './loadIndex.ts';
 
 /** `undefined` while loading, `null` when the entity is not imported. */
@@ -76,5 +77,19 @@ export function useAllContent(): AllContent | undefined {
     const lists = await Promise.all(ENTITY_KINDS.map((k) => repos().content.listByKind(k)));
     const all = lists.flat() as ContentEntity[];
     return { index: createContentIndex(all), catalog: createCatalog(all, new Set(enabled)) };
+  }, [enabled.join()]);
+}
+
+/** Conditions the enabled sources offer, by name, for the condition picker. */
+export function useConditionOptions(): { id: string; name: string }[] | undefined {
+  const enabled = useEnabledSources();
+  return useLiveQuery(async () => {
+    const rules = await repos().content.listByKind('rule');
+    return availableOf(
+      rules.filter((r) => r.ruleKind === 'condition'),
+      new Set(enabled),
+    )
+      .map((r) => ({ id: r.id, name: r.name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
   }, [enabled.join()]);
 }

@@ -29,7 +29,7 @@ export function AppRoutes() {
         <Route path="library" element={<LibraryPage />} />
         <Route path="library/import" element={<ImportPage />} />
         <Route path="settings" element={<SettingsPage />} />
-        {import.meta.env.DEV && <Route path="dev/design" element={<DesignGallery />} />}
+        <Route path="dev/design" element={<DesignGallery />} />
         <Route path="dev/build" element={<QuickBuilder />} />
         <Route path="dev/coverage" element={<CoverageScreen />} />
         <Route

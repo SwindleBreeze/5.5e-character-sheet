@@ -10,6 +10,8 @@ afterEach(() => {
   cleanup();
   localStorage.clear();
   delete document.documentElement.dataset.theme;
+  delete document.documentElement.dataset.scheme;
+  delete document.documentElement.dataset.dir;
 });
 
 // jsdom lacks matchMedia; vaul and the storage helpers query it.

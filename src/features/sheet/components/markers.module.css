@@ -1,0 +1,57 @@
+.proficiency {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border: 1.5px solid var(--color-border-strong);
+  border-radius: 50%;
+}
+
+.proficiency[data-level='half'] {
+  border-color: var(--color-proficiency);
+  background: linear-gradient(90deg, var(--color-proficiency) 50%, transparent 50%);
+}
+
+.proficiency[data-level='proficient'] {
+  border-color: var(--color-proficiency);
+  background: var(--color-proficiency);
+}
+
+.proficiency[data-level='expertise'] {
+  border-color: var(--color-expertise);
+  background: var(--color-expertise);
+  box-shadow:
+    0 0 0 2px var(--color-surface),
+    0 0 0 3.5px var(--color-expertise);
+}
+
+.hint {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  line-height: var(--line-height-xs);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  background: var(--color-surface-3);
+}
+
+.hint[data-mode='advantage'] {
+  color: var(--color-advantage);
+  background: var(--color-positive-soft);
+}
+
+.hint[data-mode='disadvantage'] {
+  color: var(--color-disadvantage);
+  background: var(--color-negative-soft);
+}
+
+.override {
+  color: var(--color-accent);
+  font-size: var(--font-size-sm);
+  line-height: 1;
+}

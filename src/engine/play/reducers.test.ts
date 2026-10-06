@@ -21,8 +21,11 @@ import {
   restoreResource,
   restoreSlot,
   setConcentration,
+  setDeathSaves,
   setExhaustion,
   setHeroicInspiration,
+  setHitDiceUsed,
+  setOverride,
   setTempHp,
   shortRest,
   spendResource,
@@ -292,5 +295,19 @@ describe('small state changes', () => {
     expect(used.state.turn.ridersUsed).toEqual(['hex-strike']);
     expect(useRider(used, 'hex-strike')).toBe(used);
     expect(endTurn(used).state.turn.ridersUsed).toEqual([]);
+  });
+
+  it('death-save marks, hit dice spent and overrides, set directly', () => {
+    const c = brute();
+    expect(setDeathSaves(c, { successes: 5, failures: -1 }).state.deathSaves).toEqual({
+      successes: 3,
+      failures: 0,
+    });
+    // Brute 5: five d12s.
+    expect(setHitDiceUsed(c, sheet(c), 12, 9).state.hitDiceUsed[12]).toBe(5);
+    expect(setHitDiceUsed(c, sheet(c), 8, 2).state.hitDiceUsed[8]).toBe(0);
+    const overridden = setOverride(c, 'ac', 18);
+    expect(sheet(overridden).ac.value).toBe(18);
+    expect(setOverride(overridden, 'ac', undefined).overrides).toEqual({});
   });
 });

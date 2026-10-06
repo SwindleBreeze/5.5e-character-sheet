@@ -16,7 +16,7 @@ body {
   color: var(--color-text);
   font-family: var(--font-sans);
   font-size: var(--font-size-md);
-  line-height: 1.45;
+  line-height: var(--line-height-md);
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
@@ -42,7 +42,15 @@ h1,
 h2,
 h3 {
   margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-display);
+  letter-spacing: var(--heading-tracking);
   line-height: 1.2;
+}
+
+/* Numbers that line up and don't jump: stats, counters, totals. */
+.numeric {
+  font-variant-numeric: var(--numeric);
 }
 
 p {

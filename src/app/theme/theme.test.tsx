@@ -1,7 +1,13 @@
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { THEME_STORAGE_KEY, applyThemePref, readThemePref } from './theme.ts';
-import { useTheme } from './useTheme.ts';
+import {
+  DIRECTION_STORAGE_KEY,
+  THEME_STORAGE_KEY,
+  applyThemePref,
+  readDirection,
+  readThemePref,
+} from './theme.ts';
+import { useDirection, useTheme } from './useTheme.ts';
 
 describe('theme', () => {
   it('defaults to system and ignores unknown stored values', () => {
@@ -10,11 +16,28 @@ describe('theme', () => {
     expect(readThemePref()).toBe('system');
   });
 
-  it('applies data-theme only for explicit choices', () => {
+  it('applies data-theme only for explicit choices, and always the scheme in effect', () => {
     applyThemePref('dark');
     expect(document.documentElement.dataset.theme).toBe('dark');
+    expect(document.documentElement.dataset.scheme).toBe('dark');
     applyThemePref('system');
     expect(document.documentElement.dataset.theme).toBeUndefined();
+    // The test environment's system preference is light.
+    expect(document.documentElement.dataset.scheme).toBe('light');
+  });
+
+  it('switches the design direction and remembers it', () => {
+    expect(readDirection()).toBe('a');
+    localStorage.setItem(DIRECTION_STORAGE_KEY, 'z');
+    expect(readDirection()).toBe('a');
+    const { result } = renderHook(() => useDirection());
+    act(() => result.current[1]('b'));
+    expect(result.current[0]).toBe('b');
+    expect(document.documentElement.dataset.dir).toBe('b');
+    expect(localStorage.getItem(DIRECTION_STORAGE_KEY)).toBe('b');
+    act(() => result.current[1]('a'));
+    expect(document.documentElement.dataset.dir).toBe('a');
+    expect(localStorage.getItem(DIRECTION_STORAGE_KEY)).toBeNull();
   });
 
   it('switches theme, saves the choice, and clears it for system', () => {

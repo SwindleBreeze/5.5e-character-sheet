@@ -7,6 +7,16 @@
   background: var(--color-surface-2);
 }
 
+.segmented:has([data-wide]) {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.subTitle {
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
 .segment {
   position: relative;
   display: grid;

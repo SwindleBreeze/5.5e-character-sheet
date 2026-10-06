@@ -2,7 +2,7 @@
 // derived sheet to the next character. The UI dispatches them and saves the result. None of
 // them refuse: limits clamp, so the player stays in charge.
 
-import type { Character, Id, Ref } from '../../schema/index.ts';
+import type { Character, Id, OverrideKey, Ref } from '../../schema/index.ts';
 import { cryptoRng, roll, type Rng } from '../dice/roll.ts';
 import type { DerivedGrantedSpell, DerivedOutcome, DerivedSheet } from '../derive/types.ts';
 
@@ -300,6 +300,44 @@ export function useRider(c: Character, riderId: string): Character {
   if (c.state.turn.ridersUsed.includes(riderId)) return c;
   const n = clone(c);
   n.state.turn.ridersUsed.push(riderId);
+  return n;
+}
+
+/** Set death-save marks directly (tapping the pips), each 0 to 3. */
+export function setDeathSaves(
+  c: Character,
+  saves: { successes: number; failures: number },
+): Character {
+  const n = clone(c);
+  n.state.deathSaves = {
+    successes: clamp(Math.floor(saves.successes), 0, 3),
+    failures: clamp(Math.floor(saves.failures), 0, 3),
+  };
+  return n;
+}
+
+/** Set how many hit dice of one size are spent, 0 to the number the sheet has. */
+export function setHitDiceUsed(
+  c: Character,
+  sheet: DerivedSheet,
+  faces: number,
+  used: number,
+): Character {
+  const total = sheet.hitDice.find((h) => h.faces === faces)?.total ?? 0;
+  const n = clone(c);
+  n.state.hitDiceUsed[faces] = clamp(Math.floor(used), 0, total);
+  return n;
+}
+
+/** The player's own value for a number on the sheet (plan §4.4); `undefined` clears it. */
+export function setOverride(
+  c: Character,
+  key: OverrideKey,
+  value: number | string | boolean | undefined,
+): Character {
+  const n = clone(c);
+  if (value === undefined) delete n.overrides[key];
+  else n.overrides[key] = value;
   return n;
 }
 
