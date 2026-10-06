@@ -8,7 +8,8 @@ archives; `npm run content-guard` (also run in CI) enforces this.
 
 ## Development
 
-Requires Node 24.
+Requires Node 24. The project plan, with phase status and design decisions, is in
+[docs/PLAN.md](docs/PLAN.md).
 
 ```sh
 npm install
