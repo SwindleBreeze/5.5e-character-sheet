@@ -1,4 +1,6 @@
-# 5.5e Character Sheet PWA: Plan (phases 1–2 in detail, 3–8 in outline)
+# 5.5e Character Sheet PWA: Plan (phases 1–5 in detail, 6–8 in outline)
+
+> **Status (2026-10-06):** phases 1, 2 and 2b are done and pushed. §9 now plans phases 3–5 at implementation level. The source of truth for this plan is `docs/PLAN.md` in the repo.
 
 ## Context
 
@@ -12,25 +14,30 @@ The repo and the hosted build hold no book content. Content comes from 5etools d
 
 The public-release work itself (bundled SRD) is deferred to phase 8.
 
-The project folder holds only `5etools-src-2.36.1/` today. No app code exists yet. I checked the local 5etools 2.36.1 data before writing this plan, and §1 lists where it changes assumptions in the brief.
+When this plan was first written, the project folder held only `5etools-src-2.36.1/`. I checked the local 5etools 2.36.1 data before writing it, and §1 lists where that changed assumptions in the brief. The phase 3–5 detail in §9 was checked against the code as committed after phase 2b (`f5338c9`) and against a full import of 2.36.1.
 
 ### Decisions so far
 
-| Topic               | Decision                                                                                                                                                                                                                                                         |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Audience            | Private app for one group. Public-release features move to phase 8.                                                                                                                                                                                              |
-| Classes & sources   | Every class and every source in the 5etools data can be imported. Players switch sources on and off, globally and per character (§6.7).                                                                                                                          |
-| 2014 vs 2024        | Phases 1–5 are **2024 only**: 2014 entities (including 2014 subclasses re-homed onto 2024 classes) are hidden. The "Show 2014" toggle comes in phase 8.                                                                                                          |
-| SRD 5.2.1           | Bundled in **phase 8**, from a CC-BY structured conversion checked against the official PDF. Never from 5etools.                                                                                                                                                 |
-| 5etools folder      | Stays in the project folder and is gitignored.                                                                                                                                                                                                                   |
-| Devices             | Full iOS parity. Storage strategy is in §6.9.                                                                                                                                                                                                                    |
-| Hosting             | GitHub Pages, public repo `5.5e-character-sheet`, Vite `base: '/5.5e-character-sheet/'`, deployed by GitHub Actions.                                                                                                                                             |
-| Content on phones   | **Pack files are the main path.** An import from the 5etools zip is a desktop task.                                                                                                                                                                              |
-| Character choices   | **One source of truth: the per-level choice log.** There is no top-level choices map (§4.4).                                                                                                                                                                     |
-| Class table columns | Referenced by a **normalized key**, not by display label (§4.3).                                                                                                                                                                                                 |
-| Design              | In phase 3, the Main tab is fully styled first to set the visual system. Other tabs come after sign-off.                                                                                                                                                         |
-| Mapping order       | Fixed order, A–Z by class (phase 6).                                                                                                                                                                                                                             |
-| Player extras       | Deities, supernatural gifts (charms, blessings, boons), bastion facilities and 2014 character options are imported (phase 2b, §6.12, done) and used on the sheet (phases 3 and 7). Monsters, book/adventure prose, cult boons and UA psionics stay out of scope. |
+| Topic                        | Decision                                                                                                                                                                                                                                                         |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Audience                     | Private app for one group. Public-release features move to phase 8.                                                                                                                                                                                              |
+| Classes & sources            | Every class and every source in the 5etools data can be imported. Players switch sources on and off, globally and per character (§6.7).                                                                                                                          |
+| 2014 vs 2024                 | Phases 1–5 are **2024 only**: 2014 entities (including 2014 subclasses re-homed onto 2024 classes) are hidden. The "Show 2014" toggle comes in phase 8.                                                                                                          |
+| SRD 5.2.1                    | Bundled in **phase 8**, from a CC-BY structured conversion checked against the official PDF. Never from 5etools.                                                                                                                                                 |
+| 5etools folder               | Stays in the project folder and is gitignored.                                                                                                                                                                                                                   |
+| Devices                      | Full iOS parity. Storage strategy is in §6.9.                                                                                                                                                                                                                    |
+| Hosting                      | GitHub Pages, public repo `5.5e-character-sheet`, Vite `base: '/5.5e-character-sheet/'`, deployed by GitHub Actions.                                                                                                                                             |
+| Content on phones            | **Pack files are the main path.** An import from the 5etools zip is a desktop task.                                                                                                                                                                              |
+| Character choices            | **One source of truth: the per-level choice log.** There is no top-level choices map (§4.4).                                                                                                                                                                     |
+| Class table columns          | Referenced by a **normalized key**, not by display label (§4.3).                                                                                                                                                                                                 |
+| Design                       | In phase 3, the Main tab is fully styled first to set the visual system. Other tabs come after sign-off.                                                                                                                                                         |
+| Phase 3 order                | **Engine first:** all of P1–P12 with fixture and golden tests, then the Main tab design gate, then the other tabs (§9.2).                                                                                                                                        |
+| Characters before the wizard | A **quick-builder** writes valid characters from real content with automatic picks. It ships in production behind Settings → Developer tools, so the design gate can be checked on phones (§9.2, step 3.10).                                                     |
+| Rules strictness             | **Guide, allow override.** Pickers filter and count by default. Every limit can be bypassed with an explicit "Ignore rules" switch, and a broken rule shows as a warning, never a block (§9.1).                                                                  |
+| Spells a character has       | Cantrips, Bard/Sorcerer/Warlock spells and the Wizard spellbook are **build choices** in the log. Cleric/Druid/Paladin/Ranger/Wizard **prepared** lists are play state (§9.1).                                                                                   |
+| Deity on a character         | `details.deity` (a ref plus a name snapshot), not a `ChoiceRecord`: a god has no effects (§9.1).                                                                                                                                                                 |
+| Mapping order                | Fixed order, A–Z by class (phase 6).                                                                                                                                                                                                                             |
+| Player extras                | Deities, supernatural gifts (charms, blessings, boons), bastion facilities and 2014 character options are imported (phase 2b, §6.12, done) and used on the sheet (phases 3 and 7). Monsters, book/adventure prose, cult boons and UA psionics stay out of scope. |
 
 ---
 
@@ -507,7 +514,7 @@ Estimate: about 1.5 days.
 
 **On the sheet** (no new engine primitives needed):
 
-- **Phase 3, Description tab:** a deity picker (filtered by pantheon), stored as a `ChoiceRecord` with `via: 'manual'` and shown with its symbol and domains.
+- **Phase 3, Description tab:** a deity picker (filtered by pantheon), stored in `details.deity` (ref plus name) and shown with its symbol and domains. A free-text deity is allowed too.
 - **Phase 3, Features tab:** a "Gifts" section where you add a charm, blessing or boon the DM gave you. Its effects apply like a feat's, its `uses` counter is tracked and spent like any resource (casting one of its spells spends the cost), and a used-up charm can be removed. Gifts are `manual` records in the current top log entry, so level-up undo warns about them (§4.4).
 - **Phase 7, Bastion:** a Bastion section for characters level 5 and up. It lists your facilities, with the number of special facilities following the XDMG table (2 at level 5, 4 at 9, 5 at 13, 6 at 17). It records hirelings and the order each facility is on this turn, and links facility charms (such as the Arcane Study Charm) to the Gifts section. Bastion turns are tracked by hand; there is no automatic simulation of orders.
 
@@ -592,57 +599,275 @@ Counts are approximate numbers of XPHB features that need each primitive. Estima
 
 ---
 
-## 9. Phases 3–8 (outline)
+## 9. Phases 3–5 in detail
 
-**Phase 3: Character model, engine, sheet pages, play tools** (built against §8)
+Phases 3–5 turn the imported content into characters: phase 3 builds the rules engine and the sheet, phase 4 the creation wizard, phase 5 level-up and everything that changes a character over time. Each step below is sized to be one or two commits, lists the files it creates, and says when it is done. Estimates are focused working days including tests, ±30%.
 
-1. **Engine core.** Built in this order, each step fully tested before the next:
-   1. Formula DSL with dice values and `steps` (P5), then `ContentIndex`, then reconcile choices (§4.4).
-   2. Static state: equipment and wield (P2), predicates (P1), toggles v2 (P8), choice-bound parameters (P10).
-   3. Collect effects into buckets (data effects + `featureEffects` + active toggles) with `Contribution` tracking.
-   4. Abilities (caps) → PB → saves/skills/passives + roll modifiers (P9) → AC candidates → HP + ward (P12) → speed/senses/defenses.
-   5. Attacks: the attack model + modifiers (P3), then damage riders (P4), then mastery.
-   6. Spellcasting (P11): per-caster DC/attack, slots (multiclass + pact), prepared limits, spell modifiers.
-   7. Resources (P6) → actions (P7) grouped by type → exhaustion/conditions → overrides.
-   8. Play reducers (§8.2 rule 4) and the dev manual-character editor that writes a valid `log`.
+What already exists and is reused:
 
-   The prerequisite evaluator (P13) lands in phase 4, where feat and invocation pickers need it. Adapter auto-mapping (P14) belongs to phase 2.
+| Need                                      | Existing code                                                                                                                   |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Character, log, choices, play state types | `src/schema/character.ts` (`Character`, `LevelEntry`, `ChoiceRecord`, `PlayState`, `OverrideKey`)                               |
+| Choice key strings                        | `src/schema/keys.ts` (`encodeChoiceKey`, `decodeChoiceKey`, `refKey`)                                                           |
+| Effects from data                         | `src/schema/effects.ts`; produced by `src/adapters/fivetools/effectsFromData.ts`                                                |
+| Rules numbers                             | `src/schema/constants.ts` (`proficiencyBonus`, `abilityModifier`, `SKILL_ABILITY`)                                              |
+| Content reads                             | `src/db/contentRepo.ts` (`get`, `listByKind`), `src/content/hooks.ts` (`useEntity`, `useEnabledSources`)                        |
+| Character storage                         | `src/db/characterRepo.ts` (`newCharacter`, `save`, `duplicate`), `src/db/backup.ts`                                             |
+| Source filtering                          | `src/sources/sourceFilter.ts` (`availableOf`, `effectiveSources`)                                                               |
+| Rule text and links                       | `src/richtext/` (`Entries`, `EntitySheet`, `tagRegistry` roll tags)                                                             |
+| UI primitives                             | `src/ui/` (`BottomSheet` + `useSheet` push/back, `SwipeTabs`, `Counter`, `Badge`, `Button`, `VirtualList`)                      |
+| Sheet shell and routes                    | `src/features/sheet/SheetPage.tsx`, `sheetTabs.ts`, `src/app/routes.tsx` (`c/:id/:tab`, `c/:id/level-up`, `new/:draftId/:step`) |
 
-2. **Visual system on the Main tab (gate).** Fully design and build the Main tab:
-   - **Tokens:** type scale, spacing scale, semantic colour tokens for light and dark, radii, elevation, motion.
-   - **Components:** ability block, save/skill rows with proficiency and expertise markers, stat pills (AC, initiative, speed, PB), HP widget with damage/heal/temp input, hit dice, death saves, condition chips with exhaustion level, override marker, source and "content not loaded" badges, section headers.
-   - **Layouts:** phone, tablet and desktop breakpoints.
-   - **`#/dev/design` gallery** showing every component in both themes.
+What a full 2.36.1 import gives the engine (checked):
 
-   **Sign-off gate:** you review it on your devices. I verify through code and tests only. The other tabs start after sign-off and reuse the same components and tokens.
+- **12 XPHB classes.** Their table keys:
+  - Barbarian: `rages`, `rage-damage`, `weapon-mastery`
+  - Bard: `bardic-die`, `cantrips`, `prepared-spells`
+  - Cleric: `channel-divinity`, `cantrips`, `prepared-spells`
+  - Druid: `wild-shape`, `cantrips`, `prepared-spells`
+  - Fighter: `second-wind`, `weapon-mastery`
+  - Monk: `martial-arts`, `focus-points`, `unarmored-movement`
+  - Paladin: `channel-divinity`, `prepared-spells`
+  - Ranger: `favored-enemy`, `prepared-spells`
+  - Rogue: `sneak-attack`
+  - Sorcerer: `sorcery-points`, `cantrips`, `prepared-spells`
+  - Warlock: `invocations`, `cantrips`, `prepared-spells`, `spell-slots`, `slot-level`
+  - Wizard: `cantrips`, `prepared-spells`
+- **Caster progressions:** Paladin and Ranger carry 5etools progression `artificer`, which is the 2024 half caster that rounds up and gets slots at level 1. The subclass casters are Eldritch Knight, Arcane Trickster and AU Warrior of the Mystic Arts.
+- **Choices already generated by the importer:**
+  - every class's `epic-boon` feat progression, and `fighting-style` for Fighter, Paladin and Ranger
+  - the `metamagic` and `eldritch-invocations` optional-feature progressions
+  - 55 ASI feat choices
+  - Divine Order, Primal Order and Elemental Fury as `featureOptions`
+  - starting equipment A/B(/C) with gold values
+- **Choices that are prose only and need a core mapping** (§9.3, §9.4):
+  - Weapon Mastery (5 classes)
+  - Expertise (Bard, Rogue, Ranger)
+  - Deft Explorer, Scholar, Primal Knowledge, Thieves' Cant
+  - Magical Secrets, Mystic Arcanum, Spell Mastery, Signature Spells, Blessed Strikes
+- **Background ability increases** are stored as `abilityOptions` (weights 2/1 or 1/1/1). They are not effects, so the engine offers the slot itself.
 
-3. **Remaining tabs:** Actions, Spells, Inventory, Features (with the Gifts section, §6.12), Description (with the deity picker, §6.12), Notes.
-4. **Play tools:**
-   - HP and temp HP
-   - short and long rest (2024 rules)
-   - dice: `NdM+K`, adv/dis, history, tap-to-roll tags
-   - conditions and concentration
-5. **Tests:**
-   - one fixture test per primitive P1–P12, built on invented features that use it
-   - golden `DerivedSheet` (with `Contribution` lists) for 4 fixture characters covering a martial, a half-caster, a full caster with pact multiclass, and an unarmored/monk-style build
-   - every reconcile status
-   - every play reducer
+### 9.1 Cross-cutting design (applies to phases 3–5)
 
-**Phase 4: Creation wizard (level 1, single class)**
+**Engine boundaries.**
 
-- A generic `ChoicePicker` driven by pending slots.
-- Every pick writes a `ChoiceRecord` into `log[0]`.
-- Review lists pending and non-`ok` choices.
-- Ability scores: standard array, point buy, manual entry, 4d6-drop-lowest.
-- Equipment packages or gold.
-- Spells filtered by class list and level, with counts enforced.
+- `src/engine/` is pure TypeScript with no React or Dexie imports. One entry point: `derive(character, index, opts) → DerivedSheet`.
+- Content reaches the engine only through the synchronous `ContentIndex` interface (§9.2, step 3.1). The async loader that fills it lives in `src/content/`.
+- §8.2 rules hold:
+  - two-pass evaluation
+  - typed buckets
+  - every number carries `Contribution[]`
+  - play actions are pure reducers
 
-**Phase 5: Level-up, higher-level creation, multiclass, preparation**
+**Rules strictness: guide, allow override.**
 
-- Level-up: `pendingChoices` for the new `LevelEntry`, HP average or roll, multiclass prerequisites from `primaryAbility`.
-- **Undo:** pop the last `LevelEntry`, warning about `via: 'manual'` records.
-- Higher-level creation loops the level-up flow.
-- Preparation: `state.prepared`, plus wizard spellbook additions as `manual` records.
+- Every rule check returns `RuleIssue { severity: 'warn' | 'info'; code; message; ref? }` and never throws or blocks.
+- Pickers filter and count by default. An "Ignore rules" switch in the picker header lists everything, and the picks that break a rule are saved anyway.
+- Broken rules appear in `DerivedSheet.issues` and behind the "Needs attention (N)" chip:
+  - over-prepared spells
+  - a multiclass without the 13s
+  - an ASI over 20
+  - attunement over 3
+  - a swap outside its timing
+
+**Which spells a character has.** 2024 rules differ by class (checked against the XPHB Spellcasting features). `src/engine/rules/casters.ts` holds a policy table keyed by class name. A class it doesn't know (supplements, homebrew) falls back to `prepared`.
+
+| Class                   | Cantrips                                    | Leveled spells                                                                                                                                                  | Change timing                                                           |
+| ----------------------- | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Bard, Sorcerer, Warlock | `ChoiceRecord` slot `cantrips.<classLevel>` | **`ChoiceRecord`** slot `spells.<classLevel>` (they work like known spells)                                                                                     | Swap one cantrip and one spell when gaining a level (`retrain` record)  |
+| Cleric, Druid           | `ChoiceRecord`                              | `state.prepared[casterKey]`                                                                                                                                     | Prepared list: any change on a Long Rest. Cantrip: swap one on level-up |
+| Paladin, Ranger         | none                                        | `state.prepared[casterKey]`                                                                                                                                     | Replace one spell per Long Rest                                         |
+| Wizard                  | `ChoiceRecord` (swap one per Long Rest)     | Spellbook = `ChoiceRecord` slot `spellbook.<classLevel>` (6 at level 1, then 2 per level); extra copied spells are `via: 'manual'`. Prepared = `state.prepared` | Any change to the prepared list on a Long Rest                          |
+
+`casterKey` is the class id, or the subclass id for subclass casters. Counts come from `table.cantrips` and `table.prepared-spells` (falling back to `spellcasting.preparedByLevel`/`cantripsByLevel`).
+
+**Character schema v2.**
+
+- `CHARACTER_SCHEMA_VERSION = 2`.
+- `src/db/characterMigrations.ts` holds `migrateCharacter(raw): Character`. It runs in `characterRepo.get/list` and on backup restore, and older versions are upgraded step by step.
+- v1 → v2 adds the fields below with defaults:
+  - `draft?: { step: string }`: a character still in the creation wizard. The list shows it as "Continue creating".
+  - `details.deity?: { ref?: Ref; name: string }`
+  - `state.wardHp: number` (P12)
+  - `state.turn: { ridersUsed: string[] }`: a once-per-turn reminder, cleared from the Actions tab.
+  - `InventoryItem.variantRef?: Ref`: a magic variant applied to a base item, so `+1 Longsword` is base `longsword|xphb` plus variant `+1 weapon|xdmg`.
+  - `InventoryItem.chargesUsed?: number`
+  - `state.lastPrepSwapAt?: number`: when a Paladin or Ranger last swapped a prepared spell (a warning only).
+
+**Saving play changes.**
+
+- `useCharacterActions(id)` wraps the reducers. It applies them to the in-memory character at once and writes through `repos().characters.save`, coalesced per character every 250 ms.
+- `useLiveQuery` re-renders, and pending writes flush on `pagehide`.
+
+**Effect schema additions** (`src/schema/effects.ts`; one union member per primitive, all of them wrappers or new members so existing data stays valid):
+
+```ts
+// P1: static predicates, read only static state (§8.2 rule 1)
+type Predicate =
+  | { armor: 'none' | 'light' | 'medium' | 'heavy' | 'notHeavy' | 'any' }
+  | { shield: boolean }
+  | { freeHands: number }
+  | { wielding: AttackFilter }
+  | { toggle: string; option?: string }
+  | { condition: Id }
+  | { level: number; classId?: Id }
+  | { all: Predicate[] } | { any: Predicate[] } | { not: Predicate };
+
+// P3/P4: which attacks a modifier or rider applies to
+interface AttackFilter {
+  range?: 'melee' | 'ranged';
+  source?: ('weapon' | 'unarmed' | 'spell' | 'natural')[];
+  weaponCategory?: 'simple' | 'martial';
+  properties?: string[];      // all of, item-property abbreviations (`F`, `L`, `2H`…)
+  notProperties?: string[];
+  ability?: Ability[];
+  itemIds?: Id[];
+  tags?: string[];            // derived tags: `monkWeapon`, `pactWeapon`, `offHand`
+}
+type RollTarget = `save:${Ability}` | 'save:all' | 'save:concentration' | 'save:death'
+  | `check:${Ability}` | `skill:${Skill}` | 'initiative' | 'attack:all' | `attack:${string}`;
+type Cost = { resource: string; amount: Formula } | { slot: { minLevel: number } }
+  | { hitDice: Formula } | { action: ActionType };
+type SelfOutcome = { heal: Formula } | { tempHp: Formula } | { toggleOn: string }
+  | { restore: { resource: string; amount: Formula } } | { regainSlot: { maxLevel: Formula } };
+type Bound<T> = T | { fromChoice: string };   // P10: value picked in a choice slot
+
+Effect +=
+  | { type: 'when'; when: Predicate; effects: Effect[] }                                   // P1
+  | { type: 'attackMod'; filter: AttackFilter; label: string; toHit?: Formula; damage?: Formula;
+      abilities?: Ability[]; damageDie?: Formula; critRange?: number; extraAttacks?: number } // P3
+  | { type: 'damageRider'; id: string; name: string; dice: Formula; damageType?: Bound<string>;
+      filter: AttackFilter; oncePerTurn?: boolean; cost?: Cost; optIn: boolean }           // P4
+  | { type: 'rollMode'; target: RollTarget; mode: 'advantage' | 'disadvantage'; note?: string } // P9
+  | { type: 'rollBonus'; target: RollTarget; value: Formula; note?: string }
+  | { type: 'halfProficiency'; targets: RollTarget[] }
+  | { type: 'rollFloor'; target: RollTarget; value: number }
+  | { type: 'resourceModify'; resourceId: string; max?: Formula; recharge?: Recharge; die?: Formula } // P6
+  | { type: 'restoreWith'; resourceId: string; amount: Formula; costs: Cost[] }
+  | { type: 'spellcasting'; casterKey: string; ability: Bound<Ability>; list: string;        // P11
+      progression: ClassSpellcasting['progression']; tableOwner?: Ref }
+  | { type: 'spellMod'; filter: string; casterKey?: string; dcBonus?: Formula;
+      attackBonus?: Formula; damageBonus?: Formula; countsAsClassSpell?: boolean }
+  | { type: 'ward'; name: string; max: Formula };                                           // P12
+// Extended members:
+//  resource   += die?: Formula; pool?: boolean (spend any amount: Lay on Hands)           // P6
+//  toggle     += cost?: Cost[]; onActivate?: SelfOutcome[]; options?: {id,name,effects}[];
+//                group?: string; endsOn?: ('shortRest'|'longRest')[]                       // P8
+//  ActionDef  += costs?: Cost[]; attack?: AttackFilter; outcomes?: SelfOutcome[]          // P7
+//  ChoiceSlot += retrain?: 'levelUp'|'shortRest'|'longRest';
+//                from may be { query: OptionQuery } (dynamic lists, P10)
+//  resistance/immunity/expertise/abilityBonus values may be Bound<…>                      // P10
+```
+
+**Formula DSL (P5)**, in `src/engine/formula/`:
+
+- Grammar:
+  - `expr := term (('+'|'-') term)*`
+  - `term := factor (('*'|'/') factor)*`
+  - `factor := number | dice | ref | fn '(' args ')' | '(' expr ')' | '-' factor`
+- Refs:
+  - `pb`, `level` (character level), `level.<class>`
+  - `mod.<ab>`, `score.<ab>`
+  - `table.<key>` (owning class), `table.<class>.<key>`
+  - `choice.<slot>`, `resource.<id>.max`
+- Functions: `min`, `max`, `floor`, `ceil`, `steps(x, l1, v1, l2, v2…)` and `dice(n, faces)`.
+- Dice literals are `NdM` and `dM`.
+- The result is `number | Dice` (`{ terms: {count, faces}[]; flat: number }`).
+- Table cells like `1d6` or `+10 ft.` parse to dice or to their leading number.
+- Parsed formulas are cached by string. There is no `eval`. An unknown ref is a typed error, and it becomes a `RuleIssue` at derive time.
+
+### 9.2 Phase 3: engine, sheet and play tools (engine first)
+
+#### 3A: Engine (each step tested before the next)
+
+| Step | Work                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | Files                                                                                                                  | Done when                                                                                                                                                                           | Est. |
+| ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
+| 3.0  | **Fixtures and schema v2.** Add 4 invented fixture classes to the fixture tree, each with ~5 features and a table: **Brute** (martial: rage-like toggle, second-wind resource, weapon mastery), **Lorekeeper** (full INT caster with spellbook), **Pactbinder** (pact caster: `spell-slots`/`slot-level` columns), **Wanderer** (unarmored: martial-arts die, focus pool, unarmored movement), plus a third-caster subclass for Brute. A test-only `featureEffects` registry maps their features with the §9.1 effect types. Also: schema v2 types, `migrateCharacter`, the effect union additions (types only).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | `tests/fixtures/fivetools/tree/class/*`, `src/db/characterMigrations.ts`, `src/schema/*`                               | `tsc` green; migration tests (v1 → v2, unknown future version refused); fixtures import with 0 warnings                                                                             | 2    |
+| 3.1  | **ContentIndex + loader.** `ContentIndex { get(ref); classFeatures(classId, maxLevel); subclassFeatures(subclassId, maxLevel); snapshotFor(ref) }`. `loadContentIndex(character, repo)` gathers the refs in the log and inventory, bulk-loads them, and follows refs found in effects and choice values (granted feats, picked feats, optional features, feature options, gifts, variants) to a fixed point (at most 6 rounds). A missing ref falls back to `character.snapshots`. `useContentIndex(character)` reloads when the character's ref set or `sources[].importedAt` changes.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | `src/engine/content/`, `src/content/loadIndex.ts`, `src/content/hooks.ts`                                              | Loads a level 20 fixture character in ≤ 3 IndexedDB round trips; a snapshot fallback test passes                                                                                    | 2    |
+| 3.2  | **Formula DSL and dice (P5).** Parser and evaluator as in §9.1, plus a dice roller: `NdM(kh\|kl)N±K`, advantage/disadvantage, an injectable RNG (default `crypto.getRandomValues`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | `src/engine/formula/`, `src/engine/dice/`                                                                              | About 40 parser/evaluator cases incl. `steps`, table dice, errors; roller statistics test with a seeded RNG                                                                         | 1.5  |
+| 3.3  | **Effect collection and choices.** `collectEffects(character, index, staticState)` walks owners in a fixed order: the starting class's synthesized proficiencies (saves only for the first class; `multiclass.gains` for later ones; skills slot `skills` / `multiclassSkills`) → class progressions → class features ≤ class level → subclass and its features → species → background (synthesized slot `ability` for `abilityOptions` with values like `['con','con','int']`; slot `equipment`) → granted and picked feats (instance `n` for repeatables) → optional features → feature options → gifts (manual records) → items in use (equipped or attuned) → `featureEffects` registry entries for every entity met. It flattens `atLevel` (class level for class content, otherwise character level), `ifChoice`, `when` and active `toggle`s. Output: `AppliedEffect { effect, source: Ref, owner: Ref, path }[]` and `Offer[]`, where an offer is a choice slot with its evaluated count, options and kind. `reconcile(records, offers, index)` gives each record a §4.4 status. `pendingOffers` lists offers without a full record. | `src/engine/collect/`, `src/engine/choices/`                                                                           | Every §4.4 reconcile status has a test; slot keys of fixture characters are stable across a re-import                                                                               | 3    |
+| 3.4  | **Static state (P2, P1, P8, P10).** Equipment and wield state from `InventoryItem.equipped`: armor category, shield, hands used, wielded weapons, derived tags. Predicate evaluator. Toggles v2: active state from `state.activeToggles`, option effects, exclusion groups. Choice-bound values (`fromChoice`) and dynamic option queries (`proficientSkillsWithoutExpertise`, `savesNotProficient`, `knownCantrips:damage`), with retrain cadence carried on offers.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | `src/engine/static/`                                                                                                   | One fixture test per primitive: unarmored AC predicate with and without a shield, Dueling only with one weapon, a toggle with options, an Elemental-Affinity-style bound resistance | 4    |
+| 3.5  | **Core derive.** Abilities: base + background picks + bonuses (cap 20 unless `max`) + `abilitySet` (higher wins) + overrides. Then PB → saves, skills, expertise, `halfProficiency` → roll modifiers (P9) → initiative and passives → AC candidates (unarmored 10+DEX, worn armor, `acFormula`, best wins, then shield and bonuses) → HP max (level 1 max die, then average `die/2+1` or the rolled value, + CON × level + `hpBonus`) and ward (P12) → speed (heavy armor STR penalty −10, exhaustion −5 per level, `walk` refs) → senses, defenses, size, languages and proficiencies. Exhaustion (2024): −2 × level on every d20 test. Every value is `Derived<T> = { value: T; parts: Contribution[] }`; overrides apply last as one more part.                                                                                                                                                                                                                                                                                                                                                                                           | `src/engine/derive/core.ts` and siblings                                                                               | Golden test on all 4 fixture characters for this part; tapping any number can list its parts                                                                                        | 3    |
+| 3.6  | **Attacks (P3, P4, mastery).** Attack sources: every weapon in the inventory (equipped first, the rest as "carried"), the built-in Unarmed Strike (1 + STR, bludgeoning), and spells with `attack` or `saves` among the cantrips and spells the character has. For each: allowed abilities (STR melee, DEX ranged, best of with Finesse, `attackMod.abilities`), proficiency (weapon category or item id), to-hit and damage parts, versatile die when no other hand is used, the Light off-hand attack without the ability modifier, damage die override (max of the base die and the override), crit range, extra attacks (largest wins, they do not stack), riders shown as opt-in chips, and mastery when a weapon's `masteryId` matches a mastery the character picked.                                                                                                                                                                                                                                                                                                                                                                 | `src/engine/derive/attacks.ts`                                                                                         | Golden attacks for Brute (two-weapon, mastery, rage rider) and Wanderer (martial-arts die override)                                                                                 | 5    |
+| 3.7  | **Spellcasting (P11).** Casters from class `spellcasting` and `spellcasting` effects. Per caster: ability, DC `8+PB+mod`, attack `PB+mod`, `spellMod` bonuses, cantrip and prepared counts, list source (spell `classIds`/`subclassIds`, `expanded` grants, `countsAsClassSpell`), always-prepared spells, and the highest spell level available. Slots: a single class uses its `slotTable`. Multiclass uses the 2024 table with caster level = full-caster levels + ⌈Paladin/Ranger levels ÷ 2⌉ + ⌊Eldritch Knight/Arcane Trickster levels ÷ 3⌋ (stored in `rules/slots.ts`). Pact slots stay separate (`table.spell-slots`, `table.slot-level`). Free casts from `grantSpells.uses` (own count, `resource`, `resourceName`). Cantrip damage scaling: **adapter addition** `Spell.scaling` from `scalingLevelDice` (ADAPTER_VERSION 3).                                                                                                                                                                                                                                                                                                    | `src/engine/derive/spellcasting.ts`, `src/engine/rules/slots.ts`, `src/adapters/fivetools/convert/spell.ts`            | Golden test for the Lorekeeper 5 / Pactbinder 2 multiclass; slot table tests for Paladin 3 + Sorcerer 2, EK 7 + Wizard 1, pure Warlock                                              | 3    |
+| 3.8  | **Resources and actions (P6, P7).** Resources from `resource` effects with `resourceModify` applied in order, and `die`/`pool` kinds. `restoreWith` options. Actions grouped as Action / Bonus Action / Reaction / Other / Limited use, from `grantAction`, attacks, castable spells and the standard 2024 actions (Attack, Dash, Disengage, Dodge, Help, Hide, Influence, Magic, Ready, Search, Study, Utilize: linked to their rule ids). Optional-feature `consumes` become costs. Then conditions (rule ids), exhaustion, overrides, and `issues`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | `src/engine/derive/resources.ts`, `actions.ts`                                                                         | Golden resources and actions for all 4 fixtures                                                                                                                                     | 3    |
+| 3.9  | **Play reducers.** `applyDamage` (temp → ward → HP; at 0 HP a death-save failure, two on a crit; a hit of at least max HP is instant death), `heal`, `setTempHp` (the larger value wins), `deathSave(roll)` (20 regains 1 HP, 1 counts two failures, 3 successes stabilise), `concentrationDc(damage)` = max(10, ⌊damage/2⌋) capped at 30, `spend`/`restore`/`restoreWith`, `castSpell(level, casterKey)` (slot or pact slot, sets concentration), `useAction` (costs → outcomes), `toggle(on/off, option)`, `addCondition`/`removeCondition`, `setExhaustion`, `shortRest({ hitDice })` (spend hit dice, rolled or average, + CON; short and `shortOne` resources; pact slots; toggles that end), `longRest()` (2024: all HP, all hit dice, all slots and resources, exhaustion −1, temp HP 0, death saves reset; `dawn` treated as a long rest), and `useItemCharge`.                                                                                                                                                                                                                                                                      | `src/engine/play/`                                                                                                     | One test per reducer and per edge case above                                                                                                                                        | 2    |
+| 3.10 | **Build helpers and quick-builder.** `src/engine/build/` holds the pure functions phases 4 and 5 use as well: `startCharacter`, `setChoice(character, key, values, via)`, `addLevel(character, classRef, hp, subclassRef?)`, `autoChoose(offer, character, index)` (deterministic: the class's recommended picks first, then the first valid options), `assignStandardArray(primaryAbility)`. The quick-builder screen (`#/dev/build`) picks class, subclass, species, background, level or a multiclass split and builds with automatic picks, standard array and average HP. It is visible in development, and in production under **Settings → Developer tools**. Until the styled tabs exist, a plain **derived-sheet view** lists every derived value with its contributions, so results can be checked on a phone.                                                                                                                                                                                                                                                                                                                     | `src/engine/build/`, `src/features/dev/QuickBuilder.tsx`, `src/features/dev/DerivedView.tsx`, `src/features/settings/` | Smoke test (real data): every XPHB class × levels 1, 5 and 20 builds, derives without errors and has no pending choices that `autoChoose` could fill                                | 2    |
+| 3.11 | **`featureEffects` registry framework.** `registerFeatureEffects({ [entityId]: { effects, notes?, level: 'A' \| 'B' \| 'C' } })`. Validation at load: table keys exist on the owning class, slots are unique per owner, refs resolve. The coverage report (dev screen and smoke test) lists XPHB features with no mapping and prose features whose text says "choose" or "of your choice" without an offer. Phases 4 and 5 add the core choice mappings; phase 6 fills the rest.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | `src/engine/featureEffects/`                                                                                           | Validation tests; coverage report renders                                                                                                                                           | 1.5  |
+| 3.12 | **Golden tests and performance.** Golden `DerivedSheet` snapshots (with contributions, pretty-printed for review) for: Brute 5 (martial), Gladiator 6 with subclass (half caster), Lorekeeper 5 / Pactbinder 2 (full caster + pact), Wanderer 7 (unarmored). Performance guard: deriving a level 20 character takes < 5 ms in Node (a phone budget of about 20 ms).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | `src/engine/__tests__/golden/`                                                                                         | Snapshots reviewed and committed                                                                                                                                                    | 2    |
+
+Engine subtotal: about 34 days.
+
+#### 3B: Visual system and Main tab (design gate)
+
+| Step | Work                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Est. |
+| ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
+| 3.13 | **Tokens.** Replace `src/app/theme/tokens.css` with the final system: a type scale (12/14/16/18/22/28/34 with line heights and tabular numerals for stats), 4-pt spacing, semantic colours (surface levels, text levels, accent, positive, negative, warning, proficiency, expertise, advantage, disadvantage, each damage type for chips) for light and dark, radii, elevation, motion (durations, easing, honouring `prefers-reduced-motion`), and density (compact on phones). The gallery shows **two candidate directions** side by side for you to pick at the gate.                                                                         | 2    |
+| 3.14 | **Sheet components** (in `src/features/sheet/components/` unless generic): `AbilityCard`, `SaveRow`/`SkillRow` (proficiency, expertise and half markers, advantage hint), `StatPill` (AC, initiative, speed, PB, inspiration), `HpWidget` (current/max/temp, damage-heal-temp input with a numeric keypad sheet), `HitDice`, `DeathSaves`, `ConditionChips` + `ExhaustionStepper`, `ContributionSheet` (why a number is what it is, plus its override control), `OverrideMarker`, `NeedsAttentionChip`, `SourceBadge`/`ContentMissingBadge`, `SectionHeader`, `RollButton`. All of them go into `#/dev/design` in both themes and at three widths. | 3    |
+| 3.15 | **Main tab.** A sticky header (name, class and level summary, HP pill, AC, conditions, needs-attention). Layouts: phone (one column: abilities, saves, skills, then the rest), tablet (two columns), desktop (three columns). Every number taps to its `ContributionSheet`; d20 numbers roll. Also senses, defenses, proficiencies, languages and the Heroic Inspiration toggle.                                                                                                                                                                                                                                                                   | 2    |
+| 3.16 | **Gate.** You review on your devices (characters from the quick-builder) and pick a token direction. I fix what comes back. The other tabs start only after sign-off.                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | –    |
+
+#### 3C: Remaining tabs and play tools
+
+| Step | Work                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | Est. |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---- |
+| 3.17 | **Actions tab.** Attacks table (name, range, to-hit, damage, notes; tap to roll to-hit and damage; riders as opt-in chips that add their dice; the once-per-turn marker), action groups, limited-use counters, toggles with costs and options, standard actions (collapsed).                                                                                                                                                                                             | 3    |
+| 3.18 | **Spells tab.** Per caster: ability, DC, attack, slot pips to spend and restore, pact slots. Spells by level with prepared, always-prepared, ritual and concentration markers and free-cast counters. Tap a spell for its `EntitySheet` and **Cast** (choose the slot level, set concentration). "Change prepared" mode applies the §9.1 policy and counts, with Ignore rules. Wizard spellbook view.                                                                    | 3    |
+| 3.19 | **Inventory tab.** Items with equip-slot control (armor, shield, main hand, off hand, both hands), attunement (warning above 3), quantity, containers, charges, notes, currency editor, weight against carrying capacity (STR × 15, scaled by size). An add-item picker searches the library and can apply a magic variant to a base item (5etools `requires`/`excludes` matching). Custom items too.                                                                    | 3    |
+| 3.20 | **Features tab.** Grouped by source (class, subclass, species, background, feats, optional features). Each feature shows its text, the picks made for it (with change/retrain when allowed), and its resource counters inline. **Gifts** section (§6.12): add a charm, blessing or boon, track its `uses` counter, remove it when used up.                                                                                                                               | 2    |
+| 3.21 | **Description and Notes tabs.** Details fields, portrait (the existing `portraits` table), size, alignment, and the deity picker (pantheon filter, free text allowed). Notes: free text and a session log with dates.                                                                                                                                                                                                                                                    | 1.5  |
+| 3.22 | **Play tools.** HP and temp HP from the header, short rest (choose hit dice, rolled or average), long rest (shows a summary of what came back), conditions and concentration (prompt for the save on damage), dice roller sheet (expression input, advantage/disadvantage, last 50 rolls per character in memory), tap-to-roll on `{@dice}`/`{@damage}`/`{@hit}`/`{@d20}` tags in any rule text, and the sheet overflow menu (level up link, rests, sources, overrides). | 3    |
+| 3.23 | **Snapshots and attention.** On open, `refreshSnapshots` stores name, entries and effects for every resolved ref, written only when they changed. The "Needs attention" sheet lists non-`ok` reconcile statuses, pending offers and `issues`, with actions (re-pick, update to the reprint, ignore).                                                                                                                                                                     | 1    |
+
+UI subtotal: about 27.5 days. **Phase 3 total: about 61 days (12 weeks).**
+
+**Phase 3 tests.**
+
+- Engine: everything above.
+- Components: React Testing Library tests for HP input, death saves, rests and casting (they dispatch the right reducers), for the contribution sheet, and for tab rendering on a golden fixture character.
+- Smoke (real data): the quick-builder matrix and the coverage report run without errors.
+
+### 9.3 Phase 4: creation wizard (level 1, single class)
+
+| Step | Work                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | Files                             | Est. |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------- | ---- |
+| 4.1  | **Prerequisite evaluator (P13).** `checkPrereqs(prereqs, ctx) → { met: boolean; unmet: string[]; unknown: string[] }` over static state (levels, scores, proficiencies, spellcasting, feats and features taken). `other` prerequisites are `unknown`: shown, never blocking. Used by the feat, optional-feature and (phase 5) multiclass pickers.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | `src/engine/prereq.ts`            | 1    |
+| 4.2  | **Core choice mappings, levels 1–3.** Hand-written `featureEffects` for XPHB features that offer choices before level 4: Weapon Mastery (5 classes; count `table.weapon-mastery`; options are weapons the character is proficient with; retrain on a long rest), Expertise (Rogue 1, Bard 2), Thieves' Cant (one extra language), Deft Explorer (expertise + 2 languages), Scholar (expertise from its skill list), Primal Knowledge (one class skill). Spellcasting slots are generated, not mapped: cantrips, `spells.<lvl>` or `spellbook.<lvl>` from the class data and the §9.1 policy.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | `src/engine/featureEffects/core/` | 1.5  |
+| 4.3  | **Generic `ChoicePicker`.** One component per offer kind: ability (with value), skill, tool, language, expertise, resistance, size, option (`optionChoice`), feat (category + prerequisites), optional feature (feature types + prerequisites), feature options, spell (filter DSL shared with 5etools `choose` strings: `level=0\|class=Wizard`, school, ritual; counts), weapon (mastery), equipment. Each shows its count, enforces it unless Ignore rules is on, and writes through `setChoice`. Choices nested inside a picked entity (a feat's spells) open inline.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | `src/features/choices/`           | 3    |
+| 4.4  | **Wizard flow** at `#/new/:draftId/:step`. The draft is a real `Character` with `draft.step` and is saved on every change; the characters list shows drafts with "Continue". Steps: **Class** (list from the enabled sources; detail sheet with the table, hit die, saves, proficiencies) → **Background** (ability increases as +2/+1 or +1/+1/+1 among its three abilities; origin feat with its own choices) → **Species** (lineages grouped under their species; size and species choices) → **Abilities** (standard array assigned by tap, point buy 27 points with costs 8:0 to 15:9, manual 3–18, 4d6 drop lowest with reroll; the background increases are shown applied, capped at 20; primary-ability hints) → **Equipment** (class and background A/B/(C) choices; "any simple weapon"-type entries open an item picker; armor, shield and weapons auto-equipped; gold into currency) → **Spells** (only when something grants spells: cantrips, level 1 spells or spellbook, species and feat spells) → **Other choices** (every remaining pending offer: class skills, expertise, mastery, fighting style, languages, tools) → **Details** (name, portrait, alignment, deity) → **Review** (summary, pending choices, issues; **Create** clears `draft`, stores snapshots, opens the sheet). Changing an earlier step: picks whose owner is gone are listed ("these picks will be removed") and dropped on confirm; still-valid picks are kept. | `src/features/wizard/`            | 5    |
+| 4.5  | **Tests.** Engine: background ability slot validation, point-buy costs, standard array, equipment resolution to inventory, the prerequisite evaluator. UI: a full wizard run on fixture content (class → review → sheet), draft resume after reload, changing class drops only the class-owned picks. Smoke: auto-filled level 1 build for every XPHB class + species + background combination, with no pending offers left.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |                                   | 2    |
+
+**Phase 4 total: about 12.5 days.**
+
+### 9.4 Phase 5: level-up, higher-level creation, multiclass, preparation
+
+| Step | Work                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Files                             | Est. |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------- | ---- |
+| 5.1  | **Level-up engine.** `planLevelUp(character, index, classRef)` returns the new `LevelEntry` skeleton, features gained, new offers (keyed to the new level), HP options, whether a subclass is due (`classLevel === subclassLevel`), spell changes (new cantrip/spell/spellbook counts, the allowed swap per §9.1), and `issues`. Multiclassing (2024 rule): 13+ in the primary ability of the new class **and** of every current class (Fighter: STR or DEX), checked with P13 and warned, not blocked. `commitLevelUp(character, plan, picks)` appends the entry. | `src/engine/build/levelUp.ts`     | 2    |
+| 5.2  | **Level-up flow** at `#/c/:id/level-up`: **Class** (continue a class or multiclass, with prerequisite warnings; multiclass proficiency gains) → **Hit points** (average, roll with the dice roller, or a typed roll) → **Subclass** (when due) → **Features** (new features to read, and their choices: ASI/feat, fighting style, invocations, metamagic, expertise, mastery count increases) → **Spells** (new cantrips, spells or spellbook entries; one optional swap where the policy allows it) → **Review** → **Apply**. Leaving in the middle discards it.  | `src/features/levelup/`           | 4    |
+| 5.3  | **Undo the last level.** Pops the last `LevelEntry` after a confirmation that lists the `via: 'manual'` records and the retrains in it. Afterwards, prepared lists are trimmed to the new count (the lowest-level extras are dropped, and listed) and spent resources are clamped.                                                                                                                                                                                                                                                                                 | `src/engine/build/undo.ts`        | 1    |
+| 5.4  | **Higher-level creation.** The wizard gets a "Starting level" field. After the level 1 steps, a compact level-up loop runs for each extra level: one card per level with the class (multiclassing allowed), HP and that level's choices, pre-filled by `autoChoose` and editable. "Fill the rest automatically" finishes it.                                                                                                                                                                                                                                       | `src/features/wizard/`            | 2    |
+| 5.5  | **Multiclass details.** Hit dice pools per die size, `multiclass.gains` (and the `multiclassSkills` slot), the combined slot table (step 3.7), prepared lists per class, Extra Attack not stacking, and Unarmored Defense from the first class only (the best AC candidate wins anyway; the issue is noted). Spell lists per caster on the Spells tab.                                                                                                                                                                                                             | engine + Spells tab               | 1.5  |
+| 5.6  | **Preparation and spellbook UI.** Spells tab prepare mode per §9.1: free changes after a Long Rest for Cleric, Druid and Wizard; one swap per Long Rest for Paladin and Ranger (tracked in `state.lastPrepSwapAt`, a warning only); Wizard spellbook "Copy a spell" (manual record, with the 2024 cost noted, 50 GP and 2 hours per spell level) and the cantrip swap on a Long Rest. Always-prepared spells don't count against the limit.                                                                                                                        | `src/features/sheet/tabs/spells/` | 2    |
+| 5.7  | **Retraining.** Generic, from the slot `retrain` cadence: Weapon Mastery after a Long Rest, Fighting Style when gaining a Fighter level, invocations and metamagic on level-up, cantrip swaps. A retrain replaces the record's values with `via: 'retrain'` (§4.4), offered from the Features tab and the level-up flow.                                                                                                                                                                                                                                           | engine + UI                       | 1.5  |
+| 5.8  | **Core choice mappings, levels 4–20.** Expertise (Bard 9, Rogue 6, Ranger 9), Magical Secrets (Bard 10: widens the spell list), Mystic Arcanum (Warlock 11/13/15/17: one spell per level, one free cast per Long Rest), Blessed Strikes (Cleric 7), Spell Mastery (Wizard 18), Signature Spells (Wizard 20), and subclass features that ask for a build-time choice (from the coverage report in step 3.11; anything that is only a play-time choice waits for phase 6).                                                                                           | `src/engine/featureEffects/core/` | 2    |
+| 5.9  | **Tests.** Every fixture class levelled 1 → 20 ends with no pending offers. Slot tables for mixed casters. Undo restores the exact previous character. Higher-level creation gives the same log as creating at level 1 and levelling up with the same picks (equivalence test). Retrain records. Smoke: every XPHB class and subclass auto-built to 20, plus 10 seeded random multiclass builds, derive without errors.                                                                                                                                            |                                   | 2    |
+
+**Phase 5 total: about 18 days.**
+
+### 9.5 Order of work and checkpoints
+
+1. 3A engine steps 3.0–3.12, in order. Checkpoint: golden tests reviewed; the quick-builder works on your phone with real content (Settings → Developer tools).
+2. 3B, ending at the **design gate**. Checkpoint: you sign off a token direction and the Main tab.
+3. 3C. Checkpoint: a full play session on the quick-built characters (HP, rests, casting, attacks).
+4. Phase 4. Checkpoint: everyone in the group creates their level 1 character on their own phone.
+5. Phase 5. Checkpoint: the group levels up, or creates at their current level, including multiclass builds.
+
+Phase 6 (the full `featureEffects` mapping) can start in parallel after step 3.11, class by class, because the registry and its validation exist from then on.
+
+---
+
+## 10. Phases 6–8 (outline)
 
 **Phase 6: `featureEffects` mapping**
 
@@ -684,7 +909,7 @@ Counts are approximate numbers of XPHB features that need each primitive. Estima
 
 ---
 
-## 9b. Phase 2 implementation notes
+## 11. Phase 2 implementation notes
 
 - Rule ids carry their rule kind (§4.1).
 - Effect union additions for P14: `optionChoice` + `ifChoice` (alternative sets: ability +2 or +1/+1, Magic Initiate lists), `featureOptions` (`type: options` blocks), `atLevel` (progression gating), `abilitySet` (items). `grantSpells` covers known, always prepared, innate and expanded spells, uses (N per rest, at will, ritual) and `{ all: filter }`.
@@ -693,23 +918,27 @@ Counts are approximate numbers of XPHB features that need each primitive. Estima
 - Magic variants are items with `itemKind: 'variant'` and a `variant` block; applying them to base items belongs to the item picker.
 - 2014 subraces merge into species variants (5etools rules); their `_versions` expand after the merge.
 
-## 10. Open questions
+## 12. Open questions
 
-None are blocking.
+None are blocking. The token direction is chosen at the phase 3 design gate (step 3.16).
 
-## 11. Risks
+## 13. Risks
 
 - **Primitives missed by the survey.** The survey covered XPHB only. Supplement subclasses and 2014 re-homed subclasses (phase 8) may need a few more. Mitigation: the §8.2 bucket design leaves room to extend, and phase 6 logs gaps instead of hacking around them.
-- **P3 (attack model) is the largest and most connected piece**, at about 3.5 days. It comes after P1/P2 and before riders, so errors surface early in golden tests.
+- **P3 (attack model) is the largest and most connected piece**, at about 5 days (step 3.6). It comes after P1/P2 and before riders, so errors surface early in golden tests.
+- **Engine first means 7 weeks before the first styled screen.** The quick-builder and its plain derived-sheet view (step 3.10) give you something to try on a phone in the meantime.
+- **Choices hidden in prose.** Build-time choices the importer can't see would leave characters incomplete. The coverage report (step 3.11) finds them; phases 4 and 5 map the build-time ones (steps 4.2, 5.8).
+- **Spell policy for non-XPHB casters.** Supplement or homebrew casters default to `prepared` (§9.1); a wrong guess is a warning, not a block.
 - **The phase 3 design gate adds a review round-trip.** It is intended; it prevents restyling six tabs later.
 - **5etools format drift.** Report warnings plus the smoke test on each update. Stable table keys and slots mean ordinary data updates don't break characters, and reconciliation covers the rest.
 - **Low-end phones.** Worker import, memoized derive, virtual lists. A full pack is about 1.8 MB gzipped.
 - **Storage loss on iOS.** Home Screen install, `persist()`, backups and nudges, with Capacitor or sync as the escape hatch.
 - **Public repo.** It holds code only, and the CI content guard enforces that.
 
-## 12. Verification (per phase)
+## 14. Verification (per phase)
 
 - `npm run typecheck && npm run lint && npm test` must be green. Acceptance items are covered by tests on hand-written fixtures.
 - `FIVETOOLS_DATA=./5etools-src-2.36.1/5etools-src-2.36.1/data npm run test:smoke` is opt-in and local, and checks invariants only.
 - `npm run build && npm run preview` show the SW and manifest are generated. You do the UI, design-gate and iOS checks on your devices (install, persist, pack import in the installed app, backup to Files). I verify through code and tests only.
 - The CI content guard runs on every push.
+- Phases 3–5 add golden `DerivedSheet` snapshots, the real-data build matrix in the smoke run (steps 3.10, 4.5, 5.9), and the device checkpoints in §9.5.
