@@ -47,6 +47,9 @@ export const IMPORTED_PROPS = [
   'magicvariant',
   'itemProperty',
   'itemMastery',
+  // Not entities: shared item text, merged into items before conversion.
+  'itemEntry',
+  'itemTypeAdditionalEntries',
   'condition',
   'disease',
   'status',

@@ -21,6 +21,16 @@
       "name": "Everburning Torch",
       "source": "TST",
       "rarity": "common"
+    },
+    {
+      "name": "Ring of Loud Shouting",
+      "source": "TST",
+      "page": 47,
+      "type": "RG|TST",
+      "rarity": "rare",
+      "resist": ["thunder", "psychic"],
+      "detail1": "a tiny bell",
+      "entries": ["{#itemEntry Ring of Shouting|TST}"]
     }
   ]
 }

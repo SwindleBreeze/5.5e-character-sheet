@@ -32,6 +32,7 @@ import { locateDataRoot } from './locate.ts';
 import { IMPORTED_PROPS, readManifest, type SourceMeta } from './manifest.ts';
 import type { RawEntity } from './raw.ts';
 import { ReportBuilder, type ImportReport } from './report.ts';
+import { resolveItemEntries } from './itemEntries.ts';
 import { applySpellLists } from './spellLists.ts';
 import { mergeSubraces } from './subraces.ts';
 import { expandAllVersions } from './versions.ts';
@@ -143,6 +144,7 @@ export async function importFivetools(
   records.race = mergeSubraces(records.race ?? [], records.subrace ?? [], report);
   records.subrace = [];
   expandAllVersions(records, ['race'], report);
+  resolveItemEntries(records, report);
 
   const editions = sourceEditions(Object.values(records).flat(), manifest.sources);
   const ctx: ConvertContext = {

@@ -47,7 +47,7 @@ describe('importFivetools (fixture tree)', () => {
       background: 1,
       feat: 4,
       species: 6,
-      item: 6,
+      item: 7,
       optionalFeature: 2,
       rule: 11,
     });
@@ -282,6 +282,10 @@ describe('importFivetools (fixture tree)', () => {
       abbreviation: 'V',
     });
     expect(get(r, 'rule', 'skill/performance|tst')).toMatchObject({ ability: 'cha' });
+    // Shared item text is filled in from the item's own fields.
+    expect(get<Item>(r, 'item', 'ring of loud shouting|tst').entries).toEqual([
+      'You resist thunder and psychic damage. The ring is set with a tiny bell.',
+    ]);
   });
 
   it('is deterministic, so re-importing keeps every id and slot', async () => {

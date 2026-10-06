@@ -61,5 +61,14 @@
   "itemType": [{ "abbreviation": "M", "source": "TST", "name": "Melee Weapon" }],
   "itemMastery": [
     { "name": "Snare", "source": "TST", "page": 44, "entries": ["The target is slowed."] }
+  ],
+  "itemEntry": [
+    {
+      "name": "Ring of Shouting",
+      "source": "TST",
+      "entriesTemplate": [
+        "You resist {{getFullImmRes item.resist}} damage. The ring is set with {{item.detail1}}."
+      ]
+    }
   ]
 }

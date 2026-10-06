@@ -12,6 +12,7 @@ export type WarningCode =
   | 'modUnsupported'
   | 'versionFailed'
   | 'subraceOrphan'
+  | 'itemEntryMissing'
   | 'convertFailed'
   | 'duplicateId'
   | 'tableKeyCollision'

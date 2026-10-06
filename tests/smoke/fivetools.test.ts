@@ -81,6 +81,13 @@ describe.skipIf(!root)('5etools import (local data)', () => {
     expect(listed.length / spells.length).toBeGreaterThan(0.95);
   });
 
+  it('fills in all shared item text', () => {
+    const unresolved = (result.entities.item ?? []).filter((i) =>
+      JSON.stringify(i).includes('{#itemEntry'),
+    );
+    expect(unresolved.map((i) => i.id)).toEqual([]);
+  });
+
   it('is deterministic', async () => {
     const again = await importFivetools(nodeFileSource(root!), { now: 1 });
     expect(again.entities).toEqual(result.entities);

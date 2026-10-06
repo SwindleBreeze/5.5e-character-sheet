@@ -39,7 +39,7 @@ describe('LibraryPage', () => {
     renderApp('/library');
 
     await user.click(await screen.findByRole('tab', { name: 'Items' }));
-    await waitFor(async () => expect(await names()).toHaveLength(6));
+    await waitFor(async () => expect(await names()).toHaveLength(7));
 
     await user.type(screen.getByRole('searchbox', { name: 'Search' }), 'torch');
     await waitFor(async () => expect(await names()).toEqual(['Everburning Torch', 'Torch']));
