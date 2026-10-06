@@ -1,0 +1,43 @@
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: minmax(var(--tap-min), auto) 1fr minmax(var(--tap-min), auto);
+  align-items: center;
+  gap: var(--space-2);
+  min-height: calc(var(--topbar-height) + var(--safe-top));
+  padding: var(--safe-top) var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg);
+}
+
+.title {
+  overflow: hidden;
+  font-size: var(--font-size-lg);
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.side {
+  display: flex;
+  align-items: center;
+}
+
+.actions {
+  justify-content: flex-end;
+  gap: var(--space-1);
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tap-min);
+  height: var(--tap-min);
+  color: var(--color-accent);
+  font-size: 1.75rem;
+  line-height: 1;
+  text-decoration: none;
+}

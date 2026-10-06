@@ -1,0 +1,18 @@
+.shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  padding-left: var(--safe-left);
+  padding-right: var(--safe-right);
+}
+
+.main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.shell[data-nav='visible'] .main {
+  padding-bottom: calc(var(--nav-height) + var(--safe-bottom));
+}

@@ -1,0 +1,20 @@
+# Dependencies and build output
+node_modules/
+dist/
+dev-dist/
+coverage/
+*.tsbuildinfo
+
+# Game content must never be committed (see scripts/content-guard.mjs)
+data/
+5etools-src-*/
+*.pack.json
+*.pack.json.gz
+*.zip
+
+# Local env and editor files
+.env
+.env.*
+.DS_Store
+Thumbs.db
+*.log

@@ -1,0 +1,32 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.badge[data-variant='accent'] {
+  border-color: transparent;
+  background: var(--color-accent-soft);
+  color: var(--color-text);
+}
+
+.badge[data-variant='warning'] {
+  border-color: transparent;
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
+}
+
+.badge[data-variant='override'] {
+  border-style: dashed;
+  border-color: var(--color-accent);
+  background: transparent;
+  color: var(--color-accent);
+}
