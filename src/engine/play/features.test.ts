@@ -158,6 +158,7 @@ describe('choice options', () => {
 
   it('lists every value an offer allows and marks what the character has from elsewhere', () => {
     const c = brute();
+    c.baseScores = { ...c.baseScores, str: 13 };
     const sheet = derive(c, index, { registry: FIXTURE_FEATURE_EFFECTS });
     const ctx = { character: c, sheet, catalog, index };
     const skills = sheet.features
@@ -165,18 +166,37 @@ describe('choice options', () => {
       .choices.find((x) => x.offer.key.slot === 'skills')!;
     // Arena Hand gives Athletics already; Performance is this pick's own, so not marked.
     expect(offerOptions(skills.offer, ctx, ['performance']).options).toEqual([
-      { value: 'athletics', label: 'Athletics', taken: true },
-      { value: 'performance', label: 'Performance' },
+      { value: 'athletics', label: 'Athletics', taken: true, group: 'Skills', detail: 'Strength' },
+      { value: 'performance', label: 'Performance', group: 'Skills', detail: 'Charisma' },
     ]);
+    // Ignore rules: every skill.
+    expect(offerOptions(skills.offer, ctx, [], { ignoreRules: true }).options).toHaveLength(18);
 
     const feat = sheet.features
       .find((f) => f.name === 'Ability Score Improvement')!
       .choices.find((x) => x.offer.key.slot === 'feat')!;
     const feats = offerOptions(feat.offer, ctx, [veteran.id]);
     expect(feats.valueKind).toBe('feat');
+    // Level 4, Strength 13: Arena Veteran's prerequisites are met.
     expect(feats.options.find((o) => o.value === veteran.id)).toEqual({
       value: veteran.id,
       label: 'Arena Veteran',
+      group: 'General feats',
+      detail: 'Prerequisite: Level 4+, Strength 13+ or Charisma 13+',
     });
+  });
+
+  it('marks feats whose prerequisites aren’t met; Ignore rules lists every feat', () => {
+    const c = brute();
+    c.baseScores = { ...c.baseScores, str: 10, cha: 10 };
+    const sheet = derive(c, index, { registry: FIXTURE_FEATURE_EFFECTS });
+    const ctx = { character: c, sheet, catalog, index };
+    const feat = sheet.features
+      .find((f) => f.name === 'Ability Score Improvement')!
+      .choices.find((x) => x.offer.key.slot === 'feat')!;
+    const veteranOption = offerOptions(feat.offer, ctx).options.find((o) => o.value === veteran.id);
+    expect(veteranOption?.unmet).toEqual(['Strength 13+ or Charisma 13+']);
+    const all = offerOptions(feat.offer, ctx, [], { ignoreRules: true }).options;
+    expect(all.map((o) => o.group)).toContain('Origin feats');
   });
 });

@@ -1,0 +1,183 @@
+/* The choice picker (plan §9.3, step 4.3): used in sheets on the Features tab and the "Needs
+   attention" list, and inline in the creation wizard. */
+
+.picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-3);
+}
+
+.count {
+  font-weight: 600;
+  font-variant-numeric: var(--numeric);
+}
+
+.count[data-done='false'] {
+  color: var(--color-warning);
+}
+
+.hint {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.chip {
+  min-height: 32px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.chip[aria-pressed='true'] {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+.filters select {
+  min-height: 32px;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.groupTitle {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.options {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.option {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.option:last-child {
+  border-bottom: 0;
+}
+
+.option > label {
+  flex: 1;
+  min-width: 0;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--tap-min);
+}
+
+.check input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--color-accent);
+}
+
+.check input[aria-disabled='true'] {
+  opacity: 0.5;
+}
+
+/* An option's details, under its name (aligned past the box). */
+.text {
+  display: flex;
+  flex: 1 1 100%;
+  flex-direction: column;
+  min-width: 0;
+  margin-top: calc(-1 * var(--space-2));
+  padding: 0 0 var(--space-2) calc(20px + var(--space-2));
+}
+
+.label {
+  font-weight: 600;
+}
+
+.detail {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.unmet {
+  color: var(--color-warning);
+  font-size: var(--font-size-sm);
+}
+
+.reading {
+  flex: 1 1 100%;
+  padding-bottom: var(--space-2);
+}
+
+.nested {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-1);
+  padding-left: var(--space-3);
+  border-left: 2px solid var(--color-accent-soft);
+}
+
+.nestedTitle {
+  margin: 0;
+  font-size: var(--font-size-md);
+}
+
+/* A list of choices (the wizard's steps, a feature's picks). */
+.choiceList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.choice {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.choiceTitle {
+  margin: 0;
+  font-size: var(--font-size-md);
+}

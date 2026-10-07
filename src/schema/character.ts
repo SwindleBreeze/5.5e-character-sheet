@@ -184,8 +184,12 @@ export interface Character {
   scoreMethod: ScoreMethod;
   /** The build. log[0] is character level 1. */
   log: LevelEntry[];
-  /** Set while the character is still in the creation wizard. */
-  draft?: { step: string };
+  /**
+   * Set while the character is still in the creation wizard: the step it is on, and the items
+   * picked for "any …" starting equipment entries (plan §9.3 step 4.4), keyed by
+   * `<owner ref key>#<option>#<entry index>`. Cleared when it is created.
+   */
+  draft?: { step: string; anyItems?: Record<string, Id> };
   inventory: InventoryItem[];
   currency: Currency;
   state: PlayState;

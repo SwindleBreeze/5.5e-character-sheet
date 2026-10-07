@@ -10,14 +10,12 @@ import {
   updateToReprint,
   type AttentionItem,
 } from '../../../engine/play/attention.ts';
-import { setPick } from '../../../engine/play/features.ts';
 import type { DerivedFeature, DerivedFeatureChoice } from '../../../engine/derive/types.ts';
 import { refName } from '../../../engine/content/resolve.ts';
-import { decodeChoiceKey } from '../../../schema/index.ts';
 import { Button } from '../../../ui/Button.tsx';
 import { useSheet } from '../../../ui/sheetContext.ts';
-import { ChoiceSheet } from '../features/ChoiceSheet.tsx';
-import { choiceTitle } from '../features/labels.ts';
+import { choiceTitle } from '../../choices/labels.ts';
+import { LiveChoiceSheet } from '../../choices/LiveChoiceSheet.tsx';
 import inventory from '../inventory/inventory.module.css';
 import type { SheetBindings } from '../sheetBindings.ts';
 import styles from './attention.module.css';
@@ -45,19 +43,7 @@ export function AttentionSheet({ bindings }: { bindings: SheetBindings }) {
     ui.push({
       key: `choice:${c.key}`,
       title: `${choiceTitle(c)}: ${f.name}`,
-      render: () => (
-        <ChoiceSheet
-          choice={c}
-          character={character}
-          sheet={sheet}
-          onSave={(spec) => {
-            ui.close();
-            apply((ch) =>
-              setPick(ch, decodeChoiceKey(c.key), { ...spec, entryIndex: f.entryIndex }),
-            );
-          }}
-        />
-      ),
+      render: () => <LiveChoiceSheet bindings={bindings} choiceKey={c.key} onClose={ui.close} />,
     });
 
   const describe = (item: AttentionItem): Shown => {

@@ -10,9 +10,7 @@ import {
   setPortrait,
   type TextDetail,
 } from '../../engine/play/details.ts';
-import { setPick } from '../../engine/play/features.ts';
 import { repos } from '../../db/repos.ts';
-import { decodeChoiceKey } from '../../schema/index.ts';
 import { EntitySheet } from '../../richtext/EntitySheet.tsx';
 import { Button } from '../../ui/Button.tsx';
 import { useSheet } from '../../ui/sheetContext.ts';
@@ -21,9 +19,10 @@ import { SectionHeader } from './components/stats.tsx';
 import { DeitySheet } from './description/DeitySheet.tsx';
 import { shrinkImage, usePortraitUrl } from './description/portrait.ts';
 import styles from './description/description.module.css';
-import { ChoiceSheet } from './features/ChoiceSheet.tsx';
+import { LiveChoiceSheet } from '../choices/LiveChoiceSheet.tsx';
 import inventory from './inventory/inventory.module.css';
 import mainStyles from './MainTab.module.css';
+import { usePublishBindings } from './liveBindings.ts';
 import type { SheetBindings } from './sheetBindings.ts';
 
 /** The nine alignments (2024 Player's Handbook). */
@@ -60,6 +59,7 @@ function Section({ id, title, children }: { id: string; title: string; children:
 
 export function DescriptionTab(bindings: SheetBindings) {
   const { character, sheet, apply } = bindings;
+  usePublishBindings(bindings);
   const ref = useRef<HTMLDivElement>(null);
   const columns = Math.min(2, columnsFor(useContainerWidth(ref)));
   const ui = useSheet();
@@ -96,20 +96,7 @@ export function DescriptionTab(bindings: SheetBindings) {
       key: `choice:${sizeChoice.key}`,
       title: `Size: ${species.name}`,
       render: () => (
-        <ChoiceSheet
-          choice={sizeChoice}
-          character={character}
-          sheet={sheet}
-          onSave={(spec) => {
-            ui.close();
-            apply((c) =>
-              setPick(c, decodeChoiceKey(sizeChoice.key), {
-                ...spec,
-                entryIndex: species.entryIndex,
-              }),
-            );
-          }}
-        />
+        <LiveChoiceSheet bindings={bindings} choiceKey={sizeChoice.key} onClose={ui.close} />
       ),
     });
 
