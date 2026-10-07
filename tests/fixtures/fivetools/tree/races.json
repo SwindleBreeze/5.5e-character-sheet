@@ -70,6 +70,7 @@
       "size": ["M"],
       "speed": 25,
       "ability": [{ "con": 2 }],
+      "traitTags": ["Powerful Build"],
       "entries": [{ "type": "entries", "name": "Stone Skin", "entries": ["Tough."] }],
       "reprintedAs": ["Mossling|TST"]
     }

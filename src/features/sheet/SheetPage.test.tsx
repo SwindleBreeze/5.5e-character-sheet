@@ -185,6 +185,22 @@ describe('Actions tab', () => {
   });
 });
 
+describe('Inventory tab', () => {
+  it('adds an item from the library; its content loads into the sheet', async () => {
+    const user = userEvent.setup();
+    renderApp(`/c/${character.id}/inventory`);
+    expect(await screen.findByRole('region', { name: 'Carrying' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Add item' }));
+    const dialog = within(await screen.findByRole('dialog', { name: 'Add an item' }));
+    await user.type(await dialog.findByRole('searchbox', { name: 'Find an item' }), 'sack');
+    await user.click(await dialog.findByRole('button', { name: /^Sack of Holding/ }));
+    await user.click(dialog.getByRole('button', { name: 'Add' }));
+    const sack = await screen.findByRole('listitem', { name: 'Sack of Holding' });
+    // Its weight comes from the content, loaded once the character holds it.
+    expect(await within(sack).findByText('5 lb.')).toBeInTheDocument();
+  });
+});
+
 describe('a character without a class', () => {
   it('shows the plain header and a note', async () => {
     const empty = await repos().characters.save({ ...character, id: 'empty', log: [] });

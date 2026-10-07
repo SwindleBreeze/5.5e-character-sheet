@@ -10,6 +10,8 @@ Initiative +1  [DEX modifier +1]
 Concentration +3  [CON modifier +3]
 Death saves +0
 Attacks per Attack action 1  [Attack action 1]
+Carrying 6.3 lb.  [Items 6, 15 coins (50 to the pound) +0.3] of 210  [Strength 14 × 15 (Small) 210]; drag 420
+Attuned 0/3
 
 ## Abilities
 str 14 (+2)  [Base score 12, Arena Hand +1, Arena Veteran +1]

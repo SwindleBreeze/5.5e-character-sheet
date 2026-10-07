@@ -154,6 +154,23 @@ export function targetMatches(target: RollTarget, kind: RollKind): boolean {
   }
 }
 
+/** The ability a roll involves, when one does. Initiative is a Dexterity check. */
+function rollAbility(kind: RollKind): Ability | undefined {
+  switch (kind.type) {
+    case 'save':
+    case 'check':
+      return kind.ability;
+    case 'initiative':
+      return 'dex';
+    case 'concentration':
+      return 'con';
+    case 'attack':
+      return kind.traits.ability;
+    case 'death':
+      return undefined;
+  }
+}
+
 /** One d20 roll: base parts, proficiency, roll modifiers, exhaustion. */
 export function buildRoll(
   ctx: DeriveContext,
@@ -191,6 +208,14 @@ export function buildRoll(
   for (const { effect, source } of effectsOfType(ctx.collected, 'rollMode')) {
     if (!targetMatches(effect.target, kind)) continue;
     (effect.mode === 'advantage' ? advantage : disadvantage).push(effect.note ?? source.name);
+  }
+  // Armor without training: Disadvantage on D20 Tests that involve Strength or Dexterity.
+  const ability = rollAbility(kind);
+  if (ctx.gear?.untrainedArmor && (ability === 'str' || ability === 'dex')) {
+    disadvantage.push(`${ctx.gear.untrainedArmor} without armor training`);
+  }
+  if (ctx.gear?.stealthArmor && kind.type === 'check' && kind.skill === 'stealth') {
+    disadvantage.push(ctx.gear.stealthArmor);
   }
 
   let floor: number | undefined;

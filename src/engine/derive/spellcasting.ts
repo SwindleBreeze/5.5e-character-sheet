@@ -36,6 +36,7 @@ import {
   valuesOf,
   type DeriveContext,
 } from './context.ts';
+import { magicWorks } from '../items/items.ts';
 import { buildRoll } from './rolls.ts';
 import { findResource, findResourceByName } from './resources.ts';
 import type {
@@ -72,10 +73,10 @@ function itemSpellBonus(ctx: DeriveContext, bonus: 'spellAttack' | 'spellSaveDc'
   for (const row of ctx.character.inventory) {
     if (!row.equipped || !row.itemRef) continue;
     const item = ctx.index.get({ kind: 'item', id: row.itemRef.id });
-    if (item?.attunement && !row.attuned) continue;
     const variant: Item | undefined = row.variantRef
       ? ctx.index.get({ kind: 'item', id: row.variantRef.id })
       : undefined;
+    if (!magicWorks(row, item, variant)) continue;
     const value = (item?.bonuses?.[bonus] ?? 0) + (variant?.bonuses?.[bonus] ?? 0);
     if (value)
       out.push({ label: variant?.name ?? item?.name ?? row.name, value, source: row.itemRef });

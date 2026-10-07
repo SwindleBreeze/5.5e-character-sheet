@@ -3,11 +3,13 @@
 import {
   MOVE_MODES,
   type Ability,
+  type InventoryItem,
   type Item,
   type MoveMode,
   type Size,
 } from '../../schema/index.ts';
 import { choiceKey } from '../collect/collect.ts';
+import { armorDrawbacks, magicWorks, needsAttunement } from '../items/items.ts';
 import { resolveBound } from '../static/bound.ts';
 import {
   contribution,
@@ -22,8 +24,16 @@ import type { Contribution, Derived, DerivedClass, DerivedSheet, SourcedValue } 
 
 type Mods = Record<Ability, number>;
 
-/** AC bonus an item gives on its own (+1 armor, a Ring of Protection), and from its variant. */
-function itemAcBonus(item: Item | undefined, variant: Item | undefined): number {
+/**
+ * AC bonus an item gives on its own (+1 armor, a Ring of Protection), and from its variant.
+ * Magic that needs Attunement works only when attuned.
+ */
+function itemAcBonus(
+  row: InventoryItem,
+  item: Item | undefined,
+  variant: Item | undefined,
+): number {
+  if (!magicWorks(row, item, variant)) return 0;
   return (item?.bonuses?.ac ?? 0) + (variant?.bonuses?.ac ?? 0);
 }
 
@@ -38,7 +48,7 @@ export function deriveAc(ctx: DeriveContext, mods: Mods): Derived & { calculatio
     if (armor.info.category === 'medium') {
       parts.push({ label: 'DEX modifier (max 2)', value: Math.min(mods.dex, 2) });
     }
-    const magic = itemAcBonus(armor.item, armor.variant);
+    const magic = itemAcBonus(armor.row, armor.item, armor.variant);
     if (magic) parts.push({ label: `${name} bonus`, value: magic });
     candidates.push({ name, parts, shield: true });
   } else {
@@ -70,20 +80,24 @@ export function deriveAc(ctx: DeriveContext, mods: Mods): Derived & { calculatio
     derived(b.parts).value > derived(a.parts).value ? b : a,
   );
   const parts = [...best.parts];
-  if (shield) {
+  // A Shield gives its AC only with Shield training (2024).
+  if (shield && !ctx.gear?.untrainedShield) {
     const name = shield.item?.name ?? shield.row.name;
-    parts.push({ label: name, value: shield.info.ac + itemAcBonus(shield.item, shield.variant) });
+    parts.push({
+      label: name,
+      value: shield.info.ac + itemAcBonus(shield.row, shield.item, shield.variant),
+    });
   }
   // Other items in use with an AC bonus (rings, cloaks), when attuned if they need it.
   for (const row of ctx.character.inventory) {
     if (!row.equipped || row.equipped === 'armor' || row.equipped === 'shield' || !row.itemRef)
       continue;
     const item = ctx.index.get({ kind: 'item', id: row.itemRef.id });
-    if (item?.attunement && !row.attuned) continue;
     const variant = row.variantRef
       ? ctx.index.get({ kind: 'item', id: row.variantRef.id })
       : undefined;
-    const bonus = itemAcBonus(item, variant);
+    if (needsAttunement(item, variant) && !row.attuned) continue;
+    const bonus = itemAcBonus(row, item, variant);
     if (bonus && !item?.weapon)
       parts.push({ label: item?.name ?? row.name, value: bonus, source: row.itemRef });
   }
@@ -188,7 +202,7 @@ export function deriveSpeed(ctx: DeriveContext, strScore: number): DerivedSheet[
     ]);
   }
   const armor = ctx.st.wield.armor;
-  const strReq = armor?.item?.armor?.strReq;
+  const strReq = armor ? armorDrawbacks(armor.item, armor.variant).strReq : undefined;
   const penalties: Contribution[] = [];
   if (strReq && strScore < strReq) {
     penalties.push({ label: `${armor?.item?.name ?? 'Armor'} (needs STR ${strReq})`, value: -10 });

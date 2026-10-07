@@ -269,3 +269,14 @@ describe('how attacks are made (2024 rules)', () => {
     ]);
   });
 });
+
+describe('Two-Handed weapons', () => {
+  it('held in one hand, ready only while the other hand is free', () => {
+    const bow = (d: DerivedSheet) => d.attacks.find((a) => a.name === 'arc bow')?.ready;
+    expect(bow(run(brute([row('arc bow|tst', 'bothHands')])))).toBe(true);
+    expect(bow(run(brute([row('arc bow|tst', 'mainHand')])))).toBe(true);
+    expect(bow(run(brute([row('arc bow|tst', 'mainHand'), row('buckler|tst', 'shield')])))).toBe(
+      false,
+    );
+  });
+});

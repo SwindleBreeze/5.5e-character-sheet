@@ -139,10 +139,13 @@ export function applyEquipment(
     };
     if (grant.itemId) row.itemRef = { kind: 'item', id: grant.itemId };
     if (item?.armor && !hasSlot('armor')) row.equipped = 'armor';
-    else if (item?.itemKind === 'shield' && !hasSlot('shield')) row.equipped = 'shield';
+    else if (item?.itemKind === 'shield' && !hasSlot('shield') && !hasSlot('bothHands'))
+      row.equipped = 'shield';
     else if (item?.weapon && !hasSlot('mainHand') && !hasSlot('bothHands')) {
+      // Two hands: a Two-Handed weapon goes in both only while no Shield is held.
       const twoHanded = item.weapon.properties.some((p) => /\/2h\|/i.test(p));
-      row.equipped = twoHanded ? 'bothHands' : 'mainHand';
+      if (!twoHanded) row.equipped = 'mainHand';
+      else if (!hasSlot('shield')) row.equipped = 'bothHands';
     }
     n.inventory.push(row);
   });

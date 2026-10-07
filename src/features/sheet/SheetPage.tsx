@@ -9,6 +9,7 @@ import { derive } from '../../engine/derive/derive.ts';
 import { featureEffects } from '../../engine/featureEffects/index.ts';
 import { SwipeTabs, type TabDef } from '../../ui/SwipeTabs.tsx';
 import { ActionsTab } from './ActionsTab.tsx';
+import { InventoryTab } from './InventoryTab.tsx';
 import { MainTab } from './MainTab.tsx';
 import { SpellsTab } from './SpellsTab.tsx';
 import { SheetHeader } from './SheetHeader.tsx';
@@ -69,7 +70,9 @@ export function SheetPage() {
           ? built(bindings && <ActionsTab {...bindings} />)
           : t.id === 'spells'
             ? built(bindings && <SpellsTab {...bindings} />)
-            : placeholder(t.label),
+            : t.id === 'inventory'
+              ? built(bindings && <InventoryTab {...bindings} />)
+              : placeholder(t.label),
   }));
 
   return (

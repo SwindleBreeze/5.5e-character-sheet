@@ -76,6 +76,11 @@ export function formatSheet(s: DerivedSheet): string {
   line(`Concentration ${roll(s.concentration)}`);
   line(`Death saves ${roll(s.deathSave)}`);
   line(`Attacks per Attack action ${s.attacksPerAction.value}${parts(s.attacksPerAction)}`);
+  const inv = s.inventory;
+  line(
+    `Carrying ${inv.weight.value} lb.${parts(inv.weight)} of ${inv.carry.value}${parts(inv.carry)}; drag ${inv.dragLiftPush}`,
+  );
+  line(`Attuned ${inv.attuned}/${inv.attunementMax}`);
 
   head('Abilities');
   for (const a of ABILITIES) {

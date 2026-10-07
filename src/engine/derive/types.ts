@@ -14,6 +14,7 @@ import type {
   SpellGrant,
 } from '../../schema/index.ts';
 import type { Pending, Reconciled } from '../choices/reconcile.ts';
+import type { ItemCharges } from '../items/items.ts';
 
 export interface Contribution {
   label: string;
@@ -285,6 +286,34 @@ export interface DerivedClass {
   subclassName?: string;
 }
 
+export interface DerivedContainer {
+  /** Weight of what is inside, nested containers' contents included unless weightless. */
+  contents: number;
+  /** The most it holds (times the number of containers on the row); missing when unknown. */
+  capacity?: number;
+  /** Its contents don't count toward the weight carried. */
+  weightless: boolean;
+  /** Items it holds by count (a Quiver: 20 Arrows): how many are in it. */
+  counts?: { itemId: Id; name: string; count: number; max: number }[];
+}
+
+export interface DerivedInventory {
+  /** Everything carried: items (not those inside weightless containers) and coins. */
+  weight: Derived;
+  /** The most the character can carry. Drag, lift or push: twice that. */
+  carry: Derived;
+  dragLiftPush: number;
+  /** The size carrying capacity uses (Powerful Build counts one larger). */
+  carrySize: Size;
+  attuned: number;
+  attunementMax: number;
+  /** Rows whose Attunement prerequisite the character doesn't meet. */
+  unqualified: string[];
+  /** Charges of the rows that have them. */
+  charges: Record<string, ItemCharges>;
+  containers: Record<string, DerivedContainer>;
+}
+
 export interface DerivedSheet {
   charLevel: number;
   pb: Derived;
@@ -321,6 +350,7 @@ export interface DerivedSheet {
     languages: SourcedValue[];
   };
   size: Size;
+  inventory: DerivedInventory;
   attacks: DerivedAttack[];
   /** Attacks per Attack action (Extra Attack). */
   attacksPerAction: Derived;

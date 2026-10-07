@@ -51,7 +51,7 @@ describe('importFivetools (fixture tree)', () => {
       background: 1,
       feat: 4,
       species: 6,
-      item: 13,
+      item: 20,
       optionalFeature: 2,
       rule: 16,
       deity: 5,
@@ -307,6 +307,41 @@ describe('importFivetools (fixture tree)', () => {
       itemKind: 'variant',
       bonuses: { weapon: 1 },
       variant: { requires: [{ weapon: true }], excludes: { net: true }, namePrefix: '+1 ' },
+    });
+    // Base items keep the raw fields variant filters match; packs take no variants.
+    expect(get<Item>(r, 'item', 'net blade|tst').variantBase).toMatchObject({
+      name: 'Net Blade',
+      source: 'TST',
+      edition: 'one',
+      type: 'M|TST',
+      weapon: true,
+      weaponCategory: 'martial',
+      property: ['V|TST', 'F|TST'],
+    });
+    expect(get<Item>(r, 'item', "delver's kit|tst").variantBase).toBeUndefined();
+    expect(get<Item>(r, 'item', 'cloak of cheers|tst').variantBase).toBeUndefined();
+    // A variant: its Attunement, charges as dice, recharge, and its text with the bonus filled.
+    expect(get<Item>(r, 'item', 'echo weapon|tst')).toMatchObject({
+      attunement: 'by a gladiator',
+      attunementTags: [{ class: 'gladiator' }],
+      chargesDice: '1d3',
+      recharge: 'dawn',
+      rechargeAmount: '1d3',
+      entries: ['+1 to attack and damage rolls; an item that echoes.'],
+    });
+    expect(get<Item>(r, 'item', '+1 old weapon|tst').variant?.edition).toBe('classic');
+    expect(get<Item>(r, 'item', 'backpack|tst').containerCapacityLb).toBe(30);
+    expect(get<Item>(r, 'item', 'quiver|tst')).toMatchObject({
+      container: true,
+      containerItems: { 'arrow|tst': 20 },
+    });
+    expect(get<Item>(r, 'item', 'sack of holding|tst')).toMatchObject({
+      containerCapacityLb: 500,
+      containerWeightless: true,
+    });
+    expect(get(r, 'species', 'stoneborn|old').effects).toContainEqual({
+      type: 'carrySize',
+      steps: 1,
     });
     expect(get(r, 'rule', 'itemProperty/v|tst')).toMatchObject({
       name: 'Versatile',

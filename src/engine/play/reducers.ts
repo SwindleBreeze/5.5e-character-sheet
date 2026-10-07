@@ -479,6 +479,17 @@ function resetSpellUses(n: Character, sheet: DerivedSheet, recharges: readonly s
   }
 }
 
+/**
+ * Items that regain all their charges on a rest. Those regaining a rolled number are left to
+ * the Inventory tab, as are dawn, dusk and midnight, which aren't rests.
+ */
+function rechargeItems(n: Character, sheet: DerivedSheet, on: string[]) {
+  for (const row of n.inventory) {
+    const ch = sheet.inventory.charges[row.uid];
+    if (ch?.recharge && !ch.amount && on.includes(ch.recharge)) delete row.chargesUsed;
+  }
+}
+
 function endToggles(n: Character, sheet: DerivedSheet, rest: 'shortRest' | 'longRest') {
   for (const t of sheet.toggles) {
     if (t.endsOn.includes(rest) || (rest === 'longRest' && t.endsOn.includes('shortRest'))) {
@@ -511,6 +522,7 @@ export function shortRest(
     if (r.recharge === 'shortOne') n = restoreResource(n, r.key, 1);
   }
   resetSpellUses(n, sheet, ['short']);
+  rechargeItems(n, sheet, ['restShort']);
   n.state.pactSlotsUsed = 0;
   endToggles(n, sheet, 'shortRest');
   n.state.turn = { ridersUsed: [] };
@@ -536,6 +548,7 @@ export function longRest(c: Character, sheet: DerivedSheet): Character {
     if (LONG_REST_RECHARGES.includes(r.recharge)) delete s.resourcesUsed[r.key];
   }
   resetSpellUses(n, sheet, LONG_REST_RECHARGES);
+  rechargeItems(n, sheet, ['restShort', 'restLong']);
   s.exhaustion = Math.max(0, s.exhaustion - 1);
   s.deathSaves = { successes: 0, failures: 0 };
   s.concentration = null;

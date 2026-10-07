@@ -3,7 +3,8 @@ import styles from './Counter.module.css';
 export interface CounterProps {
   label: string;
   value: number;
-  max: number;
+  /** No maximum when missing (a quantity). */
+  max?: number;
   min?: number;
   onChange: (next: number) => void;
 }
@@ -40,7 +41,7 @@ export function StepButton({
   );
 }
 
-/** A tappable used/max counter for resources, slots and hit dice. */
+/** A tappable used/max counter for resources, slots and hit dice, or a plain count. */
 export function Counter({ label, value, max, min = 0, onChange }: CounterProps) {
   return (
     <div className={styles.counter} role="group" aria-label={label}>
@@ -52,13 +53,13 @@ export function Counter({ label, value, max, min = 0, onChange }: CounterProps) 
       />
       <output className={styles.value} aria-live="polite">
         {value}
-        <span className={styles.max}> / {max}</span>
+        {max !== undefined && <span className={styles.max}> / {max}</span>}
       </output>
       <StepButton
         label={`Increase ${label}`}
         symbol="+"
-        blocked={value >= max}
-        onStep={() => onChange(Math.min(max, value + 1))}
+        blocked={max !== undefined && value >= max}
+        onStep={() => onChange(max === undefined ? value + 1 : Math.min(max, value + 1))}
       />
     </div>
   );

@@ -65,12 +65,15 @@ export interface InventoryItem {
   quantity: number;
   equipped?: EquipSlot;
   attuned: boolean;
+  /** The row of the container it is in. Equipped items are never in a container. */
   containerUid?: string;
   notes?: string;
   custom?: { weightLb?: number; valueCp?: number };
   /** A magic variant applied to this base item: `+1 Longsword` is longsword + `+1 weapon`. */
   variantRef?: Ref;
   chargesUsed?: number;
+  /** This item's maximum charges, when the item gives them as dice (rolled when found). */
+  chargesMax?: number;
 }
 
 export interface Currency {

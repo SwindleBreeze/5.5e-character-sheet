@@ -10,6 +10,7 @@ import {
   type ItemBonus,
   type ItemKind,
 } from '../../../schema/index.ts';
+import { stripTags } from '../../../richtext/tagRegistry.ts';
 import { defenseEffects } from '../effectsFromData.ts';
 import { asArray, isObject, num, strArray, type RawEntity } from '../raw.ts';
 import { uidToId } from '../uid.ts';
@@ -104,6 +105,30 @@ function bonuses(raw: RawEntity): Item['bonuses'] {
   return Object.keys(out).length ? out : undefined;
 }
 
+/** `{@dice 1d6 + 1}` or a number → `1d6 + 1`; nothing for anything else. */
+function amountText(value: unknown): string | undefined {
+  if (typeof value === 'number') return String(value);
+  if (typeof value !== 'string') return undefined;
+  const text = stripTags(value).trim();
+  return text || undefined;
+}
+
+/** Charges, recharge and who can attune: on items, and on the `inherits` of a variant. */
+function chargeFields(item: Item, raw: RawEntity) {
+  if (typeof raw.charges === 'number') item.charges = raw.charges;
+  else {
+    const dice = amountText(raw.charges);
+    if (dice) item.chargesDice = dice;
+  }
+  if (typeof raw.recharge === 'string') item.recharge = raw.recharge;
+  const amount = amountText(raw.rechargeAmount);
+  if (amount) item.rechargeAmount = amount;
+  if (raw.reqAttune === true) item.attunement = true;
+  else if (typeof raw.reqAttune === 'string') item.attunement = raw.reqAttune;
+  const tags = asArray(raw.reqAttuneTags).filter(isObject);
+  if (tags.length) item.attunementTags = tags;
+}
+
 function itemEffects(raw: RawEntity): Effect[] {
   const out = defenseEffects(raw);
   const ability = isObject(raw.ability) ? raw.ability : null;
@@ -121,8 +146,6 @@ function fill(item: Item, raw: RawEntity): Item {
   const value = num(raw.value);
   if (value !== undefined) item.valueCp = value;
   if (typeof raw.rarity === 'string' && raw.rarity !== 'none') item.rarity = raw.rarity;
-  if (raw.reqAttune === true) item.attunement = true;
-  else if (typeof raw.reqAttune === 'string') item.attunement = raw.reqAttune;
 
   const code = typeCode(raw.type);
   const toolType = TOOL_TYPES[code];
@@ -177,14 +200,26 @@ function fill(item: Item, raw: RawEntity): Item {
   });
   if (pack.length) item.packContents = pack;
   if (isObject(raw.containerCapacity)) {
-    const cap = num(asArray(raw.containerCapacity.weight)[0]);
-    if (cap !== undefined) item.containerCapacityLb = cap;
+    // One weight per compartment; capacities by volume or by item count aren't weights.
+    const weights = asArray(raw.containerCapacity.weight).filter(
+      (w): w is number => typeof w === 'number',
+    );
+    if (weights.length) item.containerCapacityLb = weights.reduce((a, b) => a + b, 0);
+    if (raw.containerCapacity.weightless === true) item.containerWeightless = true;
+    const counts: Record<string, number> = {};
+    for (const compartment of asArray(raw.containerCapacity.item).filter(isObject)) {
+      for (const [uid, n] of Object.entries(compartment)) {
+        if (typeof n !== 'number') continue;
+        const id = uidToId.nameSource(uid, 'PHB');
+        counts[id] = (counts[id] ?? 0) + n;
+      }
+    }
+    if (Object.keys(counts).length) item.containerItems = counts;
+    item.container = true;
   }
   const b = bonuses(raw);
   if (b) item.bonuses = b;
-  const charges = num(raw.charges);
-  if (charges !== undefined) item.charges = charges;
-  if (typeof raw.recharge === 'string') item.recharge = raw.recharge;
+  chargeFields(item, raw);
   if (typeof raw.baseItem === 'string') item.baseItemId = uidToId.nameSource(raw.baseItem, 'DMG');
   item.effects = itemEffects(raw);
   return item;
@@ -199,6 +234,42 @@ export function convertItem(raw: RawEntity, ctx: ConvertContext): Item {
     itemKind: itemKind(raw),
   };
   return fill(item, raw);
+}
+
+/** Raw fields of a base item that variant filters never match. */
+const NOT_MATCHED = new Set([
+  'entries',
+  'page',
+  'srd',
+  'srd52',
+  'basicRules',
+  'basicRules2024',
+  'referenceSources',
+  'otherSources',
+  'reprintedAs',
+  'hasFluff',
+  'hasFluffImages',
+]);
+
+/**
+ * A base item (5etools `baseitem`), the only kind magic variants apply to. It keeps the raw
+ * fields their `requires`/`excludes` filters read. Packs ("Arrows (20)") take no variants.
+ */
+export function convertBaseItem(raw: RawEntity, ctx: ConvertContext): Item {
+  const item = convertItem(raw, ctx);
+  if (raw.packContents !== undefined) return item;
+  const base: NonNullable<Item['variantBase']> = {};
+  for (const [key, value] of Object.entries(raw)) {
+    if (NOT_MATCHED.has(key) || key.startsWith('_')) continue;
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+      base[key] = value;
+    } else if (Array.isArray(value)) {
+      const list = value.map(uidOf).filter((v): v is string => v !== null);
+      if (list.length === value.length) base[key] = list;
+    }
+  }
+  item.variantBase = base;
+  return item;
 }
 
 /**
@@ -226,6 +297,41 @@ export function convertItemGroup(raw: RawEntity, ctx: ConvertContext): Item {
   return item;
 }
 
+const LEADING_AN = new Set(['a', 'e', 'i', 'o', 'u']);
+
+/**
+ * 5etools `{=prop/mods}` in a variant's text. The bonuses come from the variant; the base
+ * item's name and damage type aren't known until it is applied, so those read generically.
+ */
+function variantText(text: string, inherits: RawEntity): string {
+  return text.replace(/\{=(\w+)(?:\/(\w+))?\}/g, (_m, prop: string, mods: string = '') => {
+    let value =
+      prop === 'baseName'
+        ? 'item'
+        : prop === 'dmgType'
+          ? 'the weapon’s damage type'
+          : String(inherits[prop] ?? '');
+    for (const mod of mods) {
+      if (mod === 'a') value = LEADING_AN.has(value[0]?.toLowerCase() ?? '') ? 'an' : 'a';
+      else if (mod === 'l') value = value.toLowerCase();
+      else if (mod === 'u') value = value.toUpperCase();
+      else if (mod === 't') value = value.replace(/\b\w/g, (c) => c.toUpperCase());
+    }
+    return value;
+  });
+}
+
+function withVariantText(value: unknown, inherits: RawEntity): unknown {
+  if (typeof value === 'string') return variantText(value, inherits);
+  if (Array.isArray(value)) return value.map((v) => withVariantText(v, inherits));
+  if (isObject(value)) {
+    return Object.fromEntries(
+      Object.entries(value).map(([k, v]) => [k, withVariantText(v, inherits)]),
+    );
+  }
+  return value;
+}
+
 /** A generic variant. Its source, page and text live in `inherits`. */
 export function convertMagicVariant(raw: RawEntity, ctx: ConvertContext): Item {
   const inherits = isObject(raw.inherits) ? raw.inherits : {};
@@ -233,7 +339,7 @@ export function convertMagicVariant(raw: RawEntity, ctx: ConvertContext): Item {
     ...raw,
     source: typeof inherits.source === 'string' ? inherits.source : raw.source,
     page: inherits.page ?? raw.page,
-    entries: raw.entries ?? inherits.entries,
+    entries: withVariantText(raw.entries ?? inherits.entries, inherits),
     reprintedAs: inherits.reprintedAs ?? raw.reprintedAs,
   };
   const item: Item = {
@@ -248,12 +354,14 @@ export function convertMagicVariant(raw: RawEntity, ctx: ConvertContext): Item {
     },
   };
   if (isObject(raw.excludes)) item.variant!.excludes = raw.excludes;
+  if (raw.edition === 'classic' || raw.edition === 'one') item.variant!.edition = raw.edition;
   if (typeof inherits.namePrefix === 'string') item.variant!.namePrefix = inherits.namePrefix;
   if (typeof inherits.nameSuffix === 'string') item.variant!.nameSuffix = inherits.nameSuffix;
   if (typeof inherits.rarity === 'string' && inherits.rarity !== 'none')
     item.rarity = inherits.rarity;
   const b = bonuses(inherits);
   if (b) item.bonuses = b;
+  chargeFields(item, inherits);
   item.effects = itemEffects(inherits);
   return item;
 }

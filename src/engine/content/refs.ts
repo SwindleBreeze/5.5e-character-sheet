@@ -76,6 +76,8 @@ export function entityRefs(entity: ContentEntity): Ref[] {
     case 'item':
       if (entity.baseItemId) out.push({ kind: 'item', id: entity.baseItemId });
       if (entity.weapon?.masteryId) out.push({ kind: 'rule', id: entity.weapon.masteryId });
+      // What a pack holds, so it can be unpacked into the inventory.
+      for (const p of entity.packContents ?? []) out.push({ kind: 'item', id: p.itemId });
       break;
     default:
       break;

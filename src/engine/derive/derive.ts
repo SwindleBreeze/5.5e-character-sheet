@@ -15,6 +15,7 @@ import { buildStaticState, holds } from '../static/state.ts';
 import { deriveAbilities } from './abilities.ts';
 import { deriveAttacks } from './attacks.ts';
 import { deriveActions, deriveToggles } from './actions.ts';
+import { deriveInventory, gearState } from './inventory.ts';
 import { deriveResources } from './resources.ts';
 import { deriveSpellcasting } from './spellcasting.ts';
 import { valuesOf, withOverride, type DeriveContext } from './context.ts';
@@ -90,6 +91,7 @@ export function derive(
     number
   >;
   const profs = collectProficiencies(ctx);
+  ctx.gear = gearState(ctx, profs);
   const rolls = deriveRolls(ctx, mods, profs, pb.value);
   const classes = deriveClasses(ctx);
   const { attacks, attacksPerAction } = deriveAttacks(
@@ -103,14 +105,8 @@ export function derive(
   const { spellcasting, spellAttacks } = deriveSpellcasting(ctx, mods, pb.value, resources);
   const allAttacks = [...attacks, ...spellAttacks];
 
-  const attuned = character.inventory.filter((r) => r.attuned).length;
-  if (attuned > 3) {
-    issues.push({
-      severity: 'warn',
-      code: 'attunement',
-      message: `${attuned} items attuned; the limit is 3.`,
-    });
-  }
+  const size = deriveSize(ctx);
+  const inventory = deriveInventory(ctx, scores.str, size, spellcasting);
 
   for (const c of st.classes) {
     if (c.cls && !c.subclassId && c.level >= c.cls.subclassLevel) {
@@ -164,7 +160,8 @@ export function derive(
       tools: sourced(profs.tools),
       languages: sourced(profs.languages),
     },
-    size: deriveSize(ctx),
+    size,
+    inventory,
     attacks: allAttacks,
     attacksPerAction,
     spellcasting,

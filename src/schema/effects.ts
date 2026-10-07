@@ -293,6 +293,8 @@ export type Effect =
       countsAsClassSpell?: boolean;
     }
   /** P12: hit points that absorb damage after temporary HP (Arcane Ward). */
-  | { type: 'ward'; name: string; max: Formula };
+  | { type: 'ward'; name: string; max: Formula }
+  /** Count as `steps` sizes larger when determining carrying capacity (Powerful Build). */
+  | { type: 'carrySize'; steps: number };
 
 export type EffectType = Effect['type'];

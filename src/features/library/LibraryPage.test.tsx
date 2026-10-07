@@ -51,7 +51,8 @@ describe('LibraryPage', () => {
     renderApp('/library');
 
     await user.click(await screen.findByRole('tab', { name: 'Items' }));
-    await waitFor(async () => expect(await names()).toHaveLength(13));
+    // The list is virtual: count the results, not the rows drawn.
+    expect(await screen.findByText(/^19 results/)).toBeInTheDocument();
 
     await user.type(screen.getByRole('searchbox', { name: 'Search' }), 'torch');
     await waitFor(async () => expect(await names()).toEqual(['Everburning Torch', 'Torch']));

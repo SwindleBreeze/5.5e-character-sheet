@@ -252,6 +252,10 @@ export function convertSpecies(raw: RawEntity, ctx: ConvertContext): Species {
     ...featEffects(raw),
     ...spellEffects(raw),
   ];
+  // "You also count as one size larger when determining your carrying capacity."
+  if (strArray(raw.traitTags).includes('Powerful Build')) {
+    species.effects.push({ type: 'carrySize', steps: 1 });
+  }
   if (species.size.length > 1) {
     species.effects.unshift({
       type: 'optionChoice',

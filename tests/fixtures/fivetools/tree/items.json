@@ -31,6 +31,16 @@
       "resist": ["thunder", "psychic"],
       "detail1": "a tiny bell",
       "entries": ["{#itemEntry Ring of Shouting|TST}"]
+    },
+    {
+      "name": "Sack of Holding",
+      "source": "TST",
+      "page": 49,
+      "rarity": "uncommon",
+      "wondrous": true,
+      "weight": 5,
+      "containerCapacity": { "weight": [500], "weightless": true },
+      "entries": ["It weighs 5 pounds, whatever it holds."]
     }
   ],
   "itemGroup": [

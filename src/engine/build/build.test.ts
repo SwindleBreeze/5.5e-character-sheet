@@ -110,6 +110,25 @@ describe('build helpers', () => {
       ['Shiv', 2, undefined],
     ]);
     expect(c.currency).toMatchObject({ gp: 8, sp: 0, cp: 0 });
+
+    // Two hands: a Shield and a Two-Handed bow can't both be held.
+    const both = applyEquipment(
+      startCharacter('Di', brute, 7),
+      {
+        key: 'X',
+        valueCp: 0,
+        items: [
+          { itemId: 'buckler|tst', quantity: 1 },
+          { itemId: 'arc bow|tst', quantity: 1 },
+        ],
+      },
+      index,
+      7,
+    );
+    expect(both.inventory.map((r) => [r.name, r.equipped])).toEqual([
+      ['Buckler', 'shield'],
+      ['Arc Bow', undefined],
+    ]);
   });
 });
 

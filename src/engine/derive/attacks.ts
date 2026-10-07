@@ -23,6 +23,7 @@ import {
   valuesOf,
   type DeriveContext,
 } from './context.ts';
+import { magicWorks } from '../items/items.ts';
 import { buildRoll, type Proficiencies } from './rolls.ts';
 import { costOf } from './resources.ts';
 import type {
@@ -148,8 +149,10 @@ function buildAttack(
   if (!offHand || mods[ability] < 0) {
     damageParts.push({ label: `${ability.toUpperCase()} modifier`, value: mods[ability] });
   }
+  // Magic that needs Attunement works only when attuned; the weapon itself always does.
+  const magic = !input.row || magicWorks(input.row, input.item, input.variant);
   const itemBonus = (b: 'weapon' | 'weaponAttack' | 'weaponDamage') =>
-    (input.item?.bonuses?.[b] ?? 0) + (input.variant?.bonuses?.[b] ?? 0);
+    magic ? (input.item?.bonuses?.[b] ?? 0) + (input.variant?.bonuses?.[b] ?? 0) : 0;
   const magicHit = itemBonus('weapon') + itemBonus('weaponAttack');
   const magicDamage = itemBonus('weapon') + itemBonus('weaponDamage');
   const magicName = input.variant?.name ?? input.item?.name ?? input.name;
@@ -280,7 +283,9 @@ export function deriveAttacks(
       baseDie,
       damageType: item.weapon.damageType,
       distance: distanceOf(item, traits.range === 'ranged'),
-      ready: !!hand,
+      // A Two-Handed weapon needs both hands to attack: held in one, the other must be free.
+      ready:
+        !!hand && (hand === 'both' || !traits.properties.includes('2H') || wield.freeHands >= 1),
       item,
       ...(variant ? { variant } : {}),
       row,

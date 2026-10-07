@@ -14,6 +14,40 @@
         "bonusWeapon": "+1",
         "entries": ["{=bonusWeapon} to hit."]
       }
+    },
+    {
+      "name": "Echo Weapon",
+      "type": "GV|TST",
+      "requires": [{ "type": "M|TST" }],
+      "inherits": {
+        "nameSuffix": " of Echoes",
+        "source": "TST",
+        "page": 49,
+        "rarity": "rare",
+        "reqAttune": "by a gladiator",
+        "reqAttuneTags": [{ "class": "gladiator" }],
+        "bonusWeapon": "+1",
+        "charges": "{@dice 1d3}",
+        "recharge": "dawn",
+        "rechargeAmount": "{@dice 1d3}",
+        "entries": [
+          "{=bonusWeapon} to attack and damage rolls; {=baseName/a} {=baseName/l} that echoes."
+        ]
+      }
+    },
+    {
+      "name": "+1 Old Weapon",
+      "edition": "classic",
+      "type": "GV|TST",
+      "requires": [{ "weapon": true }],
+      "inherits": {
+        "namePrefix": "+1 ",
+        "source": "TST",
+        "page": 50,
+        "rarity": "uncommon",
+        "bonusWeapon": "+1",
+        "entries": ["Old rules."]
+      }
     }
   ]
 }

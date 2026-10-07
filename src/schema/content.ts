@@ -242,6 +242,8 @@ export type ItemBonus =
 export interface MagicVariant {
   requires: Record<string, unknown>[];
   excludes?: Record<string, unknown>;
+  /** 5etools `edition`: `classic` variants apply only to classic base items. */
+  edition?: 'classic' | 'one';
   namePrefix?: string;
   nameSuffix?: string;
   /** Item fields the variant sets, e.g. rarity, bonuses, attunement. */
@@ -274,10 +276,29 @@ export interface Item extends BaseEntity {
   };
   shieldAc?: number;
   packContents?: { itemId: Id; quantity: number }[];
+  /** Holds other items: by weight, by volume or by count (5etools `containerCapacity`). */
+  container?: boolean;
+  /** The most weight it holds: the sum of its compartments (Heward's Handy Haversack). */
   containerCapacityLb?: number;
+  /** How many of certain items it holds (a Quiver: 20 Arrows), over all its compartments. */
+  containerItems?: Record<Id, number>;
+  /** Its contents add nothing to the weight carried (Bag of Holding). */
+  containerWeightless?: boolean;
   bonuses?: Partial<Record<ItemBonus, number>>;
   charges?: number;
+  /** Charges given as dice (`1d3`), rolled when the item is found. */
+  chargesDice?: string;
+  /** `dawn`, `dusk`, `midnight`, `restLong`, `special`. */
   recharge?: string;
+  /** Charges regained when it recharges (`1d6 + 1`); missing means all of them. */
+  rechargeAmount?: string;
+  /** 5etools `reqAttuneTags`: who can attune (`{class: 'paladin'}`, `{spellcasting: true}`). */
+  attunementTags?: Record<string, unknown>[];
+  /**
+   * Base items only (5etools `baseitem`): the raw fields a magic variant's `requires` and
+   * `excludes` filters match (`type`, `weapon`, `sword`, `property`, `edition`…).
+   */
+  variantBase?: Record<string, string | number | boolean | string[]>;
   /** For magic items built on a base item, e.g. `longsword|xphb`. */
   baseItemId?: Id;
   /** For tools: which "any …" picks they fill (adapter 3). */

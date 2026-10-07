@@ -20,6 +20,7 @@ import {
   type Subclass,
 } from '../../schema/index.ts';
 import type { ContentIndex } from '../content/contentIndex.ts';
+import { needsAttunement } from '../items/items.ts';
 import { nestedFeatureRefs } from '../content/refs.ts';
 import { childEffects } from '../effects/walk.ts';
 import type { FeatureEffectsMap } from '../featureEffects/types.ts';
@@ -450,7 +451,8 @@ export function collectEffects(
   for (const row of character.inventory) {
     if (!row.equipped || !row.itemRef) continue;
     const item = index.get({ kind: 'item', id: row.itemRef.id });
-    if (item?.attunement && !row.attuned) continue;
+    const variant = row.variantRef ? index.get({ kind: 'item', id: row.variantRef.id }) : undefined;
+    if (needsAttunement(item, variant) && !row.attuned) continue;
     addOwner(row.itemRef, {});
     if (row.variantRef) addOwner(row.variantRef, {});
   }

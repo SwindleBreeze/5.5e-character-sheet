@@ -109,6 +109,48 @@
       "weight": 6,
       "value": 1000,
       "ac": 2
+    },
+    {
+      "name": "Backpack",
+      "source": "TST",
+      "page": 48,
+      "type": "G|TST",
+      "rarity": "none",
+      "weight": 5,
+      "value": 200,
+      "containerCapacity": { "weight": [30] },
+      "entries": ["A backpack holds 30 pounds."]
+    },
+    {
+      "name": "Delver's Kit",
+      "source": "TST",
+      "page": 48,
+      "type": "G|TST",
+      "rarity": "none",
+      "weight": 9,
+      "value": 1000,
+      "packContents": ["backpack|tst", { "item": "torch|tst", "quantity": 2 }],
+      "entries": ["A backpack and two torches."]
+    },
+    {
+      "name": "Arrow",
+      "source": "TST",
+      "page": 48,
+      "type": "A|TST",
+      "rarity": "none",
+      "weight": 0.05,
+      "value": 5,
+      "arrow": true
+    },
+    {
+      "name": "Quiver",
+      "source": "TST",
+      "page": 48,
+      "type": "G|TST",
+      "rarity": "none",
+      "weight": 1,
+      "value": 100,
+      "containerCapacity": { "item": [{ "arrow|tst": 20 }] }
     }
   ],
   "itemProperty": [

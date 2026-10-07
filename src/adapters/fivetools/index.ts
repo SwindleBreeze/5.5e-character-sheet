@@ -27,7 +27,12 @@ import {
   convertReward,
   linkDeityReprints,
 } from './convert/extras.ts';
-import { convertItem, convertItemGroup, convertMagicVariant } from './convert/item.ts';
+import {
+  convertBaseItem,
+  convertItem,
+  convertItemGroup,
+  convertMagicVariant,
+} from './convert/item.ts';
 import { convertBackground, convertFeat, convertSpecies } from './convert/origin.ts';
 import { convertOptionalFeature, convertRule, RULE_KIND_BY_PROP } from './convert/rules.ts';
 import { convertSpell } from './convert/spell.ts';
@@ -77,7 +82,7 @@ const CONVERTERS: [string, EntityKind, Converter][] = [
   ['feat', 'feat', convertFeat],
   ['race', 'species', convertSpecies],
   ['optionalfeature', 'optionalFeature', convertOptionalFeature],
-  ['baseitem', 'item', convertItem],
+  ['baseitem', 'item', convertBaseItem],
   ['item', 'item', convertItem],
   ['magicvariant', 'item', convertMagicVariant],
   ['itemGroup', 'item', convertItemGroup],

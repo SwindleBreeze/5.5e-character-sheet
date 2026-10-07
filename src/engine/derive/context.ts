@@ -16,6 +16,7 @@ import { averageOf, isDice, type Value } from '../formula/dice.ts';
 import { evaluateFormula } from '../formula/evaluate.ts';
 import { FormulaError } from '../formula/parse.ts';
 import type { StaticState } from '../static/state.ts';
+import type { GearState } from './inventory.ts';
 import { makeScope, type ScopeContext } from './scope.ts';
 import type { Contribution, Derived, RuleIssue } from './types.ts';
 
@@ -27,6 +28,8 @@ export interface DeriveContext {
   recon: Reconciliation;
   scope: ScopeContext;
   issues: RuleIssue[];
+  /** Armor drawbacks, once proficiencies are known. */
+  gear?: GearState;
 }
 
 /** Applied effects of one type, typed. */
