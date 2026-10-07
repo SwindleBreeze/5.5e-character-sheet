@@ -24,7 +24,14 @@ import { useCharacterActions } from '../sheet/useCharacterActions.ts';
 import { fillable, isSpellOffer } from '../wizard/progress.ts';
 import wizard from '../wizard/wizard.module.css';
 import { levelPicks, type LevelUpBindings } from './bindings.ts';
-import { ClassStep, FeaturesList, HpStep, ReviewStep, SubclassStep } from './steps.tsx';
+import {
+  ClassStep,
+  FeaturesList,
+  HpStep,
+  RetrainSection,
+  ReviewStep,
+  SubclassStep,
+} from './steps.tsx';
 
 export type LevelUpStep = 'class' | 'hp' | 'subclass' | 'features' | 'spells' | 'review';
 
@@ -157,27 +164,53 @@ export function LevelUpPage() {
     navigate(`/c/${id}/main`, { replace: true });
   };
 
-  const picks = (spells: boolean) => {
-    if (!plan || !ctx) return null;
-    const { features, only } = levelPicks(plan, spells);
-    if (!features.length)
-      return <p className={wizard.notice}>Nothing to choose here: on you go.</p>;
-    return (
-      <FeatureChoices
-        features={features}
+  const retrain = (spells: boolean) =>
+    plan && ctx ? (
+      <RetrainSection
+        plan={plan}
         ctx={ctx}
-        only={only}
-        named
-        onPick={(c, _f, pick) =>
+        spells={spells}
+        onSave={(c, pick) =>
           b.change((ch) =>
             setPick(ch, decodeChoiceKey(c.key), {
               ...pick,
               entryIndex: c.entryIndex,
-              ...(c.entryIndex === plan.entryIndex ? { via: 'levelUp' as const } : {}),
+              via: 'retrain',
             }),
           )
         }
       />
+    ) : null;
+
+  const picks = (spells: boolean) => {
+    if (!plan || !ctx) return null;
+    const { features, only } = levelPicks(plan, spells);
+    if (!features.length)
+      return (
+        <>
+          <p className={wizard.notice}>Nothing to choose here: on you go.</p>
+          {retrain(spells)}
+        </>
+      );
+    return (
+      <>
+        <FeatureChoices
+          features={features}
+          ctx={ctx}
+          only={only}
+          named
+          onPick={(c, _f, pick) =>
+            b.change((ch) =>
+              setPick(ch, decodeChoiceKey(c.key), {
+                ...pick,
+                entryIndex: c.entryIndex,
+                ...(c.entryIndex === plan.entryIndex ? { via: 'levelUp' as const } : {}),
+              }),
+            )
+          }
+        />
+        {retrain(spells)}
+      </>
     );
   };
 

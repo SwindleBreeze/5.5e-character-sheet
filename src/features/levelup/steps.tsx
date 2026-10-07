@@ -5,6 +5,12 @@ import type { ContentIndex } from '../../engine/content/contentIndex.ts';
 import type { ClassOption, LevelUpPlan } from '../../engine/build/levelUp.ts';
 import type { DerivedSheet } from '../../engine/derive/types.ts';
 import { EntityView } from '../../richtext/EntitySheet.tsx';
+import type { AutoContext } from '../../engine/build/autoChoose.ts';
+import type { DerivedFeatureChoice } from '../../engine/derive/types.ts';
+import { ChoicePicker } from '../choices/ChoicePicker.tsx';
+import { choiceTitle } from '../choices/labels.ts';
+import type { PickSave } from '../choices/picks.ts';
+import { isSpellOffer } from '../wizard/progress.ts';
 import type { HpGain, Ref } from '../../schema/index.ts';
 import { Button } from '../../ui/Button.tsx';
 import { useRoller } from '../../ui/rollerContext.ts';
@@ -300,5 +306,54 @@ function PickRow({ name, values }: { name: string; values: string[] }) {
       <dt>{name}</dt>
       <dd>{values.join(', ')}</dd>
     </>
+  );
+}
+
+/**
+ * Earlier picks the rules let change when gaining a level (plan §9.4, step 5.7): known spells,
+ * invocations, a Fighting Style… of the class this level is in. Each opens its picker; the
+ * change is recorded as a retrain. The rules' "how many" is the feature's to say.
+ */
+export function RetrainSection({
+  plan,
+  ctx,
+  spells,
+  onSave,
+}: {
+  plan: LevelUpPlan;
+  ctx: AutoContext;
+  spells: boolean;
+  onSave: (choice: DerivedFeatureChoice, pick: PickSave) => void;
+}) {
+  const earlier = plan.sheet.features
+    .filter((f) => f.classId === plan.classId)
+    .flatMap((f) => f.choices)
+    .filter(
+      (c) =>
+        c.entryIndex < plan.entryIndex &&
+        c.offer.retrain === 'levelUp' &&
+        c.values.length > 0 &&
+        !plan.choiceKeys.has(c.key) &&
+        isSpellOffer(c.offer) === spells,
+    );
+  if (!earlier.length) return null;
+  return (
+    <details className={choices.choice}>
+      <summary className={choices.choiceTitle}>Change an earlier choice ({earlier.length})</summary>
+      <p className={choices.help}>
+        Gaining a {plan.cls?.name ?? 'class'} level lets you swap some earlier picks, usually one
+        each: the feature’s text says how many.
+      </p>
+      {earlier.map((c) => (
+        <section key={c.key} className={styles.feature} aria-label={`Change ${choiceTitle(c)}`}>
+          <h3 className={choices.choiceTitle}>
+            {c.offer.source.name === choiceTitle(c)
+              ? choiceTitle(c)
+              : `${c.offer.source.name}: ${choiceTitle(c)}`}
+          </h3>
+          <ChoicePicker choice={c} ctx={ctx} showRetrain onSave={(pick) => onSave(c, pick)} />
+        </section>
+      ))}
+    </details>
   );
 }

@@ -126,4 +126,24 @@ describe('level-up flow (plan §9.4, step 5.2)', () => {
     await user.click(sheet.getByRole('button', { name: 'Undo level 4' }));
     await waitFor(async () => expect((await repos().characters.get(c.id))!.log).toHaveLength(3));
   });
+
+  it('earlier picks the rules let change on a level can be swapped, as a retrain (plan step 5.7)', async () => {
+    const user = userEvent.setup();
+    const c = await saved('pactbinder|tst', 3);
+    renderApp(`/c/${c.id}/level-up`);
+    await user.click(await screen.findByRole('radio', { name: 'Pactbinder 4' }));
+    await user.click(next(/Hit points ›/));
+    await user.click(next(/Features ›/));
+    // The Ability Score Improvement's feat first; then the spells, where the swaps are.
+    const feat = within(screen.getByRole('region', { name: /Ability Score Improvement/ }));
+    await user.click(feat.getAllByRole('radio')[0]!);
+    // Arena Veteran asks for an increase of its own, under it.
+    await user.click(feat.getByRole('radio', { name: 'Charisma' }));
+    await user.click(next(/Spells ›/));
+    await user.click(screen.getByText(/Change an earlier choice/));
+    const known = screen.getAllByRole('region', { name: /^Change / })[0]!;
+    expect(
+      within(known).getByText(/You can change this when you gain a level/),
+    ).toBeInTheDocument();
+  });
 });
