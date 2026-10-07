@@ -81,11 +81,54 @@ export function removeItem(c: Character, uid: string): Character {
   return n;
 }
 
-export function setQuantity(c: Character, uid: string, quantity: number): Character {
+/** Set how many a row holds. Worn and held items are one each: more go to Carried. */
+export function setQuantity(
+  c: Character,
+  uid: string,
+  quantity: number,
+  makeUid: MakeUid = newUid,
+): Character {
   const n = clone(c);
   const row = find(n, uid);
   if (!row) return c;
   row.quantity = Math.max(0, Math.floor(quantity));
+  return unstackHeld(n, makeUid);
+}
+
+/**
+ * Worn and held items are one each (a hand holds one Dagger): the rest of a worn or held stack
+ * goes to Carried, onto a plain carried stack of the same item when there is one. Returns `c`
+ * itself when there is none, so characters saved with a held stack are fixed without a write
+ * otherwise.
+ */
+export function unstackHeld(c: Character, makeUid: MakeUid = newUid): Character {
+  if (!c.inventory.some((r) => r.equipped && r.quantity > 1)) return c;
+  const n = clone(c);
+  for (const held of n.inventory.filter((r) => r.equipped && r.quantity > 1)) {
+    const extra = held.quantity - 1;
+    held.quantity = 1;
+    const stack = n.inventory.find(
+      (r) =>
+        !r.equipped &&
+        !r.containerUid &&
+        !r.notes &&
+        r.chargesMax === undefined &&
+        held.chargesMax === undefined &&
+        r.name === held.name &&
+        r.itemRef?.id === held.itemRef?.id &&
+        r.variantRef?.id === held.variantRef?.id,
+    );
+    if (stack) stack.quantity += extra;
+    else {
+      const { equipped: _held, ...rest } = held;
+      n.inventory.splice(n.inventory.indexOf(held) + 1, 0, {
+        ...rest,
+        uid: makeUid(),
+        quantity: extra,
+        attuned: false,
+      });
+    }
+  }
   return n;
 }
 
@@ -113,8 +156,8 @@ const FREES: Record<EquipSlot, EquipSlot[]> = {
  * Put a row in a slot, or stow it (`null`). Armor is one suit, a Shield one, and hands are two:
  * whatever the new item displaces is stowed, except that a weapon held in both hands that
  * can be held in one moves to the main hand when a Shield or an off-hand item takes the other.
- * From a stack, one item is equipped and the rest stay (where they were: a held stack of two
- * Daggers put in the off hand leaves one in each hand). Equipped items leave their container.
+ * From a stack, one item is equipped (it keeps the row, so its details stay open) and the
+ * rest stay where they were. Equipped items leave their container.
  */
 export function equipItem(
   c: Character,
@@ -125,7 +168,7 @@ export function equipItem(
 ): Character {
   const n = clone(c);
   const at = n.inventory.findIndex((r) => r.uid === uid);
-  let row = n.inventory[at];
+  const row = n.inventory[at];
   if (!row) return c;
   if (!slot) {
     if (!row.equipped) return c;
@@ -134,11 +177,14 @@ export function equipItem(
   }
   if (row.equipped === slot) return c;
   if (row.quantity > 1) {
-    const one: InventoryItem = { ...structuredClone(row), uid: makeUid(), quantity: 1 };
-    row.quantity -= 1;
-    row.attuned = false;
-    n.inventory.splice(at + 1, 0, one);
-    row = one;
+    const rest: InventoryItem = {
+      ...structuredClone(row),
+      uid: makeUid(),
+      quantity: row.quantity - 1,
+      attuned: false,
+    };
+    row.quantity = 1;
+    n.inventory.splice(at + 1, 0, rest);
   }
   delete row.containerUid;
   delete row.equipped;

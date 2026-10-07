@@ -6,6 +6,7 @@ import page from '../../app/Page.module.css';
 import { useConditionOptions, useContentIndex } from '../../content/hooks.ts';
 import { repos } from '../../db/repos.ts';
 import { refreshSnapshots } from '../../engine/content/snapshots.ts';
+import { unstackHeld } from '../../engine/play/inventory.ts';
 import { derive } from '../../engine/derive/derive.ts';
 import { featureEffects } from '../../engine/featureEffects/index.ts';
 import { useRoller } from '../../ui/rollerContext.ts';
@@ -46,14 +47,16 @@ export function SheetPage() {
   );
 
   // Snapshots of the content in use (plan §4.4): refreshed whenever the loaded content changes,
-  // written only when they changed.
+  // written only when they changed. A worn or held stack saved before they were split is
+  // split too (one in hand, the rest carried).
   useEffect(() => {
     if (!index) return;
-    apply((c) =>
-      c.log.length
+    apply((saved) => {
+      const c = unstackHeld(saved);
+      return c.log.length
         ? refreshSnapshots(c, index, derive(c, index, { registry: featureEffects() }))
-        : c,
-    );
+        : c;
+    });
   }, [index, apply]);
 
   if (!SHEET_TABS.some((t) => t.id === tab)) return <Navigate to={`/c/${id}/main`} replace />;

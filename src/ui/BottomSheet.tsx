@@ -1,10 +1,18 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Drawer } from 'vaul';
 import styles from './BottomSheet.module.css';
 import { SheetContext, type SheetApi, type SheetPage } from './sheetContext.ts';
 
 /** Deep enough for rule → linked rule chains, small enough to keep "back" meaningful. */
 const MAX_DEPTH = 12;
+
+/** A field that brings up the on-screen keyboard. */
+function typing(): boolean {
+  const el = document.activeElement;
+  if (el instanceof HTMLTextAreaElement) return true;
+  if (!(el instanceof HTMLInputElement)) return false;
+  return !['checkbox', 'radio', 'button', 'submit', 'range', 'color', 'file'].includes(el.type);
+}
 
 /**
  * App-wide bottom sheet for rules text and quick details. One sheet at a time: a tap inside it
@@ -28,14 +36,34 @@ export function SheetProvider({ children }: { children: ReactNode }) {
   );
 
   const top = stack.at(-1);
+  const open = stack.length > 0;
+
+  // While the on-screen keyboard is up, vaul gives the sheet a fixed height to keep the field
+  // in view, and keeps that height afterwards: a search that listed many results left the
+  // sheet tall once they were gone. When no field has focus, the sheet fits its content again.
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [inner, setInner] = useState<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!inner || typeof ResizeObserver === 'undefined') return;
+    const release = () => {
+      if (contentRef.current && !typing()) contentRef.current.style.height = '';
+    };
+    const observer = new ResizeObserver(release);
+    observer.observe(inner);
+    window.visualViewport?.addEventListener('resize', release);
+    return () => {
+      observer.disconnect();
+      window.visualViewport?.removeEventListener('resize', release);
+    };
+  }, [inner]);
 
   return (
     <SheetContext.Provider value={api}>
       {children}
-      <Drawer.Root open={stack.length > 0} onOpenChange={(open) => !open && api.close()}>
+      <Drawer.Root open={open} onOpenChange={(next) => !next && api.close()}>
         <Drawer.Portal>
           <Drawer.Overlay className={styles.overlay} />
-          <Drawer.Content className={styles.content} aria-describedby={undefined}>
+          <Drawer.Content ref={contentRef} className={styles.content} aria-describedby={undefined}>
             <div className={styles.handle} aria-hidden="true" />
             <header className={styles.header}>
               {stack.length > 1 ? (
@@ -55,7 +83,9 @@ export function SheetProvider({ children }: { children: ReactNode }) {
                 <span aria-hidden="true">✕</span>
               </button>
             </header>
-            <div className={styles.body}>{top?.render()}</div>
+            <div className={styles.body}>
+              <div ref={setInner}>{top?.render()}</div>
+            </div>
           </Drawer.Content>
         </Drawer.Portal>
       </Drawer.Root>

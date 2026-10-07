@@ -16,6 +16,8 @@ import {
   recoverAmmo,
   removeItem,
   setChargesLeft,
+  setQuantity,
+  unstackHeld,
   setCurrency,
   spendAmmo,
   unpackItem,
@@ -116,22 +118,33 @@ describe('equipping (one armor, one Shield, two hands)', () => {
       row('shivs', 'shiv|tst', { quantity: 3, containerUid: 'pack' }),
     ]);
     const next = equipItem(c, 'shivs', 'mainHand', index, uid);
-    const [, stack, held] = next.inventory;
-    expect(stack).toMatchObject({ uid: 'shivs', quantity: 2, containerUid: 'pack' });
-    expect(held).toMatchObject({ quantity: 1, equipped: 'mainHand' });
+    const [, held, stack] = next.inventory;
+    // The one in hand keeps the row; the rest stay in the pack.
+    expect(held).toMatchObject({ uid: 'shivs', quantity: 1, equipped: 'mainHand' });
     expect(held?.containerUid).toBeUndefined();
-    expect(equipItem(next, held!.uid, null, index).inventory[2]?.equipped).toBeUndefined();
+    expect(stack).toMatchObject({ quantity: 2, containerUid: 'pack' });
+    expect(stack?.equipped).toBeUndefined();
+    expect(equipItem(next, 'shivs', null, index).inventory[1]?.equipped).toBeUndefined();
+  });
 
-    // A stack of two held in the main hand: one goes to the off hand, one in each.
+  it('worn and held items are one each: more go to Carried', () => {
+    // Saved with two Shivs in one hand: one stays, the other is carried.
     const pair = character([row('shivs', 'shiv|tst', { quantity: 2, equipped: 'mainHand' })]);
-    expect(
-      equipItem(pair, 'shivs', 'offHand', index, uid).inventory.map((r) => [
-        r.quantity,
-        r.equipped,
-      ]),
-    ).toEqual([
+    const fixed = unstackHeld(pair, uid);
+    expect(fixed.inventory.map((r) => [r.uid, r.quantity, r.equipped ?? '-'])).toEqual([
+      ['shivs', 1, 'mainHand'],
+      [expect.stringMatching(/^new-/), 1, '-'],
+    ]);
+    expect(unstackHeld(fixed)).toBe(fixed);
+    // Then one in each hand.
+    expect(slots(equipItem(fixed, fixed.inventory[1]!.uid, 'offHand', index))).toMatchObject({
+      shivs: 'mainHand',
+    });
+    // Raising a held row's quantity adds to the carried stack.
+    const more = setQuantity(fixed, 'shivs', 3, uid);
+    expect(more.inventory.map((r) => [r.quantity, r.equipped ?? '-'])).toEqual([
       [1, 'mainHand'],
-      [1, 'offHand'],
+      [3, '-'],
     ]);
   });
 });

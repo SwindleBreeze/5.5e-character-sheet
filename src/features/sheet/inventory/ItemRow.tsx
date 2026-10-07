@@ -219,8 +219,12 @@ function ItemDetails({ row, bindings }: { row: InventoryItem; bindings: SheetBin
         <Counter
           label={`${row.name} quantity`}
           value={row.quantity}
+          min={1}
           onChange={(q) => apply((c) => setQuantity(c, row.uid, q))}
         />
+        {row.equipped && (
+          <p className={styles.help}>Worn and held items are one each: more go to Carried.</p>
+        )}
       </div>
 
       {(attunement || custom) && (

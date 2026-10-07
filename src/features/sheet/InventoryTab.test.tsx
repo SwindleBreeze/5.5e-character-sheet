@@ -129,6 +129,29 @@ describe('Inventory tab', () => {
     );
   });
 
+  it('holding one of a stack: its details stay open, and more of it go to Carried', async () => {
+    const user = userEvent.setup();
+    renderTab(brute([row('shivs', 'shiv|tst', { quantity: 2 })]));
+    await open(user, 'Shiv');
+    await user.selectOptions(
+      within(rowNamed('Shiv')).getByRole('combobox', { name: 'Worn or held' }),
+      'mainHand',
+    );
+    const held = within(
+      within(screen.getByRole('list', { name: 'Worn and held' })).getByRole('listitem', {
+        name: 'Shiv',
+      }),
+    );
+    expect(
+      held.getByText('Worn and held items are one each: more go to Carried.'),
+    ).toBeInTheDocument();
+    await user.click(held.getByRole('button', { name: /Increase Shiv quantity/ }));
+    expect(latest.inventory.map((r) => [r.quantity, r.equipped ?? '-'])).toEqual([
+      [1, 'mainHand'],
+      [2, '-'],
+    ]);
+  });
+
   it('Attunement: the prerequisite and the limit', async () => {
     const user = userEvent.setup();
     renderTab(
