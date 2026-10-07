@@ -6,7 +6,7 @@
 import { useMemo, useState } from 'react';
 import { useEnabledSources, useEntitiesOfKind } from '../../../content/hooks.ts';
 import { variantApplies, variantName } from '../../../engine/items/items.ts';
-import type { Item } from '../../../schema/index.ts';
+import type { Item, SourceCode } from '../../../schema/index.ts';
 import { availableOf } from '../../../sources/sourceFilter.ts';
 import { Button } from '../../../ui/Button.tsx';
 import { itemKindText } from './format.ts';
@@ -25,9 +25,16 @@ const MAX_RESULTS = 50;
 
 const byName = (a: Item, b: Item) => a.name.localeCompare(b.name);
 
-export function AddItemSheet({ onAdd }: { onAdd: (spec: AddSpec) => void }) {
+export function AddItemSheet({
+  sources,
+  onAdd,
+}: {
+  /** The character's own sources, when it has them (plan §6.7). */
+  sources?: SourceCode[] | null;
+  onAdd: (spec: AddSpec) => void;
+}) {
   const all = useEntitiesOfKind('item');
-  const enabled = useEnabledSources();
+  const enabled = useEnabledSources(sources);
   const [mode, setMode] = useState<'library' | 'custom'>('library');
   const [query, setQuery] = useState('');
   const [picked, setPicked] = useState<Item | null>(null);

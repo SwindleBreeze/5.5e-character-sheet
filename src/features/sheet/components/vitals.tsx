@@ -90,7 +90,7 @@ export function HpKeypad({
   );
 }
 
-/** Opens the HP keypad; an action closes it. */
+/** Opens the HP keypad; an action closes it first, so it can open another sheet (a save). */
 function useHpKeypad(values: HpValues, actions: HpActions, onExplainMax?: () => void) {
   const sheet = useSheet();
   return () =>
@@ -101,9 +101,9 @@ function useHpKeypad(values: HpValues, actions: HpActions, onExplainMax?: () => 
         <HpKeypad
           {...values}
           onExplainMax={onExplainMax}
-          onDamage={(n) => (actions.onDamage(n), sheet.close())}
-          onHeal={(n) => (actions.onHeal(n), sheet.close())}
-          onTempHp={(n) => (actions.onTempHp(n), sheet.close())}
+          onDamage={(n) => (sheet.close(), actions.onDamage(n))}
+          onHeal={(n) => (sheet.close(), actions.onHeal(n))}
+          onTempHp={(n) => (sheet.close(), actions.onTempHp(n))}
         />
       ),
     });

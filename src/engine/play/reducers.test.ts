@@ -127,6 +127,18 @@ describe('damage, healing and death saves', () => {
   it('concentration DC: half the damage, at least 10, at most 30', () => {
     expect([concentrationDc(5), concentrationDc(30), concentrationDc(100)]).toEqual([10, 15, 30]);
   });
+
+  it('Concentration ends at 0 HP (Unconscious) and with a condition that Incapacitates', () => {
+    const c = brute();
+    c.state.concentration = { kind: 'spell', id: 'dim lantern|tst' };
+    const s = sheet(c);
+    expect(applyDamage(c, s, 49).state.concentration).not.toBeNull();
+    expect(applyDamage(c, s, 50).state.concentration).toBeNull();
+    expect(addCondition(c, 'condition/prone|xphb').state.concentration).not.toBeNull();
+    for (const id of ['incapacitated', 'paralyzed', 'petrified', 'stunned', 'unconscious']) {
+      expect(addCondition(c, `condition/${id}|xphb`).state.concentration, id).toBeNull();
+    }
+  });
 });
 
 describe('resources, slots, actions and toggles', () => {
@@ -245,6 +257,14 @@ describe('rests', () => {
     expect(rested.state.resourcesUsed).toEqual({ [FURY]: 2, [BREATH]: 1 });
     // Fury ends only on a Long Rest.
     expect(rested.state.activeToggles).toEqual({ fury: {} });
+    // Each die heals at least 1, even with a negative CON modifier.
+    const frail = testCharacter({
+      classes: [{ classId: 'brute|tst', levels: 5 }],
+      scores: { con: 6 },
+    });
+    const fs0 = sheet(frail);
+    const hurt = applyDamage(frail, fs0, 20);
+    expect(shortRest(hurt, sheet(hurt), [{ faces: 12, rolls: [1, 1] }]).state.damage).toBe(18);
     // Can't spend more dice than there are.
     expect(
       shortRest(c, s, [{ faces: 12, rolls: [1, 1, 1, 1, 1, 1, 1] }]).state.hitDiceUsed,

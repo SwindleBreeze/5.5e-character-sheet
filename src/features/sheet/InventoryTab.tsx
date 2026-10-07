@@ -111,7 +111,7 @@ export function InventoryTab(bindings: SheetBindings) {
     ui.open({
       key: 'inventory:add',
       title: 'Add an item',
-      render: () => <AddItemSheet onAdd={add} />,
+      render: () => <AddItemSheet sources={character.enabledSources} onAdd={add} />,
     });
 
   const over = inv.weight.value > inv.carry.value;

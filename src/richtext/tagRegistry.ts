@@ -1,5 +1,6 @@
 // What each inline tag means (plan §6.4): entity tags open a rule sheet, roll tags render as
-// dice (tap-to-roll in phase 3), formatting tags format, and everything else shows its text.
+// dice (tapped to roll since step 3.22), formatting tags format, and everything else shows its
+// text.
 
 import type { EntityKind, Ref, RuleKind } from '../schema/index.ts';
 import {
@@ -12,6 +13,7 @@ import {
   subclassFeatureId,
   subclassId,
 } from '../schema/ids.ts';
+import { parseRoll, RollError } from '../engine/dice/roll.ts';
 import { tokenize, type TagToken } from './parseTags.ts';
 
 export type TagCategory = 'entity' | 'roll' | 'format' | 'text';
@@ -178,6 +180,31 @@ function part(token: TagToken, index: number): string | undefined {
 function signed(value: string): string {
   const n = Number(value);
   return Number.isFinite(n) && n >= 0 && !value.startsWith('+') ? `+${value}` : value;
+}
+
+/**
+ * What tapping a roll tag rolls: `{@dice 2d6 + 3}` and `{@damage 1d8}` their dice, `{@hit 5}`
+ * and `{@d20 -1}` a d20 with that bonus. Nothing for tags that aren't plain dice (scaling dice,
+ * chances, recharges).
+ */
+export function tagRollExpr(token: TagToken): string | undefined {
+  const first = part(token, 0);
+  if (!first) return undefined;
+  let expr: string | undefined;
+  if (token.tag === 'dice' || token.tag === 'damage' || token.tag === 'autodice') expr = first;
+  if (token.tag === 'hit' || token.tag === 'd20') {
+    const n = Number(first);
+    if (!Number.isInteger(n)) return undefined;
+    expr = n ? `1d20${n < 0 ? '-' : '+'}${Math.abs(n)}` : '1d20';
+  }
+  if (!expr) return undefined;
+  try {
+    parseRoll(expr);
+    return expr;
+  } catch (err) {
+    if (err instanceof RollError) return undefined;
+    throw err;
+  }
 }
 
 /** The text a tag shows, before any nested tags in it are resolved. */

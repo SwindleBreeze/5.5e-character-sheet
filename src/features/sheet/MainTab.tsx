@@ -6,16 +6,13 @@ import { useRef, type ReactNode } from 'react';
 import type { Derived, DerivedRoll, SourcedValue } from '../../engine/derive/types.ts';
 import {
   deathSave,
-  heal,
   addCondition,
-  applyDamage,
   removeCondition,
   setDeathSaves,
   setExhaustion,
   setHeroicInspiration,
   setHitDiceUsed,
   setOverride,
-  setTempHp,
 } from '../../engine/play/reducers.ts';
 import {
   ABILITIES,
@@ -38,6 +35,7 @@ import {
   Tiles,
   type ConditionOption,
 } from './components/vitals.tsx';
+import { useHpActions } from './play/useHpActions.tsx';
 import { nameOf, type SheetBindings } from './sheetBindings.ts';
 import styles from './MainTab.module.css';
 
@@ -85,6 +83,7 @@ export function MainTab({ character, sheet, index, apply, conditionOptions }: Ma
   const columns = columnsFor(useContainerWidth(ref));
   const explain = useExplain();
   const roller = useRoller();
+  const hpActions = useHpActions({ character, sheet, index, apply });
 
   const override = (key: OverrideKey) => (value: number | undefined) =>
     apply((c) => setOverride(c, key, value));
@@ -219,11 +218,7 @@ export function MainTab({ character, sheet, index, apply, conditionOptions }: Ma
                 max: hp.ward.max.value,
               },
             }}
-            actions={{
-              onDamage: (n) => apply((c) => applyDamage(c, sheet, n)),
-              onHeal: (n) => apply((c) => heal(c, sheet, n)),
-              onTempHp: (n) => apply((c) => setTempHp(c, n)),
-            }}
+            actions={hpActions}
             onExplainMax={() => explainNumber('hpMax', 'Hit point maximum', hp.max)}
           />
           <HitDice

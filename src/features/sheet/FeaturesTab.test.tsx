@@ -40,11 +40,11 @@ function Harness({ initial }: { initial: Character }) {
 
 const renderTab = (c: Character) =>
   render(
-    <SheetProvider>
-      <RollerProvider>
+    <RollerProvider>
+      <SheetProvider>
         <Harness initial={c} />
-      </RollerProvider>
-    </SheetProvider>,
+      </SheetProvider>
+    </RollerProvider>,
   );
 
 const gladiator = { kind: 'class', id: 'gladiator|tst' } as const;

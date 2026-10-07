@@ -29,7 +29,8 @@ function currentHp(c: Character, sheet: DerivedSheet): number {
 /**
  * Damage goes to temporary HP, then the ward (P12), then HP (2024 rules). At 0 HP a hit is a
  * failed death save (two on a critical hit); damage that leaves at least the HP maximum
- * over is instant death (three failures).
+ * over is instant death (three failures). Dropping to 0 HP leaves the character Unconscious,
+ * which ends Concentration.
  */
 export function applyDamage(
   c: Character,
@@ -60,6 +61,7 @@ export function applyDamage(
   }
   s.damage = Math.min(max, s.damage + rest);
   if (rest - current >= max) s.deathSaves.failures = 3;
+  if (rest >= current) s.concentration = null;
   return n;
 }
 
@@ -380,10 +382,24 @@ export function useAction(
   );
 }
 
+/** Conditions that include Incapacitated, which ends Concentration (2024). */
+const INCAPACITATING = new Set([
+  'incapacitated',
+  'paralyzed',
+  'petrified',
+  'stunned',
+  'unconscious',
+]);
+
+/** `condition/stunned|xphb` → `stunned`. */
+const conditionName = (id: Id) => ((id.split('|')[0] ?? id).split('/').pop() ?? id).toLowerCase();
+
+/** A condition that includes Incapacitated also ends Concentration. */
 export function addCondition(c: Character, id: Id): Character {
   if (c.state.conditions.includes(id)) return c;
   const n = clone(c);
   n.state.conditions.push(id);
+  if (INCAPACITATING.has(conditionName(id))) n.state.concentration = null;
   return n;
 }
 
@@ -499,7 +515,7 @@ function endToggles(n: Character, sheet: DerivedSheet, rest: 'shortRest' | 'long
 }
 
 /**
- * Short Rest (2024): spend Hit Dice (each heals its roll plus the CON modifier), regain
+ * Short Rest (2024): spend Hit Dice (each heals its roll plus the CON modifier, at least 1), regain
  * short-rest resources (one use for `shortOne`) and Pact Magic slots.
  */
 export function shortRest(
@@ -515,7 +531,7 @@ export function shortRest(
     const available = pool.total - (n.state.hitDiceUsed[faces] ?? 0);
     const used = rolls.slice(0, Math.max(0, available));
     n.state.hitDiceUsed[faces] = (n.state.hitDiceUsed[faces] ?? 0) + used.length;
-    healing += used.reduce((sum, r) => sum + Math.max(0, r + sheet.abilities.con.mod), 0);
+    healing += used.reduce((sum, r) => sum + Math.max(1, r + sheet.abilities.con.mod), 0);
   }
   for (const r of sheet.resources) {
     if (r.recharge === 'short') delete n.state.resourcesUsed[r.key];

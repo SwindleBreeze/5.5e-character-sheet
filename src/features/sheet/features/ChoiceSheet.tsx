@@ -40,7 +40,7 @@ export function ChoiceSheet({
   sheet: DerivedSheet;
   onSave: (spec: Omit<PickSpec, 'entryIndex'>) => void;
 }) {
-  const content = useAllContent();
+  const content = useAllContent(character.enabledSources);
   const [ignore, setIgnore] = useState(false);
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<string[] | null>(null);

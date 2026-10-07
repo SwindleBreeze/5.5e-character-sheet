@@ -15,13 +15,13 @@ export function App() {
 
   return (
     <HashRouter>
-      <SheetProvider>
-        <RollerProvider>
+      <RollerProvider>
+        <SheetProvider>
           <AppRoutes />
           <UpdatePrompt />
           <AutoBackup />
-        </RollerProvider>
-      </SheetProvider>
+        </SheetProvider>
+      </RollerProvider>
     </HashRouter>
   );
 }

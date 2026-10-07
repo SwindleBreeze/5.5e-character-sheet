@@ -10,10 +10,20 @@ function total(counts: Record<string, number | undefined>): number {
   return Object.values(counts).reduce<number>((a, b) => a + (b ?? 0), 0);
 }
 
-/** Switch imported sources on and off for the whole app (plan §6.7). */
-export function SourceToggles() {
+/**
+ * Switch imported sources on and off (plan §6.7): for the whole app, or with `value` and
+ * `onChange` for one character.
+ */
+export function SourceToggles({
+  value,
+  onChange,
+}: {
+  value?: SourceCode[];
+  onChange?: (codes: SourceCode[]) => void;
+} = {}) {
   const sources = useSources();
-  const enabled = useEnabledSources();
+  const global = useEnabledSources();
+  const enabled = value ?? global;
 
   if (sources === undefined) return null;
   if (sources.length === 0) {
@@ -21,8 +31,11 @@ export function SourceToggles() {
   }
 
   const on = new Set(enabled);
-  const save = (codes: Iterable<SourceCode>) =>
-    repos().settings.set('enabledSources', [...new Set(codes)].sort());
+  const save = async (codes: Iterable<SourceCode>) => {
+    const list = [...new Set(codes)].sort();
+    if (onChange) onChange(list);
+    else await repos().settings.set('enabledSources', list);
+  };
   const toggle = (code: SourceCode, value: boolean) => {
     const next = new Set(on);
     if (value) next.add(code);

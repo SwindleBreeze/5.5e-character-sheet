@@ -4,7 +4,7 @@
 // render in the tab, not in a bottom sheet, so they always show the live character.
 
 import { useId, useState } from 'react';
-import { readable, spreadLabel } from '../../../engine/choices/options.ts';
+import { optionLabel, readable, spreadLabel } from '../../../engine/choices/options.ts';
 import type { DerivedFeature, DerivedFeatureChoice } from '../../../engine/derive/types.ts';
 import { restoreResource, spendResource } from '../../../engine/play/reducers.ts';
 import { valueKind } from '../../../engine/content/refs.ts';
@@ -27,6 +27,7 @@ function choiceValues(c: DerivedFeatureChoice, bindings: SheetBindings): string[
       return ABILITY_NAMES[v as Ability] ?? v;
     const kind = valueKind(c.valueKinds, i);
     if (kind) return nameOf(bindings.index, kind, v);
+    if (c.offer.kind === 'option') return optionLabel(c.offer, v);
     const label = c.labels[i];
     return label && label !== v ? label : readable(v);
   });

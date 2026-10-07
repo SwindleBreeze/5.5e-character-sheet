@@ -8,6 +8,7 @@ import {
   type Ability,
   type Background,
   type EntityKind,
+  type Size,
 } from '../../schema/index.ts';
 import {
   knownSpells,
@@ -16,6 +17,7 @@ import {
   type AutoContext,
 } from '../build/autoChoose.ts';
 import type { Offer } from '../collect/types.ts';
+import { SIZE_NAMES } from '../items/items.ts';
 import { queryOptions } from './queries.ts';
 
 export interface ChoiceOption {
@@ -79,6 +81,14 @@ export function spreadLabel(values: readonly string[]): string {
   return [...counts].map(([a, n]) => `+${n} ${ABILITY_NAMES[a as Ability] ?? a}`).join(', ');
 }
 
+/** An option's label. A species' size pick stores the size code (`S`, `M`). */
+export function optionLabel(offer: Offer, value: string): string {
+  if (offer.key.owner.kind === 'species' && offer.key.slot === 'size')
+    return SIZE_NAMES[value as Size] ?? value;
+  const from = Array.isArray(offer.from) ? (offer.from as string[]) : [];
+  return offer.labels?.[from.indexOf(value)] ?? value;
+}
+
 /** The same pick in any order: background increases are compared this way. */
 export const sameSpread = (a: readonly string[], b: readonly string[]) =>
   [...a].sort().join() === [...b].sort().join();
@@ -137,7 +147,7 @@ export function offerOptions(
       break;
     case 'option':
       values = from ?? [];
-      label = (v) => offer.labels?.[values.indexOf(v)] ?? v;
+      label = (v) => optionLabel(offer, v);
       break;
     case 'featureOptions':
       valueKind =

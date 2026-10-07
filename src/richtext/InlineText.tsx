@@ -1,11 +1,19 @@
 import { useContext, useMemo, type ReactNode } from 'react';
 import { refKey, type Ref } from '../schema/index.ts';
+import { RollerContext } from '../ui/rollerContext.ts';
 import { useSheet } from '../ui/sheetContext.ts';
 import { EntitySheet } from './EntitySheet.tsx';
 import { InSheetContext } from './inSheet.ts';
 import { tokenize, type TagToken } from './parseTags.ts';
 import styles from './richtext.module.css';
-import { refFromTag, stripTags, tagCategory, tagDisplay, tagFormatting } from './tagRegistry.ts';
+import {
+  refFromTag,
+  stripTags,
+  tagCategory,
+  tagDisplay,
+  tagFormatting,
+  tagRollExpr,
+} from './tagRegistry.ts';
 
 function EntityLink({
   entityRef,
@@ -37,6 +45,24 @@ function EntityLink({
   );
 }
 
+/** Dice in rule text: tapping rolls them, when a roller is there and they are plain dice. */
+function RollTag({ token, children }: { token: TagToken; children: ReactNode }) {
+  const roller = useContext(RollerContext);
+  const expr = tagRollExpr(token);
+  if (!roller || !expr) return <span className={styles.roll}>{children}</span>;
+  const label = stripTags(tagDisplay(token));
+  return (
+    <button
+      type="button"
+      className={`${styles.roll} ${styles.rollButton}`}
+      aria-label={`Roll ${label}`}
+      onClick={() => roller.roll({ label, expr })}
+    >
+      {children}
+    </button>
+  );
+}
+
 function Tag({ token }: { token: TagToken }) {
   const display = tagDisplay(token);
   const inner = display.includes('{@') ? <InlineText text={display} /> : display;
@@ -53,8 +79,7 @@ function Tag({ token }: { token: TagToken }) {
       );
     }
     case 'roll':
-      // Tap-to-roll arrives with the dice roller in phase 3.
-      return <span className={styles.roll}>{inner}</span>;
+      return <RollTag token={token}>{inner}</RollTag>;
     case 'format':
       switch (tagFormatting(token.tag)) {
         case 'bold':

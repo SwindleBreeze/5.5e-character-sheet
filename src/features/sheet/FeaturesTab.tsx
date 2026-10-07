@@ -139,6 +139,7 @@ export function FeaturesTab(bindings: SheetBindings) {
       render: () => (
         <AddGiftSheet
           have={new Set(gifts.map((g) => g.ref.id))}
+          sources={character.enabledSources}
           onAdd={(gift) => {
             ui.close();
             apply((c) => addGift(c, { kind: 'reward', id: gift.id }, gift.name));

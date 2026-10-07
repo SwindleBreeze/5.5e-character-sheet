@@ -21,7 +21,14 @@ export interface ShownRoll extends RollRequest {
 
 export interface RollerApi {
   roll: (request: RollRequest) => RollResult;
+  /** Rolls made in the current scope, newest first: the last `HISTORY_SIZE`, in memory only. */
+  history: () => ShownRoll[];
+  /** Whose rolls are kept: a character's id while its sheet is open, `''` elsewhere. */
+  setScope: (scope: string) => void;
 }
+
+/** Rolls kept per character (plan §9.2, step 3.22). */
+export const HISTORY_SIZE = 50;
 
 export const RollerContext = createContext<RollerApi | null>(null);
 

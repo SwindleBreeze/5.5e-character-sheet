@@ -37,11 +37,11 @@ function Harness({ initial, registry }: { initial: Character; registry: FeatureE
 
 function renderTab(character: Character, rng?: Rng, registry = FIXTURE_FEATURE_EFFECTS) {
   return render(
-    <SheetProvider>
-      <RollerProvider rng={rng}>
+    <RollerProvider rng={rng}>
+      <SheetProvider>
         <Harness initial={character} registry={registry} />
-      </RollerProvider>
-    </SheetProvider>,
+      </SheetProvider>
+    </RollerProvider>,
   );
 }
 

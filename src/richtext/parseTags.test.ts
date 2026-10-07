@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { splitByTags, tokenize, type TagToken } from './parseTags.ts';
-import { refFromTag, stripTags, tagCategory, tagDisplay } from './tagRegistry.ts';
+import { refFromTag, stripTags, tagCategory, tagDisplay, tagRollExpr } from './tagRegistry.ts';
 
 function tag(input: string): TagToken {
   const t = tokenize(input)[0];
@@ -150,5 +150,21 @@ describe('tag categories and refs', () => {
       kind: 'subclass',
       id: 'net|gladiator|tst|tst',
     });
+  });
+});
+
+describe('tagRollExpr', () => {
+  it('rolls dice tags as written and attack bonuses as a d20', () => {
+    expect(tagRollExpr(tag('{@damage 2d6 + 3}'))).toBe('2d6 + 3');
+    expect(tagRollExpr(tag('{@dice 1d20|a d20}'))).toBe('1d20');
+    expect(tagRollExpr(tag('{@hit 5}'))).toBe('1d20+5');
+    expect(tagRollExpr(tag('{@d20 -1}'))).toBe('1d20-1');
+    expect(tagRollExpr(tag('{@hit 0}'))).toBe('1d20');
+  });
+
+  it('nothing for what is not plain dice', () => {
+    expect(tagRollExpr(tag('{@scaledice 1d6|1-9|1d6}'))).toBeUndefined();
+    expect(tagRollExpr(tag('{@chance 50}'))).toBeUndefined();
+    expect(tagRollExpr(tag('{@dice 1d6;2d6}'))).toBeUndefined();
   });
 });

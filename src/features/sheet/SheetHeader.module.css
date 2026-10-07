@@ -72,6 +72,19 @@
   white-space: nowrap;
 }
 
+.more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tap-min);
+  height: var(--tap-min);
+  border: 0;
+  background: transparent;
+  color: var(--color-accent);
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
 .acLabel {
   color: var(--color-text-muted);
   font-family: var(--font-sans);
@@ -118,4 +131,9 @@
 .muted {
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
+}
+
+button.condition {
+  border: 0;
+  font-family: inherit;
 }

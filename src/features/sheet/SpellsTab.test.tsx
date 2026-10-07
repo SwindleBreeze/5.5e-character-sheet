@@ -49,11 +49,11 @@ function Harness({ initial }: { initial: Character }) {
 
 const renderTab = (c: Character) =>
   render(
-    <SheetProvider>
-      <RollerProvider>
+    <RollerProvider>
+      <SheetProvider>
         <Harness initial={c} />
-      </RollerProvider>
-    </SheetProvider>,
+      </SheetProvider>
+    </RollerProvider>,
   );
 
 /** Lorekeeper 5 (a Wizard-like spellbook caster) / Pactbinder 2 (Pact Magic). */

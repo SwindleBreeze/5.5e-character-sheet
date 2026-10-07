@@ -42,11 +42,11 @@ function Harness({ initial }: { initial: Character }) {
 
 const renderTab = (c: Character, rng?: Rng) =>
   render(
-    <SheetProvider>
-      <RollerProvider rng={rng}>
+    <RollerProvider rng={rng}>
+      <SheetProvider>
         <Harness initial={c} />
-      </RollerProvider>
-    </SheetProvider>,
+      </SheetProvider>
+    </RollerProvider>,
   );
 
 const item = (id: string) => ({ kind: 'item', id }) as const;

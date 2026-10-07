@@ -115,6 +115,18 @@
   color: var(--color-accent);
 }
 
+/* Tap to roll: inline, the text's own size, underlined like a link. */
+.rollButton {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
 .note {
   color: var(--color-text-muted);
   font-style: italic;

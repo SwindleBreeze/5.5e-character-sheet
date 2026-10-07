@@ -5,6 +5,8 @@ import { resetDb } from '../db/db.ts';
 import type { Entry } from '../schema/index.ts';
 import { seedFixtureContent } from '../test/seedContent.ts';
 import { SheetProvider } from '../ui/BottomSheet.tsx';
+import { RollerProvider } from '../ui/Roller.tsx';
+import { face, fixedRng } from '../test/rng.ts';
 import { Entries } from './Entries.tsx';
 
 const SAMPLE: Entry[] = [
@@ -35,6 +37,19 @@ beforeEach(async () => {
 });
 
 describe('Entries', () => {
+  it('dice in rule text roll when tapped', async () => {
+    const user = userEvent.setup();
+    render(
+      <RollerProvider rng={fixedRng([face(2, 6), face(3, 6)])}>
+        <SheetProvider>
+          <Entries entries={['Deal {@damage 2d6 + 1} fire damage.']} />
+        </SheetProvider>
+      </RollerProvider>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Roll 2d6 + 1' }));
+    expect(screen.getByRole('button', { name: '2d6 + 1: 6. Dismiss' })).toBeTruthy();
+  });
+
   it('renders the entry union', () => {
     const { container } = renderEntries(SAMPLE);
     expect(container.innerHTML).toMatchSnapshot();

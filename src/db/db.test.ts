@@ -133,6 +133,17 @@ describe('characterRepo', () => {
     expect(await db.portraits.get('p1')).toBeUndefined();
     expect(await db.portraits.count()).toBe(1);
   });
+
+  it('stores a portrait under a new id, replacing the old one, and removes it', async () => {
+    const repo = createCharacterRepo(db);
+    const first = await repo.putPortrait(new Blob(['a']), undefined, 1);
+    const second = await repo.putPortrait(new Blob(['bb']), first, 2);
+    expect(second).not.toBe(first);
+    expect(await repo.portrait(first)).toBeUndefined();
+    expect(await repo.portrait(second)).toBeDefined();
+    await repo.removePortrait(second);
+    expect(await db.portraits.count()).toBe(0);
+  });
 });
 
 describe('settingsRepo', () => {

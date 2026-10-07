@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { useEnabledSources, useEntitiesOfKind } from '../../../content/hooks.ts';
 import type { DerivedCaster } from '../../../engine/derive/types.ts';
 import { matchesSpellFilter } from '../../../engine/spells/filter.ts';
-import type { Id, Spell } from '../../../schema/index.ts';
+import type { Id, SourceCode, Spell } from '../../../schema/index.ts';
 import { availableOf } from '../../../sources/sourceFilter.ts';
 import { Button } from '../../../ui/Button.tsx';
 import { levelHeading } from './spellText.ts';
@@ -16,15 +16,18 @@ import styles from './spells.module.css';
 export function PrepareSheet({
   caster,
   current,
+  sources,
   onSave,
 }: {
+  /** The character's own sources, when it has them (plan §6.7). */
+  sources?: SourceCode[] | null;
   caster: DerivedCaster;
   /** The prepared list as stored (without spells known from choices). */
   current: readonly Id[];
   onSave: (ids: Id[]) => void;
 }) {
   const all = useEntitiesOfKind('spell');
-  const enabled = useEnabledSources();
+  const enabled = useEnabledSources(sources);
   const [picked, setPicked] = useState<Id[]>([...current]);
   const [ignore, setIgnore] = useState(false);
   const [query, setQuery] = useState('');

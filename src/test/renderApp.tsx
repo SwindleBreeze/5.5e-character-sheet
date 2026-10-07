@@ -9,11 +9,11 @@ import { RollerProvider } from '../ui/Roller.tsx';
 export function renderApp(path = '/', rng?: Rng) {
   return render(
     <MemoryRouter initialEntries={[path]}>
-      <SheetProvider>
-        <RollerProvider rng={rng}>
+      <RollerProvider rng={rng}>
+        <SheetProvider>
           <AppRoutes />
-        </RollerProvider>
-      </SheetProvider>
+        </SheetProvider>
+      </RollerProvider>
     </MemoryRouter>,
   );
 }

@@ -38,11 +38,15 @@ export function useSources(): SourceInfo[] | undefined {
   return useLiveQuery(() => repos().content.listSources(), []);
 }
 
-export function useEnabledSources(): SourceCode[] {
-  return (
+/**
+ * The sources pickers offer: a character's own list when it has one (plan §6.7), else the
+ * app's setting.
+ */
+export function useEnabledSources(character?: SourceCode[] | null): SourceCode[] {
+  const global =
     useLiveQuery(() => repos().settings.get('enabledSources'), []) ??
-    DEFAULT_SETTINGS.enabledSources
-  );
+    DEFAULT_SETTINGS.enabledSources;
+  return character ?? global;
 }
 
 /**
@@ -71,8 +75,8 @@ export interface AllContent {
  * the creation wizard later). Heavier than `useContentIndex`; reloads after an import or a
  * source change.
  */
-export function useAllContent(): AllContent | undefined {
-  const enabled = useEnabledSources();
+export function useAllContent(sources?: SourceCode[] | null): AllContent | undefined {
+  const enabled = useEnabledSources(sources);
   return useLiveQuery(async () => {
     const lists = await Promise.all(ENTITY_KINDS.map((k) => repos().content.listByKind(k)));
     const all = lists.flat() as ContentEntity[];

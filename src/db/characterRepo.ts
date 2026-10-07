@@ -37,6 +37,24 @@ export function createCharacterRepo(db: AppDb = getDb()) {
       });
     },
 
+    async portrait(id: string): Promise<Blob | undefined> {
+      return (await db.portraits.get(id))?.blob;
+    },
+
+    /** Store a portrait under a new id, removing the one it replaces. Returns the new id. */
+    async putPortrait(blob: Blob, replaces?: string, now = Date.now()): Promise<string> {
+      const id = newId();
+      await db.transaction('rw', db.portraits, async () => {
+        await db.portraits.put({ id, blob, updatedAt: now });
+        if (replaces) await db.portraits.delete(replaces);
+      });
+      return id;
+    },
+
+    async removePortrait(id: string): Promise<void> {
+      await db.portraits.delete(id);
+    },
+
     /** Copy a character (and its portrait) under a new id. */
     async duplicate(id: string, now = Date.now()): Promise<Character | undefined> {
       return db.transaction('rw', db.characters, db.portraits, async () => {

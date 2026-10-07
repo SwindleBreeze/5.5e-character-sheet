@@ -1,0 +1,67 @@
+/* Play tools (plan §9.2, step 3.22): rests, the dice roller and the "More" menu. Forms and
+   rows share the Inventory tab's styles. */
+
+.summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding-left: var(--space-4);
+}
+
+.methods {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-3);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.methods legend {
+  width: 100%;
+  padding: 0;
+}
+
+.number {
+  width: 5rem;
+  min-height: 36px;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-variant-numeric: var(--numeric);
+}
+
+.dice {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(4rem, 1fr));
+  gap: var(--space-2);
+}
+
+.history,
+.menu {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.history li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.historyText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.menu a {
+  text-decoration: none;
+}

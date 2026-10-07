@@ -131,6 +131,7 @@ export function SpellsTab({ character, sheet, index, apply }: SheetBindings) {
       render: () => (
         <PrepareSheet
           caster={caster}
+          sources={character.enabledSources}
           current={character.state.prepared[caster.key] ?? []}
           onSave={(ids) => {
             ui.close();

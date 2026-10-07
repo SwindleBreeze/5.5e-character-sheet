@@ -3,7 +3,7 @@
 
 import { useMemo, useState } from 'react';
 import { useEnabledSources, useEntitiesOfKind } from '../../../content/hooks.ts';
-import type { Reward } from '../../../schema/index.ts';
+import type { Reward, SourceCode } from '../../../schema/index.ts';
 import { EntitySheet } from '../../../richtext/EntitySheet.tsx';
 import { availableOf } from '../../../sources/sourceFilter.ts';
 import { Button } from '../../../ui/Button.tsx';
@@ -12,14 +12,17 @@ import styles from './features.module.css';
 
 export function AddGiftSheet({
   have,
+  sources,
   onAdd,
 }: {
+  /** The character's own sources, when it has them (plan §6.7). */
+  sources?: SourceCode[] | null;
   /** Ids of the gifts the character has. */
   have: ReadonlySet<string>;
   onAdd: (gift: Reward) => void;
 }) {
   const all = useEntitiesOfKind('reward');
-  const enabled = useEnabledSources();
+  const enabled = useEnabledSources(sources);
   const [reading, setReading] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const available = useMemo(
