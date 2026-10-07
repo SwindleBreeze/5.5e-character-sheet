@@ -115,6 +115,24 @@ action: Study (Rules)
 action: Utilize (Rules)
 reaction: Opportunity Attack (Rules); attacks item:0-0-0, unarmed
 
+## Features
+class: Gladiator; level 1; entry 0; skills 2/2; featProgression.arena-style.1 [Arena Style] 1/1; featProgression.arena-style.6 [Arena Style] 0/1; optfeat.crowd-tricks.2 [Crowd Tricks] 2/2; optfeat.crowd-tricks.4 [Crowd Tricks] 0/1
+feat: Net Style; from Gladiator (Arena Style); entry 0
+optionalFeature: Encore; from Gladiator (Crowd Tricks); entry 1
+optionalFeature: Taunt; from Gladiator (Crowd Tricks); entry 1
+class: Showmanship; level 1; entry 0; options.0 1/1
+class: Crowd Pleaser; level 1; from Showmanship; entry 0
+class: Arena Training; level 1; entry 0; counter classFeature:arena training|gladiator|tst|1|tst#bravado
+class: Gladiator School; level 3; entry 2
+class: Ability Score Improvement; level 4; entry 3; feat 1/1
+feat: Arena Veteran; from Ability Score Improvement; entry 3; ability 1/1; skills 1/1
+subclass: School of the Net; level 3; entry 2
+subclass: School of the Net; level 3; entry 2
+subclass: Tangle; level 3; in subclassFeature:school of the net|gladiator|tst|net|tst|3|tst; entry 2
+species: Mossling; entry 0; size 1/1; spellsSet 1/1; spells.0.ability 1/1
+background: Arena Hand; entry 0; tools 0/1; languages 1/1; ability 3/3
+feat: Spark Initiate; Gladiator; from Arena Hand; entry 0; spells.0.ability 1/1; spells.0.known.0 0/2
+
 ## Choices and issues
 pending Gladiator featProgression.arena-style.6 0/1
 pending Gladiator optfeat.crowd-tricks.4 0/1

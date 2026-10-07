@@ -44,7 +44,7 @@ function firstN<T>(options: readonly T[], n: number, taken: ReadonlySet<T> = new
 const lower = (values: readonly { value: string }[]) =>
   new Set(values.map((v) => v.value.toLowerCase()));
 
-function proficiencyOptions(
+export function proficiencyOptions(
   offer: Offer,
   ctx: AutoContext,
 ): { options: string[]; taken: Set<string> } {
@@ -86,7 +86,7 @@ function proficiencyOptions(
   return { options, taken };
 }
 
-function spellOptions(offer: Offer, ctx: AutoContext): Id[] {
+export function spellOptions(offer: Offer, ctx: AutoContext): Id[] {
   if (Array.isArray(offer.from)) return offer.from;
   const grant =
     offer.effect?.type === 'grantSpells'
@@ -99,7 +99,7 @@ function spellOptions(offer: Offer, ctx: AutoContext): Id[] {
     .map((s) => s.id);
 }
 
-function knownSpells(sheet: DerivedSheet): Set<Id> {
+export function knownSpells(sheet: DerivedSheet): Set<Id> {
   return new Set([
     ...sheet.spellcasting.casters.flatMap((c) => [
       ...c.cantrips,

@@ -104,6 +104,23 @@ action: Study (Rules)
 action: Utilize (Rules)
 reaction: Opportunity Attack (Rules); attacks item:0-0-0, unarmed
 
+## Features
+class: Wanderer; level 1; entry 0; skills 2/2
+class: Unarmored Defense; level 1; entry 0
+class: Martial Arts; level 1; entry 0
+class: Focus; level 2; entry 1; counter classFeature:focus|wanderer|tst|2|tst#focus-points
+class: Unarmored Movement; level 2; entry 1
+class: Wanderer Way; level 3; entry 2
+class: Ability Score Improvement; level 4; entry 3; feat 1/1
+feat: Arena Veteran; from Ability Score Improvement; entry 3; ability 1/1; skills 1/1
+class: Extra Attack; level 5; entry 4
+class: Evasion; level 7; entry 6
+subclass: Way of Mist; level 3; entry 2
+subclass: Way of Mist; level 3; entry 2
+species: Mossling; entry 0; size 1/1; spellsSet 1/1; spells.0.ability 1/1
+background: Arena Hand; entry 0; tools 0/1; languages 1/1; ability 3/3
+feat: Spark Initiate; Gladiator; from Arena Hand; entry 0; spells.0.ability 1/1; spells.0.known.0 0/2
+
 ## Choices and issues
 pending Arena Hand tools 0/1
 pending Spark Initiate; Gladiator spells.0.known.0 0/2

@@ -117,7 +117,9 @@ export function SwipeTabs({ label, tabs, activeId, onChange }: SwipeTabsProps) {
             inert={index !== activeIndex}
             className={styles.panel}
           >
-            {tab.content}
+            {/* Only the active tab and its neighbours, which a swipe reveals, are rendered:
+                every tab re-rendering on each change is slow on a phone. */}
+            {Math.abs(index - activeIndex) <= 1 ? tab.content : null}
           </section>
         ))}
       </div>

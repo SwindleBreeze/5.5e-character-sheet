@@ -5,6 +5,7 @@ import type {
   Ability,
   ActionType,
   ClassSpellcasting,
+  EntityKind,
   Id,
   MoveMode,
   Recharge,
@@ -13,7 +14,8 @@ import type {
   Skill,
   SpellGrant,
 } from '../../schema/index.ts';
-import type { Pending, Reconciled } from '../choices/reconcile.ts';
+import type { Pending, Reconciled, RecordStatus } from '../choices/reconcile.ts';
+import type { Offer } from '../collect/types.ts';
 import type { ItemCharges } from '../items/items.ts';
 
 export interface Contribution {
@@ -346,6 +348,54 @@ export interface DerivedInventory {
   containers: Record<string, DerivedContainer>;
 }
 
+/** Where a feature comes from, for grouping on the Features tab. */
+export type FeatureGroup =
+  'class' | 'subclass' | 'species' | 'background' | 'feat' | 'optionalFeature' | 'gift' | 'other';
+
+/** One choice a feature offers, with the picks made for it. */
+export interface DerivedFeatureChoice {
+  /** The encoded choice key. */
+  key: string;
+  offer: Offer;
+  /** Picks the slot allows now. */
+  count: number;
+  values: string[];
+  /** Names at pick time. */
+  labels: string[];
+  /** Set when the values are entity ids. */
+  valueKinds?: EntityKind[];
+  /** A class's feat or option progression it belongs to (Fighting Style), and the level. */
+  progression?: { name: string; level?: number };
+  /** Missing when nothing has been picked yet. */
+  status?: RecordStatus;
+}
+
+/** Step 3.20: an entity whose effects apply (a class feature, a feat, a gift…). */
+export interface DerivedFeature {
+  ref: Ref;
+  name: string;
+  /** Instance number of a feat taken more than once. */
+  n?: number;
+  group: FeatureGroup;
+  classId?: Id;
+  subclassId?: Id;
+  /** Class level it comes at (class and subclass content). */
+  level?: number;
+  /** The feature whose text it is written in (`refSubclassFeature`), by ref key. */
+  parent?: string;
+  /** The feature whose pick or grant brought it in (an Ability Score Improvement's feat). */
+  pickedIn?: { ref: Ref; name: string; progression?: string };
+  /** Its content isn't loaded; the character's snapshot stands in. */
+  fromSnapshot?: boolean;
+  /** A gift or other thing granted outright: the encoded key of that record. */
+  grantKey?: string;
+  choices: DerivedFeatureChoice[];
+  /** Its counters, as keys of `DerivedSheet.resources`. */
+  resourceKeys: string[];
+  /** The log entry its picks belong in (plan §4.4). */
+  entryIndex: number;
+}
+
 export interface DerivedSheet {
   charLevel: number;
   pb: Derived;
@@ -390,6 +440,8 @@ export interface DerivedSheet {
   masteries: SourcedValue[];
   spellcasting: DerivedSpellcasting;
   resources: DerivedResource[];
+  /** Step 3.20: everything that applies, items aside, in the order collected. */
+  features: DerivedFeature[];
   actions: DerivedAction[];
   toggles: DerivedToggle[];
   conditions: Id[];

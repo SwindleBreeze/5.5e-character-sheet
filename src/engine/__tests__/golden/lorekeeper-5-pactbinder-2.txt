@@ -124,6 +124,25 @@ action: Utilize (Rules)
 reaction: Opportunity Attack (Rules); attacks item:0-0-0, unarmed
 toggle: Pact Blade off (Pact Blade)
 
+## Features
+class: Lorekeeper; level 1; entry 0; skills 2/2; cantrips.1 1/2 (longRest); spellbook.1 2/5; spellbook.2 0/2; spellbook.3 1/2; cantrips.4 0/1 (longRest); spellbook.4 0/2; spellbook.5 1/2
+class: Spellcasting; level 1; entry 0
+class: Glyph Ward; level 1; entry 0
+class: Lore Recovery; level 1; entry 0; counter classFeature:lore recovery|lorekeeper|tst|1|tst#lore-recovery
+class: Keen Mind; level 2; entry 1
+class: Lorekeeper Circle; level 3; entry 2
+class: Ability Score Improvement; level 4; entry 3; feat 1/1
+feat: Arena Veteran; from Ability Score Improvement; entry 3; ability 1/1; skills 1/1
+subclass: Circle of Ink; level 3; entry 2
+subclass: Circle of Ink; level 3; entry 2
+class: Pactbinder; level 1; entry 5; cantrips.1 0/2 (levelUp); spells.1 1/2 (levelUp); spells.2 0/1 (levelUp)
+class: Pact Magic; level 1; entry 5
+class: Hex Strike; level 1; entry 5
+class: Pact Blade; level 2; entry 6
+species: Mossling; entry 0; size 1/1; spellsSet 1/1; spells.0.ability 1/1
+background: Arena Hand; entry 0; tools 0/1; languages 1/1; ability 3/3
+feat: Spark Initiate; Gladiator; from Arena Hand; entry 0; spells.0.ability 1/1; spells.0.known.0 0/2
+
 ## Choices and issues
 pending Lorekeeper cantrips.1 1/2
 pending Lorekeeper spellbook.1 2/5

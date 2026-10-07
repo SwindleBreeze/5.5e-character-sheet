@@ -57,11 +57,20 @@ describe('SwipeTabs', () => {
     render(<SwipeTabs label="Test tabs" tabs={tabs} activeId="b" onChange={() => {}} />);
     expect(screen.getByRole('tab', { name: 'Beta' })).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByRole('tabpanel', { name: 'Beta' })).toHaveTextContent('Panel B');
-    // Inactive panels stay mounted (for swiping) but are hidden from assistive tech.
+    // Neighbouring panels are rendered (for swiping) but hidden from assistive tech.
     expect(screen.getByText('Panel A').closest('[role="tabpanel"]')).toHaveAttribute(
       'aria-hidden',
       'true',
     );
+  });
+
+  it('renders only the active tab and its neighbours', () => {
+    const four = [...tabs, { id: 'd', label: 'Delta', content: <p>Panel D</p> }];
+    render(<SwipeTabs label="Test tabs" tabs={four} activeId="a" onChange={() => {}} />);
+    expect(screen.getByText('Panel B')).toBeTruthy();
+    expect(screen.queryByText('Panel C')).toBeNull();
+    // The panel is still there to swipe to.
+    expect(screen.getAllByRole('tabpanel', { hidden: true })).toHaveLength(4);
   });
 
   it('reports tab clicks and arrow-key navigation', async () => {

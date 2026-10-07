@@ -15,6 +15,7 @@ import { buildStaticState, holds } from '../static/state.ts';
 import { deriveAbilities } from './abilities.ts';
 import { deriveAttacks } from './attacks.ts';
 import { deriveActions, deriveToggles } from './actions.ts';
+import { deriveFeatures } from './features.ts';
 import { deriveInventory, gearState } from './inventory.ts';
 import { deriveResources } from './resources.ts';
 import { deriveSpellcasting } from './spellcasting.ts';
@@ -166,6 +167,7 @@ export function derive(
     attacksPerAction,
     spellcasting,
     resources,
+    features: deriveFeatures(ctx, countOf(ctx.scope), resources),
     actions: deriveActions(ctx, resources, allAttacks),
     toggles: deriveToggles(ctx, resources),
     masteries: sourced(profs.masteries),

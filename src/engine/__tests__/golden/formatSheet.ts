@@ -191,6 +191,24 @@ export function formatSheet(s: DerivedSheet): string {
     }
   }
 
+  head('Features');
+  for (const f of s.features) {
+    const extras = [
+      f.level !== undefined ? `level ${f.level}` : '',
+      f.parent ? `in ${f.parent}` : '',
+      f.pickedIn
+        ? `from ${f.pickedIn.name}${f.pickedIn.progression ? ` (${f.pickedIn.progression})` : ''}`
+        : '',
+      `entry ${f.entryIndex}`,
+      ...f.choices.map(
+        (c) =>
+          `${c.offer.key.slot}${c.progression ? ` [${c.progression.name}]` : ''} ${c.values.length}/${c.count}${c.offer.retrain ? ` (${c.offer.retrain})` : ''}`,
+      ),
+      ...f.resourceKeys.map((k) => `counter ${k}`),
+    ].filter(Boolean);
+    line(`${f.group}: ${f.name}; ${extras.join('; ')}`);
+  }
+
   head('Choices and issues');
   for (const p of s.choices.pending) {
     line(`pending ${p.offer.source.name} ${p.offer.key.slot} ${p.have}/${p.count}`);

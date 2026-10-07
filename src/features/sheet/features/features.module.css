@@ -1,0 +1,79 @@
+/* The Features tab (plan §9.2, step 3.20). Rows, details and forms share the Inventory tab's
+   styles; these are the parts only features have. */
+
+.counters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-bottom: var(--space-2);
+}
+
+.counter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+}
+
+.counterName {
+  min-width: 7.5rem;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.picks,
+.options {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.picks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-bottom: var(--space-2);
+}
+
+.pick {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  font-size: var(--font-size-sm);
+}
+
+.pickTitle {
+  min-width: 7.5rem;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.pickValues {
+  flex: 1;
+  min-width: 8rem;
+}
+
+.option {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* The option itself (a label, or a gift's name); its Read or Add button keeps its size. */
+.option > :first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.option > button:first-child {
+  border-bottom: 0;
+}
+
+.reading {
+  flex: 1 1 100%;
+  padding-bottom: var(--space-2);
+}

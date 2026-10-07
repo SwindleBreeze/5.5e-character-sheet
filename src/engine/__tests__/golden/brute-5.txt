@@ -119,6 +119,24 @@ action: Utilize (Rules)
 reaction: Opportunity Attack (Rules); attacks item:0-0-0, unarmed
 toggle: Fury on (Fury); costs 1 Furies + a Bonus Action; ends on longRest
 
+## Features
+class: Brute; level 1; entry 0; skills 2/2
+class: Fury; level 1; entry 0; counter classFeature:fury|brute|tst|1|tst#furies
+class: Hardened Hide; level 1; entry 0
+class: Weapon Mastery; level 1; entry 0; mastery 3/3 (longRest)
+class: Catch Breath; level 2; entry 1; counter classFeature:catch breath|brute|tst|2|tst#catch-breath
+class: Brute Path; level 3; entry 2
+class: Ability Score Improvement; level 4; entry 3; feat 1/1
+feat: Arena Veteran; from Ability Score Improvement; entry 3; ability 1/1; skills 1/1
+class: Extra Attack; level 5; entry 4
+class: Swift Feet; level 5; entry 4
+subclass: Path of the Spark; level 3; entry 2; cantrips.3 1/1 (levelUp); spells.3 2/2 (levelUp); spells.4 0/1 (levelUp)
+subclass: Path of the Spark; level 3; entry 2
+subclass: Static Charge; level 3; in subclassFeature:path of the spark|brute|tst|spark|tst|3|tst; entry 2
+species: Mossling; entry 0; size 1/1; spellsSet 1/1; spells.0.ability 1/1
+background: Arena Hand; entry 0; tools 0/1; languages 1/1; ability 3/3
+feat: Spark Initiate; Gladiator; from Arena Hand; entry 0; spells.0.ability 1/1; spells.0.known.0 0/2
+
 ## Choices and issues
 pending Path of the Spark spells.4 0/1
 pending Arena Hand tools 0/1
