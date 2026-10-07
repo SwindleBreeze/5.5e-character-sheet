@@ -1,11 +1,10 @@
 // The creation wizard's model (plan §9.3 step 4.4). A draft is a real Character with `draft`
-// set, saved on every change; these pure helpers make its level 1 choices, say which picks an
-// earlier step's change would remove, and finish it.
+// set, saved on every change; these pure helpers make its level 1 choices, set aside the picks
+// an earlier step's change no longer offers (and bring them back), and finish it.
 
 import {
   ABILITIES,
   encodeChoiceKey,
-  refKey,
   type Ability,
   type Character,
   type ChoiceRecord,
@@ -84,8 +83,8 @@ export function setStep(c: Character, step: WizardStep): Character {
 }
 
 /**
- * The class at level 1. Picks stay; the ones the new class doesn't offer are dropped apart
- * (`previewChange`). Standard array scores the player hasn't moved follow the class's primary
+ * The class at level 1. Picks stay; the ones the new class doesn't offer are set aside
+ * (`changeDraft`). Standard array scores the player hasn't moved follow the class's primary
  * abilities.
  */
 export function chooseClass(c: Character, classRef: Ref, index?: ContentIndex): Character {
@@ -135,10 +134,7 @@ export interface DroppedPick {
   labels: string[];
 }
 
-/**
- * Picks a changed draft no longer offers (their owner is gone, or no longer applies): the
- * ones the wizard lists as "these picks will be removed" before a change is confirmed.
- */
+/** Picks a changed draft no longer offers (their owner is gone, or no longer applies). */
 export function droppedPicks(
   next: Character,
   index: ContentIndex,
@@ -161,39 +157,58 @@ function recordLabels(r: ChoiceRecord, index: ContentIndex): string[] {
   });
 }
 
-/** Remove these picks, and the items picked for starting equipment no longer offered. */
-export function dropPicks(c: Character, keys: readonly string[]): Character {
-  const gone = new Set(keys);
-  const n = structuredClone(c);
-  for (const entry of n.log)
-    entry.choices = entry.choices.filter((r) => !gone.has(encodeChoiceKey(r.key)));
-  const owners = new Set(
-    (n.log[0]?.choices ?? [])
-      .filter((r) => r.key.slot === 'equipment')
-      .map((r) => refKey(r.key.owner)),
-  );
-  const anyItems = n.draft?.anyItems;
-  if (n.draft && anyItems) {
-    n.draft.anyItems = Object.fromEntries(
-      Object.entries(anyItems).filter(([k]) => owners.has(k.split('#')[0] ?? '')),
-    );
-  }
-  return n;
-}
-
 /**
- * Make a change from an earlier step: the changed draft, and the picks it would remove. With
- * none, the change can be applied as it is; otherwise after the player confirms, with
- * `dropPicks`.
+ * A change from an earlier step (a class, background or species; plan step 4C.1). The picks the
+ * changed draft no longer offers are set aside on the draft, not deleted, and picks set aside
+ * before come back once what offered them is chosen again: switching to another class and back
+ * keeps the first one's skills and equipment.
  */
-export function previewChange(
+export function changeDraft(
   c: Character,
   change: (c: Character) => Character,
   index: ContentIndex,
   registry?: FeatureEffectsMap,
-): { next: Character; dropped: DroppedPick[] } {
+): Character {
   const next = change(c);
-  return { next, dropped: droppedPicks(next, index, registry) };
+  const gone = new Set(droppedPicks(next, index, registry).map((d) => d.key));
+  return restorePicks(setAside(next, gone), index, registry);
+}
+
+function setAside(c: Character, keys: ReadonlySet<string>): Character {
+  if (!keys.size) return c;
+  const n = structuredClone(c);
+  const moved: ChoiceRecord[] = [];
+  for (const entry of n.log) {
+    moved.push(...entry.choices.filter((r) => keys.has(encodeChoiceKey(r.key))));
+    entry.choices = entry.choices.filter((r) => !keys.has(encodeChoiceKey(r.key)));
+  }
+  const kept = (n.draft?.setAside ?? []).filter((r) => !keys.has(encodeChoiceKey(r.key)));
+  n.draft = { step: 'class', ...n.draft, setAside: [...kept, ...moved] };
+  return n;
+}
+
+/** Put back the set-aside picks the draft offers again (not ones made anew meanwhile). */
+function restorePicks(c: Character, index: ContentIndex, registry?: FeatureEffectsMap): Character {
+  const aside = c.draft?.setAside ?? [];
+  const first = c.log[0];
+  if (!aside.length || !first) return c;
+  const have = new Set(c.log.flatMap((e) => e.choices.map((r) => encodeChoiceKey(r.key))));
+  const candidates = aside.filter((r) => !have.has(encodeChoiceKey(r.key)));
+  if (!candidates.length) return c;
+  const trial = structuredClone(c);
+  trial.log[0]!.choices.push(...structuredClone(candidates));
+  const missing = new Set(droppedPicks(trial, index, registry).map((d) => d.key));
+  const back = candidates.filter((r) => !missing.has(encodeChoiceKey(r.key)));
+  if (!back.length) return c;
+  const backKeys = new Set(back.map((r) => encodeChoiceKey(r.key)));
+  const n = structuredClone(c);
+  n.log[0]!.choices.push(...structuredClone(back));
+  n.draft = {
+    step: 'class',
+    ...n.draft,
+    setAside: aside.filter((r) => !backKeys.has(encodeChoiceKey(r.key))),
+  };
+  return n;
 }
 
 /**

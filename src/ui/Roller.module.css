@@ -17,10 +17,14 @@
   gap: var(--space-3);
   width: 100%;
   padding: var(--space-2) var(--space-3) var(--space-2) var(--space-4);
-  border: 1px solid var(--color-border);
+  /* Set apart from the cards it floats over: another surface, an accent edge, a deeper shadow. */
+  border: 1px solid var(--color-border-strong);
+  border-left: 4px solid var(--color-accent);
   border-radius: var(--radius-lg);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-3);
+  background: var(--color-surface-3);
+  box-shadow:
+    var(--shadow-3),
+    0 0 0 1px rgb(0 0 0 / 0.08);
   text-align: left;
   pointer-events: auto;
   animation: rise var(--duration-base) var(--ease-out);
@@ -28,10 +32,12 @@
 
 .toast[data-natural='crit'] {
   border-color: var(--color-positive);
+  border-left-color: var(--color-positive);
 }
 
 .toast[data-natural='fumble'] {
   border-color: var(--color-negative);
+  border-left-color: var(--color-negative);
 }
 
 .text {
@@ -70,6 +76,7 @@
   font-size: var(--font-size-2xl);
   font-weight: 700;
   line-height: var(--line-height-2xl);
+  color: var(--color-accent);
 }
 
 .toast[data-natural='crit'] .total {

@@ -7,6 +7,7 @@ import type { AutoContext } from '../../engine/build/autoChoose.ts';
 import {
   anyEquipmentType,
   anyItemKey,
+  EQUIPMENT_TYPES,
   equipmentTypeItems,
   pickedEquipment,
   startingEquipmentOwners,
@@ -94,11 +95,24 @@ export function variantsOf(species: Species | undefined, ctx: AutoContext): Spec
   return ctx.catalog.of('species').filter((s) => s.variantOf === species.id);
 }
 
-/** What a species calls its versions: `Lineage`, `Ancestry`, `Legacy`, or `Type`. */
-export function variantLabel(variants: readonly Species[]): string {
-  for (const word of ['Lineage', 'Ancestry', 'Legacy'])
+/**
+ * What a species calls its versions: `Lineage`, `Ancestry` or `Legacy`, from the versions' names
+ * (`Elf; High Elf Lineage`) or else a trait of the species (Dragonborn's "Draconic Ancestry");
+ * `Type` when neither says.
+ */
+export function variantLabel(variants: readonly Species[], species?: Species): string {
+  const words = ['Lineage', 'Ancestry', 'Legacy'];
+  for (const word of words)
     if (variants.length && variants.every((v) => v.name.includes(word))) return word;
-  return 'Type';
+  const traits = (species?.entries ?? []).flatMap((e) =>
+    typeof e === 'object' && e && 'name' in e && typeof e.name === 'string' ? [e.name] : [],
+  );
+  return words.find((word) => traits.some((t) => t.split(' ').includes(word))) ?? 'Type';
+}
+
+/** `a lineage`, `an ancestry`. */
+export function aOrAn(word: string): string {
+  return `${/^[aeiou]/i.test(word) ? 'an' : 'a'} ${word}`;
 }
 
 export interface StepTodo {
@@ -107,11 +121,13 @@ export interface StepTodo {
 }
 
 function pendingText(p: Pending, sheet: DerivedSheet): string {
-  if (p.offer.kind === 'equipment') return `${p.offer.source.name}: starting equipment`;
+  const source = p.offer.source.name;
+  if (p.offer.kind === 'equipment') return `${source}: starting equipment`;
   const choice = sheet.features.flatMap((f) => f.choices).find((c) => c.offer === p.offer);
   const what = choice ? choiceTitle(choice) : 'a choice';
-  const left = p.count - p.have;
-  return `${p.offer.source.name}: ${what}${p.offer.kind === 'backgroundAbility' ? '' : ` (${left} more)`}`;
+  const left = p.offer.kind === 'backgroundAbility' ? '' : ` (${p.count - p.have} more)`;
+  // "Weapon Mastery: Weapon Mastery" says it once.
+  return `${what === source ? what : `${source}: ${what}`}${left}`;
 }
 
 /** Prepared spells a Long Rest caster still has room for, when its list has any to give. */
@@ -159,7 +175,10 @@ export function wizardTodos(character: Character, ctx: AutoContext | undefined):
     const variants = variantsOf(chosen, ctx);
     needsVariant = variants.length > 0;
     if (needsVariant)
-      out.push({ step: 'species', text: `Choose a ${variantLabel(variants).toLowerCase()}` });
+      out.push({
+        step: 'species',
+        text: `Choose ${aOrAn(variantLabel(variants, chosen).toLowerCase())}`,
+      });
   }
   for (const p of sheet.choices.pending) {
     const step = stepOf(p.offer, sheet);
@@ -176,7 +195,7 @@ export function wizardTodos(character: Character, ctx: AutoContext | undefined):
       if (!equipmentTypeItems(ctx.catalog, code).length) return;
       out.push({
         step: owner.ref.kind === 'background' ? 'background' : 'class',
-        text: `${owner.name}: choose the ${g.special?.replace(/^Any /, '').toLowerCase() ?? 'item'}`,
+        text: `${owner.name}: which ${EQUIPMENT_TYPES[code]?.label.toLowerCase() ?? 'item'}`,
       });
     });
   }

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -144,6 +144,26 @@ describe('BottomSheet', () => {
     await waitFor(() =>
       expect(screen.queryByRole('heading', { name: 'First rule' })).not.toBeInTheDocument(),
     );
+  });
+
+  it('leaves its compositor layer once it has slid in, for crisp text', async () => {
+    const user = userEvent.setup();
+    render(
+      <SheetProvider>
+        <Opener />
+      </SheetProvider>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    const sheet = await screen.findByRole('dialog');
+    expect(sheet).toHaveAttribute('data-settled', 'false');
+    // jsdom has no AnimationEvent, so React listens for the prefixed name there.
+    fireEvent(sheet, new Event('webkitAnimationEnd', { bubbles: true }));
+    expect(sheet).toHaveAttribute('data-settled', 'true');
+    // Closed and opened again: it slides in again first.
+    await user.click(screen.getByRole('button', { name: 'Close' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(await screen.findByRole('dialog')).toHaveAttribute('data-settled', 'false');
   });
 
   it('throws a clear error outside the provider', () => {

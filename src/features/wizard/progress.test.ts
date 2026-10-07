@@ -47,7 +47,7 @@ describe('what each wizard step still needs (plan §9.3b, step 4B.5)', () => {
       { step: 'class', text: 'Brute: starting equipment' },
       { step: 'background', text: 'Choose a background' },
       { step: 'species', text: 'Choose a species' },
-      { step: 'choices', text: 'Weapon Mastery: Weapon Mastery (2 more)' },
+      { step: 'choices', text: 'Weapon Mastery (2 more)' },
     ]);
   });
 
@@ -74,12 +74,14 @@ describe('what each wizard step still needs (plan §9.3b, step 4B.5)', () => {
     const c = chooseSpecies(chooseClass(newDraft(0), brute, index), mossling);
     const variants = variantsOf(index.get(mossling) as Species, ctxOf(c));
     expect(variants.map((v) => v.name)).toContain('Mossling; Deep Lineage');
-    // "Mossling (red)" is not a lineage: the menu says Type.
+    // "Mossling (red)" is no lineage by name: without more, the menu says Type…
     expect(variantLabel(variants)).toBe('Type');
     expect(variantLabel(variants.filter((v) => v.name.includes('Lineage')))).toBe('Lineage');
+    // …but the species' "Moss Lineage" trait names them.
+    expect(variantLabel(variants, index.get(mossling) as Species)).toBe('Lineage');
     // Its own picks wait for the version: only the version is asked for.
     expect(todos(c).filter((t) => t.step === 'species')).toEqual([
-      { step: 'species', text: 'Choose a type' },
+      { step: 'species', text: 'Choose a lineage' },
     ]);
   });
 

@@ -22,6 +22,7 @@ import { Button } from '../../ui/Button.tsx';
 import inventory from '../sheet/inventory/inventory.module.css';
 import styles from './choices.module.css';
 import { choiceHelp } from './help.ts';
+import { suggestion } from './suggest.ts';
 import { retrainText, type PickSave } from './picks.ts';
 
 const SEARCH_FROM = 12;
@@ -160,7 +161,13 @@ export function ChoicePicker({ choice, ctx, onSave, instant, showRetrain }: Choi
     const ruled = !!o.taken || !!o.unmet?.length;
     const blocked = !on && ((ruled && !ignore) || (full && !single));
     const descId = `${baseId}-${options.indexOf(o)}`;
+    const why = suggestion(choice.offer, o.value, ctx);
     const notes = [
+      why && (
+        <span key="why" className={styles.why}>
+          {why}
+        </span>
+      ),
       o.detail && (
         <span key="detail" className={styles.detail}>
           {o.detail}
@@ -197,6 +204,11 @@ export function ChoicePicker({ choice, ctx, onSave, instant, showRetrain }: Choi
           />
           <span className={styles.label}>{o.label}</span>
         </label>
+        {why && (
+          <span className={styles.suggested} aria-hidden="true">
+            Suggested
+          </span>
+        )}
         {valueKind && (
           <Button
             size="sm"

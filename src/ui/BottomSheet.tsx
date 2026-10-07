@@ -20,6 +20,10 @@ function typing(): boolean {
  */
 export function SheetProvider({ children }: { children: ReactNode }) {
   const [stack, setStack] = useState<SheetPage[]>([]);
+  // vaul keeps the sheet on its own compositor layer (`will-change: transform`), which renders
+  // its text as a texture: soft, and blurred when centring puts it on a half pixel. Once the
+  // sheet has slid in, it is let go of that layer until it moves again.
+  const [settled, setSettled] = useState(false);
 
   const api = useMemo<SheetApi>(
     () => ({
@@ -30,7 +34,10 @@ export function SheetProvider({ children }: { children: ReactNode }) {
           return [...current, page].slice(-MAX_DEPTH);
         }),
       back: () => setStack((current) => current.slice(0, -1)),
-      close: () => setStack([]),
+      close: () => {
+        setSettled(false);
+        setStack([]);
+      },
     }),
     [],
   );
@@ -63,7 +70,15 @@ export function SheetProvider({ children }: { children: ReactNode }) {
       <Drawer.Root open={open} onOpenChange={(next) => !next && api.close()}>
         <Drawer.Portal>
           <Drawer.Overlay className={styles.overlay} />
-          <Drawer.Content ref={contentRef} className={styles.content} aria-describedby={undefined}>
+          <Drawer.Content
+            ref={contentRef}
+            className={styles.content}
+            aria-describedby={undefined}
+            data-settled={settled}
+            onAnimationEnd={(e) => {
+              if (e.target === e.currentTarget && open) setSettled(true);
+            }}
+          >
             <div className={styles.handle} aria-hidden="true" />
             <header className={styles.header}>
               {stack.length > 1 ? (

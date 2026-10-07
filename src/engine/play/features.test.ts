@@ -199,4 +199,21 @@ describe('choice options', () => {
     const all = offerOptions(feat.offer, ctx, [], { ignoreRules: true }).options;
     expect(all.map((o) => o.group)).toContain('Origin feats');
   });
+
+  it('a feat given outright counts as had: the same version of a repeatable feat is taken', () => {
+    const c = brute();
+    const sheet = derive(c, index, { registry: FIXTURE_FEATURE_EFFECTS });
+    const ctx = { character: c, sheet, catalog, index };
+    const feat = sheet.features
+      .find((f) => f.name === 'Ability Score Improvement')!
+      .choices.find((x) => x.offer.key.slot === 'feat')!;
+    const all = offerOptions(feat.offer, ctx, [], { ignoreRules: true }).options;
+    // Arena Hand gives Spark Initiate; Gladiator: repeatable, but with another version.
+    expect(all.find((o) => o.value === 'spark initiate; gladiator|tst')?.taken).toBe(true);
+    // Arena Veteran, picked by this very choice, stays pickable here.
+    expect(
+      offerOptions(feat.offer, ctx, [veteran.id]).options.find((o) => o.value === veteran.id)
+        ?.taken,
+    ).toBeUndefined();
+  });
 });

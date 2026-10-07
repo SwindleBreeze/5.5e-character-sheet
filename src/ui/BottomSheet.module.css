@@ -23,6 +23,12 @@
   outline: none;
 }
 
+/* At rest (slid in, not being dragged): off the compositor layer, so text is crisp. */
+.content[data-settled='true']:not(:global(.vaul-dragging)) {
+  will-change: auto;
+  transform: none !important;
+}
+
 .handle {
   flex: none;
   width: 40px;
