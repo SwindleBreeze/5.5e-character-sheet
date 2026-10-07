@@ -2,8 +2,8 @@ import { useMemo } from 'react';
 import { Link } from 'react-router';
 import { TopBar } from '../../app/TopBar.tsx';
 import page from '../../app/Page.module.css';
-import { useDirection, useTheme } from '../../app/theme/useTheme.ts';
-import { DIRECTIONS, type ThemePref } from '../../app/theme/theme.ts';
+import { useTheme } from '../../app/theme/useTheme.ts';
+import type { ThemePref } from '../../app/theme/theme.ts';
 import { detectEnv, shouldShowInstallGuide } from '../../db/storage.ts';
 import { SourceToggles } from '../sources/SourceToggles.tsx';
 import { BackupCard } from './BackupCard.tsx';
@@ -19,7 +19,6 @@ const THEMES: { value: ThemePref; label: string }[] = [
 
 export function SettingsPage() {
   const [theme, setTheme] = useTheme();
-  const [direction, setDirection] = useDirection();
   const showInstallGuide = useMemo(() => shouldShowInstallGuide(detectEnv()), []);
 
   return (
@@ -44,26 +43,6 @@ export function SettingsPage() {
               </label>
             ))}
           </div>
-          <h3 id="direction-title" className={styles.subTitle}>
-            Design (trying out)
-          </h3>
-          <div className={styles.segmented} role="radiogroup" aria-labelledby="direction-title">
-            {DIRECTIONS.map((d) => (
-              <label key={d.value} className={styles.segment} data-wide="true">
-                <input
-                  type="radio"
-                  name="direction"
-                  value={d.value}
-                  checked={direction === d.value}
-                  onChange={() => setDirection(d.value)}
-                />
-                <span>{d.label}</span>
-              </label>
-            ))}
-          </div>
-          <p className={page.muted}>
-            <Link to="/dev/design">Compare them side by side</Link>
-          </p>
         </section>
 
         <section className={page.card} aria-labelledby="sources-title">

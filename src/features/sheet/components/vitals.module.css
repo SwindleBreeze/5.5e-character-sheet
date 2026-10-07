@@ -1,53 +1,70 @@
-/* ---- HP ---- */
+/* ---- Tiles: HP, hit dice, exhaustion (the same grid as the Combat tiles) ---- */
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: var(--space-2);
+}
 
 .hp {
+  gap: var(--space-1);
+}
+
+.ring {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+}
+
+.ring svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.ring circle {
+  fill: none;
+  stroke-width: 5;
+}
+
+.ringTrack {
+  stroke: var(--color-surface-3);
+}
+
+.ringFill {
+  stroke: var(--color-positive);
+  stroke-linecap: round;
+  transition: stroke-dasharray var(--duration-base) var(--ease-standard);
+}
+
+.hp[data-state='bloodied'] .ringFill {
+  stroke: var(--color-warning);
+}
+
+.hp[data-state='down'] .ringFill {
+  stroke: var(--color-negative);
+}
+
+.ringTemp {
+  stroke: var(--color-proficiency);
+  opacity: 0.8;
+}
+
+.ringText {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-1) var(--card-padding) var(--space-2);
-  border: var(--card-border-width) solid var(--color-border);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface);
-  box-shadow: var(--card-shadow);
-}
-
-.hpMain {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: var(--space-1);
-  margin: 0 calc(-1 * var(--space-2));
-  padding: var(--space-2);
-  border: 0;
-  border-radius: var(--radius-md);
-  background: transparent;
-  color: var(--color-text);
-  text-align: left;
-}
-
-.hpMain:active {
-  background: var(--color-surface-2);
-}
-
-.hpLabel {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-xs);
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.hpNumbers {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-2);
+  align-items: center;
   font-family: var(--font-stat);
+  line-height: 1;
 }
 
 .hpCurrent {
-  font-size: var(--font-size-3xl);
+  font-size: var(--font-size-2xl);
   font-weight: 700;
-  line-height: var(--line-height-3xl);
 }
 
 .hp[data-state='bloodied'] .hpCurrent {
@@ -60,7 +77,7 @@
 
 .hpMax {
   color: var(--color-text-muted);
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-xs);
 }
 
 .hpTemp {
@@ -68,38 +85,36 @@
   font-weight: 700;
 }
 
-.bar {
+.of {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+}
+
+.steps {
   display: flex;
-  height: 8px;
-  overflow: hidden;
-  border-radius: var(--radius-pill);
+  gap: var(--space-1);
+}
+
+.step {
+  width: 40px;
+  height: 36px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.step:active {
   background: var(--color-surface-3);
 }
 
-.barFill {
-  background: var(--color-positive);
-  transition: width var(--duration-base) var(--ease-standard);
-}
-
-.hp[data-state='bloodied'] .barFill {
-  background: var(--color-warning);
-}
-
-.hp[data-state='down'] .barFill {
-  background: var(--color-negative);
-}
-
-.barTemp {
-  background: var(--color-proficiency);
-  opacity: 0.7;
-}
-
-.hpMeta {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-2);
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
+.step[aria-disabled='true'] {
+  cursor: not-allowed;
+  opacity: 0.35;
 }
 
 .link {
@@ -200,26 +215,6 @@
 .heal:not(:disabled) {
   border-color: var(--color-positive);
   color: var(--color-positive);
-}
-
-/* ---- Hit dice ---- */
-
-.hitDice {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-}
-
-.hitDie {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.hitDieLabel {
-  min-width: 32px;
-  font-family: var(--font-stat);
-  font-weight: 700;
 }
 
 /* ---- Death saves ---- */
@@ -342,18 +337,6 @@
   border-bottom: 1px solid var(--color-border);
   background: transparent;
   text-align: left;
-}
-
-.exhaustion {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-3);
-}
-
-.exhaustionNote {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
 }
 
 .attention {

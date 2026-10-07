@@ -1,6 +1,6 @@
-// The Main tab (plan §9.2, step 3.15): abilities, saves, skills, combat numbers, hit points and
-// the rest. One column on phones (abilities, saves, skills, then the rest), two on tablets,
-// three on wide screens. Every number explains itself when tapped; d20 numbers roll.
+// The Main tab (plan §9.2, step 3.15): hit points, combat numbers, abilities, saves, skills and
+// the rest. One column on phones (health and combat first, the things touched most in play),
+// two on tablets, three on wide screens. Every number explains itself when tapped; d20 numbers roll.
 
 import { useRef, type ReactNode } from 'react';
 import type { Derived, DerivedRoll, SourcedValue } from '../../engine/derive/types.ts';
@@ -35,6 +35,7 @@ import {
   ExhaustionStepper,
   HitDice,
   HpWidget,
+  Tiles,
   type ConditionOption,
 } from './components/vitals.tsx';
 import { nameOf, type SheetBindings } from './sheetBindings.ts';
@@ -44,15 +45,15 @@ type SectionId =
   'abilities' | 'saves' | 'skills' | 'combat' | 'vitals' | 'senses' | 'defenses' | 'proficiencies';
 
 const LAYOUTS: Record<1 | 2 | 3, SectionId[][]> = {
-  1: [['abilities', 'saves', 'skills', 'combat', 'vitals', 'senses', 'defenses', 'proficiencies']],
+  1: [['vitals', 'combat', 'abilities', 'saves', 'skills', 'senses', 'defenses', 'proficiencies']],
   2: [
-    ['abilities', 'saves', 'skills'],
-    ['combat', 'vitals', 'senses', 'defenses', 'proficiencies'],
+    ['vitals', 'combat', 'abilities', 'saves'],
+    ['skills', 'senses', 'defenses', 'proficiencies'],
   ],
   3: [
-    ['abilities', 'saves'],
-    ['skills', 'senses'],
-    ['combat', 'vitals', 'defenses', 'proficiencies'],
+    ['vitals', 'combat', 'defenses'],
+    ['abilities', 'saves', 'senses'],
+    ['skills', 'proficiencies'],
   ],
 };
 
@@ -206,24 +207,34 @@ export function MainTab({ character, sheet, index, apply, conditionOptions }: Ma
     ),
     vitals: (
       <Section id="vitals" title="Health">
-        <HpWidget
-          values={{
-            current: hp.current,
-            max: hp.max.value,
-            temp: hp.temp,
-            ward: hp.ward && {
-              name: hp.ward.name,
-              current: hp.ward.current,
-              max: hp.ward.max.value,
-            },
-          }}
-          actions={{
-            onDamage: (n) => apply((c) => applyDamage(c, sheet, n)),
-            onHeal: (n) => apply((c) => heal(c, sheet, n)),
-            onTempHp: (n) => apply((c) => setTempHp(c, n)),
-          }}
-          onExplainMax={() => explainNumber('hpMax', 'Hit point maximum', hp.max)}
-        />
+        <Tiles>
+          <HpWidget
+            values={{
+              current: hp.current,
+              max: hp.max.value,
+              temp: hp.temp,
+              ward: hp.ward && {
+                name: hp.ward.name,
+                current: hp.ward.current,
+                max: hp.ward.max.value,
+              },
+            }}
+            actions={{
+              onDamage: (n) => apply((c) => applyDamage(c, sheet, n)),
+              onHeal: (n) => apply((c) => heal(c, sheet, n)),
+              onTempHp: (n) => apply((c) => setTempHp(c, n)),
+            }}
+            onExplainMax={() => explainNumber('hpMax', 'Hit point maximum', hp.max)}
+          />
+          <HitDice
+            dice={sheet.hitDice}
+            onChange={(faces, used) => apply((c) => setHitDiceUsed(c, sheet, faces, used))}
+          />
+          <ExhaustionStepper
+            level={sheet.exhaustion}
+            onChange={(n) => apply((c) => setExhaustion(c, n))}
+          />
+        </Tiles>
         {(hp.current === 0 || ds.successes > 0 || ds.failures > 0) && (
           <div className={styles.block}>
             <h3 className={styles.subTitle}>Death saves</h3>
@@ -243,26 +254,12 @@ export function MainTab({ character, sheet, index, apply, conditionOptions }: Ma
             />
           </div>
         )}
-        <div className={styles.block}>
-          <h3 className={styles.subTitle}>Hit dice</h3>
-          <HitDice
-            dice={sheet.hitDice}
-            onChange={(faces, used) => apply((c) => setHitDiceUsed(c, sheet, faces, used))}
-          />
-        </div>
-        <div className={styles.block}>
-          <h3 className={styles.subTitle}>Conditions</h3>
-          <ConditionChips
-            active={sheet.conditions.map((id) => ({ id, name: conditionName(id) }))}
-            available={conditionOptions}
-            onAdd={(id) => apply((c) => addCondition(c, id))}
-            onRemove={(id) => apply((c) => removeCondition(c, id))}
-          />
-          <ExhaustionStepper
-            level={sheet.exhaustion}
-            onChange={(n) => apply((c) => setExhaustion(c, n))}
-          />
-        </div>
+        <ConditionChips
+          active={sheet.conditions.map((id) => ({ id, name: conditionName(id) }))}
+          available={conditionOptions}
+          onAdd={(id) => apply((c) => addCondition(c, id))}
+          onRemove={(id) => apply((c) => removeCondition(c, id))}
+        />
       </Section>
     ),
     senses: (

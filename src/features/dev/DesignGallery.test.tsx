@@ -14,19 +14,14 @@ beforeEach(async () => {
   await resetDb('test-gallery');
 });
 
-const frames = () => screen.getAllByRole('region', { name: /^(A|B) · .+, (light|dark)$/ });
+const frames = () => screen.getAllByRole('region', { name: /^(Light|Dark)$/ });
 
 describe('DesignGallery', () => {
-  it('shows every direction in light and dark, and filters them', async () => {
+  it('shows light and dark side by side, and filters them', async () => {
     const user = userEvent.setup();
     renderApp('/dev/design');
     await screen.findByRole('heading', { level: 1, name: 'Design gallery' });
-    expect(frames().map((f) => [f.dataset.dir, f.dataset.scheme])).toEqual([
-      ['a', 'light'],
-      ['a', 'dark'],
-      ['b', 'light'],
-      ['b', 'dark'],
-    ]);
+    expect(frames().map((f) => f.dataset.scheme)).toEqual(['light', 'dark']);
     // Every frame has the sheet components, with sample numbers.
     for (const frame of frames()) {
       expect(within(frame).getByRole('group', { name: 'Strength' })).toBeInTheDocument();
@@ -35,8 +30,7 @@ describe('DesignGallery', () => {
       );
     }
     await user.click(screen.getByRole('checkbox', { name: 'Dark' }));
-    await user.click(screen.getByRole('checkbox', { name: 'A · Parchment' }));
-    expect(frames().map((f) => [f.dataset.dir, f.dataset.scheme])).toEqual([['b', 'light']]);
+    expect(frames().map((f) => f.dataset.scheme)).toEqual(['light']);
 
     await user.selectOptions(screen.getByRole('combobox', { name: 'Width' }), 'tablet');
     expect(frames()[0]).toHaveStyle({ width: '768px' });
@@ -45,21 +39,14 @@ describe('DesignGallery', () => {
   it('frames share one sample state: a change in one shows in all', async () => {
     const user = userEvent.setup();
     renderApp('/dev/design');
-    const [first] = await screen.findAllByRole('region', { name: /, light$/ });
-    await user.click(within(first!).getByRole('button', { name: /Inspiration/ }));
+    const first = await screen.findByRole('region', { name: 'Light' });
+    await user.click(within(first).getByRole('button', { name: /Inspiration/ }));
     for (const frame of frames()) {
       expect(within(frame).getByRole('button', { name: /Inspiration/ })).toHaveAttribute(
         'aria-pressed',
         'false',
       );
     }
-  });
-
-  it('picks the direction for the whole app', async () => {
-    const user = userEvent.setup();
-    renderApp('/dev/design');
-    await user.click(await screen.findByRole('radio', { name: /B · Slate/ }));
-    expect(document.documentElement.dataset.dir).toBe('b');
   });
 
   it("shows a saved character's Main tab in every frame", async () => {
@@ -78,7 +65,7 @@ describe('DesignGallery', () => {
     );
     renderApp('/dev/design');
     await user.selectOptions(await screen.findByRole('combobox', { name: 'Show' }), 'main');
-    for (const frame of await screen.findAllByRole('region', { name: /, (light|dark)$/ })) {
+    for (const frame of await screen.findAllByRole('region', { name: /^(Light|Dark)$/ })) {
       expect(
         await within(frame).findByRole('region', { name: 'Saving throws' }),
       ).toBeInTheDocument();

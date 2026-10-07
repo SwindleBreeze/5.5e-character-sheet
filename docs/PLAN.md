@@ -1,6 +1,6 @@
 # 5.5e Character Sheet PWA: Plan (phases 1–5 in detail, 6–8 in outline)
 
-> **Status (2026-10-06):** phases 1, 2 and 2b are done and pushed. §9 now plans phases 3–5 at implementation level. The source of truth for this plan is `docs/PLAN.md` in the repo.
+> **Status (2026-10-07):** phases 1, 2 and 2b are done and pushed. In phase 3, 3A (engine) and 3B (visual system, Main tab, design gate) are done; the gate picked **Parchment**. 3C (the remaining tabs) is next. §9 plans phases 3–5 at implementation level. The source of truth for this plan is `docs/PLAN.md` in the repo.
 
 ## Context
 
@@ -30,7 +30,7 @@ When this plan was first written, the project folder held only `5etools-src-2.36
 | Content on phones            | **Pack files are the main path.** An import from the 5etools zip is a desktop task.                                                                                                                                                                              |
 | Character choices            | **One source of truth: the per-level choice log.** There is no top-level choices map (§4.4).                                                                                                                                                                     |
 | Class table columns          | Referenced by a **normalized key**, not by display label (§4.3).                                                                                                                                                                                                 |
-| Design                       | In phase 3, the Main tab is fully styled first to set the visual system. Other tabs come after sign-off.                                                                                                                                                         |
+| Design                       | In phase 3, the Main tab is fully styled first to set the visual system. Other tabs come after sign-off. **Parchment** (warm paper, serif headings and stats, bordered cards) was picked at the gate on 2026-10-07.                                              |
 | Phase 3 order                | **Engine first:** all of P1–P12 with fixture and golden tests, then the Main tab design gate, then the other tabs (§9.2).                                                                                                                                        |
 | Characters before the wizard | A **quick-builder** writes valid characters from real content with automatic picks. It ships in production behind Settings → Developer tools, so the design gate can be checked on phones (§9.2, step 3.10).                                                     |
 | Rules strictness             | **Guide, allow override.** Pickers filter and count by default. Every limit can be bypassed with an explicit "Ignore rules" switch, and a broken rule shows as a warning, never a block (§9.1).                                                                  |
@@ -798,16 +798,16 @@ Effect +=
 
 Engine subtotal: about 34 days.
 
-#### 3B: Visual system and Main tab (design gate) (3.13–3.15 done; waiting at the gate)
+#### 3B: Visual system and Main tab (design gate) (done)
 
-How to review at the gate: Settings → Theme → **Design (trying out)** switches the whole app between direction A (Parchment) and B (Slate); Settings → Developer tools → **Design gallery** shows both in light and dark side by side at phone, tablet and desktop width (tokens, components, or a saved character's Main tab). Build characters with the quick builder. After the pick, the other direction's tokens and the switch are deleted.
+Gate outcome (2026-10-07): direction A, **Parchment**, was picked over B (Slate). Slate's tokens, the "Design (trying out)" switch in Settings and the direction picker in the design gallery are deleted; the gallery now shows Parchment in light and dark. Fixed from the review: on phones the Main tab puts Health and Combat first; hit points are a tile with the number inside a ring (no long bar), and hit dice and exhaustion are tiles with −/+ in the same grid as the Combat tiles, with conditions in one row below; the −/+ buttons keep focus at their limits, and the tab bar no longer scrolls the page on every change (the jump to the top). Feedback on the quick-builder's developer view (a separate subspecies dropdown, source labels and raw refs in the derived listing, the long list of standard actions) is left as is, since it is a dev tool: the creation wizard (4.4) groups lineages under their species, and the Actions tab (3.17) collapses the standard actions.
 
 | Step | Work                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Est. |
 | ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
 | 3.13 | **Tokens.** Replace `src/app/theme/tokens.css` with the final system: a type scale (12/14/16/18/22/28/34 with line heights and tabular numerals for stats), 4-pt spacing, semantic colours (surface levels, text levels, accent, positive, negative, warning, proficiency, expertise, advantage, disadvantage, each damage type for chips) for light and dark, radii, elevation, motion (durations, easing, honouring `prefers-reduced-motion`), and density (compact on phones). The gallery shows **two candidate directions** side by side for you to pick at the gate.                                                                         | 2    |
 | 3.14 | **Sheet components** (in `src/features/sheet/components/` unless generic): `AbilityCard`, `SaveRow`/`SkillRow` (proficiency, expertise and half markers, advantage hint), `StatPill` (AC, initiative, speed, PB, inspiration), `HpWidget` (current/max/temp, damage-heal-temp input with a numeric keypad sheet), `HitDice`, `DeathSaves`, `ConditionChips` + `ExhaustionStepper`, `ContributionSheet` (why a number is what it is, plus its override control), `OverrideMarker`, `NeedsAttentionChip`, `SourceBadge`/`ContentMissingBadge`, `SectionHeader`, `RollButton`. All of them go into `#/dev/design` in both themes and at three widths. | 3    |
-| 3.15 | **Main tab.** A sticky header (name, class and level summary, HP pill, AC, conditions, needs-attention). Layouts: phone (one column: abilities, saves, skills, then the rest), tablet (two columns), desktop (three columns). Every number taps to its `ContributionSheet`; d20 numbers roll. Also senses, defenses, proficiencies, languages and the Heroic Inspiration toggle.                                                                                                                                                                                                                                                                   | 2    |
-| 3.16 | **Gate.** You review on your devices (characters from the quick-builder) and pick a token direction. I fix what comes back. The other tabs start only after sign-off.                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | –    |
+| 3.15 | **Main tab.** A sticky header (name, class and level summary, HP pill, AC, conditions, needs-attention). Layouts: phone (one column: health and combat first, then abilities, saves, skills and the rest; reordered at the gate), tablet (two columns), desktop (three columns). Every number taps to its `ContributionSheet`; d20 numbers roll. Also senses, defenses, proficiencies, languages and the Heroic Inspiration toggle.                                                                                                                                                                                                                | 2    |
+| 3.16 | **Gate.** You review on your devices (characters from the quick-builder) and pick a token direction. I fix what comes back. The other tabs start only after sign-off. **Done 2026-10-07: Parchment.**                                                                                                                                                                                                                                                                                                                                                                                                                                              | –    |
 
 #### 3C: Remaining tabs and play tools
 
@@ -860,7 +860,7 @@ UI subtotal: about 27.5 days. **Phase 3 total: about 61 days (12 weeks).**
 ### 9.5 Order of work and checkpoints
 
 1. 3A engine steps 3.0–3.12, in order. Checkpoint: golden tests reviewed; the quick-builder works on your phone with real content (Settings → Developer tools).
-2. 3B, ending at the **design gate**. Checkpoint: you sign off a token direction and the Main tab.
+2. 3B, ending at the **design gate**. Checkpoint: you sign off a token direction and the Main tab. (Done 2026-10-07: Parchment.)
 3. 3C. Checkpoint: a full play session on the quick-built characters (HP, rests, casting, attacks).
 4. Phase 4. Checkpoint: everyone in the group creates their level 1 character on their own phone.
 5. Phase 5. Checkpoint: the group levels up, or creates at their current level, including multiclass builds.
@@ -922,7 +922,7 @@ Phase 6 (the full `featureEffects` mapping) can start in parallel after step 3.1
 
 ## 12. Open questions
 
-None are blocking. The token direction is chosen at the phase 3 design gate (step 3.16).
+None are blocking. The token direction was chosen at the phase 3 design gate (step 3.16): Parchment.
 
 ## 13. Risks
 

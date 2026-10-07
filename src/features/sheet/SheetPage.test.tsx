@@ -97,6 +97,20 @@ describe('sheet header and Main tab', () => {
     expect(await screen.findAllByRole('button', { name: hp(43) })).toHaveLength(2);
   });
 
+  it('spends hit dice from the Health tiles, keeping focus at the limit', async () => {
+    const user = userEvent.setup();
+    renderApp(`/c/${character.id}/main`);
+    const increase = await screen.findByRole('button', { name: /^Increase d\d+ hit dice left/ });
+    expect(increase).toHaveAttribute('aria-disabled', 'true');
+    const decrease = screen.getByRole('button', { name: /^Decrease d\d+ hit dice left/ });
+    await user.click(decrease);
+    await user.click(increase);
+    expect(increase).toHaveFocus();
+    await user.click(decrease);
+    await saved();
+    expect(Object.values((await stored(character.id)).state.hitDiceUsed)).toEqual([1]);
+  });
+
   it('shows death saves at 0 HP and saves their marks', async () => {
     const user = userEvent.setup();
     await repos().characters.save({ ...character, state: { ...character.state, damage: 50 } }, 2);

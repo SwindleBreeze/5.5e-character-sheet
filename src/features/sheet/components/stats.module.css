@@ -14,13 +14,6 @@
   text-transform: uppercase;
 }
 
-[data-dir='b'] .sectionTitle {
-  color: var(--color-text);
-  font-size: var(--font-size-md);
-  letter-spacing: var(--heading-tracking);
-  text-transform: none;
-}
-
 /* ---- Ability cards ---- */
 
 .ability {

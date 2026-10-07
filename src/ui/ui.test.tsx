@@ -22,12 +22,20 @@ describe('Counter', () => {
 
     await user.click(screen.getByRole('button', { name: 'Increase Pep' }));
     expect(group).toHaveTextContent('2 / 2');
-    expect(screen.getByRole('button', { name: 'Increase Pep' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Increase Pep' })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
+    await user.click(screen.getByRole('button', { name: 'Increase Pep' }));
+    expect(group).toHaveTextContent('2 / 2');
 
     await user.click(screen.getByRole('button', { name: 'Decrease Pep' }));
     await user.click(screen.getByRole('button', { name: 'Decrease Pep' }));
     expect(group).toHaveTextContent('0 / 2');
-    expect(screen.getByRole('button', { name: 'Decrease Pep' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Decrease Pep' })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
   });
 });
 

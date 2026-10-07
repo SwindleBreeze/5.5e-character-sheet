@@ -1,10 +1,11 @@
 // Hit points, hit dice, death saves, conditions and exhaustion: the parts of the sheet that
 // change during play. Presentational: values in, changes out through callbacks.
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Button } from '../../../ui/Button.tsx';
-import { Counter } from '../../../ui/Counter.tsx';
+import { StepButton } from '../../../ui/Counter.tsx';
 import { useSheet } from '../../../ui/sheetContext.ts';
+import stats from './stats.module.css';
 import styles from './vitals.module.css';
 
 export interface HpValues {
@@ -23,7 +24,15 @@ export interface HpActions {
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'clear', '0', 'back'] as const;
 
 /** A number pad for HP changes: type an amount, then say what it is. */
-export function HpKeypad({ current, max, temp, onDamage, onHeal, onTempHp }: HpValues & HpActions) {
+export function HpKeypad({
+  current,
+  max,
+  temp,
+  onDamage,
+  onHeal,
+  onTempHp,
+  onExplainMax,
+}: HpValues & HpActions & { onExplainMax?: (() => void) | undefined }) {
   const [amount, setAmount] = useState('');
   const n = Number(amount) || 0;
   const press = (key: (typeof KEYS)[number]) =>
@@ -41,6 +50,14 @@ export function HpKeypad({ current, max, temp, onDamage, onHeal, onTempHp }: HpV
           {current} / {max}
         </span>{' '}
         HP{temp > 0 && <span className="numeric"> · {temp} temp</span>}
+        {onExplainMax && (
+          <>
+            {' · '}
+            <button type="button" className={styles.link} onClick={onExplainMax}>
+              Max HP
+            </button>
+          </>
+        )}
       </p>
       <output className={`${styles.keypadAmount} numeric`} aria-label="Amount" aria-live="polite">
         {amount || '0'}
@@ -74,7 +91,7 @@ export function HpKeypad({ current, max, temp, onDamage, onHeal, onTempHp }: HpV
 }
 
 /** Opens the HP keypad; an action closes it. */
-function useHpKeypad(values: HpValues, actions: HpActions) {
+function useHpKeypad(values: HpValues, actions: HpActions, onExplainMax?: () => void) {
   const sheet = useSheet();
   return () =>
     sheet.open({
@@ -83,6 +100,7 @@ function useHpKeypad(values: HpValues, actions: HpActions) {
       render: () => (
         <HpKeypad
           {...values}
+          onExplainMax={onExplainMax}
           onDamage={(n) => (actions.onDamage(n), sheet.close())}
           onHeal={(n) => (actions.onHeal(n), sheet.close())}
           onTempHp={(n) => (actions.onTempHp(n), sheet.close())}
@@ -91,7 +109,12 @@ function useHpKeypad(values: HpValues, actions: HpActions) {
     });
 }
 
-/** Current, maximum and temporary HP with a bar; tapping opens the keypad. */
+/** A grid of stat tiles, the same as the Combat tiles. */
+export function Tiles({ children }: { children: ReactNode }) {
+  return <div className={styles.tiles}>{children}</div>;
+}
+
+/** An HP tile: the number inside a ring that empties as HP drops; tapping opens the keypad. */
 export function HpWidget({
   values,
   actions,
@@ -101,42 +124,100 @@ export function HpWidget({
   actions: HpActions;
   onExplainMax?: () => void;
 }) {
-  const open = useHpKeypad(values, actions);
+  const open = useHpKeypad(values, actions, onExplainMax);
   const { current, max, temp, ward } = values;
-  const pct = max > 0 ? Math.min(100, (current / max) * 100) : 0;
-  const tempPct = max > 0 ? Math.min(100 - pct, (temp / max) * 100) : 0;
+  const fill = max > 0 ? Math.min(100, (current / max) * 100) : 0;
+  const tempFill = max > 0 ? Math.min(100 - fill, (temp / max) * 100) : 0;
   const state = current === 0 ? 'down' : current <= max / 2 ? 'bloodied' : 'healthy';
   return (
-    <div className={styles.hp} data-state={state}>
-      <button
-        type="button"
-        className={styles.hpMain}
-        onClick={open}
-        aria-label={`Hit points ${current} of ${max}${temp ? `, ${temp} temporary` : ''}. Change`}
-      >
-        <span className={styles.hpLabel}>Hit points</span>
-        <span className={`${styles.hpNumbers} numeric`}>
+    <button
+      type="button"
+      className={`${stats.pill} ${styles.hp}`}
+      data-state={state}
+      onClick={open}
+      aria-label={`Hit points ${current} of ${max}${temp ? `, ${temp} temporary` : ''}. Change`}
+    >
+      <span className={stats.pillLabel}>Hit points</span>
+      <span className={styles.ring}>
+        <svg viewBox="0 0 64 64" aria-hidden="true">
+          <circle className={styles.ringTrack} cx="32" cy="32" r="28" pathLength={100} />
+          <circle
+            className={styles.ringFill}
+            cx="32"
+            cy="32"
+            r="28"
+            pathLength={100}
+            strokeDasharray={`${fill} 100`}
+          />
+          {tempFill > 0 && (
+            <circle
+              className={styles.ringTemp}
+              cx="32"
+              cy="32"
+              r="28"
+              pathLength={100}
+              strokeDasharray={`0 ${fill} ${tempFill} 100`}
+            />
+          )}
+        </svg>
+        <span className={`${styles.ringText} numeric`}>
           <span className={styles.hpCurrent}>{current}</span>
           <span className={styles.hpMax}>/ {max}</span>
-          {temp > 0 && <span className={styles.hpTemp}>+{temp}</span>}
         </span>
-        <span className={styles.bar} aria-hidden="true">
-          <span className={styles.barFill} style={{ width: `${pct}%` }} />
-          <span className={styles.barTemp} style={{ width: `${tempPct}%` }} />
+      </span>
+      {temp > 0 && (
+        <span className={`${stats.pillSub} ${styles.hpTemp} numeric`}>+{temp} temp</span>
+      )}
+      {ward && (
+        <span className={`${stats.pillSub} numeric`}>
+          {ward.name} {ward.current}/{ward.max}
         </span>
-      </button>
-      <div className={styles.hpMeta}>
-        {ward && (
-          <span className="numeric">
-            {ward.name} {ward.current}/{ward.max}
-          </span>
-        )}
-        {onExplainMax && (
-          <button type="button" className={styles.link} onClick={onExplainMax}>
-            Max HP
-          </button>
-        )}
-      </div>
+      )}
+    </button>
+  );
+}
+
+/** A tile with −/+ under its number: hit dice, exhaustion. */
+function StepperTile({
+  label,
+  name,
+  value,
+  max,
+  sub,
+  onChange,
+}: {
+  label: string;
+  /** What the buttons change, for screen readers: `d10 hit dice left`. */
+  name: string;
+  value: number;
+  max: number;
+  sub: string;
+  onChange: (next: number) => void;
+}) {
+  return (
+    <div className={stats.pill} role="group" aria-label={name}>
+      <span className={stats.pillLabel}>{label}</span>
+      <output className={`${stats.pillValue} numeric`} aria-live="polite">
+        {value}
+        <span className={styles.of}>/{max}</span>
+      </output>
+      <span className={stats.pillSub}>{sub}</span>
+      <span className={styles.steps}>
+        <StepButton
+          className={styles.step}
+          label={`Decrease ${name}`}
+          symbol="−"
+          blocked={value <= 0}
+          onStep={() => onChange(value - 1)}
+        />
+        <StepButton
+          className={styles.step}
+          label={`Increase ${name}`}
+          symbol="+"
+          blocked={value >= max}
+          onStep={() => onChange(value + 1)}
+        />
+      </span>
     </div>
   );
 }
@@ -167,21 +248,17 @@ export function HitDice({
   dice: { faces: number; total: number; used: number }[];
   onChange: (faces: number, used: number) => void;
 }) {
-  return (
-    <div className={styles.hitDice}>
-      {dice.map((d) => (
-        <div key={d.faces} className={styles.hitDie}>
-          <span className={styles.hitDieLabel}>d{d.faces}</span>
-          <Counter
-            label={`d${d.faces} hit dice left`}
-            value={d.total - d.used}
-            max={d.total}
-            onChange={(left) => onChange(d.faces, d.total - left)}
-          />
-        </div>
-      ))}
-    </div>
-  );
+  return dice.map((d) => (
+    <StepperTile
+      key={d.faces}
+      label="Hit dice"
+      name={`d${d.faces} hit dice left`}
+      value={d.total - d.used}
+      max={d.total}
+      sub={`d${d.faces}`}
+      onChange={(left) => onChange(d.faces, d.total - left)}
+    />
+  ));
 }
 
 function Pips({
@@ -325,16 +402,14 @@ export function ExhaustionStepper({
   onChange: (level: number) => void;
 }) {
   return (
-    <div className={styles.exhaustion}>
-      <Counter label="Exhaustion" value={level} max={6} onChange={onChange} />
-      <span className={styles.exhaustionNote}>
-        {level === 0
-          ? 'No exhaustion'
-          : level >= 6
-            ? 'Level 6: death'
-            : `−${2 * level} to d20 tests, −${5 * level} ft. Speed`}
-      </span>
-    </div>
+    <StepperTile
+      label="Exhaustion"
+      name="Exhaustion"
+      value={level}
+      max={6}
+      sub={level === 0 ? 'None' : level >= 6 ? 'Death' : `−${2 * level} d20, −${5 * level} ft.`}
+      onChange={onChange}
+    />
   );
 }
 

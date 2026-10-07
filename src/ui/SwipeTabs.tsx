@@ -21,6 +21,7 @@ export interface SwipeTabsProps {
 export function SwipeTabs({ label, tabs, activeId, onChange }: SwipeTabsProps) {
   const baseId = useId();
   const trackRef = useRef<HTMLDivElement>(null);
+  const barRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef(new Map<string, HTMLButtonElement>());
   const activeIndex = Math.max(
     0,
@@ -38,12 +39,17 @@ export function SwipeTabs({ label, tabs, activeId, onChange }: SwipeTabsProps) {
     track.scrollTo({ left, behavior: 'smooth' });
   }, [activeIndex]);
 
+  // Scrolls only the tab bar: scrollIntoView would also scroll the page vertically.
+  const activeTabId = tabs[activeIndex]?.id ?? '';
   useEffect(() => {
-    tabRefs.current.get(tabs[activeIndex]?.id ?? '')?.scrollIntoView?.({
-      block: 'nearest',
-      inline: 'nearest',
-    });
-  }, [activeIndex, tabs]);
+    const bar = barRef.current;
+    const tab = tabRefs.current.get(activeTabId);
+    if (!bar || !tab) return;
+    const b = bar.getBoundingClientRect();
+    const t = tab.getBoundingClientRect();
+    if (t.left < b.left) bar.scrollLeft += t.left - b.left;
+    else if (t.right > b.right) bar.scrollLeft += t.right - b.right;
+  }, [activeTabId]);
 
   function handleScroll() {
     const track = trackRef.current;
@@ -70,7 +76,13 @@ export function SwipeTabs({ label, tabs, activeId, onChange }: SwipeTabsProps) {
 
   return (
     <div className={styles.root}>
-      <div className={styles.tabBar} role="tablist" aria-label={label} onKeyDown={handleKeyDown}>
+      <div
+        ref={barRef}
+        className={styles.tabBar}
+        role="tablist"
+        aria-label={label}
+        onKeyDown={handleKeyDown}
+      >
         {tabs.map((tab, index) => {
           const selected = index === activeIndex;
           return (

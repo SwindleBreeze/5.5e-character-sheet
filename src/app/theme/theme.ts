@@ -1,21 +1,13 @@
-// Theme preference and design direction, both stored per device in localStorage (per-viewer
-// conveniences). Applied to <html> as:
+// Theme preference, stored per device in localStorage (a per-viewer convenience). Applied to
+// <html> as:
 //   data-theme   the explicit choice (`light`/`dark`); absent for `system`
 //   data-scheme  the scheme in effect (`light`/`dark`), which the palettes in tokens.css read
-//   data-dir     the design direction (`a`/`b`) while both candidates exist (plan step 3.13)
 // The inline script in index.html applies the same logic before first paint.
 
 export type ThemePref = 'system' | 'light' | 'dark';
 export type Scheme = 'light' | 'dark';
-export type Direction = 'a' | 'b';
 
 export const THEME_STORAGE_KEY = 'theme';
-export const DIRECTION_STORAGE_KEY = 'design-direction';
-
-export const DIRECTIONS: { value: Direction; label: string; description: string }[] = [
-  { value: 'a', label: 'A · Parchment', description: 'Warm paper, serif headings, bordered' },
-  { value: 'b', label: 'B · Slate', description: 'Cool greys, all sans, rounded and lifted' },
-];
 
 function read(key: string): string | null {
   try {
@@ -60,21 +52,6 @@ export function applyThemePref(
 
 export function saveThemePref(pref: ThemePref): void {
   write(THEME_STORAGE_KEY, pref === 'system' ? null : pref);
-}
-
-export function readDirection(): Direction {
-  return read(DIRECTION_STORAGE_KEY) === 'b' ? 'b' : 'a';
-}
-
-export function applyDirection(
-  direction: Direction,
-  root: HTMLElement = document.documentElement,
-): void {
-  root.dataset.dir = direction;
-}
-
-export function saveDirection(direction: Direction): void {
-  write(DIRECTION_STORAGE_KEY, direction === 'a' ? null : direction);
 }
 
 /**

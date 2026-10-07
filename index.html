@@ -11,24 +11,21 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Char Sheet" />
-    <meta name="theme-color" content="#f6f4ef" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#1f2430" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f4efe4" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#16120e" media="(prefers-color-scheme: dark)" />
     <title>5.5e Character Sheet</title>
     <script>
-      // Apply the saved theme and design direction before first paint to avoid a flash.
+      // Apply the saved theme before first paint to avoid a flash.
       // Mirrors src/app/theme/theme.ts.
       (function () {
         var root = document.documentElement;
         var t = null;
-        var d = null;
         try {
           t = localStorage.getItem('theme');
-          d = localStorage.getItem('design-direction');
         } catch (e) {}
         if (t === 'light' || t === 'dark') root.dataset.theme = t;
         else t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
         root.dataset.scheme = t;
-        root.dataset.dir = d === 'b' ? 'b' : 'a';
       })();
     </script>
   </head>

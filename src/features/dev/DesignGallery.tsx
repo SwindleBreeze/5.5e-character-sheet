@@ -1,14 +1,12 @@
-// The design gallery (plan §9.2, steps 3.13–3.16): both candidate directions, in light and
-// dark, side by side at phone, tablet or desktop width. Shows the tokens and every sheet
-// component with sample numbers, or a saved character's Main tab. The design gate is decided
-// here: pick a direction for the whole app and try it on your own devices.
+// The design gallery (plan §9.2, steps 3.13–3.16): the Parchment tokens in light and dark,
+// side by side at phone, tablet or desktop width. Shows the tokens and every sheet component
+// with sample numbers, or a saved character's Main tab.
 
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useMemo, useState, type ReactNode } from 'react';
 import { TopBar } from '../../app/TopBar.tsx';
 import page from '../../app/Page.module.css';
-import { DIRECTIONS, type Direction, type Scheme } from '../../app/theme/theme.ts';
-import { useDirection } from '../../app/theme/useTheme.ts';
+import type { Scheme } from '../../app/theme/theme.ts';
 import { useConditionOptions, useContentIndex } from '../../content/hooks.ts';
 import { repos } from '../../db/repos.ts';
 import { derive } from '../../engine/derive/derive.ts';
@@ -35,6 +33,7 @@ import {
   HitDice,
   HpPill,
   HpWidget,
+  Tiles,
   NeedsAttentionChip,
 } from '../sheet/components/vitals.tsx';
 import { MainTab } from '../sheet/MainTab.tsx';
@@ -270,32 +269,35 @@ function Components({ sample, set }: { sample: Sample; set: (s: Partial<Sample>)
           <RollButton label="Big roll" roll={sampleRoll(11)} size="lg" />
         </div>
       </Card>
-      <Card title="Hit points">
-        <HpWidget
-          values={sample.hp}
-          actions={hpActions}
-          onExplainMax={() =>
-            explain({
-              key: 'gallery.hp',
-              title: 'Hit point maximum',
-              derived: derived(44, [
-                { label: 'Hit dice', value: 34, kind: 'base' },
-                { label: 'CON modifier × 5', value: 10 },
-              ]),
-            })
-          }
-        />
+      <Card title="Health">
+        <Tiles>
+          <HpWidget
+            values={sample.hp}
+            actions={hpActions}
+            onExplainMax={() =>
+              explain({
+                key: 'gallery.hp',
+                title: 'Hit point maximum',
+                derived: derived(44, [
+                  { label: 'Hit dice', value: 34, kind: 'base' },
+                  { label: 'CON modifier × 5', value: 10 },
+                ]),
+              })
+            }
+          />
+          <HitDice
+            dice={[{ faces: 10, total: 5, used: sample.hitDiceUsed }]}
+            onChange={(_, used) => set({ hitDiceUsed: used })}
+          />
+          <ExhaustionStepper level={sample.exhaustion} onChange={(n) => set({ exhaustion: n })} />
+        </Tiles>
         <div className={page.row}>
           <HpPill values={sample.hp} actions={hpActions} />
           <HpPill values={{ current: 0, max: 44, temp: 0 }} actions={hpActions} />
           <NeedsAttentionChip count={3} onOpen={() => {}} />
         </div>
       </Card>
-      <Card title="Hit dice and death saves">
-        <HitDice
-          dice={[{ faces: 10, total: 5, used: sample.hitDiceUsed }]}
-          onChange={(_, used) => set({ hitDiceUsed: used })}
-        />
+      <Card title="Death saves">
         <DeathSaves
           successes={sample.deathSaves.successes}
           failures={sample.deathSaves.failures}
@@ -303,14 +305,13 @@ function Components({ sample, set }: { sample: Sample; set: (s: Partial<Sample>)
           onRoll={() => {}}
         />
       </Card>
-      <Card title="Conditions and exhaustion">
+      <Card title="Conditions">
         <ConditionChips
           active={conditions}
           available={SAMPLE_CONDITIONS}
           onAdd={(id) => set({ conditions: [...sample.conditions, id] })}
           onRemove={(id) => set({ conditions: sample.conditions.filter((c) => c !== id) })}
         />
-        <ExhaustionStepper level={sample.exhaustion} onChange={(n) => set({ exhaustion: n })} />
       </Card>
       <Card title="Contribution sheet">
         <ContributionSheet
@@ -348,7 +349,7 @@ function Components({ sample, set }: { sample: Sample; set: (s: Partial<Sample>)
             sheet.open({
               key: 'demo-1',
               title: 'Example rule',
-              render: () => <p>Bottom sheets open in the app’s own direction and theme.</p>,
+              render: () => <p>Bottom sheets open in the app’s own theme.</p>,
             })
           }
         >
@@ -381,10 +382,8 @@ function useMainPreview(id: string) {
 }
 
 export function DesignGallery() {
-  const [direction, setDirection] = useDirection();
   const [width, setWidth] = useState<Width>('phone');
   const [show, setShow] = useState<'tokens' | 'components' | 'main'>('components');
-  const [dirs, setDirs] = useState<Direction[]>(['a', 'b']);
   const [schemes, setSchemes] = useState<Scheme[]>(['light', 'dark']);
   const [sample, setSample] = useState<Sample>(INITIAL_SAMPLE);
   const characters = useLiveQuery(() => repos().characters.list(), []);
@@ -397,37 +396,10 @@ export function DesignGallery() {
   const toggle = <T,>(list: T[], value: T) =>
     list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
 
-  const frames = dirs.flatMap((d) => schemes.map((s) => ({ d, s })));
-
   return (
     <>
       <TopBar title="Design gallery" backTo="/settings" />
       <div className={page.content}>
-        <section className={page.card} aria-labelledby="direction-title">
-          <h2 id="direction-title" className={page.cardTitle}>
-            Design direction
-          </h2>
-          <p className={page.muted}>
-            Two candidates for the design gate. The one picked here applies to the whole app on this
-            device, so you can live with it for a while.
-          </p>
-          <div className={styles.choices} role="radiogroup" aria-labelledby="direction-title">
-            {DIRECTIONS.map((d) => (
-              <label key={d.value} className={styles.choice}>
-                <input
-                  type="radio"
-                  name="direction"
-                  checked={direction === d.value}
-                  onChange={() => setDirection(d.value)}
-                />
-                <span>
-                  <strong>{d.label}</strong>
-                  <small>{d.description}</small>
-                </span>
-              </label>
-            ))}
-          </div>
-        </section>
         <section className={page.card} aria-labelledby="preview-title">
           <h2 id="preview-title" className={page.cardTitle}>
             Compare
@@ -467,16 +439,6 @@ export function DesignGallery() {
             )}
           </div>
           <div className={page.row}>
-            {DIRECTIONS.map((d) => (
-              <label key={d.value} className={styles.check}>
-                <input
-                  type="checkbox"
-                  checked={dirs.includes(d.value)}
-                  onChange={() => setDirs(toggle(dirs, d.value))}
-                />
-                {d.label}
-              </label>
-            ))}
             {(['light', 'dark'] as const).map((s) => (
               <label key={s} className={styles.check}>
                 <input
@@ -497,19 +459,16 @@ export function DesignGallery() {
         </section>
       </div>
       <div className={styles.frames}>
-        {frames.map(({ d, s }) => (
+        {schemes.map((s) => (
           <div
-            key={`${d}-${s}`}
+            key={s}
             className={styles.frame}
-            data-dir={d}
             data-scheme={s}
             style={{ width: px }}
-            aria-label={`${DIRECTIONS.find((x) => x.value === d)!.label}, ${s}`}
+            aria-label={s === 'light' ? 'Light' : 'Dark'}
             role="region"
           >
-            <p className={styles.frameTitle}>
-              {DIRECTIONS.find((x) => x.value === d)!.label} · {s}
-            </p>
+            <p className={styles.frameTitle}>{s === 'light' ? 'Light' : 'Dark'}</p>
             <div className={styles.frameBody}>
               {show === 'tokens' && <Tokens />}
               {show === 'components' && <Components sample={sample} set={set} />}

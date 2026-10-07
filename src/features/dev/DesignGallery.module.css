@@ -1,40 +1,3 @@
-.choices {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: var(--space-2);
-}
-
-.choice {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-}
-
-.choice:has(input:checked) {
-  border-color: var(--color-accent);
-  background: var(--color-accent-soft);
-}
-
-.choice input {
-  width: 20px;
-  height: 20px;
-  margin-top: 2px;
-  accent-color: var(--color-accent);
-}
-
-.choice span {
-  display: flex;
-  flex-direction: column;
-}
-
-.choice small {
-  color: var(--color-text-muted);
-}
-
 .controls {
   display: flex;
   flex-wrap: wrap;
@@ -72,7 +35,7 @@
   accent-color: var(--color-accent);
 }
 
-/* ---- Frames: one per direction and scheme, side by side, scrolling sideways ---- */
+/* ---- Frames: one per scheme, side by side, scrolling sideways ---- */
 
 .frames {
   display: flex;
