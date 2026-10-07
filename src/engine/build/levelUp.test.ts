@@ -5,6 +5,7 @@ import { FIXTURE_FEATURE_EFFECTS } from '../../test/fixtureFeatureEffects.ts';
 import type { ContentIndex } from '../content/contentIndex.ts';
 import { derive } from '../derive/derive.ts';
 import { setSubclass } from './build.ts';
+import { autoChoose } from './autoChoose.ts';
 import { createCatalog, type Catalog } from './catalog.ts';
 import {
   autoFillLevel,
@@ -200,5 +201,27 @@ describe('higher-level creation (plan §9.4, step 5.4)', () => {
     const rolled = setLevelHp(multi, { mode: 'roll', value: 2 }, 1);
     expect(rolled.log[1]!.hp).toEqual({ mode: 'roll', value: 2 });
     expect(rolled.log[2]!.hp).toEqual({ mode: 'avg' });
+  });
+});
+
+describe('every fixture class, levelled 1 → 20 (plan §9.4, step 5.9)', () => {
+  it('ends with nothing left that could be picked', () => {
+    for (const cls of catalog.of('class')) {
+      let c = build(cls.id, 1);
+      for (let l = 2; l <= 20; l++)
+        c = autoFillLevel(planLevelUp(c, { kind: 'class', id: cls.id }, deps()).character, {
+          ...deps(),
+          now: 0,
+        });
+      const sheet = derive(c, index, { registry });
+      expect(sheet.charLevel).toBe(20);
+      const ctx = { character: c, sheet, catalog, index };
+      const fillable = sheet.choices.pending.filter(
+        (p) => autoChoose(p.offer, p.count - p.have, ctx).values.length > 0,
+      );
+      expect(
+        fillable.map((p) => `${cls.name}: ${p.offer.source.name} ${p.offer.key.slot}`),
+      ).toEqual([]);
+    }
   });
 });

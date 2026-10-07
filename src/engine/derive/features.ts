@@ -83,13 +83,25 @@ export function deriveFeatures(
   for (const { effect, source } of collected.effects) {
     if (effect.type === 'grantFeat') broughtBy.set(refKey(effect.feat), { source });
   }
+  // A repeatable feat picked again is its next instance (`@2`, `@3`), each brought by its own
+  // pick, in the order the picks were made (as collection numbers them).
+  const taken = new Map<string, number>();
+  const instanceKey = (ref: Ref) => {
+    const e = index.get(ref);
+    if (e?.kind !== 'feat' || !e.repeatable) return ownerKey(ref);
+    const n = (taken.get(ref.id) ?? 0) + 1;
+    taken.set(ref.id, n);
+    return ownerKey(ref, n === 1 ? undefined : n);
+  };
   for (const { record, entryIndex } of collected.records.values()) {
     const owner = byKey.get(ownerKey(record.key.owner, record.key.n));
     const progression = progressionOf(index.get(record.key.owner), record.key.slot)?.name;
     record.values.forEach((id, i) => {
       const kind = valueKind(record.valueKinds, i);
-      if (kind && owner && !broughtBy.has(refKey({ kind, id })))
-        broughtBy.set(refKey({ kind, id }), {
+      if (!kind || !owner) return;
+      const key = instanceKey({ kind, id });
+      if (!broughtBy.has(key))
+        broughtBy.set(key, {
           source: owner,
           entryIndex,
           ...(progression ? { progression } : {}),
@@ -119,7 +131,7 @@ export function deriveFeatures(
     if (grant) return grant.entryIndex;
     if (o.ref.kind === 'species' || o.ref.kind === 'background') return 0;
     if (o.classId && level !== undefined) return classEntry(o.classId, level);
-    const by = broughtBy.get(key);
+    const by = broughtBy.get(ownerKey(o.ref, o.n));
     if (by?.entryIndex !== undefined) return by.entryIndex;
     if (by && !seen.has(refKey(by.source.ref))) {
       seen.add(key);
@@ -168,7 +180,7 @@ export function deriveFeatures(
       if (progression) choice.progression = progression;
       choices.push(choice);
     }
-    const by = broughtBy.get(refKey(o.ref));
+    const by = broughtBy.get(ownerKey(o.ref, o.n));
     const grant = collected.records.get(encodeChoiceKey(grantKey(o)));
     const f: DerivedFeature = {
       ref: o.ref,

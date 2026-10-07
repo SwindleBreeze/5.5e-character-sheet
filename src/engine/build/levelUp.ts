@@ -242,9 +242,10 @@ export function autoFillLevel(c: Character, deps: Deps & { now?: number }): Char
     const choices = plan.sheet.features.flatMap((f) => f.choices);
     const next = plan.pending
       .filter((p) => {
-        // An earlier level's pick it gives more of is topped up, never made from nothing.
+        // Level 1's picks are the player's (creation): one this level gives more of is topped
+        // up, never made from nothing. Later levels' new picks are made.
         const c = choices.find((x) => x.offer === p.offer);
-        return !c || c.entryIndex === plan.entryIndex || c.values.length > 0;
+        return !c || c.entryIndex > 0 || c.values.length > 0;
       })
       .map((p) => ({ p, pick: autoChoose(p.offer, p.count - p.have, ctx) }))
       .find((x) => x.pick.values.length);
