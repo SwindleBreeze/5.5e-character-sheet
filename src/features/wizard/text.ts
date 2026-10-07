@@ -8,48 +8,6 @@ import { SIZE_NAMES } from '../../engine/items/items.ts';
 import type { CardItem } from './EntityCards.tsx';
 import { ABILITY_NAMES, type Background, type ClassDef, type Species } from '../../schema/index.ts';
 
-/** `a`, `a and b`, `a, b and c`. */
-export function andList(values: readonly string[]): string {
-  if (values.length <= 2) return values.join(' and ');
-  return `${values.slice(0, -1).join(', ')} and ${values.at(-1)}`;
-}
-
-const ARMOR: Record<string, string> = {
-  light: 'Light armor',
-  medium: 'Medium armor',
-  heavy: 'Heavy armor',
-  shield: 'Shields',
-};
-
-function itemOrText(value: string, index: ContentIndex): string {
-  if (value.includes('|')) return index.get({ kind: 'item', id: value })?.name ?? readable(value);
-  return value.charAt(0).toUpperCase() + value.slice(1);
-}
-
-export function armorText(values: readonly string[], index: ContentIndex): string {
-  return values.length ? andList(values.map((v) => ARMOR[v] ?? itemOrText(v, index))) : 'None';
-}
-
-export function weaponText(values: readonly string[], index: ContentIndex): string {
-  const words = values.map((v) =>
-    v === 'simple' ? 'Simple weapons' : v === 'martial' ? 'Martial weapons' : itemOrText(v, index),
-  );
-  return words.length ? andList(words) : 'None';
-}
-
-export function toolText(values: readonly string[], index: ContentIndex): string {
-  return values.length ? andList(values.map((v) => itemOrText(v, index))) : 'None';
-}
-
-/** `Choose 2: Athletics, Intimidation…`. */
-export function skillChoiceText(cls: ClassDef): string {
-  const s = cls.startingProficiencies.skills;
-  if (!s) return 'None';
-  const list =
-    s.from === 'any' ? 'any skills' : Array.isArray(s.from) ? s.from.map(readable).join(', ') : '';
-  return `Choose ${s.count}: ${list}`;
-}
-
 /** `d12 hit die · Strength`. */
 export function classLine(cls: ClassDef): string {
   return [`d${cls.hitDie} hit die`, primaryText(cls), cls.spellcasting ? 'Spellcaster' : '']

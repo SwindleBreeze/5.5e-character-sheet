@@ -101,6 +101,46 @@ describe('creation wizard', () => {
     expect(c.snapshots['class:brute|tst']).toBeDefined();
   });
 
+  it('guides each step and explains what the class, background and species give (plan §9.3b)', async () => {
+    const user = userEvent.setup();
+    renderApp('/new/draft/class');
+    const guide = await screen.findByText(/Guide: Step 1 of 5/);
+    expect(guide.closest('details')).toHaveAttribute('open');
+
+    await user.click(await screen.findByRole('radio', { name: 'Brute' }));
+    const brute = region('About the Brute');
+    // Flavor text from the imported content, then what the class gives.
+    expect(brute.getByText(/lifting the other side over their heads/)).toBeInTheDocument();
+    const gives = within(brute.getByRole('region', { name: 'What you get: Brute' }));
+    expect(gives.getByText(/12 \+ your Constitution modifier at level 1/)).toBeInTheDocument();
+    expect(gives.getByText(/how much harm you can take/)).toBeInTheDocument();
+
+    await user.click(next(/Background ›/));
+    expect(await screen.findByText(/Guide: Step 2 of 5: your origin, part 1/)).toBeInTheDocument();
+    await user.click(await screen.findByRole('radio', { name: 'Arena Hand' }));
+    const arena = within(await screen.findByRole('region', { name: 'Arena Hand choices' }));
+    expect(arena.getByText('You swept the sand between bouts.')).toBeInTheDocument();
+    expect(arena.getByText('Athletics and Performance')).toBeInTheDocument();
+    // The Origin feat says what it gives too.
+    expect(
+      arena.getByRole('region', { name: 'What you get: Spark Initiate; Gladiator' }),
+    ).toBeInTheDocument();
+
+    await user.click(next(/Species ›/));
+    await user.click(await screen.findByRole('radio', { name: 'Deep Lineage' }));
+    const deep = within(
+      await screen.findByRole('region', { name: 'Mossling; Deep Lineage choices' }),
+    );
+    expect(deep.getByText('What the Mossling; Deep Lineage adds')).toBeInTheDocument();
+    expect(deep.getByText('120 ft.')).toBeInTheDocument();
+    // A lineage without flavor text of its own shows its species'.
+    expect(deep.getByText(/coat of soft moss/)).toBeInTheDocument();
+
+    // Closing the guide is remembered.
+    await user.click(screen.getByText(/Guide: Step 2 of 5: your origin, part 2/));
+    expect(localStorage.getItem('wizard.guide.open')).toBe('false');
+  });
+
   it('a draft is saved as it goes and continued from the characters list', async () => {
     const user = userEvent.setup();
     renderApp('/new/draft/class');

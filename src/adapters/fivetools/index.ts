@@ -44,6 +44,7 @@ import { locateDataRoot } from './locate.ts';
 import { IMPORTED_PROPS, readManifest, type SourceMeta } from './manifest.ts';
 import type { RawEntity } from './raw.ts';
 import { ReportBuilder, type ImportReport } from './report.ts';
+import { attachFluff } from './fluff.ts';
 import { resolveItemEntries } from './itemEntries.ts';
 import { applySpellLists } from './spellLists.ts';
 import { mergeSubraces } from './subraces.ts';
@@ -207,6 +208,7 @@ export async function importFivetools(
 
   progress('finish');
   applySpellLists(entities.spell ?? [], manifest.spellLookup);
+  attachFluff(entities, records);
 
   if (opts.onlySources?.length) {
     const keep = new Set(opts.onlySources);

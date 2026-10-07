@@ -164,11 +164,11 @@ export function AbilitiesStep(b: WizardBindings) {
 
   return (
     <>
-      <p className={styles.intro}>
-        Six scores describe your character. Each gives a modifier (score − 10, halved, rounded down)
-        that you add to rolls with that ability.
-        {cls && ` A ${cls.name} relies most on ${primaryText(cls)}: put your best scores there.`}
-      </p>
+      {cls && (
+        <p className={styles.intro}>
+          A {cls.name} relies most on {primaryText(cls)}: put your best scores there.
+        </p>
+      )}
       <div className={styles.methods} role="group" aria-label="Method">
         {METHODS.map((m) => (
           <Button

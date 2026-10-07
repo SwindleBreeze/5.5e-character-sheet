@@ -312,3 +312,87 @@
   font-size: var(--font-size-xl);
   font-weight: 700;
 }
+
+/* ---- The guide and explanations (plan §9.3b) ---- */
+
+.guide {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-accent-soft);
+  border-radius: var(--radius-lg);
+  background: var(--color-accent-soft);
+}
+
+.guide summary {
+  color: var(--color-accent);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.guide ul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-4);
+}
+
+.about {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.flavor {
+  padding-left: var(--space-3);
+  border-left: 3px solid var(--color-accent-soft);
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.subTitle {
+  margin: var(--space-1) 0 0;
+  font-size: var(--font-size-md);
+}
+
+.benefits {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.benefit {
+  display: grid;
+  grid-template-columns: minmax(6.5rem, 30%) 1fr;
+  gap: var(--space-1) var(--space-3);
+  font-size: var(--font-size-sm);
+}
+
+.benefit dt {
+  color: var(--color-text-muted);
+  font-weight: 700;
+}
+
+.benefit dd {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+.why {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+
+.readSheet {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: 0 var(--space-4) var(--space-4);
+}
+
+.flavor summary {
+  font-style: normal;
+  font-weight: 600;
+  cursor: pointer;
+}

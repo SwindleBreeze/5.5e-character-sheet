@@ -38,6 +38,12 @@ export function EntityView({ entity }: { entity: ContentEntity }) {
           ))}
         </dl>
       )}
+      {entity.fluff?.length ? (
+        <details className={styles.about}>
+          <summary>About</summary>
+          <Entries entries={entity.fluff} />
+        </details>
+      ) : null}
       <Entries entries={entity.entries} />
       {extra && (
         <section>

@@ -35,6 +35,7 @@ import { DescriptionTab } from '../sheet/DescriptionTab.tsx';
 import inventory from '../sheet/inventory/inventory.module.css';
 import { useCharacterActions, type CharacterUpdate } from '../sheet/useCharacterActions.ts';
 import { stepOf, type WizardBindings } from './bindings.ts';
+import { StepGuideCard } from './Explain.tsx';
 import { AbilitiesStep } from './steps/AbilitiesStep.tsx';
 import { BackgroundStep } from './steps/BackgroundStep.tsx';
 import { ChoicesStep } from './steps/ChoicesStep.tsx';
@@ -269,6 +270,7 @@ function Wizard({ id }: { id: string }) {
       </ol>
       <div className={`${page.content} ${styles.body}`}>
         <h2 className={page.cardTitle}>{STEP_TITLES[step]}</h2>
+        <StepGuideCard step={step} />
         {body}
       </div>
       <nav className={styles.footer} aria-label="Wizard">

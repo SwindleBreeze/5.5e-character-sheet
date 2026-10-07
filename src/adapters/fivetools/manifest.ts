@@ -31,8 +31,14 @@ export const OPTIONAL_ROOT_FILES = [
   'charcreationoptions.json',
 ];
 
+/** Flavor text (plan §9.3b, step 4B.1). Optional, so data without it still imports. */
+export const FLUFF_FILES = ['fluff-races.json', 'fluff-backgrounds.json', 'fluff-feats.json'];
+
 /** Folders with an `index.json` mapping keys to file names. */
 export const INDEXED_FOLDERS = ['class', 'spells'];
+
+/** Class flavor text: `class/fluff-index.json` maps classes to their fluff files. */
+export const FLUFF_INDEX = 'class/fluff-index.json';
 
 export const SPELL_LOOKUP_FILE = 'generated/gendata-spell-source-lookup.json';
 export const SPELL_SOURCES_FALLBACK = 'spells/sources.json';
@@ -71,6 +77,12 @@ export const IMPORTED_PROPS = [
   'reward',
   'facility',
   'charoption',
+  // Not entities: flavor text, attached to the entities it describes (plan §9.3b).
+  'classFluff',
+  'subclassFluff',
+  'raceFluff',
+  'backgroundFluff',
+  'featFluff',
 ] as const;
 
 export type ImportedProp = (typeof IMPORTED_PROPS)[number];
@@ -127,8 +139,15 @@ async function readJson(
 }
 
 /** The file names listed by `<folder>/index.json`. */
-async function indexedFiles(fs: FileSource, root: string, folder: string, report: ReportBuilder) {
-  const index = await readJson(fs, `${root}${folder}/index.json`, report, true);
+async function indexedFiles(
+  fs: FileSource,
+  root: string,
+  folder: string,
+  report: ReportBuilder,
+  indexFile = `${folder}/index.json`,
+  required = true,
+) {
+  const index = await readJson(fs, `${root}${indexFile}`, report, required);
   if (!index) return [];
   return Object.values(index)
     .filter((v): v is string => typeof v === 'string')
@@ -184,7 +203,11 @@ export async function readManifest(
     const json = await readJson(fs, root + file, report, true);
     if (json) collect(json, records, report);
   }
-  for (const file of OPTIONAL_ROOT_FILES) {
+  const fluff = [
+    ...FLUFF_FILES,
+    ...(await indexedFiles(fs, root, 'class', report, FLUFF_INDEX, false)),
+  ];
+  for (const file of [...OPTIONAL_ROOT_FILES, ...fluff]) {
     const json = await readJson(fs, root + file, report, false);
     if (json) collect(json, records, report);
   }

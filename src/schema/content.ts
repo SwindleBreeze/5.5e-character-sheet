@@ -33,6 +33,11 @@ export interface BaseEntity {
   /** Set on `_versions` variants (species lineages, feat versions, 2014 subraces). */
   variantOf?: Id;
   entries: Entry[];
+  /**
+   * Flavor text: what the thing is like, apart from its rules (5etools fluff; classes,
+   * subclasses, species, backgrounds and feats; adapter 5).
+   */
+  fluff?: Entry[];
   /** Effects derived automatically from structured data. */
   effects: Effect[];
   origin: ContentOrigin;

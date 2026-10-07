@@ -27,6 +27,7 @@ import {
 } from '../../src/engine/build/wizard.ts';
 import { createContentIndex, type ContentIndex } from '../../src/engine/content/contentIndex.ts';
 import { derive } from '../../src/engine/derive/derive.ts';
+import { benefitsOf } from '../../src/engine/explain/benefits.ts';
 import { featureEffects } from '../../src/engine/featureEffects/index.ts';
 import type { Character, ContentEntity } from '../../src/schema/index.ts';
 import { nodeFileSource } from './nodeFileSource.ts';
@@ -65,6 +66,19 @@ describe.skipIf(!root)('creation wizard (local data)', () => {
     }
     return syncStartingEquipment(n, index);
   }
+
+  it('every XPHB class, species and background has flavor text and says what it gives', () => {
+    const missing: string[] = [];
+    for (const kind of ['class', 'species', 'background'] as const) {
+      for (const e of catalog.of(kind).filter((x) => x.source === 'XPHB')) {
+        if (!e.fluff?.length) missing.push(`${e.name}: no flavor text`);
+        const gives = benefitsOf(e, index);
+        if (!gives.length) missing.push(`${e.name}: nothing it gives`);
+        if (gives.some((b) => !b.text.trim())) missing.push(`${e.name}: an empty line`);
+      }
+    }
+    expect(missing).toEqual([]);
+  });
 
   it(
     'every XPHB class, species and background makes a level 1 character with nothing left',

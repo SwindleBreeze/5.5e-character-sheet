@@ -1,0 +1,28 @@
+{
+  "_fixture": true,
+  "classFluff": [
+    {
+      "name": "Brute",
+      "source": "TST",
+      "entries": [
+        {
+          "type": "section",
+          "entries": ["Brutes settle arguments by lifting the other side over their heads."]
+        }
+      ],
+      "images": [
+        { "type": "image", "href": { "type": "internal", "path": "classes/TST/Brute.webp" } }
+      ]
+    }
+  ],
+  "subclassFluff": [
+    {
+      "name": "Path of the Spark",
+      "shortName": "Spark",
+      "source": "TST",
+      "className": "Brute",
+      "classSource": "TST",
+      "entries": ["Sparks crackle around these brutes when they are angry."]
+    }
+  ]
+}

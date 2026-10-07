@@ -62,10 +62,6 @@ export function SpellsStep(b: WizardBindings) {
 
   return (
     <>
-      <p className={styles.intro}>
-        Cantrips can be cast at will. Level 1 spells use a spell slot each; you regain slots after a
-        Long Rest. Tap Read to see what a spell does.
-      </p>
       {classes.map((f) =>
         f.choices.some(spellPicks) ? (
           <section key={refKey(f.ref)} className={page.card} aria-label={`${f.name} spells`}>

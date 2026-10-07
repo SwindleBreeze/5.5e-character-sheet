@@ -10,7 +10,6 @@ import page from '../../../app/Page.module.css';
 import { FeatureChoices } from '../../choices/FeatureChoices.tsx';
 import inventory from '../../sheet/inventory/inventory.module.css';
 import { choiceContext, isSpellOffer, rootOf, type WizardBindings } from '../bindings.ts';
-import styles from '../wizard.module.css';
 
 export function ChoicesStep(b: WizardBindings) {
   const { sheet, apply } = b;
@@ -37,10 +36,6 @@ export function ChoicesStep(b: WizardBindings) {
 
   return (
     <>
-      <p className={styles.intro}>
-        What your class and its features let you choose. Each says how many to pick; a mark shows
-        what you already have from elsewhere.
-      </p>
       {!shown.length && <p className={inventory.muted}>Nothing else to choose.</p>}
       {shown.map((f) => (
         <section key={refKey(f.ref)} className={page.card} aria-label={f.name}>

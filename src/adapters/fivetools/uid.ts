@@ -148,6 +148,7 @@ export function identityKey(prop: string, e: RawEntity): string {
   let parts: unknown[];
   switch (prop) {
     case 'subclass':
+    case 'subclassFluff':
       parts = [e.shortName, e.className, e.classSource, e.source];
       break;
     case 'classFeature':

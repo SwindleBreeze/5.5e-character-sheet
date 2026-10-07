@@ -11,6 +11,7 @@ import page from '../../../app/Page.module.css';
 import { FeatureChoices } from '../../choices/FeatureChoices.tsx';
 import { choiceContext, type WizardBindings } from '../bindings.ts';
 import { EntityCards } from '../EntityCards.tsx';
+import { AboutEntity, ReadSheet } from '../Explain.tsx';
 import { backgroundLine } from '../text.ts';
 import styles from '../wizard.module.css';
 
@@ -33,21 +34,36 @@ export function OriginChoices({
       refKey(f.pickedIn.ref) === key &&
       !owner.choices.some((c) => c.values.includes(f.ref.id)),
   );
+  const entityOf = (f: DerivedFeature) => b.content.index.get(f.ref);
   const onPick: Parameters<typeof FeatureChoices>[0]['onPick'] = (c, f, pick) =>
     apply((ch) =>
       setPick(ch, decodeChoiceKey(c.key), { ...pick, entryIndex: f.entryIndex, via: 'creation' }),
     );
   return (
     <>
-      <FeatureChoices features={[owner]} ctx={ctx} onPick={onPick} />
+      <FeatureChoices
+        features={[
+          // Ability scores first, as the guide tells it.
+          {
+            ...owner,
+            choices: [
+              ...owner.choices.filter((c) => c.offer.kind === 'backgroundAbility'),
+              ...owner.choices.filter((c) => c.offer.kind !== 'backgroundAbility'),
+            ],
+          },
+        ]}
+        ctx={ctx}
+        onPick={onPick}
+      />
       {granted.map((f) => (
         <section key={refKey(f.ref)} className={page.card} aria-label={f.name}>
           <h2 className={page.cardTitle}>
             {f.ref.kind === 'feat' ? 'Feat: ' : ''}
             {f.name}
           </h2>
+          {entityOf(f) && <AboutEntity entity={entityOf(f)!} index={b.content.index} />}
           <details>
-            <summary>Read {f.name}</summary>
+            <summary>Full rules text</summary>
             <EntitySheet entityRef={f.ref} />
           </details>
           {f.choices.length ? (
@@ -67,13 +83,12 @@ export function BackgroundStep(b: WizardBindings) {
   const backgrounds = content.catalog.of('background');
   const selectedId = character.log[0]?.origin?.backgroundRef?.id;
   const owner = sheet?.features.find((f) => f.ref.kind === 'background' && f.ref.id === selectedId);
+  const selected = selectedId
+    ? content.index.get({ kind: 'background', id: selectedId })
+    : undefined;
 
   return (
     <>
-      <p className={styles.intro}>
-        Your background is what your character did before adventuring. It raises three ability
-        scores (choose how), and gives two skills, a tool, an Origin feat and starting equipment.
-      </p>
       <EntityCards
         label="Backgrounds"
         items={backgrounds.map((bg) => ({
@@ -87,13 +102,17 @@ export function BackgroundStep(b: WizardBindings) {
           ui.open({
             key: `wizard:background:${id}`,
             title: content.index.get({ kind: 'background', id })?.name ?? 'Background',
-            render: () => <EntitySheet entityRef={{ kind: 'background', id }} />,
+            render: () => (
+              <ReadSheet entityRef={{ kind: 'background', id }} index={content.index} />
+            ),
           })
         }
       />
       {owner && (
         <section className={page.card} aria-label={`${owner.name} choices`}>
           <h2 className={page.cardTitle}>{owner.name}</h2>
+          {selected && <AboutEntity entity={selected} index={content.index} />}
+          <h3 className={styles.subTitle}>Your choices</h3>
           <OriginChoices b={b} owner={owner} />
         </section>
       )}

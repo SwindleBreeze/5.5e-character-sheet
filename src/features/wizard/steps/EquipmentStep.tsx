@@ -55,9 +55,6 @@ export function EquipmentStep(b: WizardBindings) {
 
   return (
     <>
-      <p className={styles.intro}>
-        Take the equipment your class and background offer, or gold to buy your own instead.
-      </p>
       {!owners.length && <p className={inventory.muted}>Choose a class and a background first.</p>}
       {owners.map((owner) => {
         const picked = pickedEquipment(character, owner.ref, owner.options);

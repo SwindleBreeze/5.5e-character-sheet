@@ -3,11 +3,11 @@
 // follow, with what those bring in.
 
 import { chooseSpecies } from '../../../engine/build/wizard.ts';
-import { EntitySheet } from '../../../richtext/EntitySheet.tsx';
 import { useSheet } from '../../../ui/sheetContext.ts';
 import page from '../../../app/Page.module.css';
 import type { WizardBindings } from '../bindings.ts';
 import { EntityCards } from '../EntityCards.tsx';
+import { AboutEntity, ReadSheet } from '../Explain.tsx';
 import { speciesCards } from '../text.ts';
 import styles from '../wizard.module.css';
 import { OriginChoices } from './BackgroundStep.tsx';
@@ -17,13 +17,10 @@ export function SpeciesStep(b: WizardBindings) {
   const ui = useSheet();
   const selectedId = character.log[0]?.origin?.speciesRef?.id;
   const owner = sheet?.features.find((f) => f.ref.kind === 'species' && f.ref.id === selectedId);
+  const selected = selectedId ? content.index.get({ kind: 'species', id: selectedId }) : undefined;
 
   return (
     <>
-      <p className={styles.intro}>
-        Your species gives your size, speed and special traits. Some species come in lineages or
-        ancestries: pick the one you want, or the species itself to choose inside it.
-      </p>
       <EntityCards
         label="Species"
         items={speciesCards(content.catalog.of('species'))}
@@ -33,13 +30,15 @@ export function SpeciesStep(b: WizardBindings) {
           ui.open({
             key: `wizard:species:${id}`,
             title: content.index.get({ kind: 'species', id })?.name ?? 'Species',
-            render: () => <EntitySheet entityRef={{ kind: 'species', id }} />,
+            render: () => <ReadSheet entityRef={{ kind: 'species', id }} index={content.index} />,
           })
         }
       />
       {owner && (
         <section className={page.card} aria-label={`${owner.name} choices`}>
           <h2 className={page.cardTitle}>{owner.name}</h2>
+          {selected && <AboutEntity entity={selected} index={content.index} />}
+          <h3 className={styles.subTitle}>Your choices</h3>
           {owner.choices.length ? (
             <OriginChoices b={b} owner={owner} />
           ) : (

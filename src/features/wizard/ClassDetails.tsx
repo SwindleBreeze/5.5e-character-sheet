@@ -1,44 +1,11 @@
-// What a class gives at a glance (plan §9.3, step 4.4): hit die, primary ability, saving throws,
-// training, skills, starting equipment, and its table by level with the features gained.
+// A class's table by level (plan §9.3, step 4.4): proficiency bonus, the features gained, its
+// columns and spell slots. What it gives at level 1 is `classBenefits` (§9.3b).
 
 import type { ContentIndex } from '../../engine/content/contentIndex.ts';
-import { equipmentOptionText } from '../../engine/build/equipment.ts';
-import { primaryText } from '../../engine/build/scores.ts';
-import { ABILITY_NAMES, proficiencyBonus, type ClassDef } from '../../schema/index.ts';
+import { proficiencyBonus, type ClassDef } from '../../schema/index.ts';
 import { InlineText } from '../../richtext/InlineText.tsx';
 import { stripTags } from '../../richtext/tagRegistry.ts';
-import { andList, armorText, skillChoiceText, toolText, weaponText } from './text.ts';
 import styles from './wizard.module.css';
-
-export function ClassFacts({ cls, index }: { cls: ClassDef; index: ContentIndex }) {
-  const start = cls.startingProficiencies;
-  return (
-    <dl className={styles.facts}>
-      <dt>Hit die</dt>
-      <dd>
-        d{cls.hitDie} (at level 1: {cls.hitDie} + your Constitution modifier hit points)
-      </dd>
-      <dt>Primary ability</dt>
-      <dd>{primaryText(cls)}</dd>
-      <dt>Saving throws</dt>
-      <dd>{andList(cls.saves.map((a) => ABILITY_NAMES[a]))}</dd>
-      <dt>Skills</dt>
-      <dd>{skillChoiceText(cls)}</dd>
-      <dt>Armor training</dt>
-      <dd>{armorText(start.armor, index)}</dd>
-      <dt>Weapons</dt>
-      <dd>{weaponText(start.weapons, index)}</dd>
-      <dt>Tools</dt>
-      <dd>{toolText(start.tools, index)}</dd>
-      {cls.startingEquipment.map((o) => (
-        <div key={o.key} style={{ display: 'contents' }}>
-          <dt>Equipment {o.key}</dt>
-          <dd>{equipmentOptionText(o, index)}</dd>
-        </div>
-      ))}
-    </dl>
-  );
-}
 
 export function ClassTable({ cls, index }: { cls: ClassDef; index: ContentIndex }) {
   const featuresAt = (level: number) =>

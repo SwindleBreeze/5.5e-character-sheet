@@ -1,16 +1,16 @@
-// Step 1: the class (plan §9.3, step 4.4). Every class the enabled sources offer, each with its
-// hit die and primary ability; the chosen one with its training and table.
+// Step 1: the class (plan §9.3 step 4.4, §9.3b step 4B.3). Every class the enabled sources offer,
+// each with its hit die and primary ability; the chosen one with its flavor text, what it gives
+// in plain words, and its table.
 
 import { chooseClass } from '../../../engine/build/wizard.ts';
-import { EntitySheet } from '../../../richtext/EntitySheet.tsx';
 import { Button } from '../../../ui/Button.tsx';
 import { useSheet } from '../../../ui/sheetContext.ts';
 import page from '../../../app/Page.module.css';
 import type { WizardBindings } from '../bindings.ts';
-import { ClassFacts, ClassTable } from '../ClassDetails.tsx';
+import { ClassTable } from '../ClassDetails.tsx';
 import { EntityCards } from '../EntityCards.tsx';
+import { AboutEntity, ReadSheet } from '../Explain.tsx';
 import { classLine } from '../text.ts';
-import styles from '../wizard.module.css';
 
 export function ClassStep(b: WizardBindings) {
   const { character, content, change } = b;
@@ -26,21 +26,18 @@ export function ClassStep(b: WizardBindings) {
       key: `wizard:class:${id}`,
       title: cls.name,
       render: () => (
-        <div className={page.content}>
-          <ClassFacts cls={cls} index={content.index} />
-          <ClassTable cls={cls} index={content.index} />
-          <EntitySheet entityRef={{ kind: 'class', id }} />
-        </div>
+        <>
+          <ReadSheet entityRef={{ kind: 'class', id }} index={content.index} />
+          <div className={page.content}>
+            <ClassTable cls={cls} index={content.index} />
+          </div>
+        </>
       ),
     });
   };
 
   return (
     <>
-      <p className={styles.intro}>
-        Your class is your character’s training and calling: it gives most of your abilities and hit
-        points. You can read each one before choosing.
-      </p>
       <EntityCards
         label="Classes"
         items={classes.map((c) => ({ id: c.id, name: c.name, detail: classLine(c) }))}
@@ -51,7 +48,7 @@ export function ClassStep(b: WizardBindings) {
       {selected && (
         <section className={page.card} aria-label={`About the ${selected.name}`}>
           <h2 className={page.cardTitle}>{selected.name}</h2>
-          <ClassFacts cls={selected} index={content.index} />
+          <AboutEntity entity={selected} index={content.index} />
           <details>
             <summary>Class table</summary>
             <ClassTable cls={selected} index={content.index} />
