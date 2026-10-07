@@ -118,7 +118,27 @@ export function syncStartingEquipment(c: Character, index: ContentIndex): Charac
       picks,
     });
   }
-  return n;
+  return mergeStartingRows(n);
+}
+
+/** The same item from the class and the background on one row (one Dagger in hand, 3 stowed). */
+function mergeStartingRows(c: Character): Character {
+  const rows: Character['inventory'] = [];
+  for (const row of c.inventory) {
+    const same =
+      row.uid.startsWith(START_ROW) && !row.equipped && row.itemRef
+        ? rows.find(
+            (r) =>
+              r.uid.startsWith(START_ROW) &&
+              !r.equipped &&
+              r.itemRef?.id === row.itemRef!.id &&
+              r.name === row.name,
+          )
+        : undefined;
+    if (same) same.quantity += row.quantity;
+    else rows.push({ ...row });
+  }
+  return { ...c, inventory: rows };
 }
 
 /** "Any …" entries of the picked options still without an item. */

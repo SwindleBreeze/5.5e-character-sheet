@@ -148,6 +148,21 @@ describe('spellcasting (P11)', () => {
     ]);
   });
 
+  it('a granted spell comes at its level (Mossling Grey: Dim Lantern at level 3)', () => {
+    const species = { kind: 'species', id: 'mossling|tst' } as const;
+    const at = (levels: number) =>
+      run(
+        testCharacter({
+          classes: [{ classId: 'brute|tst', levels }],
+          speciesId: 'mossling|tst',
+          backgroundId: 'arena hand|tst',
+          choices: [{ owner: species, slot: 'spellsSet', values: ['1'] }],
+        }),
+      ).spellcasting.granted.map((g) => g.spellId);
+    expect(at(2)).not.toContain('dim lantern|tst');
+    expect(at(3)).toContain('dim lantern|tst');
+  });
+
   it('spells from species and feats keep their own ability and uses', () => {
     const species = { kind: 'species', id: 'mossling|tst' } as const;
     const initiate = { kind: 'feat', id: 'spark initiate; gladiator|tst' } as const;

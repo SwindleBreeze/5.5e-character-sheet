@@ -119,6 +119,7 @@ describe('collectEffects', () => {
       'subclass:spark|brute|tst|tst#spells.4',
       'species:mossling|tst#size',
       'species:mossling|tst#spellsSet',
+      'background:arena hand|tst#creationLanguages',
       'background:arena hand|tst#tools',
       'background:arena hand|tst#languages',
       'feat:spark initiate; gladiator|tst#spells.0.ability',

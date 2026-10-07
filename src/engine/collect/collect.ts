@@ -8,6 +8,7 @@ import {
   refKey,
   type Character,
   type ChoiceKey,
+  type Background,
   type ClassDef,
   type ContentEntity,
   type Effect,
@@ -119,6 +120,26 @@ export function classToolEffects(tools: readonly string[], slot: string): Effect
     });
   }
   return out;
+}
+
+/**
+ * Languages every 2024 character knows (2024 Player's Handbook, character creation: Common and
+ * two languages from the Standard Languages table). No 2024 background or species data gives
+ * them, so they come with the background, the origin step they are chosen in.
+ */
+export const CREATION_LANGUAGES_SLOT = 'creationLanguages';
+
+export function creationLanguageEffects(bg: Background): Effect[] {
+  if (bg.edition !== '2024') return [];
+  return [
+    { type: 'proficiency', category: 'language', value: 'common' },
+    {
+      type: 'proficiencyChoice',
+      category: 'language',
+      choice: { slot: CREATION_LANGUAGES_SLOT, count: 2, from: 'any' },
+      filter: 'standard',
+    },
+  ];
 }
 
 /** Effects a class gives that its data stores as fields, not effects. */
@@ -456,12 +477,12 @@ export function collectEffects(
   }
 
   // 2. Species and background.
-  const origin = character.log[0]?.origin;
-  if (origin) {
-    addOwner(origin.speciesRef, {});
-    addOwner(origin.backgroundRef, {});
-    const background = index.get({ kind: 'background', id: origin.backgroundRef.id });
-    const source = out.owners.find((o) => refKey(o.ref) === refKey(origin.backgroundRef));
+  const { speciesRef, backgroundRef } = character.log[0]?.origin ?? {};
+  if (speciesRef) addOwner(speciesRef, {});
+  if (backgroundRef) {
+    addOwner(backgroundRef, {}, (e) => (e.kind === 'background' ? creationLanguageEffects(e) : []));
+    const background = index.get({ kind: 'background', id: backgroundRef.id });
+    const source = out.owners.find((o) => refKey(o.ref) === refKey(backgroundRef));
     if (background && source) {
       const from = [...new Set(background.abilityOptions.flatMap((o) => o.from))];
       const count = Math.max(
@@ -470,14 +491,14 @@ export function collectEffects(
       );
       if (from.length && count) {
         offer({
-          key: choiceKey(origin.backgroundRef, 'ability'),
+          key: choiceKey(backgroundRef, 'ability'),
           kind: 'backgroundAbility',
           count,
           from,
           source,
         });
       }
-      equipmentOffers(origin.backgroundRef, background.equipment, source).forEach(offer);
+      equipmentOffers(backgroundRef, background.equipment, source).forEach(offer);
     }
   }
 
@@ -551,6 +572,7 @@ export function entityOfferSlots(entity: ContentEntity): Set<string> {
   }
   if (entity.kind === 'background') {
     if (entity.abilityOptions.length) slots.add('ability');
+    for (const slot of effectSlots(creationLanguageEffects(entity))) slots.add(slot);
     for (const slot of equipmentGroups(entity.equipment).keys()) slots.add(slot);
   }
   return slots;

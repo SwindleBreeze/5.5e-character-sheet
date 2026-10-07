@@ -23,7 +23,8 @@ export function usedRefs(character: Character, sheet: DerivedSheet): Ref[] {
   for (const entry of character.log) {
     out.push(entry.classRef);
     if (entry.subclassRef) out.push(entry.subclassRef);
-    if (entry.origin) out.push(entry.origin.speciesRef, entry.origin.backgroundRef);
+    for (const ref of [entry.origin?.speciesRef, entry.origin?.backgroundRef])
+      if (ref) out.push(ref);
     for (const record of entry.choices) {
       out.push(record.key.owner);
       record.values.forEach((id, i) => {

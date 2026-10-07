@@ -159,6 +159,8 @@ describe('reconcile', () => {
       ['equipment', 1],
       ['size', 1],
       ['spellsSet', 1],
+      // 2024: Common and two Standard languages, with the background.
+      ['creationLanguages', 2],
       ['tools', 1],
       ['languages', 1],
       ['spells.0.ability', 1],

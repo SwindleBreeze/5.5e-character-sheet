@@ -98,8 +98,8 @@ export function updateToReprint(c: Character, from: Ref, to: Ref): Character {
     if (e.subclassRef) e.subclassRef = swap(e.subclassRef);
     if (e.origin) {
       e.origin = {
-        speciesRef: swap(e.origin.speciesRef),
-        backgroundRef: swap(e.origin.backgroundRef),
+        ...(e.origin.speciesRef ? { speciesRef: swap(e.origin.speciesRef) } : {}),
+        ...(e.origin.backgroundRef ? { backgroundRef: swap(e.origin.backgroundRef) } : {}),
       };
     }
     for (const r of e.choices) {

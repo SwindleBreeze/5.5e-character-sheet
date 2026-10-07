@@ -8,6 +8,7 @@ import { LibraryPage } from '../features/library/LibraryPage.tsx';
 import { Placeholder } from '../features/Placeholder.tsx';
 import { SettingsPage } from '../features/settings/SettingsPage.tsx';
 import { SheetPage } from '../features/sheet/SheetPage.tsx';
+import { WizardPage } from '../features/wizard/WizardPage.tsx';
 import { AppShell } from './AppShell.tsx';
 
 /** All app routes (plan §7). Rendered inside a HashRouter in the app, a MemoryRouter in tests. */
@@ -18,14 +19,7 @@ export function AppRoutes() {
         <Route index element={<CharactersPage />} />
         <Route path="c/:id/level-up" element={<LevelUpPlaceholder />} />
         <Route path="c/:id/:tab?" element={<SheetPage />} />
-        <Route
-          path="new/:draftId/:step"
-          element={
-            <Placeholder title="New character" backTo="/">
-              Character creation arrives in phase 4.
-            </Placeholder>
-          }
-        />
+        <Route path="new/:draftId/:step?" element={<WizardPage />} />
         <Route path="library" element={<LibraryPage />} />
         <Route path="library/import" element={<ImportPage />} />
         <Route path="settings" element={<SettingsPage />} />

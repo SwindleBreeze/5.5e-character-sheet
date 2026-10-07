@@ -130,6 +130,18 @@ const FEAT_GROUPS: Record<string, string> = {
   epicBoon: 'Epic Boon feats',
 };
 
+/** Groups listed in this order, before any others. */
+const GROUP_ORDER = [
+  'Skills',
+  'Standard languages',
+  'Rare languages',
+  'Origin feats',
+  'General feats',
+  'Fighting Style feats',
+  'Simple weapons',
+  'Martial weapons',
+];
+
 const TOOL_GROUPS: Record<string, string> = {
   artisan: 'Artisan’s Tools',
   instrument: 'Musical instruments',
@@ -359,13 +371,22 @@ export function offerOptions(
 
   const mine = new Set(current);
   const all = [...values, ...current.filter((v) => !values.includes(v))];
+  const options: ChoiceOption[] = all.map((value) => ({
+    value,
+    label: label(value),
+    ...(taken.has(value) && !mine.has(value) ? { taken: true } : {}),
+    ...describe(value),
+  }));
+  // Common groups first (Standard languages before Rare ones); otherwise as listed.
+  const rank = (o: ChoiceOption) => {
+    const i = GROUP_ORDER.indexOf(o.group ?? '');
+    return i < 0 ? GROUP_ORDER.length : i;
+  };
   return {
-    options: all.map((value) => ({
-      value,
-      label: label(value),
-      ...(taken.has(value) && !mine.has(value) ? { taken: true } : {}),
-      ...describe(value),
-    })),
+    options: options
+      .map((o, i) => ({ o, i }))
+      .sort((a, b) => rank(a.o) - rank(b.o) || a.i - b.i)
+      .map(({ o }) => o),
     ...(valueKind ? { valueKind } : {}),
     ...(hint ? { hint } : {}),
   };

@@ -14,8 +14,16 @@ import { BackupReminder } from './BackupReminder.tsx';
 import styles from './CharactersPage.module.css';
 
 function summary(character: Character): string {
+  if (character.draft) return 'Being created · Continue';
   const level = character.log.length;
   return level === 0 ? 'Not built yet' : `Level ${level}`;
+}
+
+/** A draft opens the creation wizard where it was left (plan §9.3 step 4.4). */
+function linkTo(character: Character): string {
+  return character.draft
+    ? `/new/${character.id}/${character.draft.step}`
+    : `/c/${character.id}/main`;
 }
 
 export function CharactersPage() {
@@ -96,7 +104,11 @@ export function CharactersPage() {
           <ul className={styles.list}>
             {characters.map((c) => (
               <li key={c.id} className={styles.item}>
-                <Link to={`/c/${c.id}/main`} className={styles.link}>
+                <Link
+                  to={linkTo(c)}
+                  className={styles.link}
+                  aria-label={c.draft ? `Continue creating ${c.name}` : undefined}
+                >
                   <span className={styles.avatar} aria-hidden="true">
                     {c.name.trim().charAt(0).toUpperCase() || '?'}
                   </span>

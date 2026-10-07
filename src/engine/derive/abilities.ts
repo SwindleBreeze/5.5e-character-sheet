@@ -60,11 +60,9 @@ export function deriveAbilities(
   const valuesFor = (source: EffectSource, slot: string) =>
     valuesOf(ctx.recon, choiceKey(source.ref, slot, source.n));
 
-  const origin = ctx.character.log[0]?.origin;
-  const background = origin
-    ? ctx.collected.owners.find(
-        (o) => o.ref.kind === 'background' && o.ref.id === origin.backgroundRef.id,
-      )
+  const bgRef = ctx.character.log[0]?.origin?.backgroundRef;
+  const background = bgRef
+    ? ctx.collected.owners.find((o) => o.ref.kind === 'background' && o.ref.id === bgRef.id)
     : undefined;
   if (background) {
     const picks = valuesFor(background, 'ability');
