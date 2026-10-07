@@ -28,12 +28,3 @@ export function classSummary(sheet: DerivedSheet): string {
     .map((c) => `${c.name} ${c.level}${c.subclassName ? ` (${c.subclassName})` : ''}`)
     .join(' / ');
 }
-
-/** Choices to make, picks to fix and broken rules: the "Needs attention" count. */
-export function attentionCount(sheet: DerivedSheet): number {
-  return (
-    sheet.choices.pending.length +
-    sheet.choices.attention.length +
-    sheet.issues.filter((i) => i.severity === 'warn').length
-  );
-}

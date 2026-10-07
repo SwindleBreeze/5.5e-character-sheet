@@ -9,9 +9,16 @@ import { autoChoose } from '../../src/engine/build/autoChoose.ts';
 import { createCatalog, type Catalog } from '../../src/engine/build/catalog.ts';
 import { quickBuild } from '../../src/engine/build/quickBuild.ts';
 import { createContentIndex, type ContentIndex } from '../../src/engine/content/contentIndex.ts';
+import { offerOptions } from '../../src/engine/choices/options.ts';
+import { refreshSnapshots } from '../../src/engine/content/snapshots.ts';
 import { derive } from '../../src/engine/derive/derive.ts';
 import { featureEffects } from '../../src/engine/featureEffects/index.ts';
-import { encodeChoiceKey, type ClassDef, type ContentEntity } from '../../src/schema/index.ts';
+import {
+  encodeChoiceKey,
+  refKey,
+  type ClassDef,
+  type ContentEntity,
+} from '../../src/schema/index.ts';
 import { nodeFileSource } from './nodeFileSource.ts';
 
 const root = process.env.FIVETOOLS_DATA;
@@ -65,6 +72,23 @@ describe.skipIf(!root)('quick-builder (local data)', () => {
           problems.push(`${label}: issue ${issue.code} ${issue.message}`);
         for (const r of sheet.choices.attention)
           problems.push(`${label}: attention ${r.status} ${r.key}`);
+        // Step 3.23: a snapshot of every feature, stable once taken.
+        const snap = refreshSnapshots(character, index, sheet, 0);
+        if (refreshSnapshots(snap, index, sheet, 1) !== snap)
+          problems.push(`${label}: snapshots change`);
+        for (const f of sheet.features)
+          if (!snap.snapshots[refKey(f.ref)])
+            problems.push(`${label}: no snapshot ${refKey(f.ref)}`);
+        // Step 3.20: every pick the Features tab offers has something to pick from.
+        for (const f of sheet.features)
+          for (const c of f.choices) {
+            const { options } = offerOptions(
+              c.offer,
+              { character, sheet, catalog, index },
+              c.values,
+            );
+            if (!options.length) problems.push(`${label}: nothing to pick for ${c.key}`);
+          }
         for (const p of sheet.choices.pending) {
           const pick = autoChoose(p.offer, p.count - p.have, { character, sheet, catalog, index });
           if (pick.values.length)

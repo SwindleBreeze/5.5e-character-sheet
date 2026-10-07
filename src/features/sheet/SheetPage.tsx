@@ -5,6 +5,7 @@ import { TopBar } from '../../app/TopBar.tsx';
 import page from '../../app/Page.module.css';
 import { useConditionOptions, useContentIndex } from '../../content/hooks.ts';
 import { repos } from '../../db/repos.ts';
+import { refreshSnapshots } from '../../engine/content/snapshots.ts';
 import { derive } from '../../engine/derive/derive.ts';
 import { featureEffects } from '../../engine/featureEffects/index.ts';
 import { useRoller } from '../../ui/rollerContext.ts';
@@ -43,6 +44,17 @@ export function SheetPage() {
         : undefined,
     [character, index],
   );
+
+  // Snapshots of the content in use (plan §4.4): refreshed whenever the loaded content changes,
+  // written only when they changed.
+  useEffect(() => {
+    if (!index) return;
+    apply((c) =>
+      c.log.length
+        ? refreshSnapshots(c, index, derive(c, index, { registry: featureEffects() }))
+        : c,
+    );
+  }, [index, apply]);
 
   if (!SHEET_TABS.some((t) => t.id === tab)) return <Navigate to={`/c/${id}/main`} replace />;
   if (stored === undefined) return <TopBar title="" backTo="/" />;

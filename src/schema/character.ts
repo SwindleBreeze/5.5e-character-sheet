@@ -195,5 +195,10 @@ export interface Character {
   sessionLog: SessionNote[];
   portraitId?: string;
   snapshots: Record<RefKey, Snapshot>;
-  ui: { tabOrder?: string[]; hiddenTabs?: string[] };
+  ui: {
+    tabOrder?: string[];
+    hiddenTabs?: string[];
+    /** "Needs attention" items the player chose to ignore, by key (step 3.23). */
+    ignoredAttention?: string[];
+  };
 }

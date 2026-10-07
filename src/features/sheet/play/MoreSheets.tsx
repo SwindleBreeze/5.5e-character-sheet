@@ -11,6 +11,7 @@ import { useSheet } from '../../../ui/sheetContext.ts';
 import { SourceToggles } from '../../sources/SourceToggles.tsx';
 import inventory from '../inventory/inventory.module.css';
 import { nameOf, type SheetBindings } from '../sheetBindings.ts';
+import { AttentionSheet } from '../attention/AttentionSheet.tsx';
 import { DiceSheet } from './DiceSheet.tsx';
 import { OverridesSheet } from './OverridesSheet.tsx';
 import styles from './play.module.css';
@@ -80,6 +81,7 @@ export function MoreMenu({ bindings }: { bindings: SheetBindings }) {
   const ui = useSheet();
   const { character } = bindings;
   const overrides = Object.keys(character.overrides).length;
+  const ignored = character.ui.ignoredAttention?.length ?? 0;
   const page = (key: string, title: string, render: () => React.ReactNode) => () =>
     ui.push({ key: `more:${key}`, title, render });
   const items: { label: string; hint: string; open: () => void }[] = [
@@ -106,6 +108,11 @@ export function MoreMenu({ bindings }: { bindings: SheetBindings }) {
       label: 'Sources',
       hint: character.enabledSources ? 'This character’s own' : 'The app’s',
       open: page('sources', 'Sources', () => <SourcesSheet bindings={bindings} />),
+    },
+    {
+      label: 'Needs attention',
+      hint: ignored ? `Choices, picks and rules; ${ignored} ignored` : 'Choices, picks and rules',
+      open: page('attention', 'Needs attention', () => <AttentionSheet bindings={bindings} />),
     },
     {
       label: 'Overrides',

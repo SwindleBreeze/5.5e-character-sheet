@@ -3,6 +3,7 @@
 // (rests, dice roller, sources, overrides, level up).
 
 import { Link } from 'react-router';
+import { attentionCount, attentionItems } from '../../engine/play/attention.ts';
 import { setOverride } from '../../engine/play/reducers.ts';
 import { useSheet } from '../../ui/sheetContext.ts';
 import { isOverridden } from './components/format.ts';
@@ -12,52 +13,9 @@ import { HpPill, NeedsAttentionChip, type ConditionOption } from './components/v
 import { MoreMenu } from './play/MoreSheets.tsx';
 import { useConcentrationStatus } from './play/useConcentrationStatus.tsx';
 import { useHpActions } from './play/useHpActions.tsx';
-import { attentionCount, classSummary, nameOf, type SheetBindings } from './sheetBindings.ts';
+import { classSummary, nameOf, type SheetBindings } from './sheetBindings.ts';
+import { AttentionSheet } from './attention/AttentionSheet.tsx';
 import styles from './SheetHeader.module.css';
-
-function AttentionList({ sheet }: Pick<SheetBindings, 'sheet'>) {
-  const { pending, attention } = sheet.choices;
-  const warnings = sheet.issues.filter((i) => i.severity === 'warn');
-  return (
-    <div className={styles.attentionList}>
-      {pending.length > 0 && (
-        <section>
-          <h3>Choices to make</h3>
-          <ul>
-            {pending.map((p) => (
-              <li key={`${p.offer.key.owner.id}#${p.offer.key.slot}@${p.offer.key.n ?? ''}`}>
-                {p.offer.source.name}: {p.count - p.have} more to pick
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-      {attention.length > 0 && (
-        <section>
-          <h3>Picks to check</h3>
-          <ul>
-            {attention.map((r) => (
-              <li key={r.key}>
-                {r.at.record.labels.join(', ') || r.key} ({r.status})
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-      {warnings.length > 0 && (
-        <section>
-          <h3>Rules</h3>
-          <ul>
-            {warnings.map((i, n) => (
-              <li key={n}>{i.message}</li>
-            ))}
-          </ul>
-        </section>
-      )}
-      <p className={styles.muted}>Picking and fixing arrive with level-up (phase 5).</p>
-    </div>
-  );
-}
 
 export function SheetHeader({
   character,
@@ -68,7 +26,7 @@ export function SheetHeader({
 }: SheetBindings & { conditionOptions: ConditionOption[] }) {
   const bottomSheet = useSheet();
   const explain = useExplain();
-  const count = attentionCount(sheet);
+  const count = attentionCount(attentionItems(sheet, character, index), character);
   const bindings = { character, sheet, index, apply };
   const hpActions = useHpActions(bindings);
   const openConcentration = useConcentrationStatus(bindings);
@@ -148,7 +106,7 @@ export function SheetHeader({
               bottomSheet.open({
                 key: 'needs-attention',
                 title: 'Needs attention',
-                render: () => <AttentionList sheet={sheet} />,
+                render: () => <AttentionSheet bindings={bindings} />,
               })
             }
           />
