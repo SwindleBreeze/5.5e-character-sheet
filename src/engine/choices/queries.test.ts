@@ -135,10 +135,7 @@ describe('weapon picks (plan §9.3 step 4.2)', () => {
     const barbarian = masteryOffer('any', {
       type: 'weaponMasteryChoice',
       choice: { slot: 'mastery', count: 2, from: 'any' },
-      kinds: [
-        { category: 'simple', melee: true },
-        { category: 'martial', melee: true },
-      ],
+      kinds: [{ category: 'simple' }, { category: 'martial', melee: true }],
     });
     expect(weaponMasteryOptions(barbarian, sheet([]), catalog)).toEqual([
       'net blade|tst',

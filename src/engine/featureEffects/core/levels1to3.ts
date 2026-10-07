@@ -45,13 +45,12 @@ function languages(slot: string, count: number): Effect {
 }
 
 export const CORE_LEVELS_1_TO_3: FeatureEffectsMap = {
-  // Barbarian 1: two kinds of Simple or Martial Melee weapons (the Weapon Mastery column):
-  // melee weapons, Simple or Martial; no ranged ones.
+  // Barbarian 1: two kinds of Simple or Martial Melee weapons (the Weapon Mastery column).
   'classFeature:weapon mastery|barbarian|xphb|1|xphb': {
     level: 'A',
     effects: [
       weaponMastery('table.weapon-mastery', 'any', [
-        { category: 'simple', melee: true },
+        { category: 'simple' },
         { category: 'martial', melee: true },
       ]),
     ],

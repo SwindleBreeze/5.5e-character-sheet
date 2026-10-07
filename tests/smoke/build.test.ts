@@ -127,12 +127,10 @@ describe.skipIf(!root)('quick-builder (local data)', () => {
     const rogue = options('rogue|xphb', 1, 'mastery', 'weapon mastery|rogue');
     expect(rogue).toEqual(expect.arrayContaining(['rapier|xphb', 'scimitar|xphb', 'dagger|xphb']));
     expect(rogue).not.toContain('longsword|xphb');
-    // Barbarian: Simple or Martial Melee weapons, melee only; never a focus, a feature's weapon
-    // or a firearm.
+    // Barbarian: Simple, or Martial Melee; never a focus, a feature's weapon or a firearm.
     const barbarian = options('barbarian|xphb', 1, 'mastery', 'weapon mastery|barbarian');
-    expect(barbarian).toEqual(expect.arrayContaining(['greataxe|xphb', 'handaxe|xphb']));
-    for (const ranged of ['shortbow|xphb', 'dart|xphb', 'longbow|xphb'])
-      expect(barbarian).not.toContain(ranged);
+    expect(barbarian).toEqual(expect.arrayContaining(['greataxe|xphb', 'shortbow|xphb']));
+    expect(barbarian).not.toContain('longbow|xphb');
     const fighter = options('fighter|xphb', 1, 'mastery', 'weapon mastery|fighter');
     expect(fighter).toContain('longbow|xphb');
     for (const odd of ['staff|xphb', 'psychic blade|xphb', 'antimatter rifle|xdmg'])
