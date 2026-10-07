@@ -53,11 +53,11 @@ export function ClassStep(b: WizardBindings) {
           features={[owner]}
           ctx={choiceContext(b, sheet)}
           only={(c) => stepOf(c.offer, sheet) === 'class'}
-          onPick={(c, f, pick) =>
+          onPick={(c, _f, pick) =>
             apply((ch) =>
               setPick(ch, decodeChoiceKey(c.key), {
                 ...pick,
-                entryIndex: f.entryIndex,
+                entryIndex: c.entryIndex,
                 via: 'creation',
               }),
             )

@@ -35,9 +35,9 @@ export function OriginChoices({ b, owner }: { b: WizardBindings; owner: DerivedF
       refKey(f.pickedIn.ref) === key &&
       !owner.choices.some((c) => c.values.includes(f.ref.id)),
   );
-  const onPick: Parameters<typeof FeatureChoices>[0]['onPick'] = (c, f, pick) =>
+  const onPick: Parameters<typeof FeatureChoices>[0]['onPick'] = (c, _f, pick) =>
     apply((ch) =>
-      setPick(ch, decodeChoiceKey(c.key), { ...pick, entryIndex: f.entryIndex, via: 'creation' }),
+      setPick(ch, decodeChoiceKey(c.key), { ...pick, entryIndex: c.entryIndex, via: 'creation' }),
     );
   // Ability scores first: they matter most and the rest is easier once they are set.
   const ordered = {

@@ -135,25 +135,35 @@ export function deriveFeatures(
     offersByOwner.set(k, [...(offersByOwner.get(k) ?? []), offer]);
   }
 
+  // A class's picks that come with one of its levels: `cantrips.3`, `spellbook.5`, `spells.2`.
+  const slotLevel = (slot: string): number | undefined => {
+    const m = /^(?:cantrips|spells|spellbook)\.(\d+)$/.exec(slot);
+    return m ? Number(m[1]) : undefined;
+  };
+
   return owners.map((o) => {
     const key = ownerKey(o.ref, o.n);
     const level = levelOf(o);
+    const entryIndex = entryOf(o, level, new Set());
     const choices: DerivedFeatureChoice[] = [];
     for (const offer of offersByOwner.get(key) ?? []) {
       const choiceKey = encodeChoiceKey(offer.key);
       const r = recon.byKey.get(choiceKey);
       const count = countOf(offer);
       if (count <= 0 && !r) continue;
+      const progression = progressionOf(index.get(o.ref), offer.key.slot);
+      const atLevel = slotLevel(offer.key.slot) ?? progression?.level;
       const choice: DerivedFeatureChoice = {
         key: choiceKey,
         offer,
         count,
         values: r?.at.record.values ?? [],
         labels: r?.at.record.labels ?? [],
+        entryIndex:
+          o.classId && atLevel !== undefined ? classEntry(o.classId, atLevel) : entryIndex,
       };
       if (r) choice.status = r.status;
       if (r?.at.record.valueKinds) choice.valueKinds = r.at.record.valueKinds;
-      const progression = progressionOf(index.get(o.ref), offer.key.slot);
       if (progression) choice.progression = progression;
       choices.push(choice);
     }
@@ -165,7 +175,7 @@ export function deriveFeatures(
       group: GROUPS[o.ref.kind] ?? 'other',
       choices,
       resourceKeys: resources.filter((r) => r.key.startsWith(`${key}#`)).map((r) => r.key),
-      entryIndex: entryOf(o, level, new Set()),
+      entryIndex,
     };
     if (o.n !== undefined) f.n = o.n;
     if (o.classId) f.classId = o.classId;

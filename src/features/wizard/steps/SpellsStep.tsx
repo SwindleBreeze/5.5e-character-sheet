@@ -27,9 +27,9 @@ export function SpellsStep(b: WizardBindings) {
   const { character, sheet, apply } = b;
   if (!sheet) return <p className={inventory.muted}>Choose a class first.</p>;
   const ctx = choiceContext(b, sheet);
-  const onPick: Parameters<typeof FeatureChoices>[0]['onPick'] = (c, f, pick) =>
+  const onPick: Parameters<typeof FeatureChoices>[0]['onPick'] = (c, _f, pick) =>
     apply((ch) =>
-      setPick(ch, decodeChoiceKey(c.key), { ...pick, entryIndex: f.entryIndex, via: 'creation' }),
+      setPick(ch, decodeChoiceKey(c.key), { ...pick, entryIndex: c.entryIndex, via: 'creation' }),
     );
   const { features, only } = picksOnStep(sheet, 'spells');
   const preparers = sheet.spellcasting.casters.filter(
