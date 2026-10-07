@@ -43,6 +43,12 @@ export type Predicate =
   | { any: Predicate[] }
   | { not: Predicate };
 
+/** A kind of weapon: its category, and melee (`true`) or ranged (`false`). */
+export interface WeaponKind {
+  category?: 'simple' | 'martial';
+  melee?: boolean;
+}
+
 /** P3/P4: which attacks a modifier or rider applies to. Every field given must match. */
 export interface AttackFilter {
   range?: 'melee' | 'ranged';
@@ -159,7 +165,10 @@ export type Effect =
       /** Several categories when one pick may come from any of them (skill or tool). */
       category: ProficiencyCategory | ProficiencyCategory[];
       choice: ChoiceSlot<string>;
-      /** Narrows `from: 'any'`, e.g. `standard` languages or `artisan` tools. */
+      /**
+       * Narrows `from: 'any'`, e.g. `standard` languages or `artisan` tools; several kinds are
+       * joined with `|` (`artisan|instrument`).
+       */
       filter?: string;
     }
   | { type: 'expertise'; skill: Bound<Skill> }
@@ -192,8 +201,11 @@ export type Effect =
   | { type: 'extraAttack'; count: number }
   | { type: 'hpBonus'; perLevel?: Formula; flat?: Formula }
   | { type: 'initiativeBonus'; value: Formula }
-  /** Pick weapons (by base item id) whose mastery property you can use. */
-  | { type: 'weaponMasteryChoice'; choice: ChoiceSlot<Id> }
+  /**
+   * Pick weapons (by base item id) whose mastery property you can use. `kinds` narrows the
+   * options to any of these kinds of weapon (Barbarian: Simple, or Martial Melee).
+   */
+  | { type: 'weaponMasteryChoice'; choice: ChoiceSlot<Id>; kinds?: WeaponKind[] }
   | { type: 'featChoice'; slot: string; categories: string[]; count?: Formula }
   | { type: 'optionalFeatureChoice'; slot: string; featureTypes: string[]; count: Formula }
   | { type: 'grantFeat'; feat: Ref }

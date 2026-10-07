@@ -15,9 +15,10 @@ describe('CoverageScreen', () => {
     await seedFixtureContent(['TST']);
     renderApp('/dev/coverage');
 
-    // The app registry has no mappings yet, so nothing is mapped and nothing is broken.
+    // The app's mappings are for XPHB features, which the fixture content doesn't have.
     expect(await screen.findByText(/41 features: 0 mapped/)).toBeInTheDocument();
     expect(screen.getByText('Every mapping is valid.')).toBeInTheDocument();
+    expect(screen.getByText(/mappings are for content that isn’t imported/)).toBeInTheDocument();
 
     await user.selectOptions(screen.getByRole('combobox', { name: 'Show' }), 'all');
     const list = screen.getByRole('list', { name: 'Features' });

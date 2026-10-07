@@ -85,7 +85,7 @@ function abilityList(abilities: Ability[]): string {
   return abilities.map((a) => ABILITY_NAMES[a]).join(', ');
 }
 
-function prereqText(p: Prereq): string {
+export function prereqText(p: Prereq): string {
   switch (p.type) {
     case 'level':
       return p.classId ? `Level ${p.level} ${nameFromId(p.classId)}` : `Level ${p.level}+`;

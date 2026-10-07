@@ -11,6 +11,7 @@ import {
   type Size,
 } from '../../schema/index.ts';
 import {
+  carriedWeapons,
   knownSpells,
   proficiencyOptions,
   spellOptions,
@@ -18,7 +19,7 @@ import {
 } from '../build/autoChoose.ts';
 import type { Offer } from '../collect/types.ts';
 import { SIZE_NAMES } from '../items/items.ts';
-import { queryOptions } from './queries.ts';
+import { expertiseOptions, weaponMasteryOptions } from './queries.ts';
 
 export interface ChoiceOption {
   value: string;
@@ -139,7 +140,7 @@ export function offerOptions(
       break;
     }
     case 'expertise':
-      values = from ?? queryOptions('proficientSkillsWithoutExpertise', sheet, catalog);
+      values = expertiseOptions(offer, sheet, catalog);
       break;
     case 'resistance':
     case 'equipment':
@@ -185,10 +186,7 @@ export function offerOptions(
       break;
     case 'weaponMastery':
       valueKind = 'item';
-      values =
-        typeof offer.from === 'object' && 'query' in offer.from
-          ? queryOptions(offer.from.query, sheet, catalog)
-          : (from ?? queryOptions('proficientWeapons', sheet, catalog));
+      values = weaponMasteryOptions(offer, sheet, catalog, carriedWeapons(ctx));
       taken = new Set(sheet.masteries.map((m) => m.value));
       label = nameOf('item');
       break;

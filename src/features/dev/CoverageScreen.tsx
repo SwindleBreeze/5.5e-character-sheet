@@ -47,6 +47,9 @@ export function CoverageScreen() {
   }
 
   const { report, issues } = result;
+  // A mapping for a feature whose source isn't imported is not a problem with the mapping.
+  const problems = issues.filter((i) => i.code !== 'ownerMissing');
+  const notImported = issues.length - problems.length;
   const rows =
     show === 'unoffered'
       ? report.unofferedChoices
@@ -77,9 +80,9 @@ export function CoverageScreen() {
           <h2 id="coverage-issues" className={page.cardTitle}>
             Mapping problems
           </h2>
-          {issues.length ? (
+          {problems.length ? (
             <ul>
-              {issues.map((i, n) => (
+              {problems.map((i, n) => (
                 <li key={n}>
                   <code>{i.key}</code>: {i.message} ({i.code})
                 </li>
@@ -87,6 +90,12 @@ export function CoverageScreen() {
             </ul>
           ) : (
             <p className={page.muted}>Every mapping is valid.</p>
+          )}
+          {notImported > 0 && (
+            <p className={page.muted}>
+              {notImported} {notImported === 1 ? 'mapping is' : 'mappings are'} for content that
+              isn’t imported.
+            </p>
           )}
         </section>
 

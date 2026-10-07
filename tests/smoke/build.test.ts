@@ -98,4 +98,52 @@ describe.skipIf(!root)('quick-builder (local data)', () => {
     });
     expect(problems).toEqual([]);
   });
+
+  it('offers the level 1–3 class picks the 2024 rules give (plan §9.3 step 4.2)', () => {
+    const registry = featureEffects();
+    const deps = { index, catalog, registry, now: 0 };
+    const options = (classId: string, levels: number, slot: string, owner: string) => {
+      const character = quickBuild(
+        {
+          name: classId,
+          classes: [{ classId, levels }],
+          speciesId: 'human|xphb',
+          backgroundId: 'sage|xphb',
+        },
+        deps,
+      );
+      const sheet = derive(character, index, { registry });
+      const choice = sheet.features
+        .flatMap((f) => f.choices)
+        .find((c) => c.offer.key.slot === slot && c.offer.key.owner.id.startsWith(owner));
+      if (!choice) throw new Error(`${classId}: no ${owner} ${slot}`);
+      return offerOptions(
+        choice.offer,
+        { character, sheet, catalog, index },
+        choice.values,
+      ).options.map((o) => o.value);
+    };
+    // Weapon Mastery: Rogue's proficiencies include Finesse or Light Martial weapons.
+    const rogue = options('rogue|xphb', 1, 'mastery', 'weapon mastery|rogue');
+    expect(rogue).toEqual(expect.arrayContaining(['rapier|xphb', 'scimitar|xphb', 'dagger|xphb']));
+    expect(rogue).not.toContain('longsword|xphb');
+    // Barbarian: Simple, or Martial Melee; never a focus, a feature's weapon or a firearm.
+    const barbarian = options('barbarian|xphb', 1, 'mastery', 'weapon mastery|barbarian');
+    expect(barbarian).toEqual(expect.arrayContaining(['greataxe|xphb', 'shortbow|xphb']));
+    expect(barbarian).not.toContain('longbow|xphb');
+    const fighter = options('fighter|xphb', 1, 'mastery', 'weapon mastery|fighter');
+    expect(fighter).toContain('longbow|xphb');
+    for (const odd of ['staff|xphb', 'psychic blade|xphb', 'antimatter rifle|xdmg'])
+      expect(fighter).not.toContain(odd);
+    // Thieves' Cant and one other language from the Standard and Rare tables.
+    expect(options('rogue|xphb', 1, 'language', "thieves' cant|rogue")).toContain('elvish');
+    // Scholar: one of six skills the Wizard is proficient in (Sage gives Arcana and History).
+    expect(options('wizard|xphb', 2, 'expertise', 'scholar|wizard')).toEqual(
+      expect.arrayContaining(['arcana', 'history']),
+    );
+    expect(options('barbarian|xphb', 3, 'skills', 'primal knowledge|barbarian')).toHaveLength(6);
+    expect(options('ranger|xphb', 2, 'languages', 'deft explorer|ranger')).toContain('sylvan');
+    // Tool text in the class data becomes a pick (Bard: three musical instruments).
+    expect(options('bard|xphb', 1, 'tools', 'bard|xphb')).toContain('lute|xphb');
+  });
 });
