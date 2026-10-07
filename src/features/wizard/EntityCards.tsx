@@ -1,7 +1,7 @@
 // A list of things to pick one of (a class, a background, a species), each with a line of what
 // it gives and a button to read it (plan §9.3, step 4.4). Optionally under headings.
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { Button } from '../../ui/Button.tsx';
 import inventory from '../sheet/inventory/inventory.module.css';
 import styles from './wizard.module.css';
@@ -31,6 +31,7 @@ export function EntityCards({
   onRead: (id: string) => void;
 }) {
   const [query, setQuery] = useState('');
+  const baseId = useId();
   const q = query.trim().toLowerCase();
   const shown = items.filter(
     (i) =>
@@ -41,18 +42,27 @@ export function EntityCards({
   );
   const groups = [...new Set(shown.map((i) => i.group ?? ''))];
 
-  const card = (item: CardItem) => (
+  // Named by its name only; the detail line describes it.
+  const card = (item: CardItem, i: number) => (
     <li key={item.id} className={styles.card} data-selected={item.id === selected}>
       <label className={styles.pick}>
         <input
           type="radio"
           name={label}
           checked={item.id === selected}
+          aria-labelledby={`${baseId}-${i}-name`}
+          aria-describedby={item.detail ? `${baseId}-${i}-detail` : undefined}
           onChange={() => onSelect(item.id)}
         />
         <span className={styles.pickText}>
-          <span className={styles.pickName}>{item.name}</span>
-          {item.detail && <span className={styles.pickDetail}>{item.detail}</span>}
+          <span id={`${baseId}-${i}-name`} className={styles.pickName}>
+            {item.name}
+          </span>
+          {item.detail && (
+            <span id={`${baseId}-${i}-detail`} className={styles.pickDetail}>
+              {item.detail}
+            </span>
+          )}
         </span>
       </label>
       <Button
@@ -88,13 +98,13 @@ export function EntityCards({
           <section key={g} aria-label={g}>
             <h3 className={styles.groupTitle}>{g}</h3>
             <ul className={styles.cards} aria-label={g}>
-              {shown.filter((i) => (i.group ?? '') === g).map(card)}
+              {shown.filter((i) => (i.group ?? '') === g).map((i) => card(i, items.indexOf(i)))}
             </ul>
           </section>
         ))
       ) : (
         <ul className={styles.cards} aria-label={label}>
-          {shown.map(card)}
+          {shown.map((i) => card(i, items.indexOf(i)))}
         </ul>
       )}
     </div>

@@ -146,4 +146,24 @@ describe.skipIf(!root)('quick-builder (local data)', () => {
     // Tool text in the class data becomes a pick (Bard: three musical instruments).
     expect(options('bard|xphb', 1, 'tools', 'bard|xphb')).toContain('lute|xphb');
   });
+
+  it('species spells come at their character level (High Elf: Detect Magic at 3)', () => {
+    const registry = featureEffects();
+    const granted = (levels: number) => {
+      const c = quickBuild(
+        {
+          name: 'Elf',
+          classes: [{ classId: 'fighter|xphb', levels }],
+          speciesId: 'elf; high elf lineage|xphb',
+          backgroundId: 'soldier|xphb',
+        },
+        { index, catalog, registry, now: 0 },
+      );
+      return derive(c, index, { registry }).spellcasting.granted.map((g) => g.spellId);
+    };
+    expect(granted(1)).not.toContain('detect magic|xphb');
+    expect(granted(3)).toContain('detect magic|xphb');
+    expect(granted(3)).not.toContain('misty step|xphb');
+    expect(granted(5)).toContain('misty step|xphb');
+  });
 });

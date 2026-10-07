@@ -24,7 +24,7 @@ import styles from './choices.module.css';
 import { retrainText, type PickSave } from './picks.ts';
 
 const SEARCH_FROM = 12;
-const SPELL_FILTERS_FROM = 10;
+const SPELL_FILTERS_FROM = 6;
 
 /** Spell options narrowed by level, school and ritual (the spell filter DSL's parts). */
 function useSpellFilter(options: ChoiceOption[], spells: Map<string, Spell>) {

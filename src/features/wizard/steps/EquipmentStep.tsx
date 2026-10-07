@@ -75,11 +75,17 @@ export function EquipmentStep(b: WizardBindings) {
                         type="radio"
                         name={name}
                         checked={picked?.key === o.key}
+                        aria-labelledby={`${name}-${o.key}`}
+                        aria-describedby={`${name}-${o.key}-text`}
                         onChange={() => choose(owner.ref, o.key, text)}
                       />
                       <span className={styles.pickText}>
-                        <span className={styles.pickName}>Option {o.key}</span>
-                        <span className={styles.pickDetail}>{text}</span>
+                        <span id={`${name}-${o.key}`} className={styles.pickName}>
+                          Option {o.key}
+                        </span>
+                        <span id={`${name}-${o.key}-text`} className={styles.pickDetail}>
+                          {text}
+                        </span>
                       </span>
                     </label>
                   </li>
