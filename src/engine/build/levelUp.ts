@@ -20,7 +20,9 @@ import { derive } from '../derive/derive.ts';
 import type { DerivedFeature, DerivedSheet } from '../derive/types.ts';
 import type { FeatureEffectsMap } from '../featureEffects/types.ts';
 import { checkPrereqs, multiclassPrereqs, prereqContext, type PrereqResult } from '../prereq.ts';
-import { addLevel } from './build.ts';
+import { setPick } from '../play/features.ts';
+import { autoChoose } from './autoChoose.ts';
+import { addLevel, setSubclass } from './build.ts';
 import type { Catalog } from './catalog.ts';
 
 export const MAX_LEVEL = 20;
@@ -207,10 +209,137 @@ export function planLevelUp(c: Character, classRef: Ref, deps: Deps): LevelUpPla
   return readLevelUp(takeLevel(c, classRef), before, deps);
 }
 
-/** How the last level's hit points are gained: the fixed value, or a roll of the die. */
-export function setLevelHp(c: Character, hp: HpGain): Character {
+/**
+ * How a level's hit points are gained: the fixed value, or a roll of the die. The last level
+ * by default; level 1 always takes the die's maximum.
+ */
+export function setLevelHp(c: Character, hp: HpGain, entryIndex = c.log.length - 1): Character {
+  if (entryIndex < 1 || !c.log[entryIndex]) return c;
   const n = structuredClone(c);
-  const last = n.log.at(-1);
-  if (last && n.log.length > 1) last.hp = hp;
+  n.log[entryIndex]!.hp = hp;
   return n;
+}
+
+/** Picks per level at most, as in the quick-builder. */
+const MAX_AUTO_PICKS = 100;
+
+/**
+ * Make the last level's picks automatically (plan step 5.4): its subclass when due (the first
+ * one offered), then each of its picks, one at a time so each sees the ones before it. Earlier
+ * levels' picks are left alone.
+ */
+export function autoFillLevel(c: Character, deps: Deps & { now?: number }): Character {
+  const opts = deps.registry ? { registry: deps.registry } : {};
+  const before = derive({ ...c, log: c.log.slice(0, -1) }, deps.index, opts);
+  let character = c;
+  let plan = readLevelUp(character, before, deps);
+  if (plan.subclassDue && !plan.subclassRef && plan.cls && plan.subclasses[0]) {
+    character = setSubclass(character, plan.cls, { kind: 'subclass', id: plan.subclasses[0].id });
+    plan = readLevelUp(character, before, deps);
+  }
+  for (let i = 0; i < MAX_AUTO_PICKS; i++) {
+    const ctx = { character, sheet: plan.sheet, catalog: deps.catalog, index: deps.index };
+    const choices = plan.sheet.features.flatMap((f) => f.choices);
+    const next = plan.pending
+      .filter((p) => {
+        // An earlier level's pick it gives more of is topped up, never made from nothing.
+        const c = choices.find((x) => x.offer === p.offer);
+        return !c || c.entryIndex === plan.entryIndex || c.values.length > 0;
+      })
+      .map((p) => ({ p, pick: autoChoose(p.offer, p.count - p.have, ctx) }))
+      .find((x) => x.pick.values.length);
+    if (!next) break;
+    const { p, pick } = next;
+    const choice = choices.find((x) => x.offer === p.offer);
+    const existing = choice?.values ?? [];
+    character = setPick(character, p.offer.key, {
+      values: [...existing, ...pick.values],
+      labels: [...(choice?.labels ?? []), ...(pick.labels ?? pick.values)],
+      ...(pick.valueKinds ? { valueKinds: pick.valueKinds } : {}),
+      entryIndex: choice?.entryIndex ?? plan.entryIndex,
+      ...(deps.now !== undefined ? { now: deps.now } : {}),
+      via: (choice?.entryIndex ?? plan.entryIndex) === 0 ? 'creation' : 'levelUp',
+    });
+    plan = readLevelUp(character, before, deps);
+  }
+  return character;
+}
+
+/**
+ * Higher-level creation (plan step 5.4): the character at `level`, levels added in the class
+ * of the last one (each made automatically, to be changed) or removed from the top.
+ */
+export function setStartLevel(
+  c: Character,
+  level: number,
+  deps: Deps & { now?: number },
+): Character {
+  const target = Math.max(1, Math.min(MAX_LEVEL, Math.round(level)));
+  if (!c.log.length) return c;
+  let n = c;
+  if (target < n.log.length) {
+    n = structuredClone(n);
+    n.log = n.log.slice(0, target);
+    return n;
+  }
+  while (n.log.length < target) {
+    n = autoFillLevel(takeLevel(n, n.log.at(-1)!.classRef), deps);
+  }
+  return n;
+}
+
+/**
+ * Change the class of one of the higher levels: it and the levels after it are taken again
+ * (the later ones in their own classes), each made automatically.
+ */
+export function changeLevelClass(
+  c: Character,
+  entryIndex: number,
+  classRef: Ref,
+  deps: Deps & { now?: number },
+): Character {
+  if (entryIndex < 1 || entryIndex >= c.log.length) return c;
+  const classes = c.log.slice(entryIndex).map((e, i) => (i === 0 ? classRef : e.classRef));
+  let n: Character = { ...structuredClone(c), log: structuredClone(c.log.slice(0, entryIndex)) };
+  for (const ref of classes) n = autoFillLevel(takeLevel(n, ref), deps);
+  return n;
+}
+
+/**
+ * "Fill the rest automatically" (plan step 5.4): every pick still to make on the levels above
+ * the first, and earlier picks those levels give more of, topped up. Level 1's are left alone.
+ */
+export function fillHigherLevels(c: Character, deps: Deps & { now?: number }): Character {
+  const opts = deps.registry ? { registry: deps.registry } : {};
+  let character = c;
+  for (let i = 0; i < MAX_AUTO_PICKS * MAX_LEVEL; i++) {
+    const sheet = derive(character, deps.index, opts);
+    const choices = sheet.features.flatMap((f) => f.choices);
+    const ctx = { character, sheet, catalog: deps.catalog, index: deps.index };
+    const next = sheet.choices.pending
+      .flatMap((p) => {
+        const choice = choices.find((x) => x.offer === p.offer);
+        if (!choice || (choice.entryIndex === 0 && !choice.values.length)) return [];
+        const pick = autoChoose(p.offer, p.count - p.have, ctx);
+        return pick.values.length ? [{ p, choice, pick }] : [];
+      })
+      .at(0);
+    if (!next) break;
+    const { p, choice, pick } = next;
+    character = setPick(character, p.offer.key, {
+      values: [...choice.values, ...pick.values],
+      labels: [...choice.labels, ...(pick.labels ?? pick.values)],
+      ...(pick.valueKinds ? { valueKinds: pick.valueKinds } : {}),
+      entryIndex: choice.entryIndex,
+      ...(deps.now !== undefined ? { now: deps.now } : {}),
+      via: choice.entryIndex === 0 ? 'creation' : 'levelUp',
+    });
+  }
+  return character;
+}
+
+/** The levels above the first taken again in the classes they had (after level 1 changed). */
+export function retakeLevels(c: Character, deps: Deps & { now?: number }): Character {
+  if (c.log.length < 2) return c;
+  return changeLevelClass(c, 1, c.log[1]!.classRef, deps);
 }

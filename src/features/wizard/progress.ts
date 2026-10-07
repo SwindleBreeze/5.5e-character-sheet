@@ -47,6 +47,9 @@ export function rootOf(f: DerivedFeature, all: readonly DerivedFeature[]): Deriv
 export function stepOf(offer: Offer, sheet: DerivedSheet): WizardStep {
   const ownerKind = offer.source.ref.kind;
   if (offer.kind === 'equipment') return ownerKind === 'background' ? 'background' : 'class';
+  // A pick a higher level brings is made on its level's card (plan step 5.4).
+  const choice = sheet.features.flatMap((f) => f.choices).find((c) => c.offer === offer);
+  if (choice && choice.entryIndex > 0) return 'levels';
   const owner = sheet.features.find(
     (f) => refKey(f.ref) === refKey(offer.source.ref) && f.n === offer.source.n,
   );

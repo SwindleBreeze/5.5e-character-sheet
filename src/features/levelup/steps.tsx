@@ -130,7 +130,7 @@ export function HpStep({ plan, onHp }: { plan: LevelUpPlan; onHp: (hp: HpGain) =
 }
 
 /** A roll typed in: kept as typed, taken when it is a face of the die. */
-function RollInput({
+export function RollInput({
   die,
   value,
   onValue,

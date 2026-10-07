@@ -3,7 +3,10 @@
 // it asks for now (skills, tools, starting equipment), and, folded, everything it gives and its
 // table.
 
+import { MAX_LEVEL, retakeLevels, setStartLevel } from '../../../engine/build/levelUp.ts';
 import { chooseClass } from '../../../engine/build/wizard.ts';
+import { featureEffects } from '../../../engine/featureEffects/index.ts';
+import { StepButton } from '../../../ui/Counter.tsx';
 import { setPick } from '../../../engine/play/features.ts';
 import { decodeChoiceKey } from '../../../schema/index.ts';
 import { useSources } from '../../../content/hooks.ts';
@@ -73,16 +76,49 @@ export function ClassStep(b: WizardBindings) {
     </>
   );
 
+  const deps = { index: content.index, catalog: content.catalog, registry: featureEffects() };
+  const level = character.log.length || 1;
+  const setLevel = (n: number) => apply((c) => setStartLevel(c, n, deps));
+
   return (
-    <EntityCards
-      label="Classes"
-      items={groups.flatMap((g) =>
-        g.items.map((c) => ({ id: c.id, name: c.name, group: g.label, chips: classChips(c) })),
-      )}
-      selected={selectedId}
-      onSelect={(id) => change((c) => chooseClass(c, { kind: 'class', id }, content.index))}
-      onRead={read}
-      expanded={expanded}
-    />
+    <>
+      <div className={styles.startLevel} role="group" aria-label="Starting level">
+        <span className={styles.startLevelText}>
+          <strong>Starting level</strong>
+          <span className={styles.pickDetail}>
+            Most games start at 1. Starting higher, you make level 1 here, then each level above it.
+          </span>
+        </span>
+        <div className={styles.stepper}>
+          <StepButton
+            label="Lower starting level"
+            symbol="−"
+            blocked={level <= 1 || !selected}
+            onStep={() => setLevel(level - 1)}
+          />
+          <output className={styles.stepperValue} aria-live="polite">
+            {level}
+          </output>
+          <StepButton
+            label="Raise starting level"
+            symbol="+"
+            blocked={level >= MAX_LEVEL || !selected}
+            onStep={() => setLevel(level + 1)}
+          />
+        </div>
+      </div>
+      <EntityCards
+        label="Classes"
+        items={groups.flatMap((g) =>
+          g.items.map((c) => ({ id: c.id, name: c.name, group: g.label, chips: classChips(c) })),
+        )}
+        selected={selectedId}
+        onSelect={(id) =>
+          change((c) => retakeLevels(chooseClass(c, { kind: 'class', id }, content.index), deps))
+        }
+        onRead={read}
+        expanded={expanded}
+      />
+    </>
   );
 }

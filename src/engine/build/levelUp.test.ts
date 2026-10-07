@@ -6,7 +6,16 @@ import type { ContentIndex } from '../content/contentIndex.ts';
 import { derive } from '../derive/derive.ts';
 import { setSubclass } from './build.ts';
 import { createCatalog, type Catalog } from './catalog.ts';
-import { levelUpOptions, planLevelUp, readLevelUp, setLevelHp } from './levelUp.ts';
+import {
+  autoFillLevel,
+  changeLevelClass,
+  levelUpOptions,
+  planLevelUp,
+  readLevelUp,
+  setLevelHp,
+  setStartLevel,
+} from './levelUp.ts';
+import { chooseBackground, chooseClass, chooseSpecies, newDraft } from './wizard.ts';
 import { quickBuild } from './quickBuild.ts';
 
 let index: ContentIndex;
@@ -136,5 +145,60 @@ describe('level-up (plan §9.4, step 5.1)', () => {
   it('a level past 20 is an issue', () => {
     const plan = planLevelUp(build('brute|tst', 20), brute, deps());
     expect(plan.issues).toEqual(['Characters go up to level 20.']);
+  });
+});
+
+describe('higher-level creation (plan §9.4, step 5.4)', () => {
+  const draft = () =>
+    chooseSpecies(
+      chooseBackground(chooseClass(newDraft(0), brute, index), {
+        kind: 'background',
+        id: 'arena hand|tst',
+      }),
+      { kind: 'species', id: 'mossling|tst' },
+    );
+
+  it('levels are added in the last class, each made automatically; level 1 is left alone', () => {
+    const c = setStartLevel(draft(), 4, { ...deps(), now: 0 });
+    expect(c.log.map((e) => `${e.classRef.id} ${e.classLevel}`)).toEqual([
+      'brute|tst 1',
+      'brute|tst 2',
+      'brute|tst 3',
+      'brute|tst 4',
+    ]);
+    expect(c.log[2]!.subclassRef?.id).toBe('spark|brute|tst|tst');
+    const sheet = derive(c, index, { registry });
+    // Level 1's picks are still the player's to make.
+    expect(c.log[0]!.choices).toEqual([]);
+    expect(sheet.choices.pending.some((p) => p.offer.key.slot === 'skills')).toBe(true);
+    // The levels' own picks are made (the Ability Score Improvement's feat).
+    expect(c.log[3]!.choices.map((r) => r.key.slot)).toContain('feat');
+    expect(c.log[3]!.choices.every((r) => r.via === 'levelUp')).toBe(true);
+    // Back down: the top levels go.
+    expect(setStartLevel(c, 2, deps()).log).toEqual(c.log.slice(0, 2));
+  });
+
+  it('the same as levelling up one level at a time with the same picks', () => {
+    let stepwise = draft();
+    for (let l = 2; l <= 5; l++)
+      stepwise = autoFillLevel(planLevelUp(stepwise, brute, deps()).character, {
+        ...deps(),
+        now: 0,
+      });
+    expect(setStartLevel(draft(), 5, { ...deps(), now: 0 }).log).toEqual(stepwise.log);
+  });
+
+  it('changing a level’s class takes it and the levels after it again', () => {
+    const c = setStartLevel(draft(), 3, { ...deps(), now: 0 });
+    const multi = changeLevelClass(c, 1, lorekeeper, { ...deps(), now: 0 });
+    expect(multi.log.map((e) => `${e.classRef.id} ${e.classLevel}`)).toEqual([
+      'brute|tst 1',
+      'lorekeeper|tst 1',
+      'brute|tst 2',
+    ]);
+    // The hit points chosen for a level stay with it.
+    const rolled = setLevelHp(multi, { mode: 'roll', value: 2 }, 1);
+    expect(rolled.log[1]!.hp).toEqual({ mode: 'roll', value: 2 });
+    expect(rolled.log[2]!.hp).toEqual({ mode: 'avg' });
   });
 });

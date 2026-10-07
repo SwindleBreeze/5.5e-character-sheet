@@ -293,4 +293,40 @@ describe('creation wizard', () => {
       'Strength',
     );
   });
+
+  it('starting above level 1: each level made for you, changed on its card (plan step 5.4)', async () => {
+    const user = userEvent.setup();
+    renderApp('/new/draft/class');
+    await brute(user);
+    await user.click(screen.getByRole('button', { name: 'Raise starting level' }));
+    await user.click(screen.getByRole('button', { name: 'Raise starting level' }));
+    expect(screen.getByRole('group', { name: 'Starting level' })).toHaveTextContent('3');
+    expect(screen.getByText(/Higher levels/)).toBeInTheDocument();
+    await user.click(next(/Background ›/));
+    await arenaHand(user);
+    await user.click(next(/Species ›/));
+    await deepMossling(user);
+    await user.click(next(/Ability scores ›/));
+    await user.click(next(/Spells ›|Higher levels ›/));
+    while (!screen.queryByRole('list', { name: 'Levels' })) await user.click(next(/›/));
+
+    const levels = within(screen.getByRole('list', { name: 'Levels' }));
+    const three = within(levels.getByRole('listitem', { name: 'Level 3' }));
+    // The subclass comes at Brute 3, picked for you.
+    expect(three.getByRole('combobox', { name: 'Brute Path' })).toHaveValue('spark|brute|tst|tst');
+    // Level 2 as a Lorekeeper instead: a multiclass, with its requirement.
+    const two = within(levels.getByRole('listitem', { name: 'Level 2' }));
+    await user.selectOptions(two.getByRole('combobox', { name: 'Class' }), 'lorekeeper|tst');
+    expect(
+      within(screen.getByRole('listitem', { name: 'Level 2' })).getByText(
+        /Lorekeeper: Intelligence 13\+/,
+      ),
+    ).toBeInTheDocument();
+    const c = await stored((x) => x.log[1]?.classRef.id === 'lorekeeper|tst');
+    expect(c.log.map((e) => `${e.classRef.id} ${e.classLevel}`)).toEqual([
+      'brute|tst 1',
+      'lorekeeper|tst 1',
+      'brute|tst 2',
+    ]);
+  });
 });

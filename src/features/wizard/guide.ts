@@ -37,6 +37,10 @@ export const STEP_INTROS: Readonly<Record<WizardStep, StepIntro>> = {
     rule: 'Step 1 of 5, continued · Spells',
     lead: 'The spells your class, species or feats give you.',
   },
+  levels: {
+    rule: 'Your starting level',
+    lead: 'Each level above 1, as if you had levelled up: its class, hit points and choices. They are made for you; change any of them.',
+  },
   details: {
     rule: 'Steps 4 and 5 of 5 · Alignment and details',
     lead: 'A name, a look, a personality and an alignment: who your character is. None of it changes a number.',
