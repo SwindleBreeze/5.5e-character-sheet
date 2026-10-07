@@ -438,7 +438,14 @@ export function collectEffects(
     addOwner(ref, ctx);
     const entity = index.get(ref);
     if (!entity) return;
+    // Features it offers as a choice come only when picked (Blessed Strikes: one of two).
+    const options = new Set(
+      [...entity.effects, ...(opts.registry?.[refKey(ref)]?.effects ?? [])].flatMap((e) =>
+        e.type === 'featureOptions' && Array.isArray(e.choice.from) ? e.choice.from : [],
+      ),
+    );
     for (const nested of nestedFeatureRefs(entity)) {
+      if (options.has(nested.id)) continue;
       // Only loaded ones: a nested ref that doesn't resolve is text, not a lost feature.
       const feature = index.get(nested);
       if (

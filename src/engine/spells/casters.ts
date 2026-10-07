@@ -116,6 +116,22 @@ export function spellChoiceEffects(sc: ClassSpellcasting, owner: CasterOwner): E
         spell: { choose: `${levelsUpTo(top)}|${list}`, count: book, slot: `spellbook.${level}` },
       });
     }
+    // Spells gained at set levels outside the table (Mystic Arcanum: one level 6 spell at
+    // Warlock 11, 7 at 13…), each cast once per Long Rest without a slot (plan step 5.8).
+    for (const [spellLevel, count] of Object.entries(sc.fixedByLevel?.[level] ?? {})) {
+      if (count <= 0) continue;
+      grants.push({
+        mode: 'known',
+        ability: sc.ability,
+        spell: {
+          choose: `level=${spellLevel}|${list}`,
+          count,
+          slot: `arcanum.${level}`,
+          retrain: 'levelUp',
+        },
+        uses: { count: 1, recharge: 'long' },
+      });
+    }
     if (grants.length)
       out.push({ type: 'atLevel', level, effects: [{ type: 'grantSpells', spells: grants }] });
   }

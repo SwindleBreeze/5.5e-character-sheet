@@ -135,9 +135,10 @@ export function deriveFeatures(
     offersByOwner.set(k, [...(offersByOwner.get(k) ?? []), offer]);
   }
 
-  // A class's picks that come with one of its levels: `cantrips.3`, `spellbook.5`, `spells.2`.
+  // A class's picks that come with one of its levels: `cantrips.3`, `spellbook.5`, `spells.2`,
+  // `arcanum.11`.
   const slotLevel = (slot: string): number | undefined => {
-    const m = /^(?:cantrips|spells|spellbook)\.(\d+)$/.exec(slot);
+    const m = /^(?:cantrips|spells|spellbook|arcanum)\.(\d+)$/.exec(slot);
     return m ? Number(m[1]) : undefined;
   };
 
