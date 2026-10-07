@@ -119,7 +119,8 @@ export function coins(cp: number): { gp: number; sp: number; cp: number } {
 
 /**
  * Add a starting equipment option to the inventory and purse. Armor, a shield and the first
- * weapon are equipped; a two-handed weapon goes in both hands.
+ * weapon are equipped; a two-handed weapon goes in both hands. From a stack (two Daggers), one
+ * is held and the rest are stowed.
  */
 export function applyEquipment(
   c: Character,
@@ -147,7 +148,11 @@ export function applyEquipment(
       if (!twoHanded) row.equipped = 'mainHand';
       else if (!hasSlot('shield')) row.equipped = 'bothHands';
     }
-    n.inventory.push(row);
+    n.inventory.push(row.equipped && row.quantity > 1 ? { ...row, quantity: 1 } : row);
+    if (row.equipped && row.quantity > 1) {
+      const { equipped: _held, ...rest } = row;
+      n.inventory.push({ ...rest, uid: `${row.uid}-rest`, quantity: row.quantity - 1 });
+    }
   });
   const add = coins(option.valueCp);
   n.currency = {

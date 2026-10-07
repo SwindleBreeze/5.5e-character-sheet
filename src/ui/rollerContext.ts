@@ -12,6 +12,8 @@ export interface RollRequest {
   mode?: RollMode;
   /** For attack rolls: the lowest natural d20 that is a Critical Hit (20, or 19 with a feature). */
   critOn?: number;
+  /** Where the bonus comes from: `DEX modifier +2 · Proficiency Bonus +2`. */
+  breakdown?: string;
 }
 
 export interface ShownRoll extends RollRequest {
@@ -19,8 +21,16 @@ export interface ShownRoll extends RollRequest {
   result: RollResult;
 }
 
+/** Shown like a roll, with no dice: `Cast Shield`, `Level 1 slot expended, 2 left`. */
+export interface Notice {
+  label: string;
+  detail?: string;
+}
+
 export interface RollerApi {
   roll: (request: RollRequest) => RollResult;
+  /** Say what was just done (a spell cast), in a toast like a roll's. Not kept in history. */
+  notify: (notice: Notice) => void;
   /** Rolls made in the current scope, newest first: the last `HISTORY_SIZE`, in memory only. */
   history: () => ShownRoll[];
   /** Whose rolls are kept: a character's id while its sheet is open, `''` elsewhere. */

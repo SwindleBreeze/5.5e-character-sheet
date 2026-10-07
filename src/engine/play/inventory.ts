@@ -113,7 +113,8 @@ const FREES: Record<EquipSlot, EquipSlot[]> = {
  * Put a row in a slot, or stow it (`null`). Armor is one suit, a Shield one, and hands are two:
  * whatever the new item displaces is stowed, except that a weapon held in both hands that
  * can be held in one moves to the main hand when a Shield or an off-hand item takes the other.
- * From a stack, one item is equipped and the rest stay. Equipped items leave their container.
+ * From a stack, one item is equipped and the rest stay (where they were: a held stack of two
+ * Daggers put in the off hand leaves one in each hand). Equipped items leave their container.
  */
 export function equipItem(
   c: Character,
@@ -132,7 +133,7 @@ export function equipItem(
     return n;
   }
   if (row.equipped === slot) return c;
-  if (row.quantity > 1 && !row.equipped) {
+  if (row.quantity > 1) {
     const one: InventoryItem = { ...structuredClone(row), uid: makeUid(), quantity: 1 };
     row.quantity -= 1;
     row.attuned = false;
@@ -165,6 +166,23 @@ export function equipItem(
   }
   target.equipped = slot;
   return n;
+}
+
+/**
+ * Draw a stowed weapon to attack with it (2024: part of an attack with the Attack action):
+ * into both hands when it needs them, else a free hand, else the main hand (what was there is
+ * stowed). A weapon already in hand stays where it is.
+ */
+export function drawWeapon(c: Character, uid: string, index: ContentIndex): Character {
+  const row = find(c, uid);
+  if (!row || row.equipped) return c;
+  const slots = equipSlots(row.itemRef && index.get({ kind: 'item', id: row.itemRef.id }));
+  if (slots[0] === 'bothHands') return equipItem(c, uid, 'bothHands', index);
+  const held = c.inventory.filter((r) => r.equipped);
+  const hands = held.reduce((h, r) => h + SLOT_HANDS[r.equipped!], 0);
+  const mainFree = !held.some((r) => r.equipped === 'mainHand' || r.equipped === 'bothHands');
+  const slot = !mainFree && hands < 2 && slots.includes('offHand') ? 'offHand' : 'mainHand';
+  return equipItem(c, uid, slot, index);
 }
 
 export function setAttuned(c: Character, uid: string, attuned: boolean): Character {

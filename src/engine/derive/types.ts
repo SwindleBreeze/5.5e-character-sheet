@@ -219,6 +219,8 @@ export interface DerivedGrantedSpell {
   ability?: Ability;
   dc?: number;
   attackBonus?: number;
+  /** The spell attack roll, when the grant names its ability. */
+  attack?: DerivedRoll;
   uses?: SpellGrant['uses'];
   /** For a counted use: how many, and where spent uses are stored. */
   usesMax?: number;

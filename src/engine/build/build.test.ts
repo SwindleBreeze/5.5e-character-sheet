@@ -129,6 +129,18 @@ describe('build helpers', () => {
       ['Buckler', 'shield'],
       ['Arc Bow', undefined],
     ]);
+
+    // Two Shivs: one in hand, the other stowed.
+    const shivs = applyEquipment(
+      startCharacter('Ed', brute, 7),
+      { key: 'X', valueCp: 0, items: [{ itemId: 'shiv|tst', quantity: 2 }] },
+      index,
+      7,
+    );
+    expect(shivs.inventory.map((r) => [r.name, r.quantity, r.equipped])).toEqual([
+      ['Shiv', 1, 'mainHand'],
+      ['Shiv', 1, undefined],
+    ]);
   });
 });
 

@@ -1,5 +1,5 @@
 // The spells the Spells tab lists: each caster's cantrips and prepared spells, spells always
-// prepared, a Wizard's spellbook (shown apart), and spells from feats, species and items.
+// prepared, a Wizard's whole spellbook (shown apart), and spells from feats, species and items.
 
 import type { ContentIndex } from '../../../engine/content/contentIndex.ts';
 import type { DerivedSheet } from '../../../engine/derive/types.ts';
@@ -20,7 +20,7 @@ export interface SpellEntry {
 export interface SpellLists {
   /** Spells the character can cast: by caster, then granted. */
   ready: SpellEntry[];
-  /** Spellbook spells not prepared, by caster key. */
+  /** Every spellbook spell, prepared or not, by caster key. */
   spellbooks: Record<string, SpellEntry[]>;
 }
 
@@ -48,9 +48,9 @@ export function spellLists(sheet: DerivedSheet, index: ContentIndex): SpellLists
     );
     if (c.spellbook) {
       const prepared = new Set([...own, ...always]);
-      spellbooks[c.key] = c.spellbook
-        .filter((id) => !prepared.has(id))
-        .map((id) => entry(id, 'spellbook'));
+      spellbooks[c.key] = c.spellbook.map((id) =>
+        entry(id, always.has(id) ? 'always' : prepared.has(id) ? 'prepared' : 'spellbook'),
+      );
     }
   }
   sheet.spellcasting.granted.forEach((g, i) => {

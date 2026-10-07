@@ -1,9 +1,10 @@
 // The Spells tab (plan §9.2, step 3.18): per caster its ability, save DC, spell attack and
 // prepared count; spell slot pips to spend and restore (Pact Magic apart); Concentration;
 // spells by level with their markers and free uses. A spell opens its text and the ways to
-// cast it; Long Rest casters change their prepared spells; a Wizard's spellbook is shown too.
+// cast it; Long Rest casters change their prepared spells; a Wizard's spellbook opens under
+// its caster.
 
-import { useRef, useState, type ReactNode } from 'react';
+import { Fragment, useRef, useState, type ReactNode } from 'react';
 import type { DerivedCaster, DerivedSheet, DerivedSlot } from '../../engine/derive/types.ts';
 import { castWays, isConcentration, type CastWay } from '../../engine/play/casting.ts';
 import {
@@ -20,9 +21,11 @@ import type { Character } from '../../schema/index.ts';
 import { Badge } from '../../ui/Badge.tsx';
 import { Button } from '../../ui/Button.tsx';
 import { Counter } from '../../ui/Counter.tsx';
+import { useRoller } from '../../ui/rollerContext.ts';
 import { useSheet } from '../../ui/sheetContext.ts';
 import { columnsFor, useContainerWidth } from '../../ui/useContainerWidth.ts';
 import { ABILITY_NAMES } from '../../schema/index.ts';
+import { ABILITY_ABBR } from './components/format.ts';
 import { RollButton } from './components/RollButton.tsx';
 import { SectionHeader } from './components/stats.tsx';
 import { useExplain } from './components/useExplain.tsx';
@@ -30,7 +33,7 @@ import { nameOf, type SheetBindings } from './sheetBindings.ts';
 import { CastSheet } from './spells/CastSheet.tsx';
 import { byLevel, spellLists, type SpellEntry } from './spells/entries.ts';
 import { PrepareSheet } from './spells/PrepareSheet.tsx';
-import { castingTime, levelHeading } from './spells/spellText.ts';
+import { castingTime, castNotice, levelHeading, whereFrom } from './spells/spellText.ts';
 import mainStyles from './MainTab.module.css';
 import styles from './spells/spells.module.css';
 
@@ -77,6 +80,7 @@ export function SpellsTab({ character, sheet, index, apply }: SheetBindings) {
   const columns = columnsFor(useContainerWidth(ref));
   const ui = useSheet();
   const explain = useExplain();
+  const roller = useRoller();
   const [openBooks, setOpenBooks] = useState<string[]>([]);
   const sc = sheet.spellcasting;
   const { ready, spellbooks } = spellLists(sheet, index);
@@ -91,6 +95,7 @@ export function SpellsTab({ character, sheet, index, apply }: SheetBindings) {
     const s = e.spell;
     if (!s) return;
     const ways = castWays(sheet, s, e.from);
+    const caster = sc.casters.find((c) => c.key === e.from.caster?.key);
     ui.open({
       key: `cast:${e.key}`,
       title: s.name,
@@ -104,8 +109,20 @@ export function SpellsTab({ character, sheet, index, apply }: SheetBindings) {
           character={character}
           index={index}
           why={whyNot(e)}
+          from={whereFrom(e, s, sheet)}
+          attack={caster?.attack ?? e.from.granted?.attack}
+          dc={caster?.dc.value ?? e.from.granted?.dc}
           onCast={(way: CastWay) => {
             ui.close();
+            const was = character.state.concentration;
+            const ended =
+              isConcentration(s) && was && !(was.kind === 'spell' && was.id === s.id)
+                ? ` · Concentration on ${nameOf(index, was.kind, was.id)} ends`
+                : '';
+            roller.notify({
+              label: `Cast ${s.name}`,
+              detail: `${castNotice(way, s, e.sourceName)}${isConcentration(s) ? ' · Concentrating' : ''}${ended}`,
+            });
             apply((c) =>
               castSpellAs(
                 c,
@@ -208,22 +225,48 @@ export function SpellsTab({ character, sheet, index, apply }: SheetBindings) {
         </div>
       )}
       {sc.casters.map((c) => (
-        <CasterCard
-          key={c.key}
-          caster={c}
-          bookOpen={openBooks.includes(c.key)}
-          onExplainDc={() =>
-            explain({ key: `spells.${c.key}.dc`, title: `${c.name}: spell save DC`, derived: c.dc })
-          }
-          onPrepare={() => openPrepare(c)}
-          onBook={() =>
-            setOpenBooks(
-              openBooks.includes(c.key)
-                ? openBooks.filter((k) => k !== c.key)
-                : [...openBooks, c.key],
-            )
-          }
-        />
+        <Fragment key={c.key}>
+          <CasterCard
+            caster={c}
+            bookOpen={openBooks.includes(c.key)}
+            onExplainDc={() =>
+              explain({
+                key: `spells.${c.key}.dc`,
+                title: `${c.name}: spell save DC`,
+                derived: c.dc,
+                note: 'When one of your spells calls for a saving throw, the target rolls against this number.',
+              })
+            }
+            onExplainAttack={() =>
+              explain({
+                key: `spells.${c.key}.attack`,
+                title: `${c.name}: spell attack`,
+                derived: c.attack.bonus,
+                bonus: true,
+                note: 'When one of your spells calls for a spell attack, roll a d20 and add this bonus. It hits when the total equals or exceeds the target’s Armor Class.',
+              })
+            }
+            onPrepare={() => openPrepare(c)}
+            onBook={() =>
+              setOpenBooks(
+                openBooks.includes(c.key)
+                  ? openBooks.filter((k) => k !== c.key)
+                  : [...openBooks, c.key],
+              )
+            }
+          />
+          {c.spellbook && openBooks.includes(c.key) && (
+            <Section id={`book-${c.key}`} title={`${c.name} spellbook`}>
+              <p className={styles.muted}>
+                A spell that isn’t prepared can’t be cast, except one with the Ritual tag: as a
+                Ritual, reading from the book.
+              </p>
+              <div className={styles.levels}>
+                {lists(spellbooks[c.key] ?? [], `${c.name} spellbook`)}
+              </div>
+            </Section>
+          )}
+        </Fragment>
       ))}
       {(sc.slots.length > 0 || sc.pact) && (
         <Section id="slots" title="Spell slots">
@@ -257,24 +300,9 @@ export function SpellsTab({ character, sheet, index, apply }: SheetBindings) {
   );
 
   const spellBlock = (
-    <>
-      <Section id="list" title="Spells">
-        <div className={styles.levels}>{lists(ready, 'Spells')}</div>
-      </Section>
-      {sc.casters
-        .filter((c) => c.spellbook && openBooks.includes(c.key))
-        .map((c) => (
-          <Section key={c.key} id={`book-${c.key}`} title={`${c.name} spellbook, not prepared`}>
-            <p className={styles.muted}>
-              Not prepared, so not castable, except a spell with the Ritual tag: as a Ritual,
-              reading from the book.
-            </p>
-            <div className={styles.levels}>
-              {lists(spellbooks[c.key] ?? [], `${c.name} spellbook`)}
-            </div>
-          </Section>
-        ))}
-    </>
+    <Section id="list" title="Spells">
+      <div className={styles.levels}>{lists(ready, 'Spells')}</div>
+    </Section>
   );
 
   return (
@@ -298,12 +326,14 @@ function CasterCard({
   caster: c,
   bookOpen,
   onExplainDc,
+  onExplainAttack,
   onPrepare,
   onBook,
 }: {
   caster: DerivedCaster;
   bookOpen: boolean;
   onExplainDc: () => void;
+  onExplainAttack: () => void;
   onPrepare: () => void;
   onBook: () => void;
 }) {
@@ -323,7 +353,9 @@ function CasterCard({
           <span className={`${styles.dc} numeric`}>{c.dc.value}</span>
         </span>
         <span className={styles.stat}>
-          <span className={styles.label}>Spell attack</span>
+          <button type="button" className={styles.statButton} onClick={onExplainAttack}>
+            Spell attack
+          </button>
           <RollButton label={`${c.name} spell attack`} roll={c.attack} />
         </span>
       </div>
@@ -449,6 +481,7 @@ function SpellRow({
           </abbr>
         )}
         {e.from.caster?.status === 'always' && <Badge>Always prepared</Badge>}
+        {e.from.caster?.status === 'spellbook' && <Badge>Not prepared</Badge>}
         {concentrating && <Badge variant="accent">Concentrating</Badge>}
         {!s && <Badge variant="warning">Not imported</Badge>}
       </span>
@@ -462,6 +495,8 @@ function SpellRow({
       )}
       <span className={styles.meta}>
         {s ? castingTime(s) : ''}
+        {s?.attack && ' · spell attack'}
+        {s?.saves?.[0] && ` · ${s.saves.map((a) => ABILITY_ABBR[a]).join(' or ')} save`}
         {many && ` · ${e.sourceName}`}
         {g?.uses === 'atWill' && ' · at will'}
         {resource && ` · ${g!.cost ?? 1} ${resource.name} per cast`}

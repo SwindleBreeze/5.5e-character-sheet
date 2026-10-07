@@ -106,6 +106,14 @@ describe('Actions tab', () => {
     expect(screen.getByRole('button', { name: '2 per Attack action' })).toBeInTheDocument();
   });
 
+  it('rolling for a stowed weapon draws it into the free hand', async () => {
+    const user = userEvent.setup();
+    renderTab(brute());
+    await user.click(within(card('shiv')).getByRole('button', { name: /^Roll shiv: to hit/ }));
+    expect(last.inventory.map((r) => r.equipped)).toEqual(['mainHand', 'offHand']);
+    expect(within(card('shiv')).queryByText('Stowed')).not.toBeInTheDocument();
+  });
+
   it('rolls to hit; a natural 20 marks a Critical Hit, which doubles the damage dice', async () => {
     const user = userEvent.setup();
     renderTab(brute(), fixedRng([face(20, 20), face(5, 8), face(3, 8)]));
@@ -114,6 +122,8 @@ describe('Actions tab', () => {
     expect(
       within(rolls()).getByRole('button', { name: 'net blade: to hit: 27. Dismiss' }),
     ).toHaveAttribute('data-natural', 'crit');
+    // Where the +7 comes from, with the result.
+    expect(within(rolls()).getByText('STR modifier +4 · Proficiency +3')).toBeInTheDocument();
     expect(blade.getByRole('button', { name: 'Critical hit' })).toHaveAttribute(
       'aria-pressed',
       'true',

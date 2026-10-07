@@ -19,7 +19,7 @@ import { EntitySheet } from '../../../richtext/EntitySheet.tsx';
 import { Badge } from '../../../ui/Badge.tsx';
 import { useRoller } from '../../../ui/rollerContext.ts';
 import { useSheet } from '../../../ui/sheetContext.ts';
-import { ABILITY_ABBR } from '../components/format.ts';
+import { ABILITY_ABBR, rollBreakdown } from '../components/format.ts';
 import { RollButton } from '../components/RollButton.tsx';
 import { useCostPicker } from '../components/useCostPicker.tsx';
 import { useExplain } from '../components/useExplain.tsx';
@@ -56,6 +56,8 @@ export interface AttackCardProps {
   onSpendAmmo?: (rowUid: string) => void;
   /** After a fight: recover half the ammunition used from these rows, or lose it all. */
   onRecoverAmmo?: (rowUids: string[], recover: boolean) => void;
+  /** Draw the stowed weapon: rolling for it draws it, as part of the attack. */
+  onDraw?: () => void;
 }
 
 export function AttackCard({
@@ -67,6 +69,7 @@ export function AttackCard({
   onPayRiders,
   onSpendAmmo,
   onRecoverAmmo,
+  onDraw,
 }: AttackCardProps) {
   const roller = useRoller();
   const sheet = useSheet();
@@ -107,7 +110,12 @@ export function AttackCard({
         roller.roll({
           label: `${a.name}: ${label}${crit ? ', critical hit' : ''} (${[...new Set(types)].join(', ')})`,
           expr,
+          breakdown: rollBreakdown(
+            damageBonus,
+            riders.map((r) => ({ label: r.name, dice: r.dice })),
+          ),
         });
+        if (stowed) onDraw?.();
         const once = riders.filter((r) => r.oncePerTurn).map((r) => r.id);
         if (once.length) onRidersUsed(once);
         setChosen([]);
@@ -171,6 +179,7 @@ export function AttackCard({
                 setCrit(r.natural !== undefined && r.natural >= a.critRange);
                 // Each attack expends one piece of ammunition.
                 if (ammo && onSpendAmmo) onSpendAmmo(ammo.rowUid);
+                if (stowed) onDraw?.();
               }}
             />
           </span>
@@ -445,8 +454,8 @@ function AttackRules({
   if (stowed) {
     lines.push(
       thrown
-        ? 'Stowed: draw it as part of an attack with the Attack action (one weapon per attack), or as part of throwing it.'
-        : 'Stowed: draw it as part of an attack with the Attack action (one weapon per attack).',
+        ? 'Stowed: draw it as part of an attack with the Attack action (one weapon per attack), or as part of throwing it. Rolling for it draws it.'
+        : 'Stowed: draw it as part of an attack with the Attack action (one weapon per attack). Rolling for it draws it.',
     );
   }
   if (a.use.kind === 'lightExtra') {

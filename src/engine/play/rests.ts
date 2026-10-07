@@ -1,5 +1,5 @@
-// What a rest gives back (plan §9.2, step 3.22): the character before and after a rest,
-// compared, as lines a player can read before confirming. Pure.
+// What a rest costs and gives back (plan §9.2, step 3.22): the character before and after a
+// rest, compared, as lines a player can read before confirming. Pure.
 
 import type { Character, Id, Ref } from '../../schema/index.ts';
 import type { DerivedSheet } from '../derive/types.ts';
@@ -19,6 +19,13 @@ export function canRest(sheet: DerivedSheet): boolean {
 
 const times = (n: number) => (n === 1 ? 'one' : String(n));
 
+/** A rest's changes: what it spends, what comes back, and what ends or drops. */
+export interface RestSummary {
+  spent: string[];
+  back: string[];
+  ends: string[];
+}
+
 /**
  * What changed between `before` and `after`, for the rest's summary. `nameOf` names spells
  * and the concentration effect.
@@ -28,8 +35,10 @@ export function restSummary(
   after: Character,
   sheet: DerivedSheet,
   nameOf: (ref: Ref) => string,
-): string[] {
+): RestSummary {
+  const spent: string[] = [];
   const out: string[] = [];
+  const ends: string[] = [];
   const b = before.state;
   const a = after.state;
   const max = sheet.hp.max.value;
@@ -39,11 +48,12 @@ export function restSummary(
     const now = max - Math.min(a.damage, max);
     out.push(`Hit Points: ${healed} back (${now === max ? 'full' : `${now} of ${max}`})`);
   }
-  if (b.tempHp > 0 && a.tempHp === 0) out.push(`Temporary Hit Points end (${b.tempHp})`);
+  if (b.tempHp > 0 && a.tempHp === 0) ends.push(`Temporary Hit Points end (${b.tempHp})`);
   for (const h of sheet.hitDice) {
     const back = (b.hitDiceUsed[h.faces] ?? 0) - (a.hitDiceUsed[h.faces] ?? 0);
     if (back > 0) out.push(`Hit Dice: ${back} d${h.faces} back`);
-    if (back < 0) out.push(`Hit Dice: ${-back} d${h.faces} spent`);
+    const left = h.total - (a.hitDiceUsed[h.faces] ?? 0);
+    if (back < 0) spent.push(`Hit Dice: ${-back} d${h.faces} (${left} of ${h.total} left)`);
   }
   const slots = b.slotsUsed
     .map((used, i) => ({ level: i + 1, back: used - (a.slotsUsed[i] ?? 0) }))
@@ -70,15 +80,15 @@ export function restSummary(
     if (back > 0) out.push(`${row.name}: ${back} charges back`);
   }
   if (a.exhaustion < b.exhaustion) {
-    out.push(
+    ends.push(
       a.exhaustion ? `Exhaustion: level ${b.exhaustion} → ${a.exhaustion}` : 'Exhaustion ends',
     );
   }
   if (b.concentration && !a.concentration) {
-    out.push(`Concentration on ${nameOf(b.concentration)} ends`);
+    ends.push(`Concentration on ${nameOf(b.concentration)} ends`);
   }
   for (const t of sheet.toggles) {
-    if (b.activeToggles[t.toggleId] && !a.activeToggles[t.toggleId]) out.push(`${t.name} ends`);
+    if (b.activeToggles[t.toggleId] && !a.activeToggles[t.toggleId]) ends.push(`${t.name} ends`);
   }
-  return out;
+  return { spent, back: out, ends };
 }

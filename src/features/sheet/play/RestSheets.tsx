@@ -1,10 +1,10 @@
-// Short and Long Rests (plan §9.2, step 3.22). Both list what the rest gives back before it is
-// taken, and say what came back afterwards. On a Short Rest the player spends Hit Dice one at
-// a time (the 2024 rules let you decide after each roll): rolled here, rolled with their own
-// dice and typed in, or taken at the fixed value.
+// Short and Long Rests (plan §9.2, step 3.22). Both list what the rest spends, gives back and
+// ends before it is taken, and say so again afterwards. On a Short Rest the player spends Hit
+// Dice one at a time (the 2024 rules let you decide after each roll): rolled here, rolled with
+// their own dice and typed in, or taken at the fixed value.
 
 import { useState } from 'react';
-import { hitDieFixed, canRest, restSummary } from '../../../engine/play/rests.ts';
+import { hitDieFixed, canRest, restSummary, type RestSummary } from '../../../engine/play/rests.ts';
 import { longRest, shortRest } from '../../../engine/play/reducers.ts';
 import type { Character } from '../../../schema/index.ts';
 import { Button } from '../../../ui/Button.tsx';
@@ -22,16 +22,33 @@ const METHODS: { id: Method; label: string }[] = [
   { id: 'fixed', label: 'Fixed value' },
 ];
 
-function Summary({ lines, empty }: { lines: string[]; empty: string }) {
-  return lines.length ? (
-    <ul className={styles.summary}>
-      {lines.map((l) => (
-        <li key={l}>{l}</li>
-      ))}
-    </ul>
-  ) : (
-    <p className={inventory.muted}>{empty}</p>
-  );
+const HEADINGS = {
+  preview: { spent: 'You spend', back: 'You get back', ends: 'Ends or drops' },
+  done: { spent: 'You spent', back: 'You got back', ends: 'Ended or dropped' },
+};
+
+/** What the rest spends, gives back and ends, before it is taken (`preview`) or after. */
+function Summary({
+  summary,
+  tense,
+  empty,
+}: {
+  summary: RestSummary;
+  tense: keyof typeof HEADINGS;
+  empty: string;
+}) {
+  const parts = (['spent', 'back', 'ends'] as const).filter((p) => summary[p].length);
+  if (!parts.length) return <p className={inventory.muted}>{empty}</p>;
+  return parts.map((p) => (
+    <section key={p} aria-label={HEADINGS[tense][p]}>
+      <h3 className={inventory.fieldLabel}>{HEADINGS[tense][p]}</h3>
+      <ul className={styles.summary}>
+        {summary[p].map((l) => (
+          <li key={l}>{l}</li>
+        ))}
+      </ul>
+    </section>
+  ));
 }
 
 function NeedsHp({ bindings }: { bindings: SheetBindings }) {
@@ -62,7 +79,7 @@ export function ShortRestSheet({
   const [method, setMethod] = useState<Method>('roll');
   const [spent, setSpent] = useState<{ faces: number; roll: number }[]>([]);
   const [typed, setTyped] = useState<Record<number, string>>({});
-  const [done, setDone] = useState<string[] | null>(null);
+  const [done, setDone] = useState<RestSummary | null>(null);
   const con = sheet.abilities.con.mod;
 
   const spend = spent.reduce<{ faces: number; rolls: number[] }[]>((out, s) => {
@@ -76,8 +93,8 @@ export function ShortRestSheet({
   if (done) {
     return (
       <div className={inventory.form}>
-        <p>You finished a Short Rest. What came back:</p>
-        <Summary lines={done} empty="Nothing: nothing was spent." />
+        <p>You finished a Short Rest.</p>
+        <Summary summary={done} tense="done" empty="Nothing changed: nothing was spent." />
         <div className={inventory.actions}>
           <Button variant="primary" onClick={onClose}>
             Close
@@ -167,7 +184,7 @@ export function ShortRestSheet({
       {spent.length > 0 && (
         <div className={inventory.field}>
           <span>
-            Spent:{' '}
+            Rolls:{' '}
             {spent
               .map((s) => `d${s.faces} ${s.roll}${signed(con)} = ${Math.max(1, s.roll + con)}`)
               .join(', ')}
@@ -178,8 +195,7 @@ export function ShortRestSheet({
         </div>
       )}
 
-      <h3 className={inventory.fieldLabel}>What you get back</h3>
-      <Summary lines={preview} empty="Nothing to get back yet." />
+      <Summary summary={preview} tense="preview" empty="Nothing to get back yet." />
       <div className={inventory.actions}>
         <Button
           variant="primary"
@@ -204,13 +220,13 @@ export function LongRestSheet({
 }) {
   const { character, sheet, apply } = bindings;
   const summary = useSummary(bindings);
-  const [done, setDone] = useState<string[] | null>(null);
+  const [done, setDone] = useState<RestSummary | null>(null);
   const preview = summary(character, longRest(character, sheet));
 
   return (
     <div className={inventory.form}>
       {done ? (
-        <p>You finished a Long Rest. What came back:</p>
+        <p>You finished a Long Rest.</p>
       ) : (
         <>
           <p className={inventory.muted}>
@@ -219,10 +235,13 @@ export function LongRestSheet({
             one level. After one, you must wait 16 hours before starting another.
           </p>
           <NeedsHp bindings={bindings} />
-          <h3 className={inventory.fieldLabel}>What you get back</h3>
         </>
       )}
-      <Summary lines={done ?? preview} empty="Nothing: you have everything already." />
+      <Summary
+        summary={done ?? preview}
+        tense={done ? 'done' : 'preview'}
+        empty="Nothing: you have everything already."
+      />
       <div className={inventory.actions}>
         {done ? (
           <Button variant="primary" onClick={onClose}>

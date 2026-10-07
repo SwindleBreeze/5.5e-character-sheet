@@ -90,12 +90,15 @@ button.name {
   gap: var(--space-2);
 }
 
+/* Tapping it shows where the number comes from. */
 .rollLabel {
   min-height: 32px;
   padding: 0;
   border: 0;
   background: transparent;
   color: var(--color-text-muted);
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
   font-size: var(--font-size-xs);
   font-weight: 700;
   letter-spacing: 0.06em;

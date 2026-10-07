@@ -15,7 +15,7 @@ import {
   type RollAmount,
 } from '../../engine/play/reducers.ts';
 import type { CostChoice } from '../../engine/play/costs.ts';
-import { loseAmmo, recoverAmmo, spendAmmo } from '../../engine/play/inventory.ts';
+import { drawWeapon, loseAmmo, recoverAmmo, spendAmmo } from '../../engine/play/inventory.ts';
 import type { ActionType } from '../../schema/index.ts';
 import { EntitySheet } from '../../richtext/EntitySheet.tsx';
 import { Button } from '../../ui/Button.tsx';
@@ -144,6 +144,7 @@ export function ActionsTab({ character, sheet, index, apply }: SheetBindings) {
               onRecoverAmmo={(rows, recover) =>
                 apply((c) => (recover ? recoverAmmo(c, rows) : loseAmmo(c, rows)))
               }
+              {...(a.rowUid ? { onDraw: () => apply((c) => drawWeapon(c, a.rowUid!, index)) } : {})}
             />
           ))}
         </ul>

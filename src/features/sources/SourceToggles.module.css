@@ -13,6 +13,8 @@
 .group {
   display: flex;
   flex-direction: column;
+  /* A fieldset is at least as wide as its content by default: long names overflowed the card. */
+  min-width: 0;
   margin: 0;
   padding: 0;
   border: 0;
@@ -49,6 +51,7 @@
 .name {
   flex: 1;
   min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .count {

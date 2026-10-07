@@ -8,6 +8,7 @@ import { derive } from '../derive/derive.ts';
 import {
   coinValueCp,
   loseAmmo,
+  drawWeapon,
   equipItem,
   moveItem,
   newRow,
@@ -94,6 +95,21 @@ describe('equipping (one armor, one Shield, two hands)', () => {
     });
   });
 
+  it('drawing a stowed weapon to attack: a free hand first, else the main hand', () => {
+    const c = character([
+      row('blade', 'net blade|tst', { equipped: 'mainHand' }),
+      row('shiv', 'shiv|tst'),
+      row('bow', 'arc bow|tst'),
+    ]);
+    expect(slots(drawWeapon(c, 'shiv', index))).toMatchObject({
+      blade: 'mainHand',
+      shiv: 'offHand',
+    });
+    // A Two-Handed bow takes both hands; one already in hand stays put.
+    expect(slots(drawWeapon(c, 'bow', index))).toMatchObject({ blade: '-', bow: 'bothHands' });
+    expect(drawWeapon(c, 'blade', index)).toBe(c);
+  });
+
   it('one from a stack, out of its container; stowing keeps it out', () => {
     const c = character([
       row('pack', 'backpack|tst'),
@@ -105,6 +121,18 @@ describe('equipping (one armor, one Shield, two hands)', () => {
     expect(held).toMatchObject({ quantity: 1, equipped: 'mainHand' });
     expect(held?.containerUid).toBeUndefined();
     expect(equipItem(next, held!.uid, null, index).inventory[2]?.equipped).toBeUndefined();
+
+    // A stack of two held in the main hand: one goes to the off hand, one in each.
+    const pair = character([row('shivs', 'shiv|tst', { quantity: 2, equipped: 'mainHand' })]);
+    expect(
+      equipItem(pair, 'shivs', 'offHand', index, uid).inventory.map((r) => [
+        r.quantity,
+        r.equipped,
+      ]),
+    ).toEqual([
+      [1, 'mainHand'],
+      [1, 'offHand'],
+    ]);
   });
 });
 

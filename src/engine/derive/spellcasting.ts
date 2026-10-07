@@ -461,6 +461,7 @@ export function deriveSpellcasting(
       'proficient',
       pb,
     );
+    g.attack = attack;
     cantripAttack(g.spellId, g.ability, `${g.source.kind}:${g.source.id}`, g.dc ?? 0, attack);
   }
 

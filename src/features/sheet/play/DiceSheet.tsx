@@ -101,6 +101,7 @@ export function DiceSheet() {
                   )}
                 </span>
                 <span className={inventory.muted}>{describeDice(r.result)}</span>
+                {r.breakdown && <span className={inventory.muted}>{r.breakdown}</span>}
               </span>
               <strong className="numeric">{r.result.total}</strong>
             </li>

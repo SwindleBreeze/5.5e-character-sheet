@@ -169,7 +169,9 @@ describe('spellcasting (P11)', () => {
     });
     const d = run(c);
     expect(d.spellcasting.casters).toEqual([]);
-    expect(d.spellcasting.granted).toEqual([
+    // Each with its own spell attack roll (checked here by its bonus).
+    expect(d.spellcasting.granted.map((g) => g.attack?.bonus.value)).toEqual([5, 4, 4]);
+    expect(d.spellcasting.granted.map(({ attack: _roll, ...g }) => g)).toEqual([
       {
         spellId: 'dim lantern|tst',
         source: species,

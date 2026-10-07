@@ -32,28 +32,29 @@ function tired(): Character {
 }
 
 describe('rests', () => {
-  it('a Long Rest says what comes back', () => {
+  it('a Long Rest says what comes back and what ends', () => {
     const c = tired();
     const s = sheet(c);
-    expect(restSummary(c, longRest(c, s), s, nameOf)).toEqual([
-      'Hit Points: 30 back (full)',
-      'Temporary Hit Points end (4)',
-      'Hit Dice: 2 d12 back',
-      'Furies: 2 back',
-      'Catch Breath: 2 back',
-      'Exhaustion: level 2 → 1',
-      'Fury ends',
-    ]);
+    expect(restSummary(c, longRest(c, s), s, nameOf)).toEqual({
+      spent: [],
+      back: [
+        'Hit Points: 30 back (full)',
+        'Hit Dice: 2 d12 back',
+        'Furies: 2 back',
+        'Catch Breath: 2 back',
+      ],
+      ends: ['Temporary Hit Points end (4)', 'Exhaustion: level 2 → 1', 'Fury ends'],
+    });
   });
 
   it('a Short Rest: the Hit Dice spent, what they healed, one use of Catch Breath', () => {
     const c = tired();
     const s = sheet(c);
-    expect(restSummary(c, shortRest(c, s, [{ faces: 12, rolls: [6] }]), s, nameOf)).toEqual([
-      'Hit Points: 8 back (28 of 50)',
-      'Hit Dice: 1 d12 spent',
-      'Catch Breath: 1 back',
-    ]);
+    expect(restSummary(c, shortRest(c, s, [{ faces: 12, rolls: [6] }]), s, nameOf)).toEqual({
+      spent: ['Hit Dice: 1 d12 (2 of 5 left)'],
+      back: ['Hit Points: 8 back (28 of 50)', 'Catch Breath: 1 back'],
+      ends: [],
+    });
   });
 
   it('the fixed value of a Hit Die, and resting needs at least 1 HP', () => {

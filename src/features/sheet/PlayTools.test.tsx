@@ -81,6 +81,13 @@ describe('play tools', () => {
     const healed = rest.getByText(/^Hit Points: \d+ back/).textContent!;
     const back = Number(/(\d+) back/.exec(healed)![1]);
     await user.click(rest.getByRole('button', { name: 'Finish Short Rest' }));
+    // What was spent and what came back, apart.
+    expect(rest.getByRole('region', { name: 'You spent' })).toHaveTextContent(
+      'Hit Dice: 1 d12 (4 of 5 left)',
+    );
+    expect(rest.getByRole('region', { name: 'You got back' })).toHaveTextContent(
+      `Hit Points: ${back} back`,
+    );
     await saved();
     expect((await stored(c.id)).state).toMatchObject({ damage: 30 - back, hitDiceUsed: { 12: 1 } });
   });

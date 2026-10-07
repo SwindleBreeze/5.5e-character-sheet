@@ -42,6 +42,25 @@ export function partValue(p: Contribution): string {
     : signed(p.value);
 }
 
+/**
+ * Where a roll's bonus comes from, shown with its result: `DEX modifier +2 · Proficiency
+ * Bonus +2 · Bless +1d4`. Parts adding nothing are left out.
+ */
+export function rollBreakdown(
+  bonus: Derived,
+  dice: readonly { label: string; dice: string }[] = [],
+): string {
+  return bonus.parts
+    .filter((p) => p.value !== 0 || p.kind === 'set' || p.kind === 'override')
+    .map((p) => `${p.label} ${partValue(p)}`)
+    .concat(
+      dice.map(
+        (d) => `${d.label} ${d.dice.startsWith('-') ? `−${d.dice.slice(1)}` : `+${d.dice}`}`,
+      ),
+    )
+    .join(' · ');
+}
+
 /** The dice a d20 roll adds (Bless: `+1d4`), as a roll expression suffix. */
 export function extraDice(r: DerivedRoll): string {
   return r.dice.map((d) => (d.dice.startsWith('-') ? d.dice : `+${d.dice}`)).join('');
