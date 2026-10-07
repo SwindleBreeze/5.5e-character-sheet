@@ -7,12 +7,14 @@ import { chooseBackground } from '../../../engine/build/wizard.ts';
 import { setPick } from '../../../engine/play/features.ts';
 import type { DerivedFeature } from '../../../engine/derive/types.ts';
 import { decodeChoiceKey, refKey } from '../../../schema/index.ts';
+import { useSources } from '../../../content/hooks.ts';
 import { useSheet } from '../../../ui/sheetContext.ts';
 import { FeatureChoices } from '../../choices/FeatureChoices.tsx';
 import choices from '../../choices/choices.module.css';
 import { choiceContext, type WizardBindings } from '../bindings.ts';
 import { EntityCards } from '../EntityCards.tsx';
 import { ReadSheet, WhatYouGet, AboutFlavor } from '../Explain.tsx';
+import { groupBySource } from '../sources.ts';
 import { backgroundChips } from '../text.ts';
 import { EquipmentChoice } from './EquipmentChoice.tsx';
 
@@ -71,7 +73,8 @@ export function OriginChoices({ b, owner }: { b: WizardBindings; owner: DerivedF
 export function BackgroundStep(b: WizardBindings) {
   const { character, content, sheet, change } = b;
   const ui = useSheet();
-  const backgrounds = content.catalog.of('background');
+  const sources = useSources();
+  const groups = groupBySource(content.catalog.of('background'), sources);
   const selectedId = character.log[0]?.origin?.backgroundRef?.id;
   const owner = sheet?.features.find((f) => f.ref.kind === 'background' && f.ref.id === selectedId);
   const selected = selectedId
@@ -91,11 +94,14 @@ export function BackgroundStep(b: WizardBindings) {
   return (
     <EntityCards
       label="Backgrounds"
-      items={backgrounds.map((bg) => ({
-        id: bg.id,
-        name: bg.name,
-        chips: backgroundChips(bg, content.index, bg.id === selectedId ? spread : undefined),
-      }))}
+      items={groups.flatMap((g) =>
+        g.items.map((bg) => ({
+          id: bg.id,
+          name: bg.name,
+          group: g.label,
+          chips: backgroundChips(bg, content.index, bg.id === selectedId ? spread : undefined),
+        })),
+      )}
       selected={selectedId}
       onSelect={(id) => change((c) => chooseBackground(c, { kind: 'background', id }))}
       onRead={(id) =>

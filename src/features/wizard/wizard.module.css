@@ -163,6 +163,27 @@
   list-style: none;
 }
 
+.cardGroups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.cardGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.groupTitle {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
 .card {
   display: flex;
   flex-direction: column;

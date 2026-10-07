@@ -6,6 +6,7 @@
 import { chooseClass } from '../../../engine/build/wizard.ts';
 import { setPick } from '../../../engine/play/features.ts';
 import { decodeChoiceKey } from '../../../schema/index.ts';
+import { useSources } from '../../../content/hooks.ts';
 import { useSheet } from '../../../ui/sheetContext.ts';
 import page from '../../../app/Page.module.css';
 import { FeatureChoices } from '../../choices/FeatureChoices.tsx';
@@ -13,6 +14,7 @@ import { choiceContext, stepOf, type WizardBindings } from '../bindings.ts';
 import { ClassTable } from '../ClassDetails.tsx';
 import { EntityCards } from '../EntityCards.tsx';
 import { AboutFlavor, ReadSheet, WhatYouGet } from '../Explain.tsx';
+import { groupBySource } from '../sources.ts';
 import { classChips } from '../text.ts';
 import styles from '../wizard.module.css';
 import { EquipmentChoice } from './EquipmentChoice.tsx';
@@ -20,7 +22,8 @@ import { EquipmentChoice } from './EquipmentChoice.tsx';
 export function ClassStep(b: WizardBindings) {
   const { character, content, sheet, change, apply } = b;
   const ui = useSheet();
-  const classes = content.catalog.of('class');
+  const sources = useSources();
+  const groups = groupBySource(content.catalog.of('class'), sources);
   const selectedId = character.log[0]?.classRef.id;
   const selected = selectedId ? content.index.get({ kind: 'class', id: selectedId }) : undefined;
   const owner = sheet?.features.find((f) => f.ref.kind === 'class' && f.ref.id === selectedId);
@@ -73,7 +76,9 @@ export function ClassStep(b: WizardBindings) {
   return (
     <EntityCards
       label="Classes"
-      items={classes.map((c) => ({ id: c.id, name: c.name, chips: classChips(c) }))}
+      items={groups.flatMap((g) =>
+        g.items.map((c) => ({ id: c.id, name: c.name, group: g.label, chips: classChips(c) })),
+      )}
       selected={selectedId}
       onSelect={(id) => change((c) => chooseClass(c, { kind: 'class', id }, content.index))}
       onRead={read}

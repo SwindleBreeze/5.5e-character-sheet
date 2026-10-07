@@ -94,11 +94,24 @@ export function variantsOf(species: Species | undefined, ctx: AutoContext): Spec
   return ctx.catalog.of('species').filter((s) => s.variantOf === species.id);
 }
 
-/** What a species calls its versions: `Lineage`, `Ancestry`, `Legacy`, or `Type`. */
-export function variantLabel(variants: readonly Species[]): string {
-  for (const word of ['Lineage', 'Ancestry', 'Legacy'])
+/**
+ * What a species calls its versions: `Lineage`, `Ancestry` or `Legacy`, from the versions' names
+ * (`Elf; High Elf Lineage`) or else a trait of the species (Dragonborn's "Draconic Ancestry");
+ * `Type` when neither says.
+ */
+export function variantLabel(variants: readonly Species[], species?: Species): string {
+  const words = ['Lineage', 'Ancestry', 'Legacy'];
+  for (const word of words)
     if (variants.length && variants.every((v) => v.name.includes(word))) return word;
-  return 'Type';
+  const traits = (species?.entries ?? []).flatMap((e) =>
+    typeof e === 'object' && e && 'name' in e && typeof e.name === 'string' ? [e.name] : [],
+  );
+  return words.find((word) => traits.some((t) => t.split(' ').includes(word))) ?? 'Type';
+}
+
+/** `a lineage`, `an ancestry`. */
+export function aOrAn(word: string): string {
+  return `${/^[aeiou]/i.test(word) ? 'an' : 'a'} ${word}`;
 }
 
 export interface StepTodo {
@@ -159,7 +172,10 @@ export function wizardTodos(character: Character, ctx: AutoContext | undefined):
     const variants = variantsOf(chosen, ctx);
     needsVariant = variants.length > 0;
     if (needsVariant)
-      out.push({ step: 'species', text: `Choose a ${variantLabel(variants).toLowerCase()}` });
+      out.push({
+        step: 'species',
+        text: `Choose ${aOrAn(variantLabel(variants, chosen).toLowerCase())}`,
+      });
   }
   for (const p of sheet.choices.pending) {
     const step = stepOf(p.offer, sheet);

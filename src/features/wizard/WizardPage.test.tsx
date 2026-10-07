@@ -59,7 +59,7 @@ async function arenaHand(user: User) {
 /** A Mossling of the Deep Lineage, Small. */
 async function deepMossling(user: User) {
   await user.selectOptions(await screen.findByRole('combobox', { name: 'Species' }), 'Mossling');
-  await user.selectOptions(screen.getByRole('combobox', { name: 'Type' }), 'Deep Lineage');
+  await user.selectOptions(screen.getByRole('combobox', { name: 'Lineage' }), 'Deep Lineage');
   await user.click(region('Mossling; Deep Lineage choices').getByRole('radio', { name: 'Small' }));
 }
 
@@ -107,9 +107,9 @@ describe('creation wizard', () => {
 
     // One menu for the species, a second for its versions.
     await user.selectOptions(await screen.findByRole('combobox', { name: 'Species' }), 'Mossling');
-    expect(footer().getByText(/Choose a type/)).toBeInTheDocument();
+    expect(footer().getByText(/Choose a lineage/)).toBeInTheDocument();
     expect(next(/Ability scores ›/)).toHaveAttribute('aria-disabled', 'true');
-    await user.selectOptions(screen.getByRole('combobox', { name: 'Type' }), 'Deep Lineage');
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Lineage' }), 'Deep Lineage');
     const deep = region('Mossling; Deep Lineage choices');
     await user.click(deep.getByRole('radio', { name: 'Small' }));
     await user.click(next(/Ability scores ›/));

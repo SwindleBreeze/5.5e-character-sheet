@@ -4,6 +4,7 @@
 
 import { useId } from 'react';
 import { chooseSpecies } from '../../../engine/build/wizard.ts';
+import { useSources } from '../../../content/hooks.ts';
 import { Button } from '../../../ui/Button.tsx';
 import { useSheet } from '../../../ui/sheetContext.ts';
 import page from '../../../app/Page.module.css';
@@ -11,7 +12,8 @@ import choices from '../../choices/choices.module.css';
 import inventory from '../../sheet/inventory/inventory.module.css';
 import { choiceContext, type WizardBindings } from '../bindings.ts';
 import { AboutFlavor, ReadSheet, WhatYouGet } from '../Explain.tsx';
-import { variantLabel, variantsOf } from '../progress.ts';
+import { aOrAn, variantLabel, variantsOf } from '../progress.ts';
+import { groupBySource } from '../sources.ts';
 import { speciesLine, variantName } from '../text.ts';
 import styles from '../wizard.module.css';
 import { OriginChoices } from './BackgroundStep.tsx';
@@ -20,9 +22,11 @@ export function SpeciesStep(b: WizardBindings) {
   const { character, content, sheet, change } = b;
   const ui = useSheet();
   const id = useId();
+  const sources = useSources();
   const all = content.catalog.of('species');
   const ids = new Set(all.map((s) => s.id));
   const bases = all.filter((s) => !s.variantOf || !ids.has(s.variantOf));
+  const groups = groupBySource(bases, sources);
   const selectedId = character.log[0]?.origin?.speciesRef?.id;
   const selected = selectedId ? content.index.get({ kind: 'species', id: selectedId }) : undefined;
   const base =
@@ -31,7 +35,7 @@ export function SpeciesStep(b: WizardBindings) {
       : selected;
   const ctx = sheet ? choiceContext(b, sheet) : undefined;
   const variants = ctx ? variantsOf(base, ctx) : [];
-  const label = variantLabel(variants);
+  const label = variantLabel(variants, base);
   const needsVariant = variants.length > 0 && selected?.id === base?.id;
   const owner = sheet?.features.find((f) => f.ref.kind === 'species' && f.ref.id === selectedId);
   const choose = (speciesId: string) =>
@@ -65,11 +69,21 @@ export function SpeciesStep(b: WizardBindings) {
             <option value="" disabled>
               Choose a species…
             </option>
-            {bases.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
+            {groups.length > 1
+              ? groups.map((g) => (
+                  <optgroup key={g.code} label={g.label}>
+                    {g.items.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))
+              : groups[0]?.items.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
           </select>
         </label>
         {variants.length > 0 && (
@@ -82,7 +96,7 @@ export function SpeciesStep(b: WizardBindings) {
               onChange={(e) => choose(e.target.value)}
             >
               <option value="" disabled>
-                Choose a {label.toLowerCase()}…
+                Choose {aOrAn(label.toLowerCase())}…
               </option>
               {variants.map((v) => (
                 <option key={v.id} value={v.id}>
@@ -111,8 +125,8 @@ export function SpeciesStep(b: WizardBindings) {
           <AboutFlavor entity={selected} />
           {needsVariant ? (
             <p className={choices.help}>
-              Every {selected.name} has the traits below. Choose a {label.toLowerCase()} above: it
-              adds its own.
+              Every {selected.name} has the traits below. Choose {aOrAn(label.toLowerCase())} above:
+              it adds its own.
             </p>
           ) : (
             owner && owner.choices.length > 0 && <OriginChoices b={b} owner={owner} />
