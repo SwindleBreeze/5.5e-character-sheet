@@ -3,7 +3,14 @@
 // shields and held items; what no longer fits is stowed. Equipped items are on the body, never
 // in a container. Coins pay amounts and make change.
 
-import type { Character, Currency, EquipSlot, InventoryItem, Item } from '../../schema/index.ts';
+import type {
+  Character,
+  Currency,
+  EquipSlot,
+  Id,
+  InventoryItem,
+  Item,
+} from '../../schema/index.ts';
 import type { ContentIndex } from '../content/contentIndex.ts';
 import { equipSlots, isContainer, SLOT_HANDS, variantName } from '../items/items.ts';
 
@@ -70,6 +77,7 @@ export function removeItem(c: Character, uid: string): Character {
     if (row.containerUid) r.containerUid = row.containerUid;
     else delete r.containerUid;
   }
+  if (n.state.ammoUsed?.[uid] !== undefined) clearAmmo(n, [uid]);
   return n;
 }
 
@@ -286,6 +294,65 @@ export function unpackItem(
   }
   const insertAt = row.quantity > 1 ? at + 1 : at;
   n.inventory.splice(Math.min(insertAt, n.inventory.length), 0, ...rows.map(({ r }) => r));
+  return n;
+}
+
+// ---- Ammunition (2024 Ammunition property) ----
+
+/**
+ * Each attack expends one piece of ammunition: from a row of it, or from a bundle of it
+ * ("Arrows (20)"), which is opened first. The piece is noted as used, for recovery.
+ */
+export function spendAmmo(
+  c: Character,
+  rowUid: string,
+  ammoType: Id,
+  index: ContentIndex,
+  makeUid: MakeUid = newUid,
+): Character {
+  const row = find(c, rowUid);
+  if (!row || row.quantity <= 0) return c;
+  const item = row.itemRef ? index.get({ kind: 'item', id: row.itemRef.id }) : undefined;
+  let n: Character;
+  let target = rowUid;
+  if (row.itemRef?.id !== ammoType && item?.baseItemId !== ammoType && item?.packContents) {
+    const before = new Set(c.inventory.map((r) => r.uid));
+    n = unpackItem(c, rowUid, index, makeUid);
+    const opened = n.inventory.find((r) => !before.has(r.uid) && r.itemRef?.id === ammoType);
+    if (!opened || opened.quantity <= 0) return c;
+    target = opened.uid;
+  } else n = clone(c);
+  find(n, target)!.quantity -= 1;
+  n.state.ammoUsed = { ...n.state.ammoUsed, [target]: (n.state.ammoUsed?.[target] ?? 0) + 1 };
+  return n;
+}
+
+function clearAmmo(n: Character, rowUids: readonly string[]) {
+  const used = { ...n.state.ammoUsed };
+  for (const uid of rowUids) delete used[uid];
+  if (Object.keys(used).length) n.state.ammoUsed = used;
+  else delete n.state.ammoUsed;
+}
+
+/**
+ * After a fight, a minute spent recovers half the ammunition used (rounded down, for each
+ * kind); the rest is lost.
+ */
+export function recoverAmmo(c: Character, rowUids: readonly string[]): Character {
+  const n = clone(c);
+  for (const uid of rowUids) {
+    const row = find(n, uid);
+    const used = n.state.ammoUsed?.[uid] ?? 0;
+    if (row) row.quantity += Math.floor(used / 2);
+  }
+  clearAmmo(n, rowUids);
+  return n;
+}
+
+/** The used ammunition is lost (nothing recovered). */
+export function loseAmmo(c: Character, rowUids: readonly string[]): Character {
+  const n = clone(c);
+  clearAmmo(n, rowUids);
   return n;
 }
 

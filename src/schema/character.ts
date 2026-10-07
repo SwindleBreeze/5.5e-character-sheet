@@ -119,6 +119,11 @@ export interface PlayState {
    * replace one (2024); more is a warning, never a block.
    */
   prepSwaps?: Record<string, number>;
+  /**
+   * Ammunition expended since it was last recovered, by inventory row: after a fight, half
+   * of it (rounded down) can be recovered (2024 Ammunition property).
+   */
+  ammoUsed?: Record<string, number>;
 }
 
 export interface Details {

@@ -133,9 +133,41 @@ export interface DerivedAttack {
   propertyIds: Id[];
   /** The Unarmed Strike's Grapple and Shove: their save DC, and whether a hand is free. */
   grapple?: { dc: Derived; freeHand: boolean };
+  /** An Ammunition weapon that names its ammunition: what the character has to fire. */
+  ammo?: DerivedAmmo;
   riders: DerivedRider[];
   /** Property names and other reminders. */
   notes: string[];
+}
+
+/** One inventory row of ammunition an attack can fire. */
+export interface AmmoSource {
+  rowUid: string;
+  name: string;
+  /** Pieces in it; a bundle ("Arrows (20)") counts what it holds. */
+  count: number;
+  /** An unopened bundle, opened when a piece is taken from it. */
+  bundle: boolean;
+  /** Magic ammunition: a bonus to attack and damage rolls made with it. */
+  hitBonus: number;
+  damageBonus: number;
+}
+
+/**
+ * The 2024 Ammunition property: a ranged attack only with ammunition to fire; each attack
+ * expends one piece; after a fight, half of what was used (rounded down) can be recovered.
+ */
+export interface DerivedAmmo {
+  /** The ammunition item it fires: `arrow|xphb`. */
+  itemId: Id;
+  name: string;
+  /** Loose pieces first, then bundles; only rows with pieces left. */
+  sources: AmmoSource[];
+  total: number;
+  /** Pieces used since the last recovery, by row (rows that still exist). */
+  used: { rowUid: string; name: string; count: number }[];
+  /** A one-handed weapon in hand with no other hand free to load it (a Shield, two weapons). */
+  noHandToLoad: boolean;
 }
 
 /** P11: one spellcasting feature (a class, a subclass, or another feature). */

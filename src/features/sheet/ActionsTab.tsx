@@ -15,6 +15,7 @@ import {
   type RollAmount,
 } from '../../engine/play/reducers.ts';
 import type { CostChoice } from '../../engine/play/costs.ts';
+import { loseAmmo, recoverAmmo, spendAmmo } from '../../engine/play/inventory.ts';
 import type { ActionType } from '../../schema/index.ts';
 import { EntitySheet } from '../../richtext/EntitySheet.tsx';
 import { Button } from '../../ui/Button.tsx';
@@ -138,6 +139,10 @@ export function ActionsTab({ character, sheet, index, apply }: SheetBindings) {
               onRidersUsed={(ids) => apply((c) => ids.reduce(markRiderUsed, c))}
               onPayRiders={(costs, choice) =>
                 apply((c) => costs.reduce((n, cost) => payCost(n, sheet, cost, choice), c))
+              }
+              onSpendAmmo={(rowUid) => apply((c) => spendAmmo(c, rowUid, a.ammo!.itemId, index))}
+              onRecoverAmmo={(rows, recover) =>
+                apply((c) => (recover ? recoverAmmo(c, rows) : loseAmmo(c, rows)))
               }
             />
           ))}

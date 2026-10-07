@@ -280,3 +280,57 @@ describe('Two-Handed weapons', () => {
     );
   });
 });
+
+describe('Ammunition (2024)', () => {
+  const ammoOf = (d: DerivedSheet, name: string) => d.attacks.find((a) => a.name === name)?.ammo;
+
+  it('what the weapon can fire: loose pieces, magic ones with their bonus, then bundles', () => {
+    const d = run(
+      brute([
+        row('arc bow|tst', 'bothHands'),
+        row('arrows (20)|tst', undefined, { uid: 'bundle', name: 'Arrows (20)' }),
+        row('arrow|tst', undefined, { uid: 'loose', name: 'Arrow', quantity: 5 }),
+        row('arrow|tst', undefined, {
+          uid: 'magic',
+          name: '+1 Arrow',
+          quantity: 3,
+          variantRef: item('+1 arena ammunition|tst'),
+        }),
+        row('arrow|tst', undefined, { uid: 'none', name: 'Arrow', quantity: 0 }),
+      ]),
+    );
+    expect(ammoOf(d, 'arc bow')).toEqual({
+      itemId: 'arrow|tst',
+      name: 'Arrow',
+      sources: [
+        { rowUid: 'loose', name: 'Arrow', count: 5, bundle: false, hitBonus: 0, damageBonus: 0 },
+        { rowUid: 'magic', name: '+1 Arrow', count: 3, bundle: false, hitBonus: 1, damageBonus: 1 },
+        {
+          rowUid: 'bundle',
+          name: 'Arrows (20)',
+          count: 20,
+          bundle: true,
+          hitBonus: 0,
+          damageBonus: 0,
+        },
+      ],
+      total: 28,
+      used: [],
+      noHandToLoad: false,
+    });
+    // Weapons without the Ammunition property have none.
+    expect(d.attacks.find((a) => a.name === 'Unarmed Strike')?.ammo).toBeUndefined();
+  });
+
+  it('none to fire, and a one-handed weapon with no hand free to load it', () => {
+    expect(ammoOf(run(brute([row('arc bow|tst', 'bothHands')])), 'arc bow')).toMatchObject({
+      total: 0,
+      sources: [],
+    });
+    const free = run(brute([row('wrist bow|tst', 'mainHand')]));
+    expect(ammoOf(free, 'wrist bow')?.noHandToLoad).toBe(false);
+    const shield = run(brute([row('wrist bow|tst', 'mainHand'), row('buckler|tst', 'shield')]));
+    expect(ammoOf(shield, 'wrist bow')?.noHandToLoad).toBe(true);
+    expect(shield.attacks.find((a) => a.name === 'wrist bow')?.notes).toContain('Loading');
+  });
+});

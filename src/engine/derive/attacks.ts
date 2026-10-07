@@ -2,7 +2,7 @@
 // ones in hand first), the Light property's extra attack, and the Unarmed Strike; spell attacks
 // are added with spellcasting.
 
-import type { Ability, Effect, InventoryItem, Item } from '../../schema/index.ts';
+import type { Ability, Effect, Id, InventoryItem, Item } from '../../schema/index.ts';
 import type { EffectSource } from '../collect/types.ts';
 import { averageOf, formatValue, isDice, type Value } from '../formula/dice.ts';
 import { cellToValue } from '../formula/evaluate.ts';
@@ -23,13 +23,15 @@ import {
   valuesOf,
   type DeriveContext,
 } from './context.ts';
-import { magicWorks } from '../items/items.ts';
+import { magicWorks, rowItems } from '../items/items.ts';
 import { buildRoll, type Proficiencies } from './rolls.ts';
 import { costOf } from './resources.ts';
 import type {
+  AmmoSource,
   AttackUse,
   Contribution,
   Derived,
+  DerivedAmmo,
   DerivedAttack,
   DerivedResource,
   DerivedRider,
@@ -220,6 +222,66 @@ function buildAttack(
   return attack;
 }
 
+/**
+ * What an Ammunition weapon can fire: rows of its ammunition (magic ones with their bonus, a
+ * specific magic piece built on it too) and unopened bundles of it ("Arrows (20)").
+ */
+/** `firearm bullet` → `Firearm Bullet`. */
+const titleCase = (s: string) => s.replace(/(^|\s)\S/g, (m) => m.toUpperCase());
+
+function ammoFor(ctx: DeriveContext, ammoType: Id, noHandToLoad: boolean): DerivedAmmo {
+  const loose: AmmoSource[] = [];
+  const bundles: AmmoSource[] = [];
+  const isAmmo = (row: InventoryItem, item?: Item) =>
+    row.itemRef?.id === ammoType || item?.baseItemId === ammoType;
+  for (const row of ctx.character.inventory) {
+    if (row.quantity <= 0) continue;
+    const { item, variant } = rowItems(ctx.index, row);
+    if (isAmmo(row, item)) {
+      const magic = magicWorks(row, item, variant);
+      const bonus = (b: 'weapon' | 'weaponAttack' | 'weaponDamage') =>
+        magic ? (item?.bonuses?.[b] ?? 0) + (variant?.bonuses?.[b] ?? 0) : 0;
+      loose.push({
+        rowUid: row.uid,
+        name: row.name,
+        count: row.quantity,
+        bundle: false,
+        hitBonus: bonus('weapon') + bonus('weaponAttack'),
+        damageBonus: bonus('weapon') + bonus('weaponDamage'),
+      });
+    } else if (
+      item?.packContents?.length &&
+      item.packContents.every((p) => p.itemId === ammoType)
+    ) {
+      const each = item.packContents.reduce((n, p) => n + p.quantity, 0);
+      bundles.push({
+        rowUid: row.uid,
+        name: row.name,
+        count: each * row.quantity,
+        bundle: true,
+        hitBonus: 0,
+        damageBonus: 0,
+      });
+    }
+  }
+  const sources = [...loose, ...bundles];
+  const used = Object.entries(ctx.character.state.ammoUsed ?? {}).flatMap(([rowUid, count]) => {
+    const row = ctx.character.inventory.find((r) => r.uid === rowUid);
+    if (!row || count <= 0 || !isAmmo(row, rowItems(ctx.index, row).item)) return [];
+    return [{ rowUid, name: row.name, count }];
+  });
+  return {
+    itemId: ammoType,
+    name:
+      ctx.index.get({ kind: 'item', id: ammoType })?.name ??
+      titleCase(ammoType.split('|')[0] ?? ammoType),
+    sources,
+    total: sources.reduce((n, s) => n + s.count, 0),
+    used,
+    noHandToLoad,
+  };
+}
+
 function distanceOf(item: Item, ranged: boolean): string {
   const w = item.weapon!;
   const reach = w.properties.some((p) => propertyAbbr(p) === 'R') ? 10 : 5;
@@ -297,6 +359,12 @@ export function deriveAttacks(
     if (versatile && !twoHands && canTwoHand && traits.range === 'melee')
       attack.versatileDice = versatile;
     if (mastery) attack.mastery = mastery;
+    // Ammunition: a one-handed weapon needs a free hand to load (the weapon holds the other).
+    const ammoType = item.weapon.ammoType;
+    if (ammoType && traits.properties.includes('A')) {
+      const oneHanded = !traits.properties.includes('2H') && hand !== 'both';
+      attack.ammo = ammoFor(ctx, ammoType, !!hand && oneHanded && wield.freeHands < 1);
+    }
     attacks.push(attack);
 
     // The Light property: after attacking with a Light weapon in the Attack action, one extra

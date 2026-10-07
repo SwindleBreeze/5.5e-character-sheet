@@ -7,13 +7,16 @@ import type { ContentIndex } from '../content/contentIndex.ts';
 import { derive } from '../derive/derive.ts';
 import {
   coinValueCp,
+  loseAmmo,
   equipItem,
   moveItem,
   newRow,
   payCoins,
+  recoverAmmo,
   removeItem,
   setChargesLeft,
   setCurrency,
+  spendAmmo,
   unpackItem,
 } from './inventory.ts';
 import { longRest } from './reducers.ts';
@@ -208,5 +211,32 @@ describe('coins (1 PP = 10 GP = 20 EP = 100 SP = 1,000 CP)', () => {
   it('setting the purse keeps whole, non-negative counts', () => {
     const c = setCurrency(character([]), purse({ gp: 12.7, sp: -3 }));
     expect(c.currency).toEqual(purse({ gp: 12 }));
+  });
+});
+
+describe('ammunition', () => {
+  it('each attack expends one; a bundle is opened first; half is recovered, rounded down', () => {
+    const c = character([
+      row('bundle', 'arrows (20)|tst'),
+      row('magic', 'arrow|tst', { quantity: 3, variantRef: item('+1 arena ammunition|tst') }),
+    ]);
+    let next = spendAmmo(c, 'bundle', 'arrow|tst', index, () => 'opened');
+    expect(next.inventory.map((r) => [r.uid, r.name, r.quantity])).toEqual([
+      ['opened', 'Arrow', 19],
+      ['magic', 'arrow', 3],
+    ]);
+    next = spendAmmo(next, 'opened', 'arrow|tst', index);
+    next = spendAmmo(next, 'opened', 'arrow|tst', index);
+    next = spendAmmo(next, 'magic', 'arrow|tst', index);
+    expect(next.state.ammoUsed).toEqual({ opened: 3, magic: 1 });
+
+    const back = recoverAmmo(next, ['opened', 'magic']);
+    expect(back.inventory.map((r) => r.quantity)).toEqual([18, 2]);
+    expect(back.state.ammoUsed).toBeUndefined();
+    expect(loseAmmo(next, ['opened']).state.ammoUsed).toEqual({ magic: 1 });
+    expect(removeItem(next, 'magic').state.ammoUsed).toEqual({ opened: 3 });
+    // Nothing to spend: no change.
+    const empty = character([row('none', 'arrow|tst', { quantity: 0 })]);
+    expect(spendAmmo(empty, 'none', 'arrow|tst', index)).toBe(empty);
   });
 });

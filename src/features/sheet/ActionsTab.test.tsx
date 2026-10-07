@@ -61,7 +61,9 @@ const row = (id: string, equipped?: InventoryItem['equipped']) => ({
 });
 
 /** Brute 5 (STR 18, PB +3): Net Blade in hand, a Shiv stowed. */
-const brute = (inventory = [row('net blade|tst', 'mainHand'), row('shiv|tst')]) =>
+const brute = (
+  inventory: Partial<InventoryItem>[] = [row('net blade|tst', 'mainHand'), row('shiv|tst')],
+) =>
   testCharacter({
     classes: [{ classId: 'brute|tst', levels: 5 }],
     scores: { str: 18, dex: 13, con: 14, int: 8, wis: 10, cha: 10 },
@@ -302,5 +304,50 @@ describe('Actions tab', () => {
     await user.click(rend);
     await user.click(blade.getByRole('button', { name: /^Roll net blade damage, 1d8/ }));
     expect(last.state.resourcesUsed['classFeature:fury|brute|tst|1|tst#furies']).toBe(1);
+  });
+
+  it('ammunition: each attack roll expends a piece, magic ammunition adds its bonus, half comes back', async () => {
+    const user = userEvent.setup();
+    renderTab(
+      brute([
+        row('arc bow|tst', 'bothHands'),
+        { ...row('arrow|tst'), uid: 'arrows', name: 'Arrow', quantity: 4 },
+        {
+          ...row('arrow|tst'),
+          uid: 'magic',
+          name: '+1 Arrow',
+          quantity: 2,
+          variantRef: { kind: 'item', id: '+1 arena ammunition|tst' },
+        },
+      ]),
+      fixedRng([face(10, 20)]),
+    );
+    const bow = within(card('arc bow'));
+    const hit = () => bow.getByRole('button', { name: /^Roll arc bow: to hit/ });
+    const plain = hit().getAttribute('aria-label')!;
+    await user.click(hit());
+    await user.click(hit());
+    expect(last.inventory.find((r) => r.uid === 'arrows')?.quantity).toBe(2);
+
+    // +1 Arrows: +1 to hit and to damage.
+    await user.selectOptions(bow.getByRole('combobox', { name: 'Ammunition' }), 'magic');
+    expect(hit().getAttribute('aria-label')).not.toBe(plain);
+    expect(
+      bow.getByRole('button', { name: 'Roll arc bow damage, 1d6 + 2 piercing' }),
+    ).toBeInTheDocument();
+    await user.click(hit());
+    expect(last.state.ammoUsed).toEqual({ arrows: 2, magic: 1 });
+
+    await user.click(bow.getByRole('button', { name: 'Recover 1' }));
+    expect(last.inventory.map((r) => r.quantity)).toEqual([1, 3, 1]);
+    expect(last.state.ammoUsed).toBeUndefined();
+  });
+
+  it('no ammunition, and Loading with no hand free to load', () => {
+    renderTab(brute([row('wrist bow|tst', 'mainHand'), row('buckler|tst', 'shield')]));
+    const bow = within(card('wrist bow'));
+    expect(bow.getByText(/No Arrow ammunition/)).toBeInTheDocument();
+    expect(bow.getByText('Loading it needs a free hand, and neither is free.')).toBeInTheDocument();
+    expect(bow.getByText(/^Loading: you fire only one piece of ammunition/)).toBeInTheDocument();
   });
 });

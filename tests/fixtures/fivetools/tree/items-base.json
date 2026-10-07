@@ -87,7 +87,8 @@
       "dmgType": "P",
       "property": ["A|TST", "2H|TST"],
       "range": "60/240",
-      "mastery": ["Quickcut|TST"]
+      "mastery": ["Quickcut|TST"],
+      "ammoType": "arrow|tst"
     },
     {
       "name": "Padded Vest",
@@ -151,6 +152,33 @@
       "weight": 1,
       "value": 100,
       "containerCapacity": { "item": [{ "arrow|tst": 20 }] }
+    },
+    {
+      "name": "Arrows (20)",
+      "source": "TST",
+      "page": 48,
+      "type": "A|TST",
+      "rarity": "none",
+      "weight": 1,
+      "value": 100,
+      "arrow": true,
+      "packContents": [{ "item": "arrow|tst", "quantity": 20 }]
+    },
+    {
+      "name": "Wrist Bow",
+      "source": "TST",
+      "page": 48,
+      "type": "R|TST",
+      "rarity": "none",
+      "weight": 3,
+      "value": 7500,
+      "weaponCategory": "martial",
+      "weapon": true,
+      "dmg1": "1d6",
+      "dmgType": "P",
+      "property": ["A|TST", "L|TST", "LD|TST"],
+      "range": "30/120",
+      "ammoType": "arrow|tst"
     }
   ],
   "itemProperty": [
@@ -223,6 +251,18 @@
           "type": "entries",
           "name": "Two-Handed",
           "entries": ["Needs both hands."]
+        }
+      ]
+    },
+    {
+      "abbreviation": "LD",
+      "source": "TST",
+      "page": 43,
+      "entries": [
+        {
+          "type": "entries",
+          "name": "Loading",
+          "entries": ["One shot per action."]
         }
       ]
     }

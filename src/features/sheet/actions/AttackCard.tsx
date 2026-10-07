@@ -3,11 +3,15 @@
 
 import { useState } from 'react';
 import type {
+  Derived,
+  DerivedAmmo,
   DerivedAttack,
   DerivedCost,
   DerivedRider,
+  DerivedRoll,
   DerivedSheet,
 } from '../../../engine/derive/types.ts';
+import { Button } from '../../../ui/Button.tsx';
 import { canPay, type CostChoice } from '../../../engine/play/costs.ts';
 import { ruleId, type Character, type Ref } from '../../../schema/index.ts';
 import type { ContentIndex } from '../../../engine/content/contentIndex.ts';
@@ -48,6 +52,10 @@ export interface AttackCardProps {
   onRidersUsed: (riderIds: string[]) => void;
   /** Pay what the riders added to a damage roll cost. */
   onPayRiders: (costs: DerivedCost[], choice: CostChoice) => void;
+  /** Expend a piece of ammunition from a row (an attack roll with an Ammunition weapon). */
+  onSpendAmmo?: (rowUid: string) => void;
+  /** After a fight: recover half the ammunition used from these rows, or lose it all. */
+  onRecoverAmmo?: (rowUids: string[], recover: boolean) => void;
 }
 
 export function AttackCard({
@@ -57,6 +65,8 @@ export function AttackCard({
   index,
   onRidersUsed,
   onPayRiders,
+  onSpendAmmo,
+  onRecoverAmmo,
 }: AttackCardProps) {
   const roller = useRoller();
   const sheet = useSheet();
@@ -64,6 +74,8 @@ export function AttackCard({
   const explain = useExplain();
   const [chosen, setChosen] = useState<string[]>([]);
   const [crit, setCrit] = useState(false);
+  const [ammoUid, setAmmoUid] = useState<string | null>(null);
+  const ammo = a.ammo?.sources.find((s) => s.rowUid === ammoUid) ?? a.ammo?.sources[0];
   const used = character.state.turn.ridersUsed;
   const usedThisTurn = (r: DerivedRider) => r.oncePerTurn && used.includes(r.id);
 
@@ -90,7 +102,7 @@ export function AttackCard({
       { title: `${a.name}: extra damage`, confirm: 'Pay and roll damage' },
       (choice) => {
         if (costs.length) onPayRiders(costs, choice);
-        const expr = damageRoll([dice, ...riders.map((r) => r.dice)], a.damageBonus.value, crit);
+        const expr = damageRoll([dice, ...riders.map((r) => r.dice)], damageBonus.value, crit);
         const types = [a.damageType, ...riders.map((r) => r.damageType)].filter(Boolean);
         roller.roll({
           label: `${a.name}: ${label}${crit ? ', critical hit' : ''} (${[...new Set(types)].join(', ')})`,
@@ -103,6 +115,15 @@ export function AttackCard({
       },
     );
   };
+
+  // Magic ammunition adds its bonus to the attack and damage rolls made with it.
+  const toHit: DerivedRoll | undefined =
+    a.toHit && ammo?.hitBonus
+      ? { ...a.toHit, bonus: plus(a.toHit.bonus, ammo.name, ammo.hitBonus) }
+      : a.toHit;
+  const damageBonus = ammo?.damageBonus
+    ? plus(a.damageBonus, ammo.name, ammo.damageBonus)
+    : a.damageBonus;
 
   const stowed = a.kind === 'weapon' && !a.ready;
   const thrown = a.notes.includes('Thrown');
@@ -135,7 +156,7 @@ export function AttackCard({
                 explain({
                   key: `attack.${a.id}.hit`,
                   title: `${a.name}: to hit`,
-                  derived: a.toHit!.bonus,
+                  derived: toHit!.bonus,
                   bonus: true,
                 })
               }
@@ -144,9 +165,13 @@ export function AttackCard({
             </button>
             <RollButton
               label={`${a.name}: to hit`}
-              roll={a.toHit}
+              roll={toHit!}
               critOn={a.critRange}
-              onRolled={(r) => setCrit(r.natural !== undefined && r.natural >= a.critRange)}
+              onRolled={(r) => {
+                setCrit(r.natural !== undefined && r.natural >= a.critRange);
+                // Each attack expends one piece of ammunition.
+                if (ammo && onSpendAmmo) onSpendAmmo(ammo.rowUid);
+              }}
             />
           </span>
         )}
@@ -175,7 +200,7 @@ export function AttackCard({
                 explain({
                   key: `attack.${a.id}.damage`,
                   title: `${a.name}: damage bonus`,
-                  derived: a.damageBonus,
+                  derived: damageBonus,
                   bonus: true,
                 })
               }
@@ -185,10 +210,10 @@ export function AttackCard({
             <button
               type="button"
               className={`${styles.damage} numeric`}
-              aria-label={`Roll ${a.name} damage, ${damageText(a.damageDice, a.damageBonus.value)} ${a.damageType}`}
+              aria-label={`Roll ${a.name} damage, ${damageText(a.damageDice, damageBonus.value)} ${a.damageType}`}
               onClick={() => rollDamage(a.damageDice, 'damage')}
             >
-              {damageText(a.damageDice, a.damageBonus.value)}
+              {damageText(a.damageDice, damageBonus.value)}
               <span className={styles.damageType}>{a.damageType}</span>
             </button>
           </span>
@@ -197,14 +222,24 @@ export function AttackCard({
           <button
             type="button"
             className={`${styles.damage} numeric`}
-            aria-label={`Roll ${a.name} damage with two hands, ${damageText(a.versatileDice, a.damageBonus.value)} ${a.damageType}`}
+            aria-label={`Roll ${a.name} damage with two hands, ${damageText(a.versatileDice, damageBonus.value)} ${a.damageType}`}
             onClick={() => rollDamage(a.versatileDice!, 'damage with two hands')}
           >
-            {damageText(a.versatileDice, a.damageBonus.value)}
+            {damageText(a.versatileDice, damageBonus.value)}
             <span className={styles.damageType}>{thrown ? 'two-handed, melee' : 'two-handed'}</span>
           </button>
         )}
       </div>
+
+      {a.ammo && (
+        <AmmoLine
+          attack={a}
+          ammo={a.ammo}
+          chosen={ammo?.rowUid}
+          onChoose={setAmmoUid}
+          onRecover={onRecoverAmmo}
+        />
+      )}
 
       <p className={styles.meta}>
         {reach(a)} · {ABILITY_ABBR[a.ability]}
@@ -269,6 +304,74 @@ export function AttackCard({
 
       <AttackRules attack={a} stowed={stowed} thrown={thrown} openRule={openRule} />
     </li>
+  );
+}
+
+function plus(d: Derived, label: string, value: number): Derived {
+  return { value: d.value + value, parts: [...d.parts, { label, value }] };
+}
+
+/** Ammunition to fire, the warnings that go with it, and recovering it after a fight. */
+function AmmoLine({
+  attack: a,
+  ammo,
+  chosen,
+  onChoose,
+  onRecover,
+}: {
+  attack: DerivedAttack;
+  ammo: DerivedAmmo;
+  chosen: string | undefined;
+  onChoose: (rowUid: string) => void;
+  onRecover: AttackCardProps['onRecoverAmmo'];
+}) {
+  const used = ammo.used.reduce((n, u) => n + u.count, 0);
+  const back = ammo.used.reduce((n, u) => n + Math.floor(u.count / 2), 0);
+  const label = (s: DerivedAmmo['sources'][number]) =>
+    `${s.name} (${s.count}${s.bundle ? ', unopened' : ''})`;
+  const rows = ammo.used.map((u) => u.rowUid);
+  return (
+    <div className={styles.ammo} role="group" aria-label={`${a.name}: ammunition`}>
+      {ammo.sources.length > 1 ? (
+        <label className={styles.select}>
+          <span className={styles.ammoLabel}>Ammunition</span>
+          <select value={chosen} onChange={(e) => onChoose(e.target.value)}>
+            {ammo.sources.map((s) => (
+              <option key={s.rowUid} value={s.rowUid}>
+                {label(s)}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : ammo.sources[0] ? (
+        <span>
+          <span className={styles.ammoLabel}>Ammunition</span> {label(ammo.sources[0])}
+        </span>
+      ) : null}
+      {ammo.total === 0 && (
+        <p className={styles.warn}>
+          No {ammo.name} ammunition: you can make a ranged attack with it only when you have
+          ammunition to fire.
+        </p>
+      )}
+      {ammo.noHandToLoad && (
+        <p className={styles.warn}>Loading it needs a free hand, and neither is free.</p>
+      )}
+      {used > 0 && onRecover && (
+        <div className={styles.recover}>
+          <span className={styles.rule}>
+            {used} used since you last recovered. After a fight, 1 minute recovers half of each
+            kind, rounded down; the rest is lost.
+          </span>
+          <Button size="sm" onClick={() => onRecover(rows, true)}>
+            Recover {back}
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => onRecover(rows, false)}>
+            Lose them
+          </Button>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -354,6 +457,10 @@ function AttackRules({
       'Your ability modifier isn’t added to its damage unless it is negative.',
     );
   }
+  if (a.notes.includes('Loading'))
+    lines.push(
+      'Loading: you fire only one piece of ammunition when you use an action, a Bonus Action or a Reaction to fire it, however many attacks you can make.',
+    );
   if (!a.proficient)
     lines.push('Not proficient: your Proficiency Bonus isn’t added to the attack roll.');
 

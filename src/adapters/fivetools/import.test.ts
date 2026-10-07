@@ -51,9 +51,9 @@ describe('importFivetools (fixture tree)', () => {
       background: 1,
       feat: 4,
       species: 6,
-      item: 20,
+      item: 23,
       optionalFeature: 2,
-      rule: 16,
+      rule: 17,
       deity: 5,
       reward: 4,
       facility: 3,
@@ -292,6 +292,7 @@ describe('importFivetools (fixture tree)', () => {
     expect(get<Item>(r, 'item', 'arc bow|tst').weapon).toMatchObject({
       ranged: true,
       range: [60, 240],
+      ammoType: 'arrow|tst',
     });
     expect(get<Item>(r, 'item', 'arena mail|tst').armor).toEqual({
       category: 'heavy',

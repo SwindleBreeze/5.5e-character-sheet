@@ -48,6 +48,19 @@
         "bonusWeapon": "+1",
         "entries": ["Old rules."]
       }
+    },
+    {
+      "name": "+1 Arena Ammunition",
+      "type": "GV|TST",
+      "requires": [{ "type": "A|TST" }],
+      "inherits": {
+        "namePrefix": "+1 ",
+        "source": "TST",
+        "page": 50,
+        "rarity": "uncommon",
+        "bonusWeapon": "+1",
+        "entries": ["{=bonusWeapon} to attack and damage rolls made with this piece."]
+      }
     }
   ]
 }

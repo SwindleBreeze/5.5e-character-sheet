@@ -52,7 +52,7 @@ describe('LibraryPage', () => {
 
     await user.click(await screen.findByRole('tab', { name: 'Items' }));
     // The list is virtual: count the results, not the rows drawn.
-    expect(await screen.findByText(/^19 results/)).toBeInTheDocument();
+    expect(await screen.findByText(/^22 results/)).toBeInTheDocument();
 
     await user.type(screen.getByRole('searchbox', { name: 'Search' }), 'torch');
     await waitFor(async () => expect(await names()).toEqual(['Everburning Torch', 'Torch']));
@@ -60,7 +60,7 @@ describe('LibraryPage', () => {
     await user.clear(screen.getByRole('searchbox', { name: 'Search' }));
     await user.selectOptions(screen.getByRole('combobox', { name: 'Type' }), 'weapon');
     await waitFor(async () =>
-      expect(await names()).toEqual(['Arc Bow', 'Net Blade', 'Shiv', 'Walking Staff']),
+      expect(await names()).toEqual(['Arc Bow', 'Net Blade', 'Shiv', 'Walking Staff', 'Wrist Bow']),
     );
   });
 

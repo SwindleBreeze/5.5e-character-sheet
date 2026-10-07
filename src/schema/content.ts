@@ -267,6 +267,8 @@ export interface Item extends BaseEntity {
     range?: [number, number];
     /** A ranged weapon (5etools type `R`); thrown melee weapons are not. Missing before adapter 3. */
     ranged?: boolean;
+    /** The ammunition an Ammunition weapon fires: `arrow|xphb` (adapter 4). */
+    ammoType?: Id;
   };
   armor?: {
     category: 'light' | 'medium' | 'heavy';

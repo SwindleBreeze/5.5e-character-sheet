@@ -165,6 +165,7 @@ function fill(item: Item, raw: RawEntity): Item {
     };
     if (typeof raw.dmg2 === 'string') weapon.versatile = raw.dmg2;
     if (code === 'R') weapon.ranged = true;
+    if (typeof raw.ammoType === 'string') weapon.ammoType = uidToId.nameSource(raw.ammoType, 'PHB');
     const mastery = asArray(raw.mastery)
       .map(uidOf)
       .find((u) => u !== null);
