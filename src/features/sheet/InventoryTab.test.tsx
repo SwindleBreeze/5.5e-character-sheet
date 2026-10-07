@@ -252,7 +252,8 @@ describe('Inventory tab', () => {
 
     await user.click(screen.getByRole('button', { name: 'Add item' }));
     const dialog = within(await screen.findByRole('dialog', { name: 'Add an item' }));
-    await user.click(dialog.getByRole('button', { name: 'Custom item' }));
+    // The sheet says "Loading items…" until the library has loaded.
+    await user.click(await dialog.findByRole('button', { name: 'Custom item' }));
     await user.type(dialog.getByRole('textbox', { name: 'Name' }), 'Lucky coin');
     await user.type(dialog.getByRole('textbox', { name: 'Weight (lb. each)' }), '0.1');
     await user.click(dialog.getByRole('button', { name: 'Add' }));

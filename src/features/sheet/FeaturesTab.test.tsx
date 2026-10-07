@@ -213,7 +213,7 @@ describe('Features tab', () => {
     expect(section('Gifts').getByText(/No gifts/)).toBeTruthy();
     await user.click(screen.getByRole('button', { name: 'Add gift' }));
     const dialog = within(await screen.findByRole('dialog', { name: 'Add a gift' }));
-    await user.type(dialog.getByRole('searchbox', { name: 'Find a gift' }), 'embers');
+    await user.type(await dialog.findByRole('searchbox', { name: 'Find a gift' }), 'embers');
     await user.click(await dialog.findByRole('button', { name: 'Add Charm of Embers' }));
     expect(
       recordOf(latest, { owner: { kind: 'reward', id: 'charm of embers|tst' }, slot: 'granted' })

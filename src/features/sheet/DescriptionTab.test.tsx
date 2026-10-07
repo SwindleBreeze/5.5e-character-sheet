@@ -117,7 +117,7 @@ describe('Description tab', () => {
 
     await user.click(god.getByRole('button', { name: 'Change god' }));
     const again = within(await screen.findByRole('dialog', { name: 'Choose a god' }));
-    await user.type(again.getByRole('textbox', { name: 'Or type a name' }), 'The Lantern');
+    await user.type(await again.findByRole('textbox', { name: 'Or type a name' }), 'The Lantern');
     await user.click(again.getByRole('button', { name: 'Use this name' }));
     expect(latest.details.deity).toEqual({ name: 'The Lantern' });
 
