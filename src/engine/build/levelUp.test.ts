@@ -52,10 +52,12 @@ describe('level-up (plan §9.4, step 5.1)', () => {
       issues: [],
     });
     expect(plan.features.map((f) => f.name)).toEqual(['Ability Score Improvement']);
-    // The feat, and a spell from the Path of the Spark (a subclass that casts).
+    // A third Weapon Mastery kind, the feat, and a spell from the Path of the Spark (a subclass
+    // that casts).
     expect(
       plan.pending.map((p) => `${p.offer.key.owner.id}#${p.offer.key.slot}:${p.count - p.have}`),
     ).toEqual([
+      'weapon mastery|brute|tst|1|tst#mastery:1',
       'ability score improvement|brute|tst|4|tst#feat:1',
       'spark|brute|tst|tst#spells.4:1',
     ]);
@@ -67,6 +69,13 @@ describe('level-up (plan §9.4, step 5.1)', () => {
       deps(),
     );
     expect(rolled.sheet.hp.max.value).toBe(avg - 4);
+  });
+
+  it('an earlier pick this level gives more of is this level’s too', () => {
+    // Weapon Mastery: two kinds until Brute 4, then three; the pick is on level 1's entry.
+    const plan = planLevelUp(build('brute|tst', 3), brute, deps());
+    const mastery = plan.pending.find((p) => p.offer.key.slot === 'mastery');
+    expect(mastery && mastery.count - mastery.have).toBe(1);
   });
 
   it('the subclass is due at its level, with the subclasses to choose from', () => {

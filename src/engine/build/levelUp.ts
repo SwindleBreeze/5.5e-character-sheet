@@ -6,6 +6,7 @@
 
 import {
   ABILITY_NAMES,
+  encodeChoiceKey,
   type Character,
   type ClassDef,
   type HpGain,
@@ -123,7 +124,12 @@ export interface LevelUpPlan {
   subclassRef?: Ref;
   /** Class and subclass features this level brings. */
   features: DerivedFeature[];
-  /** Picks this level asks for and that are still to make. */
+  /**
+   * This level's picks, by encoded key: those recorded on its entry, and earlier ones it gives
+   * more of (a third Weapon Mastery kind) or brings anew.
+   */
+  choiceKeys: ReadonlySet<string>;
+  /** This level's picks still to make. */
   pending: Pending[];
   /** What stands in the way, as text (a level past 20, content that isn't imported). */
   issues: string[];
@@ -162,10 +168,16 @@ export function readLevelUp(character: Character, before: DerivedSheet, deps: De
       f.classId === classId &&
       f.level === entry.classLevel,
   );
-  const atEntry = sheet.features
-    .flatMap((f) => f.choices)
-    .filter((c) => c.entryIndex === entryIndex);
-  const pending = sheet.choices.pending.filter((p) => atEntry.some((c) => c.offer === p.offer));
+  const countBefore = new Map(
+    before.features.flatMap((f) => f.choices).map((c) => [c.key, c.count]),
+  );
+  const choiceKeys = new Set(
+    sheet.features
+      .flatMap((f) => f.choices)
+      .filter((c) => c.entryIndex === entryIndex || c.count > (countBefore.get(c.key) ?? 0))
+      .map((c) => c.key),
+  );
+  const pending = sheet.choices.pending.filter((p) => choiceKeys.has(encodeChoiceKey(p.offer.key)));
   return {
     character,
     sheet,
@@ -183,6 +195,7 @@ export function readLevelUp(character: Character, before: DerivedSheet, deps: De
     subclasses,
     ...(entry.subclassRef ? { subclassRef: entry.subclassRef } : {}),
     features,
+    choiceKeys,
     pending,
     issues,
   };

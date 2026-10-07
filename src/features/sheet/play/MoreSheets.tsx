@@ -6,11 +6,13 @@ import { Link } from 'react-router';
 import { useEnabledSources } from '../../../content/hooks.ts';
 import { setSources } from '../../../engine/play/details.ts';
 import type { SourceCode } from '../../../schema/index.ts';
+import { MAX_LEVEL } from '../../../engine/build/levelUp.ts';
 import { Button } from '../../../ui/Button.tsx';
 import { useSheet } from '../../../ui/sheetContext.ts';
 import { SourceToggles } from '../../sources/SourceToggles.tsx';
 import inventory from '../inventory/inventory.module.css';
 import { nameOf, type SheetBindings } from '../sheetBindings.ts';
+import { UndoLevelSheet } from '../../levelup/UndoSheet.tsx';
 import { AttentionSheet } from '../attention/AttentionSheet.tsx';
 import { DiceSheet } from './DiceSheet.tsx';
 import { OverridesSheet } from './OverridesSheet.tsx';
@@ -81,6 +83,7 @@ export function MoreMenu({ bindings }: { bindings: SheetBindings }) {
   const ui = useSheet();
   const { character } = bindings;
   const overrides = Object.keys(character.overrides).length;
+  const level = character.log.length;
   const ignored = character.ui.ignoredAttention?.length ?? 0;
   const page = (key: string, title: string, render: () => React.ReactNode) => () =>
     ui.push({ key: `more:${key}`, title, render });
@@ -130,12 +133,28 @@ export function MoreMenu({ bindings }: { bindings: SheetBindings }) {
           </button>
         </li>
       ))}
-      <li>
-        <Link className={inventory.result} to={`/c/${character.id}/level-up`} onClick={ui.close}>
-          <span className={inventory.resultName}>Level up</span>
-          <span className={inventory.muted}>Gain a level (coming with phase 5)</span>
-        </Link>
-      </li>
+      {level < MAX_LEVEL && (
+        <li>
+          <Link className={inventory.result} to={`/c/${character.id}/level-up`} onClick={ui.close}>
+            <span className={inventory.resultName}>Level up</span>
+            <span className={inventory.muted}>To level {level + 1}</span>
+          </Link>
+        </li>
+      )}
+      {level > 1 && (
+        <li>
+          <button
+            type="button"
+            className={inventory.result}
+            onClick={page('undo-level', `Undo level ${level}`, () => (
+              <UndoLevelSheet bindings={bindings} onClose={ui.close} />
+            ))}
+          >
+            <span className={inventory.resultName}>Undo last level</span>
+            <span className={inventory.muted}>Back to level {level - 1}</span>
+          </button>
+        </li>
+      )}
     </ul>
   );
 }

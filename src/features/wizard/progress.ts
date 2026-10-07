@@ -80,7 +80,7 @@ export function picksOnStep(
 }
 
 /** Whether a pick has anything left to pick from (not had already, prerequisites met). */
-function fillable(p: Pending, ctx: AutoContext): boolean {
+export function fillable(p: Pending, ctx: AutoContext): boolean {
   if (p.offer.kind === 'equipment') return Array.isArray(p.offer.from) && p.offer.from.length > 0;
   const current =
     ctx.sheet.features.flatMap((f) => f.choices).find((c) => c.offer === p.offer)?.values ?? [];

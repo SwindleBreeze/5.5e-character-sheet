@@ -1,0 +1,45 @@
+/* The level-up flow (plan §9.4, step 5.2); most of its look is the creation wizard's. */
+
+.features {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.feature {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: var(--card-border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.rollRow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.rollRow input {
+  width: 4.5rem;
+  min-height: 36px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  text-align: center;
+}
+
+.gain {
+  margin: var(--space-2) 0 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-accent-soft);
+}
+
+.gain strong {
+  font-family: var(--font-stat);
+  font-size: var(--font-size-lg);
+}

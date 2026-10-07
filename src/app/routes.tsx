@@ -1,9 +1,10 @@
-import { Route, Routes, useParams } from 'react-router';
+import { Route, Routes } from 'react-router';
 import { CharactersPage } from '../features/characters/CharactersPage.tsx';
 import { CoverageScreen } from '../features/dev/CoverageScreen.tsx';
 import { DesignGallery } from '../features/dev/DesignGallery.tsx';
 import { QuickBuilder } from '../features/dev/QuickBuilder.tsx';
 import { ImportPage } from '../features/import/ImportPage.tsx';
+import { LevelUpPage } from '../features/levelup/LevelUpPage.tsx';
 import { LibraryPage } from '../features/library/LibraryPage.tsx';
 import { Placeholder } from '../features/Placeholder.tsx';
 import { SettingsPage } from '../features/settings/SettingsPage.tsx';
@@ -17,7 +18,7 @@ export function AppRoutes() {
     <Routes>
       <Route element={<AppShell />}>
         <Route index element={<CharactersPage />} />
-        <Route path="c/:id/level-up" element={<LevelUpPlaceholder />} />
+        <Route path="c/:id/level-up" element={<LevelUpPage />} />
         <Route path="c/:id/:tab?" element={<SheetPage />} />
         <Route path="new/:draftId/:step?" element={<WizardPage />} />
         <Route path="library" element={<LibraryPage />} />
@@ -36,14 +37,5 @@ export function AppRoutes() {
         />
       </Route>
     </Routes>
-  );
-}
-
-function LevelUpPlaceholder() {
-  const { id = '' } = useParams();
-  return (
-    <Placeholder title="Level up" backTo={`/c/${id}/main`}>
-      Level-up arrives in phase 5.
-    </Placeholder>
   );
 }
