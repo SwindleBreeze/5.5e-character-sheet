@@ -1,4 +1,4 @@
-/* The creation wizard (plan §9.3, step 4.4). */
+/* The creation wizard (plan §9.3 step 4.4, §9.3b step 4B.5). */
 
 .page {
   display: flex;
@@ -40,6 +40,23 @@
   color: var(--color-accent);
 }
 
+.steps a[data-done='true'] {
+  color: var(--color-text);
+}
+
+.stepLocked {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 var(--space-3);
+  color: var(--color-text-subtle);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .steps a[data-todo='true']::after {
   content: '';
   width: 6px;
@@ -52,20 +69,87 @@
   flex: 1;
 }
 
-.intro {
+/* ---- The step's heading: where it sits in the rules, and what it decides ---- */
+
+.stepHead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--color-accent);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.stepTitle {
+  margin: 0;
+  font-size: var(--font-size-xl);
+  line-height: 1.2;
+}
+
+.lead {
+  max-width: 60ch;
   margin: 0;
   color: var(--color-text-muted);
+  line-height: 1.5;
 }
+
+.notice {
+  margin: 0;
+  padding: var(--space-3);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  color: var(--color-text-muted);
+}
+
+/* ---- Footer: what is left on this step, and the way on ---- */
 
 .footer {
   position: sticky;
   bottom: 0;
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   gap: var(--space-2);
   padding: var(--space-3) var(--space-4) calc(var(--space-3) + var(--safe-bottom));
   border-top: 1px solid var(--color-border);
   background: var(--color-bg);
+}
+
+.left {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-warning-soft);
+  font-size: var(--font-size-sm);
+  line-height: 1.4;
+}
+
+.linkButton {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-accent);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.footerButtons {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.footerButtons button[aria-disabled='true'] {
+  cursor: not-allowed;
+  opacity: 0.45;
 }
 
 /* ---- Lists of classes, backgrounds, species ---- */
@@ -79,20 +163,9 @@
   list-style: none;
 }
 
-.groupTitle {
-  margin: var(--space-2) 0 0;
-  color: var(--color-text-muted);
-  font-size: var(--font-size-xs);
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
 .card {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
+  flex-direction: column;
   padding: var(--space-2) var(--space-3);
   border: var(--card-border-width) solid var(--color-border);
   border-radius: var(--radius-lg);
@@ -102,6 +175,114 @@
 .card[data-selected='true'] {
   border-color: var(--color-accent);
   box-shadow: 0 0 0 1px var(--color-accent);
+}
+
+.cardHead {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.cardHead > button {
+  flex: none;
+}
+
+/* The chosen card opens: its flavor, its choices and what it gives, in place. */
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: var(--space-2) calc(-1 * var(--space-3)) calc(-1 * var(--space-2));
+  padding: var(--space-3);
+  border-top: 1px solid var(--color-border);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  background: var(--color-bg);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+}
+
+.chip {
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--color-accent-soft);
+  color: var(--color-text);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  font-variant-numeric: var(--numeric);
+  white-space: nowrap;
+}
+
+.gives {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+details.gives > summary {
+  color: var(--color-accent);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.anyItem {
+  margin-top: var(--space-2);
+}
+
+/* ---- Species: two menus, then the chosen one ---- */
+
+.speciesStep {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.menus {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--space-3);
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.menu select {
+  min-height: var(--tap-min);
+  padding: 0 var(--space-2);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--font-size-md);
+}
+
+.menu select[data-missing='true'] {
+  border-color: var(--color-warning);
+  box-shadow: 0 0 0 1px var(--color-warning);
+}
+
+.chosen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.chosenHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.chosenHead h2 {
+  margin: 0;
 }
 
 .pick {
@@ -217,6 +398,10 @@
   font-size: var(--font-size-xs);
 }
 
+.scores td {
+  vertical-align: middle;
+}
+
 .scores select,
 .scores input {
   width: 4.5rem;
@@ -229,6 +414,7 @@
 }
 
 .primary {
+  display: block;
   color: var(--color-accent);
   font-size: var(--font-size-xs);
   font-weight: 700;
@@ -240,26 +426,134 @@
   font-weight: 700;
 }
 
-.dice {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
+.mod {
+  color: var(--color-text-muted);
   font-variant-numeric: var(--numeric);
 }
 
-.dice li {
-  padding: var(--space-1) var(--space-2);
+/* Point buy: − and + around the score. */
+.stepper {
+  display: inline-flex;
+  align-items: center;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface);
 }
 
+.stepper button {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  background: transparent;
+  color: var(--color-accent);
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.stepper button[aria-disabled='true'] {
+  color: var(--color-text-subtle);
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.stepperValue {
+  min-width: 2.5ch;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: var(--numeric);
+}
+
+.points {
+  align-self: flex-start;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--color-accent-soft);
+  font-size: var(--font-size-sm);
+}
+
+.points strong {
+  font-family: var(--font-stat);
+  font-size: var(--font-size-lg);
+}
+
+.points[data-over='true'] {
+  background: var(--color-negative-soft);
+  color: var(--color-negative);
+}
+
+/* Rolling: each roll its own tile, the total big, the dice under it. */
+.rollArea {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.rolls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+  align-self: stretch;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 600px) {
+  .rolls {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+.roll {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.rollTotal {
+  font-family: var(--font-stat);
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: var(--numeric);
+}
+
+.rollDice {
+  display: flex;
+  gap: 3px;
+}
+
+.die,
 .dropped {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  font-variant-numeric: var(--numeric);
+}
+
+.dropped {
+  border-style: dashed;
   color: var(--color-text-subtle);
   text-decoration: line-through;
+}
+
+.rollFor {
+  color: var(--color-accent);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
 }
 
 /* ---- Review ---- */
@@ -280,6 +574,14 @@
   grid-template-columns: 1fr auto;
   align-items: center;
   gap: var(--space-2);
+}
+
+.items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding-left: var(--space-4);
 }
 
 .statRow {
@@ -313,28 +615,7 @@
   font-weight: 700;
 }
 
-/* ---- The guide and explanations (plan §9.3b) ---- */
-
-.guide {
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--color-accent-soft);
-  border-radius: var(--radius-lg);
-  background: var(--color-accent-soft);
-}
-
-.guide summary {
-  color: var(--color-accent);
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.guide ul {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  margin: var(--space-2) 0 0;
-  padding-left: var(--space-4);
-}
+/* ---- Explanations (plan §9.3b) ---- */
 
 .about {
   display: flex;

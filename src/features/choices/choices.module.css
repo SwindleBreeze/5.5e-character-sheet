@@ -181,3 +181,14 @@
   margin: 0;
   font-size: var(--font-size-md);
 }
+
+/* What the pick is for (plan §9.3b): right above its options. */
+.help {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-left: 3px solid var(--color-accent);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-2);
+  font-size: var(--font-size-sm);
+  line-height: 1.45;
+}

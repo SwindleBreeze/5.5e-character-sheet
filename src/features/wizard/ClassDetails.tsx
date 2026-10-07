@@ -58,7 +58,7 @@ export function ClassTable({ cls, index }: { cls: ClassDef; index: ContentIndex 
         </tbody>
       </table>
       {slotLevels > 0 && (
-        <p className={styles.intro}>The numbered columns are spell slots by spell level.</p>
+        <p className={styles.lead}>The numbered columns are spell slots by spell level.</p>
       )}
     </div>
   );

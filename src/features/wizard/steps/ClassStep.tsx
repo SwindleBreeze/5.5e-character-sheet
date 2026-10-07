@@ -1,23 +1,29 @@
-// Step 1: the class (plan §9.3 step 4.4, §9.3b step 4B.3). Every class the enabled sources offer,
-// each with its hit die and primary ability; the chosen one with its flavor text, what it gives
-// in plain words, and its table.
+// Step 1: the class (plan §9.3 step 4.4, §9.3b steps 4B.3 and 4B.5). Each class with its hit die
+// and primary ability at a glance; the chosen one opens in place with its flavor text, the picks
+// it asks for now (skills, tools, starting equipment), and, folded, everything it gives and its
+// table.
 
 import { chooseClass } from '../../../engine/build/wizard.ts';
-import { Button } from '../../../ui/Button.tsx';
+import { setPick } from '../../../engine/play/features.ts';
+import { decodeChoiceKey } from '../../../schema/index.ts';
 import { useSheet } from '../../../ui/sheetContext.ts';
 import page from '../../../app/Page.module.css';
-import type { WizardBindings } from '../bindings.ts';
+import { FeatureChoices } from '../../choices/FeatureChoices.tsx';
+import { choiceContext, stepOf, type WizardBindings } from '../bindings.ts';
 import { ClassTable } from '../ClassDetails.tsx';
 import { EntityCards } from '../EntityCards.tsx';
-import { AboutEntity, ReadSheet } from '../Explain.tsx';
-import { classLine } from '../text.ts';
+import { AboutFlavor, ReadSheet, WhatYouGet } from '../Explain.tsx';
+import { classChips } from '../text.ts';
+import styles from '../wizard.module.css';
+import { EquipmentChoice } from './EquipmentChoice.tsx';
 
 export function ClassStep(b: WizardBindings) {
-  const { character, content, change } = b;
+  const { character, content, sheet, change, apply } = b;
   const ui = useSheet();
   const classes = content.catalog.of('class');
   const selectedId = character.log[0]?.classRef.id;
   const selected = selectedId ? content.index.get({ kind: 'class', id: selectedId }) : undefined;
+  const owner = sheet?.features.find((f) => f.ref.kind === 'class' && f.ref.id === selectedId);
 
   const read = (id: string) => {
     const cls = content.index.get({ kind: 'class', id });
@@ -36,30 +42,42 @@ export function ClassStep(b: WizardBindings) {
     });
   };
 
-  return (
+  const expanded = selected && (
     <>
-      <EntityCards
-        label="Classes"
-        items={classes.map((c) => ({ id: c.id, name: c.name, detail: classLine(c) }))}
-        selected={selectedId}
-        onSelect={(id) => change((c) => chooseClass(c, { kind: 'class', id }, content.index))}
-        onRead={read}
-      />
-      {selected && (
-        <section className={page.card} aria-label={`About the ${selected.name}`}>
-          <h2 className={page.cardTitle}>{selected.name}</h2>
-          <AboutEntity entity={selected} index={content.index} />
-          <details>
-            <summary>Class table</summary>
-            <ClassTable cls={selected} index={content.index} />
-          </details>
-          <div className={page.row}>
-            <Button size="sm" onClick={() => read(selected.id)}>
-              Read the {selected.name}
-            </Button>
-          </div>
-        </section>
+      <AboutFlavor entity={selected} />
+      {owner && sheet && (
+        <FeatureChoices
+          features={[owner]}
+          ctx={choiceContext(b, sheet)}
+          only={(c) => stepOf(c.offer, sheet) === 'class'}
+          onPick={(c, f, pick) =>
+            apply((ch) =>
+              setPick(ch, decodeChoiceKey(c.key), {
+                ...pick,
+                entryIndex: f.entryIndex,
+                via: 'creation',
+              }),
+            )
+          }
+        />
       )}
+      <EquipmentChoice b={b} owner={{ kind: 'class', id: selected.id }} />
+      <WhatYouGet entity={selected} index={content.index} folded omit={['Equipment']} />
+      <details className={styles.gives}>
+        <summary>The {selected.name} table, levels 1–20</summary>
+        <ClassTable cls={selected} index={content.index} />
+      </details>
     </>
+  );
+
+  return (
+    <EntityCards
+      label="Classes"
+      items={classes.map((c) => ({ id: c.id, name: c.name, chips: classChips(c) }))}
+      selected={selectedId}
+      onSelect={(id) => change((c) => chooseClass(c, { kind: 'class', id }, content.index))}
+      onRead={read}
+      expanded={expanded}
+    />
   );
 }

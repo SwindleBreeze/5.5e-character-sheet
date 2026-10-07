@@ -1,20 +1,18 @@
-// A list of things to pick one of (a class, a background, a species), each with a line of what
-// it gives and a button to read it (plan §9.3, step 4.4). Optionally under headings.
+// A list of things to pick one of (a class, a background), each with what it gives at a glance
+// (plan §9.3 step 4.4, §9.3b step 4B.5). The chosen one opens in place, with its choices inside,
+// so nothing it asks for is out of sight below the list.
 
-import { useId, useState } from 'react';
+import { useId, type ReactNode } from 'react';
 import { Button } from '../../ui/Button.tsx';
-import inventory from '../sheet/inventory/inventory.module.css';
 import styles from './wizard.module.css';
 
 export interface CardItem {
   id: string;
   name: string;
   detail?: string;
-  /** Heading it is listed under (a species' lineages under the species). */
-  group?: string;
+  /** Short facts shown as tags: `+2/+1: INT · WIS · CHA`, `Arcana`, `Magic Initiate`. */
+  chips?: string[];
 }
-
-const SEARCH_FROM = 12;
 
 export function EntityCards({
   label,
@@ -22,6 +20,7 @@ export function EntityCards({
   selected,
   onSelect,
   onRead,
+  expanded,
 }: {
   /** The list's accessible name, e.g. `Classes`. */
   label: string;
@@ -29,84 +28,71 @@ export function EntityCards({
   selected: string | undefined;
   onSelect: (id: string) => void;
   onRead: (id: string) => void;
+  /** Shown inside the selected card: what it is and what it asks for. */
+  expanded?: ReactNode;
 }) {
-  const [query, setQuery] = useState('');
   const baseId = useId();
-  const q = query.trim().toLowerCase();
-  const shown = items.filter(
-    (i) =>
-      !q ||
-      i.id === selected ||
-      i.name.toLowerCase().includes(q) ||
-      (i.group ?? '').toLowerCase().includes(q),
-  );
-  const groups = [...new Set(shown.map((i) => i.group ?? ''))];
-
-  // Named by its name only; the detail line describes it.
-  const card = (item: CardItem, i: number) => (
-    <li key={item.id} className={styles.card} data-selected={item.id === selected}>
-      <label className={styles.pick}>
-        <input
-          type="radio"
-          name={label}
-          checked={item.id === selected}
-          aria-labelledby={`${baseId}-${i}-name`}
-          aria-describedby={item.detail ? `${baseId}-${i}-detail` : undefined}
-          onChange={() => onSelect(item.id)}
-        />
-        <span className={styles.pickText}>
-          <span id={`${baseId}-${i}-name`} className={styles.pickName}>
-            {item.name}
-          </span>
-          {item.detail && (
-            <span id={`${baseId}-${i}-detail`} className={styles.pickDetail}>
-              {item.detail}
-            </span>
-          )}
-        </span>
-      </label>
-      <Button
-        size="sm"
-        variant="ghost"
-        aria-label={`Read ${item.name}`}
-        onClick={() => onRead(item.id)}
-      >
-        Read
-      </Button>
-    </li>
-  );
-
+  if (!items.length) {
+    return (
+      <p className={styles.notice}>
+        Nothing to choose from. Import content, or check Settings → Sources.
+      </p>
+    );
+  }
   return (
-    <div className={inventory.form}>
-      {items.length > SEARCH_FROM && (
-        <input
-          type="search"
-          className={inventory.search}
-          aria-label={`Find in ${label.toLowerCase()}`}
-          placeholder="Find…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-      )}
-      {!items.length && (
-        <p className={inventory.warn}>
-          Nothing to choose from. Import content, or check Settings → Sources.
-        </p>
-      )}
-      {groups.length > 1 ? (
-        groups.map((g) => (
-          <section key={g} aria-label={g}>
-            <h3 className={styles.groupTitle}>{g}</h3>
-            <ul className={styles.cards} aria-label={g}>
-              {shown.filter((i) => (i.group ?? '') === g).map((i) => card(i, items.indexOf(i)))}
-            </ul>
-          </section>
-        ))
-      ) : (
-        <ul className={styles.cards} aria-label={label}>
-          {shown.map((i) => card(i, items.indexOf(i)))}
-        </ul>
-      )}
-    </div>
+    <ul className={styles.cards} aria-label={label}>
+      {items.map((item, i) => {
+        const on = item.id === selected;
+        const nameId = `${baseId}-${i}-name`;
+        const detailId = `${baseId}-${i}-detail`;
+        return (
+          <li
+            key={item.id}
+            className={styles.card}
+            data-selected={on}
+            aria-label={on ? item.name : undefined}
+          >
+            <div className={styles.cardHead}>
+              <label className={styles.pick}>
+                <input
+                  type="radio"
+                  name={label}
+                  checked={on}
+                  aria-labelledby={nameId}
+                  aria-describedby={item.detail || item.chips?.length ? detailId : undefined}
+                  onChange={() => onSelect(item.id)}
+                />
+                <span className={styles.pickText}>
+                  <span id={nameId} className={styles.pickName}>
+                    {item.name}
+                  </span>
+                  <span id={detailId} className={styles.pickDetail}>
+                    {item.detail}
+                    {item.chips?.length ? (
+                      <span className={styles.chips}>
+                        {item.chips.map((c) => (
+                          <span key={c} className={styles.chip}>
+                            {c}
+                          </span>
+                        ))}
+                      </span>
+                    ) : null}
+                  </span>
+                </span>
+              </label>
+              <Button
+                size="sm"
+                variant="ghost"
+                aria-label={`Read ${item.name}`}
+                onClick={() => onRead(item.id)}
+              >
+                Read
+              </Button>
+            </div>
+            {on && expanded && <div className={styles.cardBody}>{expanded}</div>}
+          </li>
+        );
+      })}
+    </ul>
   );
 }
