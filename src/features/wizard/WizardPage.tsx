@@ -34,13 +34,13 @@ import { useSheet } from '../../ui/sheetContext.ts';
 import { DescriptionTab } from '../sheet/DescriptionTab.tsx';
 import inventory from '../sheet/inventory/inventory.module.css';
 import { useCharacterActions, type CharacterUpdate } from '../sheet/useCharacterActions.ts';
-import { stepOf, type WizardBindings } from './bindings.ts';
-import { StepGuideCard } from './Explain.tsx';
+import type { WizardBindings } from './bindings.ts';
+import { STEP_INTROS } from './guide.ts';
+import { picksOnStep, wizardTodos } from './progress.ts';
 import { AbilitiesStep } from './steps/AbilitiesStep.tsx';
 import { BackgroundStep } from './steps/BackgroundStep.tsx';
 import { ChoicesStep } from './steps/ChoicesStep.tsx';
 import { ClassStep } from './steps/ClassStep.tsx';
-import { EquipmentStep } from './steps/EquipmentStep.tsx';
 import { ReviewStep } from './steps/ReviewStep.tsx';
 import { SpeciesStep } from './steps/SpeciesStep.tsx';
 import { SpellsStep } from './steps/SpellsStep.tsx';
@@ -151,7 +151,10 @@ function Wizard({ id }: { id: string }) {
     [rawApply, index],
   );
 
-  const steps = wizardSteps(sheet);
+  // "Class features" only when the class's features have something to choose there.
+  const steps = wizardSteps(sheet).filter(
+    (s) => s !== 'choices' || (!!sheet && picksOnStep(sheet, 'choices').features.length > 0),
+  );
   const step: WizardStep =
     isWizardStep(param) && steps.includes(param) ? param : (steps[0] ?? 'class');
 
@@ -215,20 +218,28 @@ function Wizard({ id }: { id: string }) {
     navigate(`/c/${id}/main`, { replace: true });
   };
 
-  const b: WizardBindings = { character, sheet, content, apply, change, go };
+  const ctx = sheet
+    ? { character, sheet, catalog: content.catalog, index: content.index }
+    : undefined;
+  const todos = wizardTodos(character, ctx);
+  const b: WizardBindings = { character, sheet, content, apply, change, go, todos };
   const at = steps.indexOf(step);
   const prev = steps[at - 1];
   const next = steps[at + 1];
   const needsClass = step !== 'class' && !character.log.length;
-  // Steps with picks still to make, marked in the step list.
-  const todo = new Set<WizardStep>(
-    sheet ? sheet.choices.pending.map((p) => stepOf(p.offer, sheet)) : [],
-  );
+  // Steps open up in order: one with picks still to make closes the ones after it.
+  const open = new Set(todos.map((t) => t.step));
+  const firstOpen = steps.findIndex((s) => open.has(s));
+  const reachable = (i: number) => firstOpen < 0 || i <= firstOpen || i <= at;
+  const here = todos.filter((t) => t.step === step);
+  const earlier = firstOpen >= 0 && firstOpen < at ? steps[firstOpen] : undefined;
+  const blocked = here.length > 0 || earlier !== undefined;
+  const intro = STEP_INTROS[step];
 
   const body = (() => {
     if (needsClass) {
       return (
-        <p className={inventory.warn}>
+        <p className={styles.notice}>
           Choose a class first.{' '}
           <Button size="sm" onClick={() => go('class')}>
             Go to Class
@@ -245,8 +256,6 @@ function Wizard({ id }: { id: string }) {
         return <SpeciesStep {...b} />;
       case 'abilities':
         return <AbilitiesStep {...b} />;
-      case 'equipment':
-        return <EquipmentStep {...b} />;
       case 'spells':
         return <SpellsStep {...b} />;
       case 'choices':
@@ -266,43 +275,71 @@ function Wizard({ id }: { id: string }) {
       <ol className={styles.steps} aria-label="Steps">
         {steps.map((s, i) => (
           <li key={s}>
-            <a
-              href={`#/new/${id}/${s}`}
-              aria-current={s === step ? 'step' : undefined}
-              ref={
-                s === step
-                  ? (el) => el?.scrollIntoView?.({ block: 'nearest', inline: 'center' })
-                  : undefined
-              }
-              data-todo={todo.has(s)}
-              onClick={(e) => {
-                e.preventDefault();
-                go(s);
-              }}
-            >
-              {i + 1}. {STEP_TITLES[s]}
-            </a>
+            {reachable(i) ? (
+              <a
+                href={`#/new/${id}/${s}`}
+                aria-current={s === step ? 'step' : undefined}
+                ref={
+                  s === step
+                    ? (el) => el?.scrollIntoView?.({ block: 'nearest', inline: 'center' })
+                    : undefined
+                }
+                data-todo={open.has(s) && i < at}
+                data-done={!open.has(s) && i < at}
+                onClick={(e) => {
+                  e.preventDefault();
+                  go(s);
+                }}
+              >
+                {i + 1}. {STEP_TITLES[s]}
+              </a>
+            ) : (
+              <span className={styles.stepLocked} aria-disabled="true">
+                {i + 1}. {STEP_TITLES[s]}
+              </span>
+            )}
           </li>
         ))}
       </ol>
       <div className={`${page.content} ${styles.body}`}>
-        <h2 className={page.cardTitle}>{STEP_TITLES[step]}</h2>
-        <StepGuideCard step={step} />
+        <header className={styles.stepHead}>
+          <p className={styles.eyebrow}>{intro.rule}</p>
+          <h2 className={styles.stepTitle}>{STEP_TITLES[step]}</h2>
+          <p className={styles.lead}>{intro.lead}</p>
+        </header>
         {body}
       </div>
       <nav className={styles.footer} aria-label="Wizard">
-        {prev ? <Button onClick={() => go(prev)}>‹ {STEP_TITLES[prev]}</Button> : <span />}
-        {next && (
-          <Button
-            variant="primary"
-            aria-disabled={!character.log.length}
-            onClick={() => {
-              if (character.log.length) go(next);
-            }}
-          >
-            {STEP_TITLES[next]} ›
-          </Button>
+        {(here.length > 0 || earlier) && step !== 'review' && (
+          <div className={styles.left} aria-live="polite">
+            {earlier ? (
+              <>
+                <strong>{STEP_TITLES[earlier]}</strong> isn’t finished.{' '}
+                <button type="button" className={styles.linkButton} onClick={() => go(earlier)}>
+                  Go back to it
+                </button>
+              </>
+            ) : (
+              <>
+                <strong>Still to choose:</strong> {here.map((t) => t.text).join(' · ')}
+              </>
+            )}
+          </div>
         )}
+        <div className={styles.footerButtons}>
+          {prev ? <Button onClick={() => go(prev)}>‹ {STEP_TITLES[prev]}</Button> : <span />}
+          {next && (
+            <Button
+              variant="primary"
+              aria-disabled={blocked || !character.log.length}
+              onClick={() => {
+                if (!blocked && character.log.length) go(next);
+              }}
+            >
+              {STEP_TITLES[next]} ›
+            </Button>
+          )}
+        </div>
       </nav>
     </div>
   );

@@ -1,7 +1,7 @@
-// Step 4: ability scores (plan §9.3, step 4.4; 2024 Player's Handbook, Generate Your Scores).
-// The standard array assigned by tap, point buy (27 points, 8 to 15), scores typed in (3–18),
-// or 4d6 dropping the lowest die, rerolled at will. The background's increases are shown
-// applied (no score above 20), with the class's primary abilities marked.
+// Step 4: ability scores (plan §9.3 step 4.4, §9.3b step 4B.5; 2024 Player's Handbook, Generate
+// Your Scores). The standard array assigned by tap, point buy with − and + (27 points, 8 to 15),
+// scores typed in (3–18), or 4d6 dropping the lowest die, each roll its own tile. The
+// background's increases are shown applied (no score above 20), primary abilities marked.
 
 import { STANDARD_ARRAY } from '../../../engine/build/build.ts';
 import {
@@ -19,17 +19,11 @@ import {
   rollScores,
   startingScores,
 } from '../../../engine/build/scores.ts';
-import { signed } from '../../sheet/components/format.ts';
-import {
-  ABILITIES,
-  ABILITY_NAMES,
-  type Ability,
-  type Character,
-  type ScoreMethod,
-} from '../../../schema/index.ts';
+import { ABILITIES, ABILITY_NAMES, type Ability, type ScoreMethod } from '../../../schema/index.ts';
 import { Button } from '../../../ui/Button.tsx';
-import page from '../../../app/Page.module.css';
-import inventory from '../../sheet/inventory/inventory.module.css';
+import { StepButton } from '../../../ui/Counter.tsx';
+import choices from '../../choices/choices.module.css';
+import { signed } from '../../sheet/components/format.ts';
 import type { WizardBindings } from '../bindings.ts';
 import styles from '../wizard.module.css';
 
@@ -37,26 +31,39 @@ const METHODS: { id: ScoreMethod; label: string; help: string }[] = [
   {
     id: 'standard',
     label: 'Standard array',
-    help: 'Give each of 15, 14, 13, 12, 10 and 8 to one ability.',
+    help: 'Give each of 15, 14, 13, 12, 10 and 8 to one ability. Picking a number another ability has swaps them.',
   },
   {
     id: 'pointBuy',
     label: 'Point buy',
-    help: `Spend ${POINT_BUY_BUDGET} points: every score starts at 8; 15 is the most before your background.`,
+    help: `Every score starts at 8. Spend ${POINT_BUY_BUDGET} points to raise them, up to 15; the higher a score, the more each point costs.`,
   },
   {
     id: 'rolled',
     label: 'Roll',
-    help: 'Roll four d6 for each score and drop the lowest, then give each total to an ability.',
+    help: 'Roll four six-sided dice for each score and add the highest three. Then give each total to an ability.',
   },
   {
     id: 'manual',
     label: 'Type in',
-    help: `Type the scores your DM agreed (${MANUAL_MIN}–${MANUAL_MAX}).`,
+    help: `Type the scores your DM agreed to (${MANUAL_MIN}–${MANUAL_MAX}).`,
   },
 ];
 
 const totals = (rolls: readonly number[][] | undefined) => (rolls ?? []).map(dropLowest);
+
+/** Which ability each rolled total went to (equal totals go in order). */
+function rollOwners(
+  scores: Record<Ability, number>,
+  rolled: readonly number[],
+): (Ability | undefined)[] {
+  const used = new Set<Ability>();
+  return rolled.map((total) => {
+    const a = ABILITIES.find((x) => !used.has(x) && scores[x] === total);
+    if (a) used.add(a);
+    return a;
+  });
+}
 
 export function AbilitiesStep(b: WizardBindings) {
   const { character, content, sheet, apply } = b;
@@ -67,17 +74,15 @@ export function AbilitiesStep(b: WizardBindings) {
   const method = character.scoreMethod;
   const scores = character.baseScores;
   const rolls = character.draft?.rolls;
-  const set = method === 'rolled' ? totals(rolls) : [...STANDARD_ARRAY];
+  const rolled = totals(rolls);
+  const set = method === 'rolled' ? rolled : [...STANDARD_ARRAY];
 
   const setMethod = (m: ScoreMethod) =>
-    apply((c) => {
-      const next: Character = {
-        ...c,
-        scoreMethod: m,
-        baseScores: startingScores(m, primaryOrder(cls), totals(c.draft?.rolls)),
-      };
-      return next;
-    });
+    apply((c) => ({
+      ...c,
+      scoreMethod: m,
+      baseScores: startingScores(m, primaryOrder(cls), totals(c.draft?.rolls)),
+    }));
 
   const roll = () =>
     apply((c) => {
@@ -93,16 +98,17 @@ export function AbilitiesStep(b: WizardBindings) {
   const setScore = (a: Ability, value: number) =>
     apply((c) => ({ ...c, baseScores: { ...c.baseScores, [a]: value } }));
 
-  const spent = pointBuyCost(scores);
-  const left = POINT_BUY_BUDGET - spent;
+  const left = POINT_BUY_BUDGET - pointBuyCost(scores);
+  const nextCost = (v: number) => (POINT_BUY_COST[v + 1] ?? Infinity) - (POINT_BUY_COST[v] ?? 0);
 
   const control = (a: Ability) => {
+    const name = `${ABILITY_NAMES[a]} score`;
     switch (method) {
       case 'standard':
       case 'rolled':
         return (
           <select
-            aria-label={`${ABILITY_NAMES[a]} score`}
+            aria-label={name}
             value={scores[a]}
             onChange={(e) =>
               apply((c) => ({
@@ -122,24 +128,23 @@ export function AbilitiesStep(b: WizardBindings) {
         );
       case 'pointBuy':
         return (
-          <select
-            aria-label={`${ABILITY_NAMES[a]} score`}
-            value={scores[a]}
-            onChange={(e) => setScore(a, Number(e.target.value))}
-          >
-            {Array.from(
-              { length: POINT_BUY_MAX - POINT_BUY_MIN + 1 },
-              (_, i) => POINT_BUY_MIN + i,
-            ).map((v) => (
-              <option
-                key={v}
-                value={v}
-                disabled={(POINT_BUY_COST[v] ?? 0) - (POINT_BUY_COST[scores[a]] ?? 0) > left}
-              >
-                {v} ({POINT_BUY_COST[v]} pt)
-              </option>
-            ))}
-          </select>
+          <div className={styles.stepper} role="group" aria-label={name}>
+            <StepButton
+              label={`Decrease ${name}`}
+              symbol="−"
+              blocked={scores[a] <= POINT_BUY_MIN}
+              onStep={() => setScore(a, scores[a] - 1)}
+            />
+            <output className={styles.stepperValue} aria-live="polite">
+              {scores[a]}
+            </output>
+            <StepButton
+              label={`Increase ${name}`}
+              symbol="+"
+              blocked={scores[a] >= POINT_BUY_MAX || nextCost(scores[a]) > left}
+              onStep={() => setScore(a, scores[a] + 1)}
+            />
+          </div>
         );
       case 'manual':
         return (
@@ -148,7 +153,7 @@ export function AbilitiesStep(b: WizardBindings) {
             inputMode="numeric"
             min={MANUAL_MIN}
             max={MANUAL_MAX}
-            aria-label={`${ABILITY_NAMES[a]} score`}
+            aria-label={name}
             value={scores[a]}
             onChange={(e) => {
               const v = Math.round(Number(e.target.value));
@@ -161,14 +166,10 @@ export function AbilitiesStep(b: WizardBindings) {
 
   const outOfRange =
     method === 'manual' && ABILITIES.some((a) => scores[a] < MANUAL_MIN || scores[a] > MANUAL_MAX);
+  const owners = method === 'rolled' ? rollOwners(scores, rolled) : [];
 
   return (
     <>
-      {cls && (
-        <p className={styles.intro}>
-          A {cls.name} relies most on {primaryText(cls)}: put your best scores there.
-        </p>
-      )}
       <div className={styles.methods} role="group" aria-label="Method">
         {METHODS.map((m) => (
           <Button
@@ -182,43 +183,45 @@ export function AbilitiesStep(b: WizardBindings) {
           </Button>
         ))}
       </div>
-      <p className={inventory.help}>{METHODS.find((m) => m.id === method)?.help}</p>
+      <p className={choices.help}>
+        {METHODS.find((m) => m.id === method)?.help}
+        {cls && ` A ${cls.name} relies most on ${primaryText(cls)}: put your best scores there.`}
+      </p>
 
       {method === 'rolled' && (
-        <section className={page.card} aria-label="Rolls">
-          {rolls?.length ? (
-            <ul className={styles.dice} aria-label="Rolled scores">
-              {rolls.map((dice, i) => {
-                const low = dice.indexOf(Math.min(...dice));
-                return (
-                  <li key={i} aria-label={`Total ${dropLowest(dice)}`}>
+        <section aria-label="Rolls" className={styles.rollArea}>
+          <ul className={styles.rolls} aria-label="Rolled scores">
+            {(rolls ?? []).map((dice, i) => {
+              const low = dice.indexOf(Math.min(...dice));
+              const owner = owners[i];
+              return (
+                <li key={i} className={styles.roll} aria-label={`Total ${dropLowest(dice)}`}>
+                  <span className={styles.rollTotal}>{dropLowest(dice)}</span>
+                  <span className={styles.rollDice} aria-hidden="true">
                     {dice.map((d, j) => (
-                      <span key={j} className={j === low ? styles.dropped : undefined}>
+                      <span key={j} className={j === low ? styles.dropped : styles.die}>
                         {d}
-                        {j < dice.length - 1 ? ' ' : ''}
                       </span>
-                    ))}{' '}
-                    = <strong>{dropLowest(dice)}</strong>
-                  </li>
-                );
-              })}
-            </ul>
-          ) : null}
-          <div className={page.row}>
-            <Button size="sm" onClick={roll}>
-              {rolls?.length ? 'Roll again' : 'Roll'}
-            </Button>
-          </div>
+                    ))}
+                  </span>
+                  <span className={styles.rollFor}>{owner ? ABILITY_NAMES[owner] : '—'}</span>
+                </li>
+              );
+            })}
+          </ul>
+          <Button size="sm" onClick={roll}>
+            {rolls?.length ? 'Roll again' : 'Roll'}
+          </Button>
         </section>
       )}
 
       {method === 'pointBuy' && (
-        <p aria-live="polite" className={left < 0 ? inventory.warn : undefined}>
+        <div className={styles.points} aria-live="polite" data-over={left < 0}>
           <strong>{left}</strong> of {POINT_BUY_BUDGET} points left
-        </p>
+        </div>
       )}
       {outOfRange && (
-        <p className={inventory.warn}>
+        <p className={styles.notice}>
           Scores are usually {MANUAL_MIN} to {MANUAL_MAX} at creation.
         </p>
       )}
@@ -242,27 +245,21 @@ export function AbilitiesStep(b: WizardBindings) {
               <tr key={a}>
                 <th scope="row">
                   {ABILITY_NAMES[a]}
-                  {primary.has(a) && (
-                    <>
-                      {' '}
-                      <span className={styles.primary}>Primary</span>
-                    </>
-                  )}
+                  {primary.has(a) && <span className={styles.primary}>Primary</span>}
                 </th>
                 <td>{control(a)}</td>
                 <td>{bonus ? signed(bonus) : '—'}</td>
                 <td className={styles.final}>{final}</td>
-                <td>{signed(mod)}</td>
+                <td className={styles.mod}>{signed(mod)}</td>
               </tr>
             );
           })}
         </tbody>
       </table>
-      {!character.log[0]?.origin?.backgroundRef && (
-        <p className={inventory.help}>
-          Your background’s increases show here once you choose it and its ability scores.
-        </p>
-      )}
+      <p className={choices.help}>
+        <strong>Bonus</strong> is your background’s increases. <strong>Mod</strong> is what you add
+        to rolls with that ability: 10–11 is +0, every 2 points more is +1, every 2 less is −1.
+      </p>
     </>
   );
 }

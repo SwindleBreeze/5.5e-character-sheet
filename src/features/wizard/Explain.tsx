@@ -1,39 +1,12 @@
-// How the wizard explains things (plan §9.3b, step 4B.3): the guide at the top of each step,
-// and for a class, background, species, lineage or feat its flavor text (from the imported
-// content) and what it gives the character.
+// How the wizard explains a class, background, species, lineage or feat (plan §9.3b, steps 4B.3
+// and 4B.5): its flavor text (from the imported content) and what it gives the character.
 
-import { useState } from 'react';
-import type { WizardStep } from '../../engine/build/wizard.ts';
 import type { ContentIndex } from '../../engine/content/contentIndex.ts';
 import { benefitsOf, type Benefit } from '../../engine/explain/benefits.ts';
 import type { ContentEntity, Entry, Ref } from '../../schema/index.ts';
 import { Entries } from '../../richtext/Entries.tsx';
 import { EntitySheet } from '../../richtext/EntitySheet.tsx';
-import { guideOpen, setGuideOpen, STEP_GUIDES } from './guide.ts';
 import styles from './wizard.module.css';
-
-export function StepGuideCard({ step }: { step: WizardStep }) {
-  const [open, setOpen] = useState(guideOpen);
-  const guide = STEP_GUIDES[step];
-  return (
-    <details
-      className={styles.guide}
-      open={open}
-      onToggle={(e) => {
-        const next = e.currentTarget.open;
-        setOpen(next);
-        setGuideOpen(next);
-      }}
-    >
-      <summary>Guide: {guide.where}</summary>
-      <ul>
-        {guide.points.map((p) => (
-          <li key={p}>{p}</li>
-        ))}
-      </ul>
-    </details>
-  );
-}
 
 export function BenefitList({ benefits, label }: { benefits: readonly Benefit[]; label: string }) {
   const plain = benefits.filter((b) => !b.trait);
@@ -90,36 +63,65 @@ function Flavor({ entries, name }: { entries: readonly Entry[] | undefined; name
   );
 }
 
-/** Flavor text, if the content has it, then what it gives. */
-export function AboutEntity({
+/** Flavor text, if the content has it. */
+export function AboutFlavor({ entity }: { entity: ContentEntity }) {
+  return <Flavor entries={entity.fluff} name={entity.name} />;
+}
+
+/**
+ * What it gives. `folded`: behind "Everything the … gives", for when its choices come first.
+ * `omit`: lines chosen right there (its equipment), by label prefix.
+ */
+export function WhatYouGet({
   entity,
   index,
-  title = 'What you get',
+  folded,
+  omit = [],
 }: {
   entity: ContentEntity;
   index: ContentIndex;
-  title?: string;
+  folded?: boolean;
+  omit?: readonly string[];
 }) {
-  const benefits = benefitsOf(entity, index);
+  const benefits = benefitsOf(entity, index).filter(
+    (b) => !omit.some((prefix) => b.label.startsWith(prefix)),
+  );
   const parent =
     entity.kind === 'species' && entity.variantOf
       ? index.get({ kind: 'species', id: entity.variantOf })
       : undefined;
-  return (
-    <div className={styles.about}>
-      <Flavor entries={entity.fluff} name={entity.name} />
-      {benefits.length > 0 && (
-        <section aria-label={`${title}: ${entity.name}`}>
-          <h3 className={styles.subTitle}>{parent ? `What the ${entity.name} adds` : title}</h3>
-          <BenefitList benefits={benefits} label={title} />
-        </section>
-      )}
+  if (!benefits.length && !parent) return null;
+  const title = parent ? `What the ${entity.name} adds` : `Everything the ${entity.name} gives`;
+  const body = (
+    <>
+      <BenefitList benefits={benefits} label={title} />
       {parent && (
         <details>
           <summary>What every {parent.name} has</summary>
-          <BenefitList benefits={benefitsOf(parent, index)} label={`${parent.name}`} />
+          <BenefitList benefits={benefitsOf(parent, index)} label={parent.name} />
         </details>
       )}
+    </>
+  );
+  return folded ? (
+    <details className={styles.gives} aria-label={title}>
+      <summary>{title}</summary>
+      {body}
+    </details>
+  ) : (
+    <section className={styles.gives} aria-label={title}>
+      <h3 className={styles.subTitle}>{title}</h3>
+      {body}
+    </section>
+  );
+}
+
+/** Flavor text, then what it gives. */
+export function AboutEntity({ entity, index }: { entity: ContentEntity; index: ContentIndex }) {
+  return (
+    <div className={styles.about}>
+      <AboutFlavor entity={entity} />
+      <WhatYouGet entity={entity} index={index} />
     </div>
   );
 }

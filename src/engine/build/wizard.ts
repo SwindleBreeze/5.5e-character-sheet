@@ -25,9 +25,8 @@ export const WIZARD_STEPS = [
   'background',
   'species',
   'abilities',
-  'equipment',
-  'spells',
   'choices',
+  'spells',
   'details',
   'review',
 ] as const;
@@ -39,9 +38,8 @@ export const STEP_TITLES: Readonly<Record<WizardStep, string>> = {
   background: 'Background',
   species: 'Species',
   abilities: 'Ability scores',
-  equipment: 'Equipment',
+  choices: 'Class features',
   spells: 'Spells',
-  choices: 'Other choices',
   details: 'Details',
   review: 'Review',
 };
@@ -59,13 +57,19 @@ export function newDraft(now = Date.now()): Character {
   };
 }
 
-/** Whether the spells step has anything: a spell pick, or spells a caster prepares. */
+/**
+ * Whether the spells step has anything: a class (or its features) gives spells. A species' or
+ * background feat's spells are picked on that step.
+ */
 export function hasSpellStep(sheet: DerivedSheet | undefined): boolean {
   if (!sheet) return false;
+  const classOwned = new Set(['class', 'subclass', 'classFeature', 'subclassFeature']);
   return (
-    sheet.spellcasting.casters.some((c) => c.preparedMax > 0 || c.preparedChange === 'restLong') ||
-    sheet.features.some((f) =>
-      f.choices.some((c) => c.offer.kind === 'spell' || c.offer.kind === 'spellAbility'),
+    sheet.spellcasting.casters.length > 0 ||
+    sheet.features.some(
+      (f) =>
+        classOwned.has(f.ref.kind) &&
+        f.choices.some((c) => c.offer.kind === 'spell' || c.offer.kind === 'spellAbility'),
     )
   );
 }

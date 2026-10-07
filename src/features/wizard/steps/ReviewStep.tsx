@@ -1,18 +1,25 @@
-// Step 9: review (plan §9.3, step 4.4): the character at a glance, what is still to choose (each
-// with a link to its step), and rule warnings. Create finishes it and opens the sheet. Rules
-// guide, never block: a character with picks left can be created and finished on the sheet.
+// The last step: review (plan §9.3 step 4.4, §9.3b step 4B.5): the character at a glance, what it
+// starts with, what is still to choose (each with a link to its step), and rule warnings. Create
+// finishes it and opens the sheet; it stays closed while a required pick is left.
 
-import { unpickedAnyItems } from '../../../engine/build/equipment.ts';
 import { STEP_TITLES } from '../../../engine/build/wizard.ts';
-import { choiceTitle } from '../../choices/labels.ts';
 import { signed, skillName, titleCase } from '../../sheet/components/format.ts';
 import { nameOf } from '../../sheet/sheetBindings.ts';
-import { ABILITIES, ABILITY_NAMES, SKILLS, refKey } from '../../../schema/index.ts';
+import { ABILITIES, ABILITY_NAMES, SKILLS } from '../../../schema/index.ts';
 import { Button } from '../../../ui/Button.tsx';
 import page from '../../../app/Page.module.css';
 import inventory from '../../sheet/inventory/inventory.module.css';
-import { stepOf, type WizardBindings } from '../bindings.ts';
+import type { WizardBindings } from '../bindings.ts';
 import styles from '../wizard.module.css';
+
+const SLOT_WORDS: Record<string, string> = {
+  armor: 'worn',
+  shield: 'shield',
+  mainHand: 'in hand',
+  offHand: 'in off hand',
+  bothHands: 'in both hands',
+  worn: 'worn',
+};
 
 export interface ReviewProps extends WizardBindings {
   onCreate: () => void;
@@ -20,7 +27,7 @@ export interface ReviewProps extends WizardBindings {
 }
 
 export function ReviewStep({ onCreate, creating, ...b }: ReviewProps) {
-  const { character, content, sheet, go } = b;
+  const { character, content, sheet, go, todos } = b;
   const index = content.index;
   const first = character.log[0];
   if (!first || !sheet) {
@@ -34,33 +41,10 @@ export function ReviewStep({ onCreate, creating, ...b }: ReviewProps) {
     );
   }
 
-  const todo: { text: string; step: keyof typeof STEP_TITLES }[] = [];
-  if (!first.origin?.backgroundRef) todo.push({ text: 'Choose a background.', step: 'background' });
-  if (!first.origin?.speciesRef) todo.push({ text: 'Choose a species.', step: 'species' });
-  for (const p of sheet.choices.pending) {
-    const owner = sheet.features.find((f) => refKey(f.ref) === refKey(p.offer.source.ref));
-    const choice = owner?.choices.find((c) => c.offer === p.offer);
-    const what =
-      p.offer.kind === 'equipment'
-        ? 'starting equipment'
-        : choice
-          ? choiceTitle(choice)
-          : 'a choice';
-    const left = p.count - p.have;
-    todo.push({
-      text: `${p.offer.source.name}: ${what}${p.offer.kind === 'equipment' ? '' : ` (${left} to pick)`}`,
-      step: stepOf(p.offer, sheet),
-    });
-  }
-  for (const item of unpickedAnyItems(character, index))
-    todo.push({ text: `${item}: choose which`, step: 'equipment' });
-  for (const caster of sheet.spellcasting.casters) {
-    if (caster.preparedChange === 'restLong' && caster.prepared.length < caster.preparedMax)
-      todo.push({
-        text: `${caster.name}: ${caster.preparedMax - caster.prepared.length} more spells to prepare`,
-        step: 'spells',
-      });
-  }
+  const purse = (['pp', 'gp', 'ep', 'sp', 'cp'] as const)
+    .filter((k) => character.currency[k] > 0)
+    .map((k) => `${character.currency[k]} ${k.toUpperCase()}`)
+    .join(', ');
   const warnings = sheet.issues.filter((i) => i.severity === 'warn');
 
   const proficient = SKILLS.filter(
@@ -154,12 +138,6 @@ export function ReviewStep({ onCreate, creating, ...b }: ReviewProps) {
           </dd>
           <dt>Weapon Mastery</dt>
           <dd>{sheet.masteries.map((m) => nameOf(index, 'item', m.value)).join(', ') || 'None'}</dd>
-          <dt>Equipment</dt>
-          <dd>
-            {character.inventory
-              .map((r) => (r.quantity > 1 ? `${r.quantity} × ${r.name}` : r.name))
-              .join(', ') || 'None'}
-          </dd>
           {spells.length > 0 && (
             <>
               <dt>Spells</dt>
@@ -169,11 +147,35 @@ export function ReviewStep({ onCreate, creating, ...b }: ReviewProps) {
         </dl>
       </section>
 
-      {todo.length > 0 && (
+      <section className={page.card} aria-label="What you start with">
+        <h2 className={page.cardTitle}>What you start with</h2>
+        {character.inventory.length ? (
+          <ul aria-label="Starting items" className={styles.items}>
+            {character.inventory.map((r) => (
+              <li key={r.uid}>
+                {r.quantity > 1 ? `${r.quantity} × ` : ''}
+                {r.name}
+                {r.equipped ? (
+                  <span className={inventory.muted}> ({SLOT_WORDS[r.equipped]})</span>
+                ) : (
+                  ''
+                )}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className={inventory.muted}>No items yet.</p>
+        )}
+        <p>
+          Coins: <strong>{purse || 'none'}</strong>
+        </p>
+      </section>
+
+      {todos.length > 0 && (
         <section aria-label="Still to choose">
           <h2 className={page.cardTitle}>Still to choose</h2>
           <ul className={styles.todo}>
-            {todo.map((t, i) => (
+            {todos.map((t, i) => (
               <li key={i}>
                 <span>{t.text}</span>
                 <Button size="sm" onClick={() => go(t.step)}>
@@ -194,13 +196,17 @@ export function ReviewStep({ onCreate, creating, ...b }: ReviewProps) {
           </ul>
         </section>
       )}
-      <p className={styles.intro}>
-        {todo.length
-          ? 'You can create the character now and finish these on its sheet: they show under “Needs attention”.'
+      <p className={styles.lead}>
+        {todos.length
+          ? 'Make these choices first; then you can create the character.'
           : 'Everything is chosen.'}
       </p>
       <div className={page.row}>
-        <Button variant="primary" onClick={onCreate} aria-disabled={creating}>
+        <Button
+          variant="primary"
+          onClick={() => !todos.length && !creating && onCreate()}
+          aria-disabled={creating || todos.length > 0}
+        >
           Create character
         </Button>
       </div>

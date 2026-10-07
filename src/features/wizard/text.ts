@@ -1,21 +1,30 @@
-// Words for what a class, background or species gives, for the wizard's lists and details
-// (plan §9.3, step 4.4).
+// What a class, background or species gives at a glance, for the wizard's cards and menus (plan
+// §9.3 step 4.4, §9.3b step 4B.5).
 
 import { readable } from '../../engine/choices/options.ts';
 import type { ContentIndex } from '../../engine/content/contentIndex.ts';
 import { primaryText } from '../../engine/build/scores.ts';
 import { SIZE_NAMES } from '../../engine/items/items.ts';
-import type { CardItem } from './EntityCards.tsx';
-import { ABILITY_NAMES, type Background, type ClassDef, type Species } from '../../schema/index.ts';
+import {
+  ABILITY_NAMES,
+  type Ability,
+  type Background,
+  type ClassDef,
+  type Species,
+} from '../../schema/index.ts';
 
-/** `d12 hit die · Strength`. */
-export function classLine(cls: ClassDef): string {
-  return [`d${cls.hitDie} hit die`, primaryText(cls), cls.spellcasting ? 'Spellcaster' : '']
-    .filter(Boolean)
-    .join(' · ');
+const abbr = (a: Ability) => ABILITY_NAMES[a].slice(0, 3).toUpperCase();
+
+/** `d8 hit die`, `Primary: Dexterity`, `Spellcaster`. */
+export function classChips(cls: ClassDef): string[] {
+  return [
+    `d${cls.hitDie} hit die`,
+    `Primary: ${primaryText(cls)}`,
+    ...(cls.spellcasting ? ['Spellcaster'] : []),
+  ];
 }
 
-export function backgroundSkills(bg: Background): string[] {
+function backgroundSkills(bg: Background): string[] {
   return bg.effects.flatMap((e) =>
     e.type === 'proficiency' && e.category === 'skill' && typeof e.value === 'string'
       ? [readable(e.value)]
@@ -23,13 +32,34 @@ export function backgroundSkills(bg: Background): string[] {
   );
 }
 
-/** `Int, Wis, Cha · Magic Initiate (Cleric) · Insight, Religion`. */
-export function backgroundLine(bg: Background, index: ContentIndex): string {
-  const abilities = [...new Set(bg.abilityOptions.flatMap((o) => o.from))]
-    .map((a) => ABILITY_NAMES[a].slice(0, 3))
-    .join(', ');
+/** `+2 STR, +1 CON` from a background's picks (largest first, as they are stored). */
+export function spreadChip(values: readonly string[]): string {
+  const counts = new Map<string, number>();
+  for (const v of values) counts.set(v, (counts.get(v) ?? 0) + 1);
+  return [...counts].map(([a, n]) => `+${n} ${abbr(a as Ability)}`).join(', ');
+}
+
+/**
+ * A background at a glance: its three abilities (or the increases picked, once picked), its
+ * Origin feat and its skills.
+ */
+export function backgroundChips(
+  bg: Background,
+  index: ContentIndex,
+  picked?: readonly string[],
+): string[] {
+  const from = [...new Set(bg.abilityOptions.flatMap((o) => o.from))];
   const feat = bg.featId ? index.get({ kind: 'feat', id: bg.featId })?.name : undefined;
-  return [abilities, feat, backgroundSkills(bg).join(', ')].filter(Boolean).join(' · ');
+  const skills = backgroundSkills(bg);
+  return [
+    picked?.length
+      ? spreadChip(picked)
+      : from.length
+        ? `+2/+1 or +1 each: ${from.map(abbr).join(' · ')}`
+        : '',
+    feat ? `Feat: ${feat}` : '',
+    skills.length ? `Skills: ${skills.join(', ')}` : '',
+  ].filter(Boolean);
 }
 
 /** `Medium · 30 ft.`; `Small or Medium · 30 ft.`. */
@@ -45,22 +75,4 @@ export function variantName(species: Species): string {
   if (semi.length > 1) return semi.slice(1).join('; ');
   const paren = /\(([^)]+)\)\s*$/.exec(species.name);
   return paren?.[1] ?? species.name;
-}
-
-/** Species with their lineages under them; species without any under "Species". */
-export function speciesCards(all: readonly Species[]): CardItem[] {
-  const byId = new Map(all.map((s) => [s.id, s]));
-  const hasVariants = new Set(all.flatMap((s) => (s.variantOf ? [s.variantOf] : [])));
-  const out: CardItem[] = [];
-  for (const s of all) {
-    if (s.variantOf && byId.has(s.variantOf)) continue;
-    if (!hasVariants.has(s.id)) {
-      out.push({ id: s.id, name: s.name, detail: speciesLine(s), group: 'Species' });
-      continue;
-    }
-    out.push({ id: s.id, name: s.name, detail: speciesLine(s), group: s.name });
-    for (const v of all.filter((x) => x.variantOf === s.id))
-      out.push({ id: v.id, name: variantName(v), detail: speciesLine(v), group: s.name });
-  }
-  return out;
 }

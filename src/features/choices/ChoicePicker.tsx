@@ -21,6 +21,7 @@ import { EntitySheet } from '../../richtext/EntitySheet.tsx';
 import { Button } from '../../ui/Button.tsx';
 import inventory from '../sheet/inventory/inventory.module.css';
 import styles from './choices.module.css';
+import { choiceHelp } from './help.ts';
 import { retrainText, type PickSave } from './picks.ts';
 
 const SEARCH_FROM = 12;
@@ -105,6 +106,7 @@ export function ChoicePicker({ choice, ctx, onSave, instant, showRetrain }: Choi
     ignoreRules: ignore,
   });
   const { options, valueKind, joined, hint } = result;
+  const help = choiceHelp(choice);
   const spells = new Map(
     valueKind === 'spell'
       ? options.flatMap((o) => {
@@ -222,6 +224,7 @@ export function ChoicePicker({ choice, ctx, onSave, instant, showRetrain }: Choi
 
   return (
     <div className={styles.picker}>
+      {help && <p className={styles.help}>{help}</p>}
       <div className={styles.head}>
         <span className={styles.count} aria-live="polite" data-done={picks.length >= count}>
           {joined ? (picks.length ? 'Chosen' : 'Choose one') : `${picks.length} of ${count} chosen`}
@@ -231,7 +234,7 @@ export function ChoicePicker({ choice, ctx, onSave, instant, showRetrain }: Choi
           Ignore rules
         </label>
       </div>
-      {hint && <p className={styles.hint}>{hint}</p>}
+      {hint && choice.offer.kind !== 'backgroundAbility' && <p className={styles.hint}>{hint}</p>}
       {showRetrain && (
         <p className={styles.hint}>
           {retrainText(choice)}
