@@ -14,7 +14,7 @@ import {
   type SpellGrant,
   type Subclass,
 } from '../../schema/index.ts';
-import { choiceKey } from '../collect/collect.ts';
+import { choiceKey, COPIED_SLOT } from '../collect/collect.ts';
 import type { EffectSource } from '../collect/types.ts';
 import { formatValue, isDice } from '../formula/dice.ts';
 import { cellToValue } from '../formula/evaluate.ts';
@@ -273,6 +273,12 @@ export function deriveSpellcasting(
       }
     }
 
+    // Spells copied into a spellbook (plan step 5.6).
+    if (c.sc.spellbookByLevel?.length) {
+      for (const e of ctx.character.log)
+        for (const r of e.choices)
+          if (r.key.slot === COPIED_SLOT && r.key.owner.id === c.key) book.push(...r.values);
+    }
     const onList = (s: Spell, id: Id) =>
       listIds.includes(id) || listFilters.some((f) => matchesSpellFilter(s, f));
     const preparedChange = c.sc.preparedChange ?? 'restLong';

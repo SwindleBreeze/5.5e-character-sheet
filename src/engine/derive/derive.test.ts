@@ -169,6 +169,36 @@ describe('derive: defenses', () => {
     ]);
   });
 
+  it('AC: Unarmored Defense from the first class that gave it only (2024 multiclassing)', () => {
+    // A registry where the Brute's own unarmored formula is an "Unarmored Defense" too.
+    const registry = structuredClone(FIXTURE_FEATURE_EFFECTS);
+    const hide = registry['classFeature:hardened hide|brute|tst|1|tst']!;
+    hide.effects = hide.effects.map((e) =>
+      e.type === 'acFormula' ? { ...e, name: 'Unarmored Defense' } : e,
+    );
+    const c = testCharacter({
+      classes: [
+        { classId: 'wanderer|tst', levels: 1 },
+        { classId: 'brute|tst', levels: 1 },
+      ],
+      scores: { dex: 14, wis: 10, con: 18 },
+    });
+    const d = derive(c, index, { registry });
+    // The Wanderer's (DEX + WIS: 12), not the Brute's (DEX + CON: 16).
+    expect(d.ac.value).toBe(12);
+    expect(d.issues.map((i) => i.code)).toContain('unarmoredDefenseAgain');
+  });
+
+  it('Extra Attack from two classes doesn’t stack (2024 multiclassing)', () => {
+    const c = testCharacter({
+      classes: [
+        { classId: 'brute|tst', levels: 5 },
+        { classId: 'wanderer|tst', levels: 5 },
+      ],
+    });
+    expect(run(c).attacksPerAction.value).toBe(2);
+  });
+
   it('AC: armor, magic items in use, overrides; heavy armor slows the weak', () => {
     const c = brute();
     c.inventory = [

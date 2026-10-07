@@ -37,7 +37,9 @@ import { useExplain } from './components/useExplain.tsx';
 import { nameOf, type SheetBindings } from './sheetBindings.ts';
 import { CastSheet } from './spells/CastSheet.tsx';
 import { byLevel, spellLists, type SpellEntry } from './spells/entries.ts';
+import { CantripsSheet } from './spells/CantripsSheet.tsx';
 import { PrepareSheet } from './spells/PrepareSheet.tsx';
+import { SpellbookSheet } from './spells/SpellbookSheet.tsx';
 import { castingTime, castNotice, levelHeading, whereFrom } from './spells/spellText.ts';
 import mainStyles from './MainTab.module.css';
 import styles from './spells/spells.module.css';
@@ -260,6 +262,24 @@ export function SpellsTab({ character, sheet, index, apply }: SheetBindings) {
               })
             }
             onPrepare={() => openPrepare(c)}
+            onAddToBook={() =>
+              ui.open({
+                key: `spellbook:${c.key}`,
+                title: `${c.name}: add to spellbook`,
+                render: () => (
+                  <SpellbookSheet bindings={{ character, sheet, index, apply }} caster={c} />
+                ),
+              })
+            }
+            onCantrips={() =>
+              ui.open({
+                key: `cantrips:${c.key}`,
+                title: `${c.name}: cantrips`,
+                render: () => (
+                  <CantripsSheet bindings={{ character, sheet, index, apply }} caster={c} />
+                ),
+              })
+            }
             onBook={() =>
               setOpenBooks(
                 openBooks.includes(c.key)
@@ -342,6 +362,8 @@ function CasterCard({
   onExplainAttack,
   onPrepare,
   onBook,
+  onAddToBook,
+  onCantrips,
 }: {
   caster: DerivedCaster;
   bookOpen: boolean;
@@ -349,6 +371,8 @@ function CasterCard({
   onExplainAttack: () => void;
   onPrepare: () => void;
   onBook: () => void;
+  onAddToBook: () => void;
+  onCantrips: () => void;
 }) {
   return (
     <section className={styles.card} aria-label={c.name}>
@@ -405,6 +429,16 @@ function CasterCard({
         {c.spellbook && (
           <Button size="sm" variant="ghost" aria-pressed={bookOpen} onClick={onBook}>
             Spellbook ({c.spellbook.length})
+          </Button>
+        )}
+        {c.spellbook && (
+          <Button size="sm" variant="ghost" onClick={onAddToBook}>
+            Add to spellbook
+          </Button>
+        )}
+        {c.cantripsMax > 0 && (
+          <Button size="sm" variant="ghost" onClick={onCantrips}>
+            Change cantrips
           </Button>
         )}
       </div>

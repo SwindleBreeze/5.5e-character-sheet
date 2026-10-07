@@ -34,6 +34,12 @@ import type { ClassLevel, Collected, EffectSource, Offer, RecordAt } from './typ
  */
 export const GRANTED_SLOT = 'granted';
 
+/**
+ * The slot of a spellbook caster's record of spells copied into its spellbook from scrolls and
+ * other books (plan step 5.6): a manual record on the class, outside any choice.
+ */
+export const COPIED_SLOT = 'spellbook.copied';
+
 export interface CollectOptions {
   /** Hand-written feature effects, keyed by ref key (`classFeature:<id>`). */
   registry?: FeatureEffectsMap;
