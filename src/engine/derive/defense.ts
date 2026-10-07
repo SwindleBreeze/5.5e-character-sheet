@@ -37,6 +37,8 @@ function itemAcBonus(
   return (item?.bonuses?.ac ?? 0) + (variant?.bonuses?.ac ?? 0);
 }
 
+const UNARMORED_DEFENSE = 'Unarmored Defense';
+
 export function deriveAc(ctx: DeriveContext, mods: Mods): Derived & { calculation: string } {
   const { armor, shield } = ctx.st.wield;
   const candidates: { name: string; parts: Contribution[]; shield: boolean }[] = [];
@@ -60,8 +62,32 @@ export function deriveAc(ctx: DeriveContext, mods: Mods): Derived & { calculatio
       ],
       shield: true,
     });
-    for (const { effect, source } of effectsOfType(ctx.collected, 'acFormula')) {
+    // 2024 multiclassing: Unarmored Defense comes only from the first class that gave it.
+    const formulas = effectsOfType(ctx.collected, 'acFormula');
+    const firstEntry = (classId?: string) =>
+      classId ? ctx.character.log.findIndex((e) => e.classRef.id === classId) : -1;
+    const unarmored = formulas
+      .filter((f) => f.effect.name === UNARMORED_DEFENSE && f.source.classId)
+      .sort((a, b) => firstEntry(a.source.classId) - firstEntry(b.source.classId));
+    const kept = unarmored[0];
+    for (const later of unarmored.slice(1)) {
+      if (later.source.classId === kept?.source.classId) continue;
+      ctx.issues.push({
+        severity: 'info',
+        code: 'unarmoredDefenseAgain',
+        message: `You have Unarmored Defense from your first class with it, so the ${later.source.name} of a later class doesn’t apply (multiclassing).`,
+        ref: later.source.ref,
+      });
+    }
+    for (const { effect, source } of formulas) {
       if (shield && !effect.shield) continue;
+      if (
+        effect.name === UNARMORED_DEFENSE &&
+        source.classId &&
+        kept &&
+        source.classId !== kept.source.classId
+      )
+        continue;
       candidates.push({
         name: effect.name,
         parts: [

@@ -368,6 +368,11 @@ export interface DerivedFeatureChoice {
   valueKinds?: EntityKind[];
   /** A class's feat or option progression it belongs to (Fighting Style), and the level. */
   progression?: { name: string; level?: number };
+  /**
+   * The log entry its pick belongs in: its feature's, or, for a pick a class level brings
+   * (`spellbook.5`, a progression's level-4 pick), that class level's entry (plan step 5.1).
+   */
+  entryIndex: number;
   /** Missing when nothing has been picked yet. */
   status?: RecordStatus;
 }

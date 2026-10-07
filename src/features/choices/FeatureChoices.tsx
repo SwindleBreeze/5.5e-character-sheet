@@ -37,7 +37,9 @@ export function FeatureChoices({
   return (
     <div className={styles.choiceList}>
       {items.map(({ c, f }) => {
-        const title = named ? `${f.name}: ${choiceTitle(c)}` : choiceTitle(c);
+        const own = choiceTitle(c);
+        // "Weapon Mastery: Weapon Mastery" says it once.
+        const title = named && own !== f.name ? `${f.name}: ${own}` : own;
         const nested = pickedFeatures(c, f, ctx.sheet.features).filter(
           (n) => !seen.has(refKey(n.ref)) && n.choices.length,
         );

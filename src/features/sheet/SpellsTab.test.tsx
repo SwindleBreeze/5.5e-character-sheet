@@ -189,6 +189,47 @@ describe('Spells tab', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
+  it('copies a spell into the spellbook, its cost said (plan step 5.6)', async () => {
+    const user = userEvent.setup();
+    // The fixture's few spells are all in the book: take one out so there is one to copy.
+    const c = duo();
+    const record = c.log
+      .flatMap((e) => e.choices)
+      .find((r) => r.key.slot.startsWith('spellbook.'))!;
+    record.values.pop();
+    record.labels.pop();
+    renderTab(c);
+    const card = within(screen.getByRole('region', { name: 'Lorekeeper' }));
+    const count = () =>
+      Number(
+        /\((\d+)\)/.exec(
+          card.getByRole('button', { name: /^Spellbook/, hidden: true }).textContent!,
+        )![1],
+      );
+    const before = count();
+    await user.click(card.getByRole('button', { name: 'Add to spellbook' }));
+    const sheet = within(
+      await screen.findByRole('dialog', { name: 'Lorekeeper: add to spellbook' }),
+    );
+    const row = (await sheet.findAllByRole('listitem'))[0]!;
+    expect(row).toHaveTextContent(/\d+ hours · \d+ GP/);
+    await user.click(within(row).getByRole('button', { name: 'Copy' }));
+    expect(count()).toBe(before + 1);
+    expect(latest.log.at(-1)!.choices.at(-1)).toMatchObject({
+      key: { slot: 'spellbook.copied' },
+      via: 'manual',
+    });
+  });
+
+  it('lists the cantrip picks to change, with when the rules allow it', async () => {
+    const user = userEvent.setup();
+    renderTab(duo());
+    const card = within(screen.getByRole('region', { name: 'Lorekeeper' }));
+    await user.click(card.getByRole('button', { name: 'Change cantrips' }));
+    const sheet = within(await screen.findByRole('dialog', { name: 'Lorekeeper: cantrips' }));
+    expect(sheet.getByRole('listitem', { name: 'Level 1 cantrips' })).toBeInTheDocument();
+  });
+
   it('a Ritual costs no slot', async () => {
     const user = userEvent.setup();
     renderTab(duo());

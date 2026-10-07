@@ -83,13 +83,25 @@ export function deriveFeatures(
   for (const { effect, source } of collected.effects) {
     if (effect.type === 'grantFeat') broughtBy.set(refKey(effect.feat), { source });
   }
+  // A repeatable feat picked again is its next instance (`@2`, `@3`), each brought by its own
+  // pick, in the order the picks were made (as collection numbers them).
+  const taken = new Map<string, number>();
+  const instanceKey = (ref: Ref) => {
+    const e = index.get(ref);
+    if (e?.kind !== 'feat' || !e.repeatable) return ownerKey(ref);
+    const n = (taken.get(ref.id) ?? 0) + 1;
+    taken.set(ref.id, n);
+    return ownerKey(ref, n === 1 ? undefined : n);
+  };
   for (const { record, entryIndex } of collected.records.values()) {
     const owner = byKey.get(ownerKey(record.key.owner, record.key.n));
     const progression = progressionOf(index.get(record.key.owner), record.key.slot)?.name;
     record.values.forEach((id, i) => {
       const kind = valueKind(record.valueKinds, i);
-      if (kind && owner && !broughtBy.has(refKey({ kind, id })))
-        broughtBy.set(refKey({ kind, id }), {
+      if (!kind || !owner) return;
+      const key = instanceKey({ kind, id });
+      if (!broughtBy.has(key))
+        broughtBy.set(key, {
           source: owner,
           entryIndex,
           ...(progression ? { progression } : {}),
@@ -119,7 +131,7 @@ export function deriveFeatures(
     if (grant) return grant.entryIndex;
     if (o.ref.kind === 'species' || o.ref.kind === 'background') return 0;
     if (o.classId && level !== undefined) return classEntry(o.classId, level);
-    const by = broughtBy.get(key);
+    const by = broughtBy.get(ownerKey(o.ref, o.n));
     if (by?.entryIndex !== undefined) return by.entryIndex;
     if (by && !seen.has(refKey(by.source.ref))) {
       seen.add(key);
@@ -135,29 +147,40 @@ export function deriveFeatures(
     offersByOwner.set(k, [...(offersByOwner.get(k) ?? []), offer]);
   }
 
+  // A class's picks that come with one of its levels: `cantrips.3`, `spellbook.5`, `spells.2`,
+  // `arcanum.11`.
+  const slotLevel = (slot: string): number | undefined => {
+    const m = /^(?:cantrips|spells|spellbook|arcanum)\.(\d+)$/.exec(slot);
+    return m ? Number(m[1]) : undefined;
+  };
+
   return owners.map((o) => {
     const key = ownerKey(o.ref, o.n);
     const level = levelOf(o);
+    const entryIndex = entryOf(o, level, new Set());
     const choices: DerivedFeatureChoice[] = [];
     for (const offer of offersByOwner.get(key) ?? []) {
       const choiceKey = encodeChoiceKey(offer.key);
       const r = recon.byKey.get(choiceKey);
       const count = countOf(offer);
       if (count <= 0 && !r) continue;
+      const progression = progressionOf(index.get(o.ref), offer.key.slot);
+      const atLevel = slotLevel(offer.key.slot) ?? progression?.level;
       const choice: DerivedFeatureChoice = {
         key: choiceKey,
         offer,
         count,
         values: r?.at.record.values ?? [],
         labels: r?.at.record.labels ?? [],
+        entryIndex:
+          o.classId && atLevel !== undefined ? classEntry(o.classId, atLevel) : entryIndex,
       };
       if (r) choice.status = r.status;
       if (r?.at.record.valueKinds) choice.valueKinds = r.at.record.valueKinds;
-      const progression = progressionOf(index.get(o.ref), offer.key.slot);
       if (progression) choice.progression = progression;
       choices.push(choice);
     }
-    const by = broughtBy.get(refKey(o.ref));
+    const by = broughtBy.get(ownerKey(o.ref, o.n));
     const grant = collected.records.get(encodeChoiceKey(grantKey(o)));
     const f: DerivedFeature = {
       ref: o.ref,
@@ -165,7 +188,7 @@ export function deriveFeatures(
       group: GROUPS[o.ref.kind] ?? 'other',
       choices,
       resourceKeys: resources.filter((r) => r.key.startsWith(`${key}#`)).map((r) => r.key),
-      entryIndex: entryOf(o, level, new Set()),
+      entryIndex,
     };
     if (o.n !== undefined) f.n = o.n;
     if (o.classId) f.classId = o.classId;

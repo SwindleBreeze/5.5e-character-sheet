@@ -26,6 +26,7 @@ export const WIZARD_STEPS = [
   'abilities',
   'choices',
   'spells',
+  'levels',
   'details',
   'review',
 ] as const;
@@ -39,6 +40,7 @@ export const STEP_TITLES: Readonly<Record<WizardStep, string>> = {
   abilities: 'Ability scores',
   choices: 'Class features',
   spells: 'Spells',
+  levels: 'Higher levels',
   details: 'Details',
   review: 'Review',
 };
@@ -73,9 +75,15 @@ export function hasSpellStep(sheet: DerivedSheet | undefined): boolean {
   );
 }
 
-/** The steps this draft shows: the spells step only when something gives spells. */
+/**
+ * The steps this draft shows: the spells step only when something gives spells, the higher
+ * levels only when it starts above level 1 (plan step 5.4).
+ */
 export function wizardSteps(sheet: DerivedSheet | undefined): WizardStep[] {
-  return WIZARD_STEPS.filter((s) => s !== 'spells' || hasSpellStep(sheet));
+  return WIZARD_STEPS.filter(
+    (s) =>
+      (s !== 'spells' || hasSpellStep(sheet)) && (s !== 'levels' || (sheet?.charLevel ?? 1) > 1),
+  );
 }
 
 export function setStep(c: Character, step: WizardStep): Character {

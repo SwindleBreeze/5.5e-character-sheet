@@ -29,11 +29,11 @@ export function ChoicesStep(b: WizardBindings) {
             features={[f]}
             ctx={choiceContext(b, sheet)}
             only={only}
-            onPick={(c, owner, pick) =>
+            onPick={(c, _owner, pick) =>
               apply((ch) =>
                 setPick(ch, decodeChoiceKey(c.key), {
                   ...pick,
-                  entryIndex: owner.entryIndex,
+                  entryIndex: c.entryIndex,
                   via: 'creation',
                 }),
               )

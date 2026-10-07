@@ -26,6 +26,7 @@ export function EntityCards({
   onSelect,
   onRead,
   expanded,
+  grouped,
 }: {
   /** The list's accessible name, e.g. `Classes`. */
   label: string;
@@ -35,6 +36,8 @@ export function EntityCards({
   onRead: (id: string) => void;
   /** Shown inside the selected card: what it is and what it asks for. */
   expanded?: ReactNode;
+  /** Group headings even for one group (the groups mean something by themselves). */
+  grouped?: boolean;
 }) {
   const baseId = useId();
   if (!items.length) {
@@ -107,7 +110,7 @@ export function EntityCards({
     );
   };
 
-  if (groups.length < 2) {
+  if (groups.length < 2 && !grouped) {
     return (
       <ul className={styles.cards} aria-label={label}>
         {items.map(card)}

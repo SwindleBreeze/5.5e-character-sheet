@@ -23,7 +23,7 @@ function weaponMastery(
 }
 
 /** Expertise in skills the character is proficient in. */
-function expertise(count: number, from?: Skill[]): Effect {
+export function expertise(count: number, from?: Skill[]): Effect {
   return {
     type: 'expertiseChoice',
     choice: {

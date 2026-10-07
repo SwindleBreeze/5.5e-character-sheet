@@ -147,6 +147,69 @@ describe.skipIf(!root)('quick-builder (local data)', () => {
     expect(options('bard|xphb', 1, 'tools', 'bard|xphb')).toContain('lute|xphb');
   });
 
+  it('offers the level 4–20 class picks the 2024 rules give (plan §9.4 step 5.8)', () => {
+    const registry = featureEffects();
+    const deps = { index, catalog, registry, now: 0 };
+    const sheetOf = (classId: string, levels: number) => {
+      const character = quickBuild(
+        {
+          name: classId,
+          classes: [{ classId, levels }],
+          speciesId: 'human|xphb',
+          backgroundId: 'sage|xphb',
+        },
+        deps,
+      );
+      return { character, sheet: derive(character, index, { registry }) };
+    };
+    const choiceOf = (sheet: ReturnType<typeof derive>, slot: string, owner: string) =>
+      sheet.features
+        .flatMap((f) => f.choices)
+        .find((c) => c.offer.key.slot === slot && c.offer.key.owner.id.startsWith(owner));
+    // Expertise again: Rogue 6, Bard 9, Ranger 9.
+    for (const [cls, level] of [
+      ['rogue', 6],
+      ['bard', 9],
+      ['ranger', 9],
+    ] as const)
+      expect(
+        choiceOf(sheetOf(`${cls}|xphb`, level).sheet, 'expertise', `expertise|${cls}|xphb|${level}`)
+          ?.values,
+      ).toHaveLength(2);
+    // Blessed Strikes: one of Divine Strike and Potent Spellcasting, the other not had.
+    const cleric = sheetOf('cleric|xphb', 7).sheet;
+    const strikes = choiceOf(cleric, 'options.0', 'blessed strikes')!;
+    expect(strikes.offer.from).toEqual([
+      'divine strike|cleric|xphb|7|xphb',
+      'potent spellcasting|cleric|xphb|7|xphb',
+    ]);
+    const names = cleric.features.map((f) => f.name);
+    expect(names.filter((n) => n === 'Divine Strike' || n === 'Potent Spellcasting')).toHaveLength(
+      1,
+    );
+    // Mystic Arcanum: a level 6 Warlock spell at 11, one free cast per Long Rest.
+    const warlock = sheetOf('warlock|xphb', 11);
+    const arcanum = choiceOf(warlock.sheet, 'arcanum.11', 'warlock')!;
+    const options = offerOptions(
+      arcanum.offer,
+      { ...warlock, catalog, index },
+      arcanum.values,
+    ).options;
+    expect(options.length).toBeGreaterThan(0);
+    for (const o of options) expect(index.get({ kind: 'spell', id: o.value })?.level).toBe(6);
+    const granted = warlock.sheet.spellcasting.granted.find((g) => g.spellId === arcanum.values[0]);
+    expect(granted).toMatchObject({ usesMax: 1 });
+    // Magical Secrets: the Cleric, Druid and Wizard lists join the Bard's.
+    const bard = sheetOf('bard|xphb', 10).sheet.spellcasting.casters[0]!;
+    expect(bard.list.filters).toEqual(
+      expect.arrayContaining(['class=Cleric', 'class=Druid', 'class=Wizard']),
+    );
+    // Spell Mastery and Signature Spells: picked, always prepared.
+    const wizard = sheetOf('wizard|xphb', 20).sheet;
+    expect(choiceOf(wizard, 'mastery.1', 'spell mastery')?.values).toHaveLength(1);
+    expect(choiceOf(wizard, 'signature', 'signature spells')?.values).toHaveLength(2);
+  });
+
   it('species spells come at their character level (High Elf: Detect Magic at 3)', () => {
     const registry = featureEffects();
     const granted = (levels: number) => {

@@ -3,7 +3,7 @@
 // "Needs attention" list what to show.
 
 import { encodeChoiceKey, refKey, type Character, type Ref } from '../../schema/index.ts';
-import { entityOfferSlots, GRANTED_SLOT } from '../collect/collect.ts';
+import { COPIED_SLOT, entityOfferSlots, GRANTED_SLOT } from '../collect/collect.ts';
 import type { Collected, Offer, RecordAt } from '../collect/types.ts';
 import type { ContentIndex } from '../content/contentIndex.ts';
 import { valueKind } from '../content/refs.ts';
@@ -76,7 +76,7 @@ export function reconcile(
       } else {
         r.status = 'ownerMissing';
       }
-    } else if (at.record.key.slot === GRANTED_SLOT) {
+    } else if (at.record.key.slot === GRANTED_SLOT || at.record.key.slot === COPIED_SLOT) {
       r.status = 'ok';
     } else if (!offer) {
       r.status = 'slotMissing';

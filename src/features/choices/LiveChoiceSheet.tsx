@@ -52,8 +52,8 @@ export function LiveChoiceSheet({
 
   // Names and options from everything imported: a pick may be content the character lacks yet.
   const ctx = { character, sheet, catalog: content.catalog, index: content.index };
-  const pick = (c: DerivedFeatureChoice, f: DerivedFeature, spec: PickSave) =>
-    apply((ch) => setPick(ch, decodeChoiceKey(c.key), { ...spec, entryIndex: f.entryIndex }));
+  const pick = (c: DerivedFeatureChoice, _f: DerivedFeature, spec: PickSave) =>
+    apply((ch) => setPick(ch, decodeChoiceKey(c.key), { ...spec, entryIndex: c.entryIndex }));
 
   if (saved !== null) {
     return (

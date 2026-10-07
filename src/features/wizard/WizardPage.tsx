@@ -37,6 +37,7 @@ import { AbilitiesStep } from './steps/AbilitiesStep.tsx';
 import { BackgroundStep } from './steps/BackgroundStep.tsx';
 import { ChoicesStep } from './steps/ChoicesStep.tsx';
 import { ClassStep } from './steps/ClassStep.tsx';
+import { LevelsStep } from './steps/LevelsStep.tsx';
 import { ReviewStep } from './steps/ReviewStep.tsx';
 import { SpeciesStep } from './steps/SpeciesStep.tsx';
 import { SpellsStep } from './steps/SpellsStep.tsx';
@@ -202,6 +203,8 @@ function Wizard({ id }: { id: string }) {
         return <SpellsStep {...b} />;
       case 'choices':
         return <ChoicesStep {...b} />;
+      case 'levels':
+        return <LevelsStep {...b} />;
       case 'details':
         return sheet ? (
           <DescriptionTab character={character} sheet={sheet} index={content.index} apply={apply} />
