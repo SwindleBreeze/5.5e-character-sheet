@@ -7,6 +7,7 @@ import type { AutoContext } from '../../engine/build/autoChoose.ts';
 import {
   anyEquipmentType,
   anyItemKey,
+  EQUIPMENT_TYPES,
   equipmentTypeItems,
   pickedEquipment,
   startingEquipmentOwners,
@@ -120,11 +121,13 @@ export interface StepTodo {
 }
 
 function pendingText(p: Pending, sheet: DerivedSheet): string {
-  if (p.offer.kind === 'equipment') return `${p.offer.source.name}: starting equipment`;
+  const source = p.offer.source.name;
+  if (p.offer.kind === 'equipment') return `${source}: starting equipment`;
   const choice = sheet.features.flatMap((f) => f.choices).find((c) => c.offer === p.offer);
   const what = choice ? choiceTitle(choice) : 'a choice';
-  const left = p.count - p.have;
-  return `${p.offer.source.name}: ${what}${p.offer.kind === 'backgroundAbility' ? '' : ` (${left} more)`}`;
+  const left = p.offer.kind === 'backgroundAbility' ? '' : ` (${p.count - p.have} more)`;
+  // "Weapon Mastery: Weapon Mastery" says it once.
+  return `${what === source ? what : `${source}: ${what}`}${left}`;
 }
 
 /** Prepared spells a Long Rest caster still has room for, when its list has any to give. */
@@ -192,7 +195,7 @@ export function wizardTodos(character: Character, ctx: AutoContext | undefined):
       if (!equipmentTypeItems(ctx.catalog, code).length) return;
       out.push({
         step: owner.ref.kind === 'background' ? 'background' : 'class',
-        text: `${owner.name}: choose the ${g.special?.replace(/^Any /, '').toLowerCase() ?? 'item'}`,
+        text: `${owner.name}: which ${EQUIPMENT_TYPES[code]?.label.toLowerCase() ?? 'item'}`,
       });
     });
   }

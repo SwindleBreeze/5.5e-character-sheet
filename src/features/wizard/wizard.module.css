@@ -130,6 +130,35 @@
   line-height: 1.4;
 }
 
+.left > strong {
+  display: block;
+  margin-bottom: var(--space-1);
+  font-size: var(--font-size-xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.todoTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  max-height: 4.6rem;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.todoTags li {
+  padding: 2px var(--space-2);
+  border: 1px solid var(--color-warning);
+  border-radius: var(--radius-pill);
+  background: var(--color-bg);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  line-height: 1.5;
+}
+
 .linkButton {
   padding: 0;
   border: 0;
@@ -218,6 +247,18 @@
   border-top: 1px solid var(--color-border);
   border-radius: 0 0 var(--radius-lg) var(--radius-lg);
   background: var(--color-bg);
+}
+
+.suggested {
+  display: inline-block;
+  align-self: flex-start;
+  margin-top: var(--space-1);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--color-positive-soft);
+  color: var(--color-positive);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
 }
 
 .chips {

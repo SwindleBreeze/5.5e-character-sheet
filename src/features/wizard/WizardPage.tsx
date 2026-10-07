@@ -15,24 +15,20 @@ import { useAllContent } from '../../content/hooks.ts';
 import { repos } from '../../db/repos.ts';
 import { syncStartingEquipment } from '../../engine/build/equipment.ts';
 import {
-  dropPicks,
+  changeDraft,
   finishDraft,
   isWizardStep,
   newDraft,
-  previewChange,
   setStep,
   STEP_TITLES,
   wizardSteps,
-  type DroppedPick,
   type WizardStep,
 } from '../../engine/build/wizard.ts';
 import { derive } from '../../engine/derive/derive.ts';
 import { featureEffects } from '../../engine/featureEffects/index.ts';
 import type { Character } from '../../schema/index.ts';
 import { Button } from '../../ui/Button.tsx';
-import { useSheet } from '../../ui/sheetContext.ts';
 import { DescriptionTab } from '../sheet/DescriptionTab.tsx';
-import inventory from '../sheet/inventory/inventory.module.css';
 import { useCharacterActions, type CharacterUpdate } from '../sheet/useCharacterActions.ts';
 import type { WizardBindings } from './bindings.ts';
 import { STEP_INTROS } from './guide.ts';
@@ -84,40 +80,6 @@ function StartDraft() {
   );
 }
 
-function DroppedList({
-  dropped,
-  onConfirm,
-  onCancel,
-}: {
-  dropped: DroppedPick[];
-  onConfirm: () => void;
-  onCancel: () => void;
-}) {
-  return (
-    <div className={inventory.form}>
-      <p>
-        These picks will be removed, since what offered them is no longer part of the character:
-      </p>
-      <ul aria-label="Picks to remove">
-        {dropped.map((d) => (
-          <li key={d.key}>
-            {d.owner}: {d.labels.join(', ') || 'nothing picked'}
-          </li>
-        ))}
-      </ul>
-      <p className={inventory.muted}>Picks that still fit are kept.</p>
-      <div className={inventory.actions}>
-        <Button variant="danger" onClick={onConfirm}>
-          Change and remove them
-        </Button>
-        <Button variant="ghost" onClick={onCancel}>
-          Keep things as they are
-        </Button>
-      </div>
-    </div>
-  );
-}
-
 export function WizardPage() {
   const { draftId = '' } = useParams();
   if (draftId === 'draft') return <StartDraft />;
@@ -127,7 +89,6 @@ export function WizardPage() {
 function Wizard({ id }: { id: string }) {
   const { step: param = 'class' } = useParams();
   const navigate = useNavigate();
-  const ui = useSheet();
   // null = not found; undefined = still loading.
   const stored = useLiveQuery(async () => (await repos().characters.get(id)) ?? null, [id]);
   const actions = useCharacterActions(stored ?? undefined);
@@ -187,28 +148,9 @@ function Wizard({ id }: { id: string }) {
     window.scrollTo(0, 0);
   };
 
-  const change = (update: CharacterUpdate) => {
-    const { dropped } = previewChange(character, update, content.index, registry);
-    if (!dropped.length) {
-      apply(update);
-      return;
-    }
-    const keys = dropped.map((d) => d.key);
-    ui.open({
-      key: 'wizard:drop',
-      title: 'Remove picks?',
-      render: () => (
-        <DroppedList
-          dropped={dropped}
-          onCancel={ui.close}
-          onConfirm={() => {
-            ui.close();
-            apply((c) => dropPicks(update(c), keys));
-          }}
-        />
-      ),
-    });
-  };
+  // Picks the change no longer offers are set aside, and come back when switched back.
+  const change = (update: CharacterUpdate) =>
+    apply((c) => changeDraft(c, update, content.index, registry));
 
   const create = async () => {
     if (creating || !character.log.length) return;
@@ -321,7 +263,12 @@ function Wizard({ id }: { id: string }) {
               </>
             ) : (
               <>
-                <strong>Still to choose:</strong> {here.map((t) => t.text).join(' · ')}
+                <strong>Still to choose</strong>
+                <ul className={styles.todoTags}>
+                  {here.map((t, i) => (
+                    <li key={i}>{t.text}</li>
+                  ))}
+                </ul>
               </>
             )}
           </div>

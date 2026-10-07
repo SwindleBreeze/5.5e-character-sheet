@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import type { ContentEntity, EquipmentOption } from '../../schema/index.ts';
+import type { Character, ContentEntity, EquipmentOption } from '../../schema/index.ts';
 import { fixtureContent } from '../../test/fixtureIndex.ts';
 import { FIXTURE_FEATURE_EFFECTS } from '../../test/fixtureFeatureEffects.ts';
 import type { ContentIndex } from '../content/contentIndex.ts';
@@ -24,13 +24,12 @@ import {
   usesSet,
 } from './scores.ts';
 import {
+  changeDraft,
   chooseBackground,
   chooseClass,
   chooseSpecies,
-  dropPicks,
   finishDraft,
   newDraft,
-  previewChange,
   wizardSteps,
 } from './wizard.ts';
 
@@ -191,7 +190,7 @@ describe('the wizard’s draft', () => {
     expect(derive(c, index, { registry }).features.map((f) => f.name)).toContain('Mossling');
   });
 
-  it('a change lists the picks it would remove; still-valid picks are kept', () => {
+  it('a change sets aside the picks it no longer offers, and switching back restores them', () => {
     let c = chooseBackground(chooseClass(newDraft(0), brute), arenaHand);
     c = setPick(
       c,
@@ -211,19 +210,34 @@ describe('the wizard’s draft', () => {
         entryIndex: 0,
       },
     );
-    const { next, dropped } = previewChange(c, (x) => chooseClass(x, lorekeeper), index, registry);
-    expect(dropped).toEqual([
-      { key: 'class:brute|tst#skills', owner: 'Brute', labels: ['Athletics', 'Intimidation'] },
+    const change = (x: Character, f: (x: Character) => Character) =>
+      changeDraft(x, f, index, registry);
+    const lore = change(c, (x) => chooseClass(x, lorekeeper));
+    // The Brute's skills go aside; the background's increases stay.
+    expect(lore.log[0]?.choices.map((r) => r.key.owner.id)).toEqual(['arena hand|tst']);
+    expect(lore.draft?.setAside?.map((r) => `${r.key.owner.id}#${r.key.slot}`)).toEqual([
+      'brute|tst#skills',
     ]);
-    const kept = dropPicks(
-      next,
-      dropped.map((d) => d.key),
+    // Back to the Brute: its skills come back, as they were.
+    const back = change(lore, (x) => chooseClass(x, brute));
+    expect(
+      back.log[0]?.choices.find((r) => r.key.owner.id === 'brute|tst' && r.key.slot === 'skills')
+        ?.values,
+    ).toEqual(['athletics', 'intimidation']);
+    expect(back.draft?.setAside).toEqual([]);
+    // A pick made anew meanwhile wins over the one set aside.
+    const anew = setPick(
+      lore,
+      { owner: brute, slot: 'skills' },
+      { values: ['survival'], labels: ['Survival'], entryIndex: 0 },
     );
-    expect(kept.log[0]?.choices.map((r) => r.key.owner.id)).toEqual(['arena hand|tst']);
-    // Nothing to remove: nothing listed.
-    expect(previewChange(c, (x) => chooseSpecies(x, mossling), index, registry).dropped).toEqual(
-      [],
-    );
+    expect(
+      change(anew, (x) => chooseClass(x, brute)).log[0]?.choices.filter(
+        (r) => r.key.owner.id === 'brute|tst' && r.key.slot === 'skills',
+      ),
+    ).toHaveLength(1);
+    // Nothing to set aside: the draft is only changed.
+    expect(change(c, (x) => chooseSpecies(x, mossling)).draft?.setAside).toBeUndefined();
   });
 
   it('the spells step shows only when something gives spells', () => {

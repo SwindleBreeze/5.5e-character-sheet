@@ -14,18 +14,23 @@ function extraEntries(entity: ContentEntity): { title: string; entries: Entry[] 
   return null;
 }
 
-export function EntityView({ entity }: { entity: ContentEntity }) {
+/** `bare`: without the name, for text shown under something that already names it. */
+export function EntityView({ entity, bare }: { entity: ContentEntity; bare?: boolean }) {
   const meta = entityMeta(entity);
   const extra = extraEntries(entity);
   return (
     <article className={styles.entity}>
-      <header className={styles.entityHeader}>
-        <h2 className={styles.entityName}>{entity.name}</h2>
-        <p className={styles.subtitle}>
-          {meta.subtitle}{' '}
-          <Badge title={entity.page ? `Page ${entity.page}` : undefined}>{entity.source}</Badge>
-        </p>
-      </header>
+      {bare ? (
+        <p className={styles.subtitle}>{meta.subtitle}</p>
+      ) : (
+        <header className={styles.entityHeader}>
+          <h2 className={styles.entityName}>{entity.name}</h2>
+          <p className={styles.subtitle}>
+            {meta.subtitle}{' '}
+            <Badge title={entity.page ? `Page ${entity.page}` : undefined}>{entity.source}</Badge>
+          </p>
+        </header>
+      )}
       {meta.facts.length > 0 && (
         <dl className={styles.facts}>
           {meta.facts.map((f) => (

@@ -14,6 +14,7 @@ import choices from '../../choices/choices.module.css';
 import { choiceContext, type WizardBindings } from '../bindings.ts';
 import { EntityCards } from '../EntityCards.tsx';
 import { ReadSheet, WhatYouGet, AboutFlavor } from '../Explain.tsx';
+import { classFocus, originSuggestion } from '../../choices/suggest.ts';
 import { groupBySource } from '../sources.ts';
 import { backgroundChips } from '../text.ts';
 import { EquipmentChoice } from './EquipmentChoice.tsx';
@@ -80,6 +81,7 @@ export function BackgroundStep(b: WizardBindings) {
   const selected = selectedId
     ? content.index.get({ kind: 'background', id: selectedId })
     : undefined;
+  const focus = classFocus(character, content.index);
   const spread = owner?.choices.find((c) => c.offer.kind === 'backgroundAbility')?.values;
 
   const expanded = selected && (
@@ -99,6 +101,7 @@ export function BackgroundStep(b: WizardBindings) {
           id: bg.id,
           name: bg.name,
           group: g.label,
+          suggested: originSuggestion(bg, focus),
           chips: backgroundChips(bg, content.index, bg.id === selectedId ? spread : undefined),
         })),
       )}

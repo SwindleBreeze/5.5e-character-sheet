@@ -233,7 +233,7 @@ describe('creation wizard', () => {
     expect(screen.getByText('3. Species')).toHaveAttribute('aria-disabled', 'true');
   });
 
-  it('changing the class removes only the picks the old class offered, after confirming', async () => {
+  it('changing the class sets its picks aside; switching back brings them back', async () => {
     const user = userEvent.setup();
     renderApp('/new/draft/class');
     await brute(user);
@@ -242,26 +242,23 @@ describe('creation wizard', () => {
     await user.click(await screen.findByRole('radio', { name: '+2 Strength, +1 Constitution' }));
     await user.click(screen.getByRole('link', { name: '1. Class' }));
 
+    // No dialog: the Brute's picks go aside.
     await user.click(await screen.findByRole('radio', { name: 'Lorekeeper' }));
-    const dialog = within(await screen.findByRole('dialog', { name: 'Remove picks?' }));
-    expect(dialog.getByRole('list', { name: 'Picks to remove' })).toHaveTextContent(
-      'Brute: Intimidation',
-    );
-    // Cancel keeps everything.
-    await user.click(dialog.getByRole('button', { name: 'Keep things as they are' }));
-    expect(screen.getByRole('radio', { name: 'Brute' })).toBeChecked();
-
-    await user.click(screen.getByRole('radio', { name: 'Lorekeeper' }));
-    await user.click(
-      within(await screen.findByRole('dialog')).getByRole('button', {
-        name: 'Change and remove them',
-      }),
-    );
     expect(await screen.findByRole('listitem', { name: 'Lorekeeper' })).toBeInTheDocument();
-    const c = await stored((x) => x.log[0]?.classRef.id === 'lorekeeper|tst');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    let c = await stored((x) => x.log[0]?.classRef.id === 'lorekeeper|tst');
     expect(c.log[0]?.choices.map((r) => `${r.key.owner.id}#${r.key.slot}`)).toEqual([
       'arena hand|tst#ability',
     ]);
+
+    // Back to the Brute: its skills and equipment are as they were.
+    await user.click(screen.getByRole('radio', { name: 'Brute' }));
+    const bruteCard = card('Brute');
+    expect(await bruteCard.findByRole('checkbox', { name: 'Intimidation' })).toBeChecked();
+    expect(bruteCard.getByRole('checkbox', { name: 'Survival' })).toBeChecked();
+    expect(optionA(bruteCard)).toBeChecked();
+    c = await stored((x) => x.log[0]?.classRef.id === 'brute|tst');
+    expect(c.draft?.setAside).toEqual([]);
   });
 
   it('ability scores: point buy with − and +, kept to 27 points; each roll its own tile', async () => {

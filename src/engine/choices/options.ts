@@ -313,7 +313,15 @@ export function offerOptions(
       const pctx = prereqContext(sheet, index);
       valueKind = 'feat';
       values = feats.map((f) => f.id);
-      taken = new Set(feats.filter((f) => !f.repeatable && picked.has(f.id)).map((f) => f.id));
+      // Feats had already: picked, or given outright (a background's Origin feat). A repeatable
+      // feat with versions (Magic Initiate's spell lists) is taken again with another version.
+      const had = new Set([
+        ...picked,
+        ...sheet.features.filter((f) => f.ref.kind === 'feat').map((f) => f.ref.id),
+      ]);
+      taken = new Set(
+        feats.filter((f) => had.has(f.id) && (!f.repeatable || f.variantOf)).map((f) => f.id),
+      );
       label = nameOf('feat');
       describe = (id) => {
         const feat = index.get({ kind: 'feat', id });

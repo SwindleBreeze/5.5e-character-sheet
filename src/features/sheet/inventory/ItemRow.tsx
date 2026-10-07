@@ -27,12 +27,11 @@ import {
   updateCustomItem,
 } from '../../../engine/play/inventory.ts';
 import type { EquipSlot, InventoryItem } from '../../../schema/index.ts';
-import { EntitySheet } from '../../../richtext/EntitySheet.tsx';
+import { EntityView } from '../../../richtext/EntitySheet.tsx';
 import { Badge } from '../../../ui/Badge.tsx';
 import { Button } from '../../../ui/Button.tsx';
 import { Counter } from '../../../ui/Counter.tsx';
 import { useRoller } from '../../../ui/rollerContext.ts';
-import { useSheet } from '../../../ui/sheetContext.ts';
 import type { SheetBindings } from '../sheetBindings.ts';
 import {
   containerFull,
@@ -110,7 +109,6 @@ export function ItemRow({
 
 function ItemDetails({ row, bindings }: { row: InventoryItem; bindings: SheetBindings }) {
   const { character, sheet, index, apply } = bindings;
-  const ui = useSheet();
   const roller = useRoller();
   const [confirmRemove, setConfirmRemove] = useState(false);
   const { item, variant } = rowItems(index, row);
@@ -126,18 +124,6 @@ function ItemDetails({ row, bindings }: { row: InventoryItem; bindings: SheetBin
   const unit = unitWeight(row, item);
   const value = row.custom?.valueCp ?? (variant ? undefined : item?.valueCp);
 
-  const openText = () =>
-    ui.open({
-      key: `item:${row.uid}`,
-      title: row.name,
-      render: () => (
-        <>
-          {row.variantRef && <EntitySheet entityRef={row.variantRef} />}
-          {row.itemRef && <EntitySheet entityRef={row.itemRef} />}
-        </>
-      ),
-    });
-
   const regain = () => {
     if (!charges || charges.max === undefined) return;
     const left = charges.max - charges.used;
@@ -149,11 +135,19 @@ function ItemDetails({ row, bindings }: { row: InventoryItem; bindings: SheetBin
 
   return (
     <div className={styles.details}>
-      <p className={styles.muted}>
-        {itemKindText(item, variant)}
-        {unit ? ` · ${lb(unit)} lb.${row.quantity > 1 ? ' each' : ''}` : ''}
-        {value ? ` · ${gp(value)}${row.quantity > 1 ? ' each' : ''}` : ''}
-      </p>
+      {/* What the item does, first: more often wanted than the controls and notes under it. */}
+      {variant || item ? (
+        <div className={styles.itemText}>
+          {variant && <EntityView entity={variant} bare />}
+          {item && <EntityView entity={item} bare />}
+        </div>
+      ) : (
+        <p className={styles.muted}>
+          {itemKindText(item, variant)}
+          {unit ? ` · ${lb(unit)} lb.${row.quantity > 1 ? ' each' : ''}` : ''}
+          {value ? ` · ${gp(value)}${row.quantity > 1 ? ' each' : ''}` : ''}
+        </p>
+      )}
 
       {(slots.length > 0 || row.equipped) && (
         <label className={styles.field}>
@@ -305,11 +299,6 @@ function ItemDetails({ row, bindings }: { row: InventoryItem; bindings: SheetBin
       </label>
 
       <div className={styles.actions}>
-        {row.itemRef && (
-          <Button size="sm" variant="ghost" onClick={openText}>
-            Item text
-          </Button>
-        )}
         {item?.packContents && (
           <Button size="sm" onClick={() => apply((c) => unpackItem(c, row.uid, index))}>
             Unpack{row.quantity > 1 ? ' one' : ''}

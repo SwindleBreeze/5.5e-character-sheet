@@ -111,6 +111,8 @@ describe('Inventory tab', () => {
       ]),
     );
     await open(user, 'Buckler');
+    // Its rules text shows as the row opens.
+    expect(within(rowNamed('Buckler')).getByText('Armor class')).toBeInTheDocument();
     await user.selectOptions(
       within(rowNamed('Buckler')).getByRole('combobox', { name: 'Worn or held' }),
       'shield',

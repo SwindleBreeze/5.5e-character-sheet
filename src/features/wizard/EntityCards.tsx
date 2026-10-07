@@ -15,6 +15,8 @@ export interface CardItem {
   chips?: string[];
   /** The book it comes from; with more than one, the list is split under their names. */
   group?: string;
+  /** Why it suits the character (`Good for a Barbarian: raises Strength`), highlighted. */
+  suggested?: string | undefined;
 }
 
 export function EntityCards({
@@ -67,7 +69,9 @@ export function EntityCards({
               name={label}
               checked={on}
               aria-labelledby={nameId}
-              aria-describedby={item.detail || item.chips?.length ? detailId : undefined}
+              aria-describedby={
+                item.detail || item.suggested || item.chips?.length ? detailId : undefined
+              }
               onChange={() => onSelect(item.id)}
             />
             <span className={styles.pickText}>
@@ -76,6 +80,7 @@ export function EntityCards({
               </span>
               <span id={detailId} className={styles.pickDetail}>
                 {item.detail}
+                {item.suggested && <span className={styles.suggested}>{item.suggested}</span>}
                 {item.chips?.length ? (
                   <span className={styles.chips}>
                     {item.chips.map((c) => (

@@ -255,6 +255,12 @@
   font-weight: 700;
 }
 
+/* One tap to cast with the usual way (plan step 4C.5). */
+.quickCast {
+  flex: none;
+  white-space: nowrap;
+}
+
 .meta {
   flex-basis: 100%;
   color: var(--color-text-muted);

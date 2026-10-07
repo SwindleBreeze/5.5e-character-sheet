@@ -5,6 +5,7 @@
 import { useId } from 'react';
 import { chooseSpecies } from '../../../engine/build/wizard.ts';
 import { useSources } from '../../../content/hooks.ts';
+import type { Species } from '../../../schema/index.ts';
 import { Button } from '../../../ui/Button.tsx';
 import { useSheet } from '../../../ui/sheetContext.ts';
 import page from '../../../app/Page.module.css';
@@ -13,6 +14,7 @@ import inventory from '../../sheet/inventory/inventory.module.css';
 import { choiceContext, type WizardBindings } from '../bindings.ts';
 import { AboutFlavor, ReadSheet, WhatYouGet } from '../Explain.tsx';
 import { aOrAn, variantLabel, variantsOf } from '../progress.ts';
+import { classFocus, originSuggestion } from '../../choices/suggest.ts';
 import { groupBySource } from '../sources.ts';
 import { speciesLine, variantName } from '../text.ts';
 import styles from '../wizard.module.css';
@@ -27,6 +29,10 @@ export function SpeciesStep(b: WizardBindings) {
   const ids = new Set(all.map((s) => s.id));
   const bases = all.filter((s) => !s.variantOf || !ids.has(s.variantOf));
   const groups = groupBySource(bases, sources);
+  // A species that raises the class's primary ability (older books' species do).
+  const focus = classFocus(character, content.index);
+  const optionName = (s: Species) =>
+    originSuggestion(s, focus) ? `${s.name} (suggested)` : s.name;
   const selectedId = character.log[0]?.origin?.speciesRef?.id;
   const selected = selectedId ? content.index.get({ kind: 'species', id: selectedId }) : undefined;
   const base =
@@ -74,14 +80,14 @@ export function SpeciesStep(b: WizardBindings) {
                   <optgroup key={g.code} label={g.label}>
                     {g.items.map((s) => (
                       <option key={s.id} value={s.id}>
-                        {s.name}
+                        {optionName(s)}
                       </option>
                     ))}
                   </optgroup>
                 ))
               : groups[0]?.items.map((s) => (
                   <option key={s.id} value={s.id}>
-                    {s.name}
+                    {optionName(s)}
                   </option>
                 ))}
           </select>

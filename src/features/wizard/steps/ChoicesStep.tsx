@@ -6,6 +6,7 @@
 import { setPick } from '../../../engine/play/features.ts';
 import { decodeChoiceKey, refKey } from '../../../schema/index.ts';
 import page from '../../../app/Page.module.css';
+import { choiceTitle } from '../../choices/labels.ts';
 import { FeatureChoices } from '../../choices/FeatureChoices.tsx';
 import { choiceContext, type WizardBindings } from '../bindings.ts';
 import { picksOnStep } from '../progress.ts';
@@ -20,7 +21,10 @@ export function ChoicesStep(b: WizardBindings) {
     <>
       {features.map((f) => (
         <section key={refKey(f.ref)} className={page.card} aria-label={f.name}>
-          <h2 className={page.cardTitle}>{f.name}</h2>
+          {/* "Weapon Mastery" over its one pick, "Weapon Mastery": the pick's title says it. */}
+          {!(
+            f.choices.filter(only).length === 1 && choiceTitle(f.choices.find(only)!) === f.name
+          ) && <h2 className={page.cardTitle}>{f.name}</h2>}
           <FeatureChoices
             features={[f]}
             ctx={choiceContext(b, sheet)}

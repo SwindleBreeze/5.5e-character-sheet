@@ -6,7 +6,12 @@
 
 import { Fragment, useRef, useState, type ReactNode } from 'react';
 import type { DerivedCaster, DerivedSheet, DerivedSlot } from '../../engine/derive/types.ts';
-import { castWays, isConcentration, type CastWay } from '../../engine/play/casting.ts';
+import {
+  castWayLabel,
+  castWays,
+  isConcentration,
+  type CastWay,
+} from '../../engine/play/casting.ts';
 import {
   castSpellAs,
   endTurn,
@@ -91,6 +96,34 @@ export function SpellsTab({ character, sheet, index, apply }: SheetBindings) {
     return <p className={mainStyles.muted}>This character has no spells.</p>;
   }
 
+  const armorUntrained = sheet.issues.some((i) => i.code === 'armorUntrained');
+
+  const cast = (e: SpellEntry, way: CastWay) => {
+    const s = e.spell;
+    if (!s) return;
+    const was = character.state.concentration;
+    const ended =
+      isConcentration(s) && was && !(was.kind === 'spell' && was.id === s.id)
+        ? ` · Concentration on ${nameOf(index, was.kind, was.id)} ends`
+        : '';
+    roller.notify({
+      label: `Cast ${s.name}`,
+      detail: `${castNotice(way, s, e.sourceName)}${isConcentration(s) ? ' · Concentrating' : ''}${ended}`,
+    });
+    apply((c) =>
+      castSpellAs(
+        c,
+        sheet,
+        {
+          ref: { kind: 'spell', id: s.id },
+          concentration: isConcentration(s),
+          ...(e.from.granted ? { granted: e.from.granted } : {}),
+        },
+        way,
+      ),
+    );
+  };
+
   const openSpell = (e: SpellEntry) => {
     const s = e.spell;
     if (!s) return;
@@ -103,9 +136,7 @@ export function SpellsTab({ character, sheet, index, apply }: SheetBindings) {
         <CastSheet
           spell={s}
           ways={ways}
-          {...(sheet.issues.some((i) => i.code === 'armorUntrained')
-            ? { armorUntrained: true }
-            : {})}
+          {...(armorUntrained ? { armorUntrained: true } : {})}
           character={character}
           index={index}
           why={whyNot(e)}
@@ -114,27 +145,7 @@ export function SpellsTab({ character, sheet, index, apply }: SheetBindings) {
           dc={caster?.dc.value ?? e.from.granted?.dc}
           onCast={(way: CastWay) => {
             ui.close();
-            const was = character.state.concentration;
-            const ended =
-              isConcentration(s) && was && !(was.kind === 'spell' && was.id === s.id)
-                ? ` · Concentration on ${nameOf(index, was.kind, was.id)} ends`
-                : '';
-            roller.notify({
-              label: `Cast ${s.name}`,
-              detail: `${castNotice(way, s, e.sourceName)}${isConcentration(s) ? ' · Concentrating' : ''}${ended}`,
-            });
-            apply((c) =>
-              castSpellAs(
-                c,
-                sheet,
-                {
-                  ref: { kind: 'spell', id: s.id },
-                  concentration: isConcentration(s),
-                  ...(e.from.granted ? { granted: e.from.granted } : {}),
-                },
-                way,
-              ),
-            );
+            cast(e, way);
           }}
         />
       ),
@@ -175,6 +186,8 @@ export function SpellsTab({ character, sheet, index, apply }: SheetBindings) {
               sheet={sheet}
               many={sc.casters.length > 1 || !!sc.granted.length}
               onOpen={() => openSpell(e)}
+              quick={!armorUntrained && e.spell ? quickWay(sheet, e) : undefined}
+              onCast={(way) => cast(e, way)}
               onFreeUses={(left) =>
                 apply((c) => {
                   const g = e.from.granted!;
@@ -438,6 +451,29 @@ function SlotRow({
   );
 }
 
+/**
+ * The way a tap on a row's Cast button uses (plan step 4C.5): a free use first, else the lowest
+ * slot; a ritual only when nothing else is left. The spell's sheet has every way.
+ */
+function quickWay(sheet: DerivedSheet, e: SpellEntry): CastWay | undefined {
+  const ways = castWays(sheet, e.spell!, e.from);
+  return ways.find((w) => w.kind !== 'ritual') ?? ways[0];
+}
+
+/** `Cast`, `Cast · L1`, `Cast · Pact`, `Cast · free`, `Ritual`. */
+function quickLabel(way: CastWay): string {
+  switch (way.kind) {
+    case 'slot':
+      return way.pact ? 'Cast · Pact' : `Cast · L${way.level}`;
+    case 'free':
+      return 'Cast · free';
+    case 'ritual':
+      return 'Ritual';
+    default:
+      return 'Cast';
+  }
+}
+
 function SpellRow({
   entry: e,
   name,
@@ -446,6 +482,8 @@ function SpellRow({
   many,
   onOpen,
   onFreeUses,
+  quick,
+  onCast,
 }: {
   entry: SpellEntry;
   /** Readable from the id when the spell isn't imported. */
@@ -456,6 +494,9 @@ function SpellRow({
   many: boolean;
   onOpen: () => void;
   onFreeUses: (left: number) => void;
+  /** The way the row's Cast button uses; none when it can't be cast now. */
+  quick: CastWay | undefined;
+  onCast: (way: CastWay) => void;
 }) {
   const s = e.spell;
   const g = e.from.granted;
@@ -492,6 +533,16 @@ function SpellRow({
           max={g.usesMax}
           onChange={onFreeUses}
         />
+      )}
+      {quick && (
+        <Button
+          size="sm"
+          className={styles.quickCast}
+          aria-label={`Cast ${s?.name ?? name}: ${castWayLabel(quick)}`}
+          onClick={() => onCast(quick)}
+        >
+          {quickLabel(quick)}
+        </Button>
       )}
       <span className={styles.meta}>
         {s ? castingTime(s) : ''}

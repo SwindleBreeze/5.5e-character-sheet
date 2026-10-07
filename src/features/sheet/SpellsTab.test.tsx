@@ -178,6 +178,17 @@ describe('Spells tab', () => {
     expect(screen.queryByRole('status', { name: 'Concentration' })).not.toBeInTheDocument();
   });
 
+  it('casts from the list in one tap, with the lowest slot (plan step 4C.5)', async () => {
+    const user = userEvent.setup();
+    renderTab(duo());
+    const row = within(screen.getByRole('listitem', { name: 'Dim Lantern' }));
+    await user.click(row.getByRole('button', { name: 'Cast Dim Lantern: Level 1 slot (4 left)' }));
+    expect(slots('Level 1')).toHaveTextContent('3/4 left');
+    expect(latest.state.concentration).toEqual({ kind: 'spell', id: 'dim lantern|tst' });
+    // No sheet opened.
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
   it('a Ritual costs no slot', async () => {
     const user = userEvent.setup();
     renderTab(duo());

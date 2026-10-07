@@ -190,10 +190,16 @@ export interface Character {
   /**
    * Set while the character is still in the creation wizard (plan §9.3 step 4.4): the step it
    * is on, the items picked for "any …" starting equipment entries (keyed by
-   * `<owner ref key>#<option>#<entry index>`), and the dice of rolled ability scores. Cleared
-   * when it is created.
+   * `<owner ref key>#<option>#<entry index>`), the dice of rolled ability scores, and the picks
+   * set aside when a class, background or species was changed (they come back when it is
+   * chosen again; plan step 4C.1). Cleared when it is created.
    */
-  draft?: { step: string; anyItems?: Record<string, Id>; rolls?: number[][] };
+  draft?: {
+    step: string;
+    anyItems?: Record<string, Id>;
+    rolls?: number[][];
+    setAside?: ChoiceRecord[];
+  };
   inventory: InventoryItem[];
   currency: Currency;
   state: PlayState;

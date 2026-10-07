@@ -47,7 +47,7 @@ describe('what each wizard step still needs (plan §9.3b, step 4B.5)', () => {
       { step: 'class', text: 'Brute: starting equipment' },
       { step: 'background', text: 'Choose a background' },
       { step: 'species', text: 'Choose a species' },
-      { step: 'choices', text: 'Weapon Mastery: Weapon Mastery (2 more)' },
+      { step: 'choices', text: 'Weapon Mastery (2 more)' },
     ]);
   });
 
