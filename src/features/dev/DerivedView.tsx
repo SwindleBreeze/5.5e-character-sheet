@@ -180,7 +180,7 @@ export function DerivedView({ sheet, index }: { sheet: DerivedSheet; index?: Con
           <div key={a.id} className={styles.block}>
             <strong>
               {a.name}
-              {a.ready ? '' : ' (carried)'}
+              {a.ready ? '' : ' (stowed)'}
             </strong>
             <small className={page.muted}>
               {a.range} {a.distance}, {ABILITY_NAMES[a.ability]}
@@ -199,7 +199,7 @@ export function DerivedView({ sheet, index }: { sheet: DerivedSheet; index?: Con
                 Rider: {r.name} {r.dice} {r.damageType ?? ''}
                 {r.optIn ? ' (opt-in)' : ''}
                 {r.oncePerTurn ? ', once per turn' : ''}
-                {r.cost ? `, costs ${r.cost}` : ''}
+                {r.cost ? `, costs ${r.cost.label}` : ''}
               </small>
             ))}
             {a.notes.length > 0 && <small className={page.muted}>{a.notes.join(', ')}</small>}

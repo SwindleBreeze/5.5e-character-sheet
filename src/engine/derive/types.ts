@@ -72,20 +72,42 @@ export interface DerivedRider {
   oncePerTurn: boolean;
   /** Added only when tapped; otherwise part of every hit. */
   optIn: boolean;
-  cost?: string;
+  /** Paid when the rider is added to a damage roll. */
+  cost?: DerivedCost;
 }
+
+/**
+ * How an attack is made (2024 rules):
+ * - `attackAction`: one attack of the Attack action (a melee one in hand can also be an
+ *   Opportunity Attack);
+ * - `lightExtra`: the Light property's extra attack, a Bonus Action after attacking with a
+ *   different Light weapon; with Nick it is part of the Attack action instead, once per turn;
+ * - `cast`: a cantrip, cast with its casting time.
+ */
+export type AttackUse =
+  | { kind: 'attackAction' }
+  | { kind: 'lightExtra'; nick: boolean }
+  | { kind: 'cast'; time: ActionType };
 
 /** P3: one way to attack, with everything needed to roll it. */
 export interface DerivedAttack {
-  /** Stable within the sheet: `item:<row uid>`, `unarmed`, `spell:<caster>:<spell id>`. */
+  /**
+   * Stable within the sheet: `item:<row uid>`, `item:<row uid>:light` (the Light extra
+   * attack), `unarmed`, `spell:<caster>:<spell id>`.
+   */
   id: string;
   name: string;
   kind: 'weapon' | 'unarmed' | 'spell';
+  use: AttackUse;
   /** Inventory row, for weapons. */
   rowUid?: string;
   itemRef?: Ref;
   spellRef?: Ref;
-  /** In hand (weapons), so the attack is ready; carried weapons are listed after. */
+  /**
+   * In hand (weapons), so the attack is ready. Stowed weapons are listed after: the Attack
+   * action lets you draw one as part of each attack, and a Thrown weapon is drawn as part of
+   * the throw.
+   */
   ready: boolean;
   range: 'melee' | 'ranged';
   /** `5 ft.`, `20/60 ft.` */
@@ -99,10 +121,17 @@ export interface DerivedAttack {
   damageDice: string;
   damageBonus: Derived;
   damageType: string;
-  /** Damage with both hands, when the weapon is Versatile and that is not already used. */
+  /**
+   * Damage of a melee attack with both hands, when the weapon is Versatile, is not already
+   * held in both hands, and a hand is free for it (no shield; a free hand when in hand).
+   */
   versatileDice?: string;
   critRange: number;
   mastery?: { id: Id; name: string };
+  /** The weapon's properties, as rule ids (`itemProperty/l|xphb`), for their rule text. */
+  propertyIds: Id[];
+  /** The Unarmed Strike's Grapple and Shove: their save DC, and whether a hand is free. */
+  grapple?: { dc: Derived; freeHand: boolean };
   riders: DerivedRider[];
   /** Property names and other reminders. */
   notes: string[];
@@ -127,6 +156,12 @@ export interface DerivedCaster {
   cantripsMax: number;
   prepared: Id[];
   preparedMax: number;
+  /**
+   * Long Rest casters: prepared spells that may be replaced after a Long Rest (Paladin and
+   * Ranger: 1; omitted: any number), and how many were replaced since the last one.
+   */
+  swapLimit?: number;
+  swapsSinceRest: number;
   /** Always prepared, not counted against the limit (subclass and feature spells). */
   alwaysPrepared: Id[];
   spellbook?: Id[];
@@ -191,7 +226,12 @@ export interface DerivedCost {
   label: string;
   /** For resource costs: which resource and how much. */
   resourceKey?: string;
+  /** Uses of the resource, or Hit Dice for a Hit Dice cost. */
   amount?: number;
+  /** A spell slot of at least this level (a Pact Magic slot counts). */
+  slot?: { minLevel: number };
+  /** Hit Dice to spend; `amount` says how many. */
+  hitDice?: true;
 }
 
 /** P7/P8: what using something does to the character, with formulas already worked out. */
@@ -210,6 +250,8 @@ export interface DerivedAction {
   actionType: ActionType;
   sourceName: string;
   source?: Ref;
+  /** One of the actions everyone has (Attack, Dash… Opportunity Attack). */
+  standard?: true;
   costs: DerivedCost[];
   outcomes: DerivedOutcome[];
   /** Attacks it makes (Flurry of Blows: the unarmed strike). */

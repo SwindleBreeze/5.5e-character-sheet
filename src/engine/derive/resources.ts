@@ -50,10 +50,12 @@ export function costOf(
     if (r) out.resourceKey = r.key;
     return out;
   }
-  if ('slot' in cost) return { label: `a level ${cost.slot.minLevel}+ spell slot` };
+  if ('slot' in cost) {
+    return { label: `a level ${cost.slot.minLevel}+ spell slot`, slot: cost.slot };
+  }
   if ('hitDice' in cost) {
     const n = Math.max(0, Math.floor(evalNumber(ctx, cost.hitDice, source)));
-    return { label: `${n} Hit ${n === 1 ? 'Die' : 'Dice'}`, amount: n };
+    return { label: `${n} Hit ${n === 1 ? 'Die' : 'Dice'}`, amount: n, hitDice: true };
   }
   const names = {
     action: 'an action',

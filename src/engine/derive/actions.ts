@@ -44,20 +44,42 @@ function outcomesOf(
 }
 
 /** The actions everyone has (2024 rules), linked to their rule text. */
-export const STANDARD_ACTIONS = [
-  'Attack',
-  'Dash',
-  'Disengage',
-  'Dodge',
-  'Help',
-  'Hide',
-  'Influence',
-  'Magic',
-  'Ready',
-  'Search',
-  'Study',
-  'Utilize',
-] as const;
+export const STANDARD_ACTIONS: readonly { name: string; actionType: 'action' | 'reaction' }[] = [
+  ...[
+    'Attack',
+    'Dash',
+    'Disengage',
+    'Dodge',
+    'Help',
+    'Hide',
+    'Influence',
+    'Magic',
+    'Ready',
+    'Search',
+    'Study',
+    'Utilize',
+  ].map((name) => ({ name, actionType: 'action' as const })),
+  { name: 'Opportunity Attack', actionType: 'reaction' },
+];
+
+/**
+ * The attacks a standard action makes. Attack: every attack of the Attack action (a stowed
+ * weapon is drawn as part of it), and a Nick weapon's Light extra attack. Opportunity Attack:
+ * one melee attack with a weapon in hand or an Unarmed Strike.
+ */
+function standardAttacks(name: string, attacks: readonly DerivedAttack[]): string[] {
+  if (name === 'Attack') {
+    return attacks
+      .filter((a) => a.use.kind === 'attackAction' || (a.use.kind === 'lightExtra' && a.use.nick))
+      .map((a) => a.id);
+  }
+  if (name === 'Opportunity Attack') {
+    return attacks
+      .filter((a) => a.use.kind === 'attackAction' && a.range === 'melee' && a.ready)
+      .map((a) => a.id);
+  }
+  return [];
+}
 
 /** Attacks an action makes: by kind and range; tags and properties are not known here. */
 function attacksFor(filter: AttackFilter | undefined, attacks: readonly DerivedAttack[]): string[] {
@@ -122,18 +144,18 @@ export function deriveActions(
     });
   }
 
-  for (const name of STANDARD_ACTIONS) {
+  for (const { name, actionType } of STANDARD_ACTIONS) {
     const id = ruleId('action', name, 'XPHB');
     out.push({
       id,
       name,
-      actionType: 'action',
+      actionType,
       sourceName: 'Rules',
       source: { kind: 'rule', id },
+      standard: true,
       costs: [],
       outcomes: [],
-      attackIds:
-        name === 'Attack' ? attacks.filter((a) => a.kind !== 'spell').map((a) => a.id) : [],
+      attackIds: standardAttacks(name, attacks),
     });
   }
   return out;

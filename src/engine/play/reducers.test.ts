@@ -31,7 +31,7 @@ import {
   spendResource,
   toggle,
   useAction,
-  useGrantedSpell,
+  spendFreeCast,
   useItemCharge,
   useRider,
 } from './reducers.ts';
@@ -170,6 +170,14 @@ describe('resources, slots, actions and toggles', () => {
     const after = useAction(hurt, s, id, { rng: fixedRng([face(4, 8)]) });
     expect(after.state.resourcesUsed[BREATH]).toBe(1);
     expect(after.state.damage).toBe(11);
+
+    // The sheet rolls through its own roller, so the player sees the dice.
+    const rolled: [string, string][] = [];
+    const shown = useAction(hurt, s, id, {
+      rollAmount: (expr, label) => (rolled.push([expr, label]), 6),
+    });
+    expect(rolled).toEqual([['1d8 + 5', 'Catch Breath: healing']]);
+    expect(shown.state.damage).toBe(14);
   });
 
   it('an action that regains a spell slot takes the highest spent one it may', () => {
@@ -214,7 +222,7 @@ describe('resources, slots, actions and toggles', () => {
     });
     const s = sheet(c);
     const lantern = s.spellcasting.granted[0]!;
-    const used = useGrantedSpell(c, s, lantern);
+    const used = spendFreeCast(c, s, lantern);
     expect(used.state.resourcesUsed[lantern.usesKey!]).toBe(1);
     // Daily: back after a Long Rest, not a Short one.
     expect(shortRest(used, sheet(used)).state.resourcesUsed[lantern.usesKey!]).toBe(1);

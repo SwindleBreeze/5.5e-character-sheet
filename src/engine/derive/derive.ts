@@ -92,7 +92,14 @@ export function derive(
   const profs = collectProficiencies(ctx);
   const rolls = deriveRolls(ctx, mods, profs, pb.value);
   const classes = deriveClasses(ctx);
-  const { attacks, attacksPerAction } = deriveAttacks(ctx, scores, mods, profs, pb.value);
+  const { attacks, attacksPerAction } = deriveAttacks(
+    ctx,
+    scores,
+    mods,
+    profs,
+    pb.value,
+    resources,
+  );
   const { spellcasting, spellAttacks } = deriveSpellcasting(ctx, mods, pb.value, resources);
   const allAttacks = [...attacks, ...spellAttacks];
 

@@ -106,10 +106,16 @@ export interface PlayState {
   prepared: Record<string, Id[]>;
   /** P12: current ward hit points (Arcane Ward). */
   wardHp: number;
-  /** Once-per-turn reminders: rider ids used this turn, cleared from the Actions tab. */
-  turn: { ridersUsed: string[] };
-  /** When a prepared spell was last swapped, for one-swap-per-rest casters (warning only). */
-  lastPrepSwapAt?: number;
+  /**
+   * Once-per-turn reminders, cleared by ending the turn: rider ids used this turn, and whether
+   * a spell slot was already expended to cast a spell (only one per turn, 2024).
+   */
+  turn: { ridersUsed: string[]; slotSpent?: boolean };
+  /**
+   * Prepared spells replaced since the last Long Rest, by caster key. Paladins and Rangers may
+   * replace one (2024); more is a warning, never a block.
+   */
+  prepSwaps?: Record<string, number>;
 }
 
 export interface Details {

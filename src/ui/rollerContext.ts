@@ -10,6 +10,8 @@ export interface RollRequest {
   /** Dice and bonus, e.g. `1d20+5` or `2d6+3`. */
   expr: string;
   mode?: RollMode;
+  /** For attack rolls: the lowest natural d20 that is a Critical Hit (20, or 19 with a feature). */
+  critOn?: number;
 }
 
 export interface ShownRoll extends RollRequest {

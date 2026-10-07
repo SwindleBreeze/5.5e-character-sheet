@@ -107,19 +107,22 @@ describe('actions (P7) and toggles (P8)', () => {
       ],
       outcomes: [{ heal: '1d8 + 5' }],
     });
-    expect(d.actions.filter((a) => a.sourceName === 'Rules').map((a) => a.name)).toEqual([
-      'Attack',
-      'Dash',
-      'Disengage',
-      'Dodge',
-      'Help',
-      'Hide',
-      'Influence',
-      'Magic',
-      'Ready',
-      'Search',
-      'Study',
-      'Utilize',
+    expect(d.actions.filter((a) => a.standard).map((a) => [a.name, a.actionType])).toEqual([
+      ...[
+        'Attack',
+        'Dash',
+        'Disengage',
+        'Dodge',
+        'Help',
+        'Hide',
+        'Influence',
+        'Magic',
+        'Ready',
+        'Search',
+        'Study',
+        'Utilize',
+      ].map((name) => [name, 'action']),
+      ['Opportunity Attack', 'reaction'],
     ]);
     expect(d.actions.find((a) => a.name === 'Attack')).toMatchObject({
       source: { kind: 'rule', id: 'action/attack|xphb' },

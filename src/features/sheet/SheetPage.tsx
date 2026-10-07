@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router';
 import { TopBar } from '../../app/TopBar.tsx';
 import page from '../../app/Page.module.css';
@@ -8,7 +8,9 @@ import { repos } from '../../db/repos.ts';
 import { derive } from '../../engine/derive/derive.ts';
 import { featureEffects } from '../../engine/featureEffects/index.ts';
 import { SwipeTabs, type TabDef } from '../../ui/SwipeTabs.tsx';
+import { ActionsTab } from './ActionsTab.tsx';
 import { MainTab } from './MainTab.tsx';
+import { SpellsTab } from './SpellsTab.tsx';
 import { SheetHeader } from './SheetHeader.tsx';
 import styles from './SheetPage.module.css';
 import { SHEET_TABS } from './sheetTabs.ts';
@@ -49,19 +51,25 @@ export function SheetPage() {
   const bindings = sheet && index ? { character, sheet, index, apply } : undefined;
   const options = conditionOptions ?? [];
 
+  const built = (tab: ReactNode) =>
+    bindings ? (
+      tab
+    ) : character.log.length === 0 ? (
+      <div className={page.empty}>This character has no class yet.</div>
+    ) : (
+      <div className={page.empty}>Loading…</div>
+    );
   const tabs: TabDef[] = SHEET_TABS.map((t) => ({
     id: t.id,
     label: t.label,
     content:
-      t.id !== 'main' ? (
-        placeholder(t.label)
-      ) : bindings ? (
-        <MainTab {...bindings} conditionOptions={options} />
-      ) : character.log.length === 0 ? (
-        <div className={page.empty}>This character has no class yet.</div>
-      ) : (
-        <div className={page.empty}>Loading…</div>
-      ),
+      t.id === 'main'
+        ? built(bindings && <MainTab {...bindings} conditionOptions={options} />)
+        : t.id === 'actions'
+          ? built(bindings && <ActionsTab {...bindings} />)
+          : t.id === 'spells'
+            ? built(bindings && <SpellsTab {...bindings} />)
+            : placeholder(t.label),
   }));
 
   return (

@@ -175,11 +175,22 @@ describe('sheet header and Main tab', () => {
   });
 });
 
+describe('Actions tab', () => {
+  it('shows the attacks and the standard actions', async () => {
+    renderApp(`/c/${character.id}/actions`);
+    const attacks = await screen.findByRole('region', { name: 'Attacks' });
+    expect(within(attacks).getByRole('listitem', { name: 'Unarmed Strike' })).toBeInTheDocument();
+    expect(screen.getByText('Standard actions')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Actions' })).toHaveAttribute('aria-selected', 'true');
+  });
+});
+
 describe('a character without a class', () => {
   it('shows the plain header and a note', async () => {
     const empty = await repos().characters.save({ ...character, id: 'empty', log: [] });
     renderApp(`/c/${empty.id}/main`);
-    expect(await screen.findByText('This character has no class yet.')).toBeInTheDocument();
+    const main = await screen.findByRole('tabpanel', { name: 'Main' });
+    expect(within(main).getByText('This character has no class yet.')).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 1, name: 'Grosh' })).toBeInTheDocument();
   });
 });

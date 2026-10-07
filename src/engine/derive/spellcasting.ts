@@ -18,7 +18,13 @@ import type { EffectSource } from '../collect/types.ts';
 import { formatValue, isDice } from '../formula/dice.ts';
 import { cellToValue } from '../formula/evaluate.ts';
 import { casterLevelShare, MULTICLASS_SLOTS, pactSlots, slotRow } from '../rules/slots.ts';
-import { cantripCount, casterList, maxSpellLevel, preparedCount } from '../spells/casters.ts';
+import {
+  cantripCount,
+  casterList,
+  maxSpellLevel,
+  prepSwapLimit,
+  preparedCount,
+} from '../spells/casters.ts';
 import { matchesSpellFilter } from '../spells/filter.ts';
 import type { AttackTraits } from '../static/attackTraits.ts';
 import { resolveBound } from '../static/bound.ts';
@@ -249,6 +255,8 @@ export function deriveSpellcasting(
       }
     }
 
+    const onList = (s: Spell, id: Id) =>
+      listIds.includes(id) || listFilters.some((f) => matchesSpellFilter(s, f));
     const preparedChange = c.sc.preparedChange ?? 'restLong';
     const prepared =
       preparedChange === 'level'
@@ -262,6 +270,43 @@ export function deriveSpellcasting(
         severity: 'warn',
         code: 'overPrepared',
         message: `${c.name}: ${counted.length} spells prepared, the limit is ${preparedMax}.`,
+      });
+    }
+
+    const topLevel = owner ? maxSpellLevel(c.sc, owner, c.level) : 0;
+    const spellbookCaster = !!c.sc.spellbookByLevel?.length;
+    // Spells prepared as play state must be on the caster's list (a Wizard: in the spellbook)
+    // and of a level it can prepare. Broken picks stay, with a warning (plan §9.1).
+    if (preparedChange === 'restLong') {
+      for (const id of ctx.character.state.prepared[c.key] ?? []) {
+        const s = spell(id);
+        if (!s) continue;
+        if (s.level === 0 || s.level > topLevel) {
+          ctx.issues.push({
+            severity: 'warn',
+            code: 'preparedLevel',
+            message: `${c.name}: ${s.name} is a level ${s.level} spell; you can prepare spells of levels 1 to ${topLevel}.`,
+            ref: { kind: 'spell', id },
+          });
+        } else if (spellbookCaster ? !book.includes(id) : !onList(s, id)) {
+          ctx.issues.push({
+            severity: 'warn',
+            code: spellbookCaster ? 'notInSpellbook' : 'notOnList',
+            message: spellbookCaster
+              ? `${c.name}: ${s.name} isn't in your spellbook.`
+              : `${c.name}: ${s.name} isn't on your spell list.`,
+            ref: { kind: 'spell', id },
+          });
+        }
+      }
+    }
+    const swapLimit = owner && preparedChange === 'restLong' ? prepSwapLimit(owner) : undefined;
+    const swapsSinceRest = ctx.character.state.prepSwaps?.[c.key] ?? 0;
+    if (swapLimit !== undefined && swapsSinceRest > swapLimit) {
+      ctx.issues.push({
+        severity: 'warn',
+        code: 'prepSwaps',
+        message: `${c.name}: ${swapsSinceRest} prepared spells replaced since your last Long Rest; you can replace ${swapLimit}.`,
       });
     }
 
@@ -280,11 +325,13 @@ export function deriveSpellcasting(
         'proficient',
         pb,
       ),
-      maxSpellLevel: owner ? maxSpellLevel(c.sc, owner, c.level) : 0,
+      maxSpellLevel: topLevel,
       cantrips: [...new Set(cantrips)],
       cantripsMax: owner ? cantripCount(c.sc, owner, c.level) : cantrips.length,
       prepared: [...new Set(prepared)],
       preparedMax,
+      ...(swapLimit !== undefined ? { swapLimit } : {}),
+      swapsSinceRest,
       alwaysPrepared: [...new Set(always)],
       list: { filters: listFilters, ids: [...new Set(listIds)] },
     };
@@ -367,10 +414,15 @@ export function deriveSpellcasting(
         contribution(source.name, evalNumber(ctx, effect.damageBonus, source), source),
       );
     }
+    const unit = s.time[0]?.unit;
     const a: DerivedAttack = {
       id: `spell:${key}:${id}`,
       name: s.name,
       kind: 'spell',
+      use: {
+        kind: 'cast',
+        time: unit === 'action' || unit === 'bonus' || unit === 'reaction' ? unit : 'other',
+      },
       spellRef: { kind: 'spell', id },
       ready: true,
       range: s.attack === 'melee' ? 'melee' : 'ranged',
@@ -383,6 +435,7 @@ export function deriveSpellcasting(
       damageBonus: derived(damageParts),
       damageType: s.damageTypes?.[0] ?? '',
       critRange: 20,
+      propertyIds: [],
       riders: [],
       notes: [],
     };

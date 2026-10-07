@@ -1,5 +1,6 @@
 // Attacks (plan §9.2, step 3.6; P3, P4 and weapon mastery). Every weapon in the inventory (the
-// ones in hand first) and the Unarmed Strike; spell attacks are added with spellcasting.
+// ones in hand first), the Light property's extra attack, and the Unarmed Strike; spell attacks
+// are added with spellcasting.
 
 import type { Ability, Effect, InventoryItem, Item } from '../../schema/index.ts';
 import type { EffectSource } from '../collect/types.ts';
@@ -23,7 +24,15 @@ import {
   type DeriveContext,
 } from './context.ts';
 import { buildRoll, type Proficiencies } from './rolls.ts';
-import type { Contribution, Derived, DerivedAttack, DerivedRider } from './types.ts';
+import { costOf } from './resources.ts';
+import type {
+  AttackUse,
+  Contribution,
+  Derived,
+  DerivedAttack,
+  DerivedResource,
+  DerivedRider,
+} from './types.ts';
 
 type Mods = Record<Ability, number>;
 type AttackMod = Extract<Effect, { type: 'attackMod' }>;
@@ -70,7 +79,11 @@ function pickAbility(own: Ability[], mods: { effect: AttackMod }[], scores: Mods
   return [...options].reduce((best, a) => (scores[a] > scores[best] ? a : best));
 }
 
-function riderList(ctx: DeriveContext, traits: AttackTraits): DerivedRider[] {
+function riderList(
+  ctx: DeriveContext,
+  traits: AttackTraits,
+  resources: readonly DerivedResource[],
+): DerivedRider[] {
   const out: DerivedRider[] = [];
   for (const { effect, source } of effectsOfType(ctx.collected, 'damageRider')) {
     if (!matchesFilter(effect.filter, traits)) continue;
@@ -85,16 +98,7 @@ function riderList(ctx: DeriveContext, traits: AttackTraits): DerivedRider[] {
       ? resolveBound(effect.damageType, source, (k) => valuesOf(ctx.recon, k))
       : undefined;
     if (type) rider.damageType = type;
-    if (effect.cost) {
-      rider.cost =
-        'resource' in effect.cost
-          ? `${String(effect.cost.amount)} ${effect.cost.resource}`
-          : 'slot' in effect.cost
-            ? `a level ${effect.cost.slot.minLevel}+ spell slot`
-            : 'hitDice' in effect.cost
-              ? `${String(effect.cost.hitDice)} Hit Dice`
-              : effect.cost.action;
-    }
+    if (effect.cost) rider.cost = costOf(ctx, effect.cost, resources, source);
     out.push(rider);
   }
   return out;
@@ -109,6 +113,7 @@ interface AttackInput {
   id: string;
   name: string;
   kind: 'weapon' | 'unarmed';
+  use: AttackUse;
   traits: AttackTraits;
   ownAbilities: Ability[];
   proficient: boolean;
@@ -127,6 +132,7 @@ function buildAttack(
   scores: Mods,
   mods: Mods,
   pb: number,
+  resources: readonly DerivedResource[],
 ): DerivedAttack {
   const broad = modsFor(ctx, input.traits);
   const ability = pickAbility(input.ownAbilities, broad, scores);
@@ -186,6 +192,7 @@ function buildAttack(
     id: input.id,
     name: input.name,
     kind: input.kind,
+    use: input.use,
     ready: input.ready,
     range: traits.range,
     distance: input.distance,
@@ -201,7 +208,8 @@ function buildAttack(
     ]),
     damageType: input.damageType,
     critRange,
-    riders: riderList(ctx, traits),
+    propertyIds: input.item?.weapon?.properties ?? [],
+    riders: riderList(ctx, traits, resources),
     notes,
   };
   if (input.row) attack.rowUid = input.row.uid;
@@ -222,9 +230,12 @@ export function deriveAttacks(
   mods: Mods,
   profs: Proficiencies,
   pb: number,
+  resources: readonly DerivedResource[],
 ): { attacks: DerivedAttack[]; attacksPerAction: Derived } {
   const attacks: DerivedAttack[] = [];
-  const hands = new Map<string, Hand>(ctx.st.wield.wielded.map((w) => [w.row.uid, w.hand]));
+  const wield = ctx.st.wield;
+  const hands = new Map<string, Hand>(wield.wielded.map((w) => [w.row.uid, w.hand]));
+  const isLight = (w: { traits: AttackTraits }) => w.traits.properties.includes('L');
 
   const rows = [...ctx.character.inventory].sort(
     (a, b) => Number(hands.has(b.uid)) - Number(hands.has(a.uid)),
@@ -237,67 +248,108 @@ export function deriveAttacks(
       ? ctx.index.get({ kind: 'item', id: row.variantRef.id })
       : undefined;
     const hand = hands.get(row.uid);
-    const traits = weaponTraits(item, hand);
+    const wieldTraits = weaponTraits(item, hand);
+    // Holding a weapon in the off hand changes nothing by itself (2024): only the Light extra
+    // attack below drops the ability modifier, so only it carries the `offHand` tag.
+    const traits = { ...wieldTraits, tags: wieldTraits.tags.filter((t) => t !== 'offHand') };
     const finesse = traits.properties.includes('F');
     const own: Ability[] = traits.range === 'ranged' ? ['dex'] : finesse ? ['str', 'dex'] : ['str'];
     const twoHands = hand === 'both';
     const versatile = item.weapon.versatile;
     const baseDie = cellToValue(twoHands && versatile ? versatile : item.weapon.damage);
-    const attack = buildAttack(
-      ctx,
-      {
-        id: `item:${row.uid}`,
-        name: row.name || item.name,
-        kind: 'weapon',
-        traits,
-        ownAbilities: own,
-        proficient: weaponProficient(item, profs),
-        baseDie,
-        damageType: item.weapon.damageType,
-        distance: distanceOf(item, traits.range === 'ranged'),
-        ready: !!hand,
-        item,
-        ...(variant ? { variant } : {}),
-        row,
-      },
-      scores,
-      mods,
-      pb,
-    );
-    if (versatile && !twoHands) attack.versatileDice = versatile;
     const masteryId = item.weapon.masteryId;
     const base = item.baseItemId ?? item.id;
-    if (masteryId && (profs.masteries.has(base) || profs.masteries.has(item.id))) {
-      const rule = ctx.index.get({ kind: 'rule', id: masteryId });
-      attack.mastery = {
-        id: masteryId,
-        name: rule?.name ?? masteryId.split('/')[1]?.split('|')[0] ?? masteryId,
-      };
-    }
+    const mastery =
+      masteryId && (profs.masteries.has(base) || profs.masteries.has(item.id))
+        ? {
+            id: masteryId,
+            name:
+              ctx.index.get({ kind: 'rule', id: masteryId })?.name ??
+              masteryId.split('/')[1]?.split('|')[0] ??
+              masteryId,
+          }
+        : undefined;
+    const input: AttackInput = {
+      id: `item:${row.uid}`,
+      name: row.name || item.name,
+      kind: 'weapon',
+      use: { kind: 'attackAction' },
+      traits,
+      ownAbilities: own,
+      proficient: weaponProficient(item, profs),
+      baseDie,
+      damageType: item.weapon.damageType,
+      distance: distanceOf(item, traits.range === 'ranged'),
+      ready: !!hand,
+      item,
+      ...(variant ? { variant } : {}),
+      row,
+    };
+    const attack = buildAttack(ctx, input, scores, mods, pb, resources);
+    // Versatile: a melee attack with both hands, which needs the other hand free (a shield
+    // always takes it). A stowed weapon could be drawn into two free hands.
+    const canTwoHand = hand ? wield.freeHands >= 1 : !wield.shield;
+    if (versatile && !twoHands && canTwoHand && traits.range === 'melee')
+      attack.versatileDice = versatile;
+    if (mastery) attack.mastery = mastery;
     attacks.push(attack);
+
+    // The Light property: after attacking with a Light weapon in the Attack action, one extra
+    // attack with a different Light weapon. Offered for a Light weapon in the off hand while
+    // another Light weapon is in hand.
+    const otherLight = wield.wielded.some((w) => w.row.uid !== row.uid && isLight(w));
+    if (hand === 'off' && isLight({ traits }) && otherLight) {
+      const nick = mastery?.name.toLowerCase() === 'nick';
+      const extra = buildAttack(
+        ctx,
+        {
+          ...input,
+          id: `item:${row.uid}:light`,
+          use: { kind: 'lightExtra', nick },
+          traits: wieldTraits,
+        },
+        scores,
+        mods,
+        pb,
+        resources,
+      );
+      if (mastery) extra.mastery = mastery;
+      attacks.push(extra);
+    }
   }
 
   // Unarmed Strike: 1 + Strength, always proficient (2024).
-  attacks.push(
-    buildAttack(
-      ctx,
-      {
-        id: 'unarmed',
-        name: 'Unarmed Strike',
-        kind: 'unarmed',
-        traits: UNARMED_TRAITS,
-        ownAbilities: ['str'],
-        proficient: true,
-        baseDie: 1,
-        damageType: 'bludgeoning',
-        distance: '5 ft.',
-        ready: true,
-      },
-      scores,
-      mods,
-      pb,
-    ),
+  const unarmed = buildAttack(
+    ctx,
+    {
+      id: 'unarmed',
+      name: 'Unarmed Strike',
+      kind: 'unarmed',
+      use: { kind: 'attackAction' },
+      traits: UNARMED_TRAITS,
+      ownAbilities: ['str'],
+      proficient: true,
+      baseDie: 1,
+      damageType: 'bludgeoning',
+      distance: '5 ft.',
+      ready: true,
+    },
+    scores,
+    mods,
+    pb,
+    resources,
   );
+  // Grapple and Shove: DC 8 + Strength modifier + Proficiency Bonus. The ability is the one the
+  // strike uses, so a feature that allows Dexterity for it (2024 Monk) applies here too.
+  unarmed.grapple = {
+    dc: derived([
+      { label: 'Base', value: 8, kind: 'base' },
+      { label: `${unarmed.ability.toUpperCase()} modifier`, value: mods[unarmed.ability] },
+      { label: 'Proficiency', value: pb },
+    ]),
+    freeHand: wield.freeHands > 0,
+  };
+  attacks.push(unarmed);
 
   // Extra Attack does not stack: the largest count wins.
   let perAction: Contribution = { label: 'Attack action', value: 1, kind: 'base' };

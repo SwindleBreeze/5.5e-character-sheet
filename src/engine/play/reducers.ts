@@ -4,7 +4,14 @@
 
 import type { Character, Id, OverrideKey, Ref } from '../../schema/index.ts';
 import { cryptoRng, roll, type Rng } from '../dice/roll.ts';
-import type { DerivedGrantedSpell, DerivedOutcome, DerivedSheet } from '../derive/types.ts';
+import type {
+  DerivedCost,
+  DerivedGrantedSpell,
+  DerivedOutcome,
+  DerivedSheet,
+} from '../derive/types.ts';
+import type { CastWay } from './casting.ts';
+import type { CostChoice, SlotChoice } from './costs.ts';
 
 export const MAX_EXHAUSTION = 6;
 
@@ -126,7 +133,7 @@ export function restoreResource(c: Character, key: string, amount = 1): Characte
 }
 
 /** One free cast of a granted spell: its own counter, or the resource it is paid from. */
-export function useGrantedSpell(
+export function spendFreeCast(
   c: Character,
   sheet: DerivedSheet,
   spell: DerivedGrantedSpell,
@@ -140,28 +147,115 @@ export function useGrantedSpell(
   return c;
 }
 
+/** Expend one spell slot (a shared slot of that level, or a Pact Magic slot). */
+export function spendSlot(c: Character, sheet: DerivedSheet, slot: SlotChoice): Character {
+  const n = clone(c);
+  if (slot.pact) {
+    const max = sheet.spellcasting.pact?.max ?? 0;
+    n.state.pactSlotsUsed = Math.min(max, n.state.pactSlotsUsed + 1);
+  } else if (slot.level > 0) {
+    const max = sheet.spellcasting.slots.find((s) => s.level === slot.level)?.max ?? 0;
+    const used = [...n.state.slotsUsed];
+    while (used.length < slot.level) used.push(0);
+    used[slot.level - 1] = Math.min(max, (used[slot.level - 1] ?? 0) + 1);
+    n.state.slotsUsed = used;
+  }
+  return n;
+}
+
 /**
- * Cast with a spell slot (level 0 spends nothing) or a Pact Magic slot. Concentration spells
- * replace whatever the character was concentrating on.
+ * Cast with a spell slot (level 0 spends nothing) or a Pact Magic slot, noting that a slot
+ * was expended this turn. A Concentration spell replaces whatever the character was
+ * concentrating on.
  */
 export function castSpell(
   c: Character,
   sheet: DerivedSheet,
   opts: { level: number; pact?: boolean; concentration?: Ref },
 ): Character {
-  const n = clone(c);
-  if (opts.pact) {
-    const max = sheet.spellcasting.pact?.max ?? 0;
-    n.state.pactSlotsUsed = Math.min(max, n.state.pactSlotsUsed + 1);
-  } else if (opts.level > 0) {
-    const max = sheet.spellcasting.slots.find((s) => s.level === opts.level)?.max ?? 0;
-    const used = [...n.state.slotsUsed];
-    while (used.length < opts.level) used.push(0);
-    used[opts.level - 1] = Math.min(max, (used[opts.level - 1] ?? 0) + 1);
-    n.state.slotsUsed = used;
-  }
+  const n = spendSlot(c, sheet, opts);
+  if (opts.pact || opts.level > 0) n.state.turn.slotSpent = true;
   if (opts.concentration) n.state.concentration = opts.concentration;
   return n;
+}
+
+/**
+ * Spend Hit Dice: from the size asked for first, then the largest sizes with dice left. Each
+ * size never goes past its total.
+ */
+export function spendHitDice(
+  c: Character,
+  sheet: DerivedSheet,
+  amount: number,
+  firstFaces?: number,
+): Character {
+  const n = clone(c);
+  let left = Math.max(0, Math.floor(amount));
+  const order = [...sheet.hitDice].sort(
+    (a, b) => Number(b.faces === firstFaces) - Number(a.faces === firstFaces) || b.faces - a.faces,
+  );
+  for (const h of order) {
+    if (!left) break;
+    const used = n.state.hitDiceUsed[h.faces] ?? 0;
+    const take = Math.min(left, h.total - used);
+    if (take > 0) n.state.hitDiceUsed[h.faces] = used + take;
+    left -= Math.max(0, take);
+  }
+  return n;
+}
+
+/**
+ * Pay one cost: a resource's uses, the spell slot the player picked, or Hit Dice. A slot cost
+ * without a picked slot is left unpaid; an action cost (a Bonus Action) is only a reminder.
+ */
+export function payCost(
+  c: Character,
+  sheet: DerivedSheet,
+  cost: DerivedCost,
+  choice: CostChoice = {},
+): Character {
+  if (cost.resourceKey) return spendResource(c, sheet, cost.resourceKey, cost.amount ?? 1);
+  if (cost.slot && choice.slot) return spendSlot(c, sheet, choice.slot);
+  if (cost.hitDice) return spendHitDice(c, sheet, cost.amount ?? 1, choice.hitDie);
+  return c;
+}
+
+/**
+ * Set a Long Rest caster's list of prepared spells. Spells taken off the list count as replaced
+ * until the next Long Rest (Paladins and Rangers may replace one; more is a warning).
+ */
+export function setPrepared(c: Character, casterKey: string, ids: readonly Id[]): Character {
+  const n = clone(c);
+  const before = n.state.prepared[casterKey] ?? [];
+  const removed = before.filter((id) => !ids.includes(id)).length;
+  n.state.prepared[casterKey] = [...new Set(ids)];
+  if (removed) {
+    n.state.prepSwaps = {
+      ...n.state.prepSwaps,
+      [casterKey]: (n.state.prepSwaps?.[casterKey] ?? 0) + removed,
+    };
+  }
+  return n;
+}
+
+/**
+ * Cast a spell one of the ways `castWays` offers: a slot is expended (once per turn), a free
+ * use is counted, a cantrip, ritual or at-will casting costs nothing. A Concentration spell
+ * replaces what the character was concentrating on.
+ */
+export function castSpellAs(
+  c: Character,
+  sheet: DerivedSheet,
+  spell: { ref: Ref; concentration: boolean; granted?: DerivedGrantedSpell },
+  way: CastWay,
+): Character {
+  let n = c;
+  if (way.kind === 'slot') {
+    n = castSpell(n, sheet, { level: way.level, ...(way.pact ? { pact: true } : {}) });
+  } else if (way.kind === 'free' && spell.granted) {
+    n = spendFreeCast(n, sheet, spell.granted);
+  }
+  return spell.concentration ? setConcentration(n, spell.ref) : n;
 }
 
 export function restoreSlot(c: Character, opts: { level: number; pact?: boolean }): Character {
@@ -175,23 +269,31 @@ export function restoreSlot(c: Character, opts: { level: number; pact?: boolean 
   return n;
 }
 
-/** Roll an outcome's dice: `1d8 + 5` → a number. */
-function rollAmount(expr: string, rng: Rng): number {
-  return Math.max(0, roll(expr, rng).total);
-}
+/**
+ * Rolls an outcome's dice (`1d8 + 5`) to a total. The sheet passes one that shows the roll;
+ * by default it rolls with the given random source.
+ */
+export type RollAmount = (expr: string, label: string) => number;
+
+const rollWith =
+  (rng: Rng): RollAmount =>
+  (expr) =>
+    roll(expr, rng).total;
 
 function applyOutcomes(
   c: Character,
   sheet: DerivedSheet,
   outcomes: readonly DerivedOutcome[],
-  rng: Rng,
+  rollAmount: RollAmount,
+  label: string,
   slotLevel?: number,
 ): Character {
   let n = c;
   for (const o of outcomes) {
-    if ('heal' in o) n = heal(n, sheet, rollAmount(o.heal, rng));
-    else if ('tempHp' in o) n = setTempHp(n, rollAmount(o.tempHp, rng));
-    else if ('toggleOn' in o) n = toggle(n, sheet, o.toggleOn, true, { rng, free: true });
+    if ('heal' in o) n = heal(n, sheet, Math.max(0, rollAmount(o.heal, `${label}: healing`)));
+    else if ('tempHp' in o)
+      n = setTempHp(n, Math.max(0, rollAmount(o.tempHp, `${label}: temporary HP`)));
+    else if ('toggleOn' in o) n = toggle(n, sheet, o.toggleOn, true, { rollAmount, free: true });
     else if ('restore' in o) {
       if (o.restore.resourceKey) n = restoreResource(n, o.restore.resourceKey, o.restore.amount);
     } else {
@@ -209,13 +311,10 @@ function applyOutcomes(
 function payCosts(
   c: Character,
   sheet: DerivedSheet,
-  costs: { resourceKey?: string; amount?: number }[],
+  costs: readonly DerivedCost[],
+  choice: CostChoice = {},
 ) {
-  let n = c;
-  for (const cost of costs) {
-    if (cost.resourceKey) n = spendResource(n, sheet, cost.resourceKey, cost.amount ?? 1);
-  }
-  return n;
+  return costs.reduce((n, cost) => payCost(n, sheet, cost, choice), c);
 }
 
 /**
@@ -227,7 +326,13 @@ export function toggle(
   sheet: DerivedSheet,
   toggleId: string,
   on: boolean,
-  opts: { option?: string; rng?: Rng; free?: boolean } = {},
+  opts: {
+    option?: string;
+    rng?: Rng;
+    rollAmount?: RollAmount;
+    free?: boolean;
+    choice?: CostChoice;
+  } = {},
 ): Character {
   const t = sheet.toggles.find((x) => x.toggleId === toggleId);
   let n = clone(c);
@@ -243,8 +348,14 @@ export function toggle(
   }
   n.state.activeToggles[toggleId] = opts.option ? { option: opts.option } : {};
   if (t && !opts.free) {
-    n = payCosts(n, sheet, t.costs);
-    n = applyOutcomes(n, sheet, t.onActivate, opts.rng ?? cryptoRng);
+    n = payCosts(n, sheet, t.costs, opts.choice);
+    n = applyOutcomes(
+      n,
+      sheet,
+      t.onActivate,
+      opts.rollAmount ?? rollWith(opts.rng ?? cryptoRng),
+      t.name,
+    );
   }
   return n;
 }
@@ -254,12 +365,19 @@ export function useAction(
   c: Character,
   sheet: DerivedSheet,
   actionId: string,
-  opts: { rng?: Rng; slotLevel?: number } = {},
+  opts: { rng?: Rng; rollAmount?: RollAmount; slotLevel?: number; choice?: CostChoice } = {},
 ): Character {
   const action = sheet.actions.find((a) => a.id === actionId);
   if (!action) return c;
-  const paid = payCosts(c, sheet, action.costs);
-  return applyOutcomes(paid, sheet, action.outcomes, opts.rng ?? cryptoRng, opts.slotLevel);
+  const paid = payCosts(c, sheet, action.costs, opts.choice);
+  return applyOutcomes(
+    paid,
+    sheet,
+    action.outcomes,
+    opts.rollAmount ?? rollWith(opts.rng ?? cryptoRng),
+    action.name,
+    opts.slotLevel,
+  );
 }
 
 export function addCondition(c: Character, id: Id): Character {
@@ -421,6 +539,7 @@ export function longRest(c: Character, sheet: DerivedSheet): Character {
   s.exhaustion = Math.max(0, s.exhaustion - 1);
   s.deathSaves = { successes: 0, failures: 0 };
   s.concentration = null;
+  delete s.prepSwaps;
   endToggles(n, sheet, 'longRest');
   s.turn = { ridersUsed: [] };
   return n;

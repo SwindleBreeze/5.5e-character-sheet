@@ -46,7 +46,13 @@ export function RollerProvider({
             type="button"
             className={styles.toast}
             data-natural={
-              r.result.natural === 20 ? 'crit' : r.result.natural === 1 ? 'fumble' : undefined
+              r.result.natural === undefined
+                ? undefined
+                : r.result.natural >= (r.critOn ?? 20)
+                  ? 'crit'
+                  : r.result.natural === 1
+                    ? 'fumble'
+                    : undefined
             }
             onClick={() => dismiss(r.id)}
             aria-label={`${r.label}: ${r.result.total}. Dismiss`}

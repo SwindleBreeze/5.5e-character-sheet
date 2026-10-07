@@ -1,9 +1,9 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import type { Character, InventoryItem } from '../../schema/index.ts';
+import type { Character, ContentEntity, InventoryItem, Item, Rule } from '../../schema/index.ts';
 import { testCharacter, type TestChoice } from '../../test/characters.ts';
-import { fixtureIndex } from '../../test/fixtureIndex.ts';
+import { fixtureContent, fixtureIndex } from '../../test/fixtureIndex.ts';
 import { FIXTURE_FEATURE_EFFECTS } from '../../test/fixtureFeatureEffects.ts';
-import type { ContentIndex } from '../content/contentIndex.ts';
+import { createContentIndex, type ContentIndex } from '../content/contentIndex.ts';
 import { UNARMED_TRAITS, weaponTraits } from '../static/attackTraits.ts';
 import { derive } from './derive.ts';
 import { targetMatches } from './rolls.ts';
@@ -51,29 +51,41 @@ function brute(inventory: Partial<InventoryItem>[], extra: TestChoice[] = []): C
 }
 
 describe('attacks (P3, P4, mastery)', () => {
-  it('weapons in hand first, then carried ones, then the Unarmed Strike', () => {
+  it('weapons in hand first, then stowed ones, then the Unarmed Strike', () => {
     const d = run(
       brute([row('arc bow|tst'), row('net blade|tst', 'mainHand'), row('shiv|tst', 'offHand')]),
     );
+    // A weapon in the off hand attacks like any other: the Net Blade isn't Light, so there is
+    // no Light extra attack, and the Shiv keeps its ability modifier.
     expect(d.attacks.map(summary)).toEqual([
       { name: 'net blade', ready: true, ability: 'str', toHit: 7, damage: '1d8 + 4' },
-      { name: 'shiv', ready: true, ability: 'str', toHit: 7, damage: '1d4' },
+      { name: 'shiv', ready: true, ability: 'str', toHit: 7, damage: '1d4 + 4' },
       { name: 'arc bow', ready: false, ability: 'dex', toHit: 4, damage: '1d6 + 1' },
       { name: 'Unarmed Strike', ready: true, ability: 'str', toHit: 7, damage: '5' },
     ]);
+    expect(d.attacks.map((a) => a.use.kind)).toEqual([
+      'attackAction',
+      'attackAction',
+      'attackAction',
+      'attackAction',
+    ]);
     const [blade, shiv, bow] = d.attacks;
+    // Both hands are full, so the Net Blade can't be swung two-handed.
+    expect(blade?.versatileDice).toBeUndefined();
     expect(blade).toMatchObject({
       proficient: true,
-      versatileDice: '1d10',
       damageType: 'slashing',
       distance: '5 ft.',
       mastery: { name: 'Snare' },
       notes: ['Versatile', 'Finesse'],
       critRange: 20,
     });
-    // The Light off-hand attack adds no ability modifier to damage.
-    expect(shiv?.damageBonus.parts).toEqual([]);
     expect(shiv?.distance).toBe('5 ft. or 20/60 ft.');
+    expect(shiv?.propertyIds).toEqual([
+      'itemProperty/f|tst',
+      'itemProperty/l|tst',
+      'itemProperty/t|tst',
+    ]);
     expect(bow).toMatchObject({ range: 'ranged', distance: '60/240 ft.' });
     expect(bow?.mastery).toBeUndefined();
     expect(d.attacksPerAction).toMatchObject({ value: 2, parts: [{ label: 'Extra Attack' }] });
@@ -170,5 +182,90 @@ describe('attacks (P3, P4, mastery)', () => {
     expect(targetMatches('attack:ranged', { type: 'attack', traits: shiv })).toBe(false);
     expect(targetMatches('attack:unarmed', { type: 'attack', traits: UNARMED_TRAITS })).toBe(true);
     expect(targetMatches('save:all', { type: 'attack', traits: shiv })).toBe(false);
+  });
+});
+
+describe('how attacks are made (2024 rules)', () => {
+  it('the Light extra attack: a different Light weapon, no ability modifier to damage', () => {
+    const d = run(brute([row('shiv|tst', 'mainHand'), row('shiv|tst', 'offHand')]));
+    expect(d.attacks.map((a) => [a.id.replace(/^item:[^:]+/, 'item'), a.use])).toEqual([
+      ['item', { kind: 'attackAction' }],
+      ['item', { kind: 'attackAction' }],
+      ['item:light', { kind: 'lightExtra', nick: false }],
+      ['unarmed', { kind: 'attackAction' }],
+    ]);
+    const extra = d.attacks[2]!;
+    expect(summary(extra)).toMatchObject({ toHit: 7, damage: '1d4' });
+    expect(extra.damageBonus.parts).toEqual([]);
+    // The Attack action can't make the extra attack; the Bonus Action does.
+    const attack = d.actions.find((a) => a.name === 'Attack')!;
+    expect(attack.attackIds).not.toContain(extra.id);
+  });
+
+  it('no Light extra attack without a second Light weapon in hand', () => {
+    const d = run(brute([row('shiv|tst', 'offHand'), row('shiv|tst')]));
+    expect(d.attacks.some((a) => a.use.kind === 'lightExtra')).toBe(false);
+  });
+
+  it('Nick: the extra attack is part of the Attack action', async () => {
+    const { entities } = await fixtureContent();
+    const all = Object.values(entities).flat() as ContentEntity[];
+    const shiv = all.find((e) => e.kind === 'item' && e.id === 'shiv|tst') as Item;
+    const quickcut = all.find((e) => e.kind === 'rule' && e.name === 'Quickcut') as Rule;
+    const nickRule: Rule = { ...quickcut, id: 'mastery/nick|tst', name: 'Nick' };
+    const nickShiv: Item = {
+      ...shiv,
+      id: 'nick shiv|tst',
+      name: 'Nick Shiv',
+      weapon: { ...shiv.weapon!, masteryId: nickRule.id },
+    };
+    const nickIndex = createContentIndex([...all, nickRule, nickShiv]);
+    const c = testCharacter({
+      classes: [{ classId: 'brute|tst', levels: 5 }],
+      scores: { str: 18, dex: 13, con: 14, int: 8, wis: 10, cha: 10 },
+      choices: [
+        {
+          owner: { kind: 'classFeature', id: 'weapon mastery|brute|tst|1|tst' },
+          slot: 'mastery',
+          values: ['nick shiv|tst', 'shiv|tst'],
+          valueKinds: ['item'],
+        },
+      ],
+      inventory: [row('shiv|tst', 'mainHand'), row('nick shiv|tst', 'offHand')],
+    });
+    const d = derive(c, nickIndex, { registry: FIXTURE_FEATURE_EFFECTS });
+    const extra = d.attacks.find((a) => a.use.kind === 'lightExtra')!;
+    expect(extra).toMatchObject({ name: 'nick shiv', use: { kind: 'lightExtra', nick: true } });
+    expect(d.actions.find((a) => a.name === 'Attack')!.attackIds).toContain(extra.id);
+  });
+
+  it('Versatile: two hands only for a melee attack with a hand free', () => {
+    const free = run(brute([row('net blade|tst', 'mainHand')]));
+    expect(free.attacks[0]?.versatileDice).toBe('1d10');
+    // A shield takes the other hand, whether the weapon is in hand or stowed.
+    const shielded = run(brute([row('net blade|tst', 'mainHand'), row('buckler|tst', 'shield')]));
+    expect(shielded.attacks[0]?.versatileDice).toBeUndefined();
+    const stowed = run(brute([row('net blade|tst'), row('buckler|tst', 'shield')]));
+    expect(stowed.attacks[0]?.versatileDice).toBeUndefined();
+    expect(run(brute([row('net blade|tst')])).attacks[0]?.versatileDice).toBe('1d10');
+  });
+
+  it('Unarmed Strike: Grapple and Shove DC, and whether a hand is free to grapple', () => {
+    const empty = run(brute([]));
+    const strike = empty.attacks.find((a) => a.id === 'unarmed')!;
+    expect(strike.grapple?.dc).toMatchObject({ value: 15 });
+    expect(strike.grapple?.freeHand).toBe(true);
+    const full = run(brute([row('arc bow|tst', 'bothHands')]));
+    expect(full.attacks.find((a) => a.id === 'unarmed')!.grapple?.freeHand).toBe(false);
+  });
+
+  it('Opportunity Attack: melee attacks in hand and the Unarmed Strike', () => {
+    const d = run(brute([row('net blade|tst', 'mainHand'), row('shiv|tst'), row('arc bow|tst')]));
+    const oa = d.actions.find((a) => a.name === 'Opportunity Attack')!;
+    expect(oa).toMatchObject({ actionType: 'reaction', standard: true });
+    expect(oa.attackIds.map((id) => d.attacks.find((a) => a.id === id)!.name)).toEqual([
+      'net blade',
+      'Unarmed Strike',
+    ]);
   });
 });

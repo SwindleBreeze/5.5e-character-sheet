@@ -30,6 +30,17 @@ export function casterList(owner: CasterOwner): string {
   return `subclass=${owner.classId.split('|')[0] ?? ''}: ${owner.shortName}`;
 }
 
+/**
+ * How many prepared spells a Long Rest caster may replace after a Long Rest (2024 Spell
+ * Preparation by Class table): Paladin and Ranger one; the others any number (undefined).
+ */
+export function prepSwapLimit(owner: CasterOwner): number | undefined {
+  const name = (owner.kind === 'class' ? owner.name : (owner.classId.split('|')[0] ?? ''))
+    .toLowerCase()
+    .trim();
+  return name === 'paladin' || name === 'ranger' ? 1 : undefined;
+}
+
 /** Highest spell level this caster can prepare at a class level, as if single-classed. */
 export function maxSpellLevel(sc: ClassSpellcasting, owner: CasterOwner, level: number): number {
   if (sc.progression === 'pact') return pactSlots(owner, level)?.level ?? 0;

@@ -6,6 +6,7 @@ import { ABILITIES, SKILLS } from '../../../schema/index.ts';
 import type {
   Contribution,
   Derived,
+  DerivedAttack,
   DerivedOutcome,
   DerivedRoll,
   DerivedSheet,
@@ -31,6 +32,12 @@ function roll(r: DerivedRoll): string {
     ...r.disadvantage.map((a) => `dis: ${a}`),
   ].filter(Boolean);
   return `${signed(r.bonus.value)}${marks.length ? ` (${marks.join('; ')})` : ''}${parts(r.bonus)}`;
+}
+
+function attackUse(a: DerivedAttack): string {
+  if (a.use.kind === 'attackAction') return 'attack action';
+  if (a.use.kind === 'lightExtra') return a.use.nick ? 'light extra (nick)' : 'light extra';
+  return `cast (${a.use.time})`;
 }
 
 const sourced = (list: SourcedValue<string>[]) =>
@@ -98,16 +105,20 @@ export function formatSheet(s: DerivedSheet): string {
   head('Attacks');
   for (const a of s.attacks) {
     line(
-      `${a.name} [${a.id}] ${a.ready ? 'ready' : 'carried'}, ${a.range} ${a.distance}, ${a.ability}${a.proficient ? ', proficient' : ''}, crit ${a.critRange}${a.mastery ? `, mastery ${a.mastery.name}` : ''}`,
+      `${a.name} [${a.id}] ${attackUse(a)}, ${a.ready ? 'ready' : 'stowed'}, ${a.range} ${a.distance}, ${a.ability}${a.proficient ? ', proficient' : ''}, crit ${a.critRange}${a.mastery ? `, mastery ${a.mastery.name}` : ''}`,
     );
     if (a.toHit) line(`  to hit ${roll(a.toHit)}`);
     if (a.save) line(`  save ${a.save.ability} DC ${a.save.dc.value}${parts(a.save.dc)}`);
+    if (a.grapple)
+      line(
+        `  grapple/shove DC ${a.grapple.dc.value}${a.grapple.freeHand ? '' : ', no free hand'}${parts(a.grapple.dc)}`,
+      );
     line(
       `  damage ${a.damageDice || '–'} ${signed(a.damageBonus.value)} ${a.damageType}${a.versatileDice ? `, versatile ${a.versatileDice}` : ''}${parts(a.damageBonus)}`,
     );
     for (const r of a.riders) {
       line(
-        `  rider ${r.name} ${r.dice}${r.damageType ? ` ${r.damageType}` : ''}${r.optIn ? ', opt-in' : ''}${r.oncePerTurn ? ', once per turn' : ''}${r.cost ? `, costs ${r.cost}` : ''}`,
+        `  rider ${r.name} ${r.dice}${r.damageType ? ` ${r.damageType}` : ''}${r.optIn ? ', opt-in' : ''}${r.oncePerTurn ? ', once per turn' : ''}${r.cost ? `, costs ${r.cost.label}` : ''}`,
       );
     }
     if (a.notes.length) line(`  notes: ${a.notes.join(', ')}`);
