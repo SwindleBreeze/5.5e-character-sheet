@@ -11,6 +11,7 @@ import {
   type Id,
   type Item,
   type Spell,
+  type SpellGrant,
   type Subclass,
 } from '../../schema/index.ts';
 import { choiceKey } from '../collect/collect.ts';
@@ -200,6 +201,21 @@ export function deriveSpellcasting(
   const itemDc = itemSpellBonus(ctx, 'spellSaveDc');
   const itemAttack = itemSpellBonus(ctx, 'spellAttack');
   const spell = (id: Id): Spell | undefined => ctx.index.get({ kind: 'spell', id });
+  const topOf = (c: CasterInput) => (c.owner ? maxSpellLevel(c.sc, c.owner, c.level) : 0);
+  const highest = Math.max(0, ...inputs.map(topOf));
+  /**
+   * A grant applies from its level: class level for class content, else character level; and,
+   * for `atSpellLevel`, once the caster (or, for other content, any caster) has that level.
+   */
+  const applies = (grant: SpellGrant, source: EffectSource, spellLevel: number) => {
+    if (grant.atLevel !== undefined) {
+      const level = source.classId
+        ? (ctx.collected.classes.find((x) => x.classId === source.classId)?.level ?? 0)
+        : ctx.collected.charLevel;
+      if (grant.atLevel > level) return false;
+    }
+    return grant.atSpellLevel === undefined || grant.atSpellLevel <= spellLevel;
+  };
 
   const casters: DerivedCaster[] = inputs.map((c) => {
     const mod = mods[c.ability];
@@ -243,6 +259,7 @@ export function deriveSpellcasting(
       if (!c.owns(source)) continue;
       for (const grant of effect.spells) {
         if (grant.uses !== undefined) continue; // free casts are listed with granted spells
+        if (!applies(grant, source, topOf(c))) continue;
         if ('all' in grant.spell) {
           if (grant.mode === 'expanded') listFilters.push(grant.spell.all);
           continue;
@@ -348,6 +365,7 @@ export function deriveSpellcasting(
     for (const grant of effect.spells) {
       if (caster && grant.uses === undefined) continue;
       if ('all' in grant.spell) continue;
+      if (!applies(grant, source, caster ? topOf(caster) : highest)) continue;
       const ability = grantAbility(ctx, grant, source) ?? caster?.ability;
       for (const spellId of grantIds(ctx, grant, source)) {
         const g: DerivedGrantedSpell = {

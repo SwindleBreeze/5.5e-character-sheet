@@ -4,34 +4,18 @@
 // render in the tab, not in a bottom sheet, so they always show the live character.
 
 import { useId, useState } from 'react';
-import { optionLabel, readable, spreadLabel } from '../../../engine/choices/options.ts';
 import type { DerivedFeature, DerivedFeatureChoice } from '../../../engine/derive/types.ts';
 import { restoreResource, spendResource } from '../../../engine/play/reducers.ts';
-import { valueKind } from '../../../engine/content/refs.ts';
-import { ABILITY_NAMES, refKey, type Ability } from '../../../schema/index.ts';
+import { refKey } from '../../../schema/index.ts';
 import { Entries } from '../../../richtext/Entries.tsx';
 import { Badge } from '../../../ui/Badge.tsx';
 import { Button } from '../../../ui/Button.tsx';
 import { Counter } from '../../../ui/Counter.tsx';
 import { RECHARGE_TEXT } from '../actions/labels.ts';
-import { nameOf, type SheetBindings } from '../sheetBindings.ts';
+import type { SheetBindings } from '../sheetBindings.ts';
 import inventory from '../inventory/inventory.module.css';
 import styles from './features.module.css';
-import { choiceTitle } from './labels.ts';
-
-/** The picks, readable. */
-function choiceValues(c: DerivedFeatureChoice, bindings: SheetBindings): string[] {
-  if (c.offer.kind === 'backgroundAbility') return c.values.length ? [spreadLabel(c.values)] : [];
-  return c.values.map((v, i) => {
-    if (c.offer.kind === 'ability' || c.offer.kind === 'spellAbility')
-      return ABILITY_NAMES[v as Ability] ?? v;
-    const kind = valueKind(c.valueKinds, i);
-    if (kind) return nameOf(bindings.index, kind, v);
-    if (c.offer.kind === 'option') return optionLabel(c.offer, v);
-    const label = c.labels[i];
-    return label && label !== v ? label : readable(v);
-  });
-}
+import { choiceTitle, choiceValues } from '../../choices/labels.ts';
 
 export function FeatureRow({
   feature,
@@ -133,7 +117,7 @@ export function FeatureRow({
       {choices.length > 0 && (
         <ul className={styles.picks} aria-label={`${feature.name} choices`}>
           {choices.map(({ c, f }) => {
-            const shown = choiceValues(c, bindings);
+            const shown = choiceValues(c, bindings.index);
             const missing = c.count - c.values.length;
             return (
               <li key={c.key} className={styles.pick}>

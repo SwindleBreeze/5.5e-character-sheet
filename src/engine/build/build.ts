@@ -1,6 +1,7 @@
 // Building a character's log (plan §9.2, step 3.10). Pure helpers the quick-builder uses now
 // and the creation wizard and level-up use in phases 4 and 5.
 
+import { anyEquipmentType, EQUIPMENT_TYPES } from './equipmentTypes.ts';
 import { newCharacter } from './newCharacter.ts';
 import {
   ABILITIES,
@@ -13,6 +14,7 @@ import {
   type EntityKind,
   type EquipmentOption,
   type HpGain,
+  type Id,
   type InventoryItem,
   type LevelEntry,
   type Ref,
@@ -127,18 +129,30 @@ export function applyEquipment(
   option: EquipmentOption,
   index: ContentIndex,
   now = Date.now(),
+  opts: {
+    /** Inventory row uids start with this (default: from `now`). */
+    uidPrefix?: string;
+    /** The item picked for an "any …" entry, by its index in `option.items`. */
+    picks?: Readonly<Record<number, Id>>;
+  } = {},
 ): Character {
   const n = structuredClone(c);
   const hasSlot = (slot: InventoryItem['equipped']) => n.inventory.some((r) => r.equipped === slot);
+  const prefix = opts.uidPrefix ?? `${now.toString(36)}-`;
   option.items.forEach((grant, i) => {
-    const item = grant.itemId ? index.get({ kind: 'item', id: grant.itemId }) : undefined;
+    const itemId = grant.itemId ?? opts.picks?.[i];
+    const item = itemId ? index.get({ kind: 'item', id: itemId }) : undefined;
+    const any = anyEquipmentType(grant);
     const row: InventoryItem = {
-      uid: `${now.toString(36)}-${n.inventory.length}-${i}`,
-      name: grant.special ?? item?.name ?? grant.itemId ?? 'Item',
+      uid: `${prefix}${n.inventory.length}-${i}`,
+      name:
+        (grant.itemId ? grant.special : undefined) ??
+        item?.name ??
+        (any ? `Any ${EQUIPMENT_TYPES[any]!.label}` : (grant.special ?? itemId ?? 'Item')),
       quantity: grant.quantity,
       attuned: false,
     };
-    if (grant.itemId) row.itemRef = { kind: 'item', id: grant.itemId };
+    if (itemId) row.itemRef = { kind: 'item', id: itemId };
     if (item?.armor && !hasSlot('armor')) row.equipped = 'armor';
     else if (item?.itemKind === 'shield' && !hasSlot('shield') && !hasSlot('bothHands'))
       row.equipped = 'shield';

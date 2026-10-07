@@ -23,6 +23,8 @@ export interface PickSpec {
   /** The log entry for a first pick (a later change stays where the record is). */
   entryIndex: number;
   now?: number;
+  /** How the pick is recorded, whatever it changes (a character still being created). */
+  via?: ChoiceRecord['via'];
 }
 
 /** The entities a record picked: feats, optional features, a feature's chosen option. */
@@ -72,7 +74,8 @@ function dropOrphans(c: Character, refs: readonly Ref[]): void {
 /**
  * Make or change a pick. A first pick goes in `entryIndex`, recorded as made at creation or on
  * that level-up; changing a pick replaces its values where the record is, as a retrain (adding
- * to an unfinished pick is not). Entities no longer picked take their own picks with them.
+ * to an unfinished pick is not), unless `via` says otherwise. No values removes the pick.
+ * Entities no longer picked take their own picks with them.
  */
 export function setPick(c: Character, key: ChoiceKey, spec: PickSpec): Character {
   const encoded = encodeChoiceKey(key);
@@ -83,14 +86,24 @@ export function setPick(c: Character, key: ChoiceKey, spec: PickSpec): Character
     ...(spec.now !== undefined ? { now: spec.now } : {}),
   };
   if (!existing) {
+    if (!spec.values.length) return c;
     return setChoice(c, key, spec.values, {
       ...opts,
       entryIndex: spec.entryIndex,
-      via: spec.entryIndex === 0 ? 'creation' : 'levelUp',
+      via: spec.via ?? (spec.entryIndex === 0 ? 'creation' : 'levelUp'),
     });
   }
+  // Nothing picked any more: the record goes, with what it brought in.
+  if (!spec.values.length) {
+    const n = structuredClone(c);
+    for (const entry of n.log)
+      entry.choices = entry.choices.filter((r) => encodeChoiceKey(r.key) !== encoded);
+    dropOrphans(n, pickedRefs(existing));
+    return n;
+  }
   const kept = existing.values.every((v) => spec.values.includes(v));
-  const n = setChoice(c, key, spec.values, { ...opts, ...(kept ? {} : { via: 'retrain' }) });
+  const via = spec.via ?? (kept ? undefined : 'retrain');
+  const n = setChoice(c, key, spec.values, { ...opts, ...(via ? { via } : {}) });
   dropOrphans(
     n,
     pickedRefs(existing).filter((ref) => !spec.values.includes(ref.id)),

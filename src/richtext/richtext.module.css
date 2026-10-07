@@ -177,3 +177,18 @@
 .fact dd {
   margin: 0;
 }
+
+/* Flavor text (plan §9.3b): what it is like, folded above its rules. */
+.about {
+  padding: var(--space-2) var(--space-3);
+  border-left: 3px solid var(--color-accent-soft);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+  font-style: italic;
+}
+
+.about summary {
+  font-style: normal;
+  font-weight: 600;
+  cursor: pointer;
+}

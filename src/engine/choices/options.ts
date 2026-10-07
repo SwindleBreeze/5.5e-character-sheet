@@ -1,30 +1,56 @@
-// What a choice can be (plan §9.2, step 3.20): every value an offer allows, with a readable
-// label, for the picker on the Features tab. Values the character already has from something
-// else are marked, so a player doesn't take the same skill twice.
+// What a choice can be (plan §9.2 step 3.20, reworked in §9.3 step 4.3): every value an offer
+// allows, with a readable label, a detail line, a group to list it under, and the rules it
+// breaks (prerequisites not met), for the choice picker. Values the character already has from
+// something else are marked, so a player doesn't take the same skill twice. "Ignore rules" lists
+// everything of the kind, and lets any of it be picked (plan §9.1).
 
 import {
   ABILITIES,
   ABILITY_NAMES,
+  SKILL_ABILITY,
+  SKILLS,
   type Ability,
   type Background,
   type EntityKind,
+  type Feat,
+  type Item,
+  type OptionalFeature,
   type Size,
+  type Skill,
+  type Spell,
 } from '../../schema/index.ts';
+import { prereqsText } from '../../richtext/entityMeta.ts';
 import {
+  carriedWeapons,
   knownSpells,
   proficiencyOptions,
   spellOptions,
   type AutoContext,
 } from '../build/autoChoose.ts';
 import type { Offer } from '../collect/types.ts';
+import { equipmentOptionText } from '../build/equipment.ts';
 import { SIZE_NAMES } from '../items/items.ts';
-import { queryOptions } from './queries.ts';
+import { checkPrereqs, prereqContext, type PrereqContext } from '../prereq.ts';
+import { baseWeapons, expertiseOptions, weaponMasteryOptions } from './queries.ts';
 
 export interface ChoiceOption {
   value: string;
   label: string;
   /** The character already has it from something else. */
   taken?: boolean;
+  /** A second line: a spell's level and school, a weapon's kind, what an option holds. */
+  detail?: string;
+  /** The heading it is listed under: a spell level, a kind of tool, a feat category. */
+  group?: string;
+  /** Rules picking it breaks (a prerequisite not met): it is picked only with Ignore rules. */
+  unmet?: string[];
+  /** Prerequisites the app can't check: shown, never enforced. */
+  unknown?: string[];
+}
+
+export interface OptionsSettings {
+  /** List everything of the kind, not only what the offer allows (plan §9.1). */
+  ignoreRules?: boolean;
 }
 
 export interface OfferOptions {
@@ -36,6 +62,8 @@ export interface OfferOptions {
    * one is chosen.
    */
   joined?: boolean;
+  /** What each pick gives, when the options don't say (`+1 to each, up to 20`). */
+  hint?: string;
 }
 
 const SMALL_WORDS = new Set(['of', 'the', 'and']);
@@ -93,6 +121,61 @@ export function optionLabel(offer: Offer, value: string): string {
 export const sameSpread = (a: readonly string[], b: readonly string[]) =>
   [...a].sort().join() === [...b].sort().join();
 
+const ORDINAL = ['Cantrip', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th'];
+
+const FEAT_GROUPS: Record<string, string> = {
+  origin: 'Origin feats',
+  general: 'General feats',
+  fightingStyle: 'Fighting Style feats',
+  epicBoon: 'Epic Boon feats',
+};
+
+/** Groups listed in this order, before any others. */
+const GROUP_ORDER = [
+  'Skills',
+  'Standard languages',
+  'Rare languages',
+  'Origin feats',
+  'General feats',
+  'Fighting Style feats',
+  'Simple weapons',
+  'Martial weapons',
+];
+
+const TOOL_GROUPS: Record<string, string> = {
+  artisan: 'Artisan’s Tools',
+  instrument: 'Musical instruments',
+  gamingSet: 'Gaming sets',
+};
+
+/** `Level 1 · Evocation · Ritual · Concentration`. */
+export function spellDetail(spell: Spell): string {
+  return [
+    spell.level === 0 ? 'Cantrip' : `Level ${spell.level}`,
+    readable(spell.school),
+    spell.ritual ? 'Ritual' : '',
+    spell.duration.some((d) => d.concentration) ? 'Concentration' : '',
+  ]
+    .filter(Boolean)
+    .join(' · ');
+}
+
+const spellGroup = (spell: Spell) =>
+  spell.level === 0 ? 'Cantrips' : `${ORDINAL[spell.level]}-level spells`;
+
+function prereqFacts(
+  entity: Feat | OptionalFeature | undefined,
+  pctx: PrereqContext,
+): Pick<ChoiceOption, 'unmet' | 'unknown' | 'detail'> {
+  if (!entity?.prerequisites.length) return {};
+  const r = checkPrereqs(entity.prerequisites, pctx);
+  return {
+    detail: `Prerequisite: ${prereqsText(entity.prerequisites)}`,
+    ...(r.met ? {} : { unmet: r.unmet }),
+    ...(r.unknown.length ? { unknown: r.unknown } : {}),
+  };
+}
+
 /**
  * Everything an offer allows. `current` are the picks being changed: they are always listed,
  * and never marked as already had.
@@ -101,50 +184,117 @@ export function offerOptions(
   offer: Offer,
   ctx: AutoContext,
   current: readonly string[] = [],
+  settings: OptionsSettings = {},
 ): OfferOptions {
   const { character, sheet, catalog, index } = ctx;
+  const ignore = !!settings.ignoreRules;
   const from = Array.isArray(offer.from) ? (offer.from as string[]) : undefined;
   const picked = new Set(character.log.flatMap((e) => e.choices.flatMap((r) => r.values)));
   const nameOf = (kind: EntityKind) => (id: string) =>
     index.get({ kind, id })?.name ?? readable(id.split('|')[0] ?? id);
+  const score = (a: Ability) => sheet.abilities[a].score.value;
 
   let values: string[] = [];
   let label: (value: string) => string = readable;
+  let describe: (value: string) => Omit<ChoiceOption, 'value' | 'label' | 'taken'> = () => ({});
   let taken = new Set<string>();
   let valueKind: EntityKind | undefined;
+  let hint: string | undefined;
 
   switch (offer.kind) {
     case 'ability':
-    case 'spellAbility':
-      values = from ?? [...ABILITIES];
+    case 'spellAbility': {
+      values = from && !ignore ? from : [...ABILITIES];
       label = (a) => ABILITY_NAMES[a as Ability] ?? a;
+      const effect = offer.effect?.type === 'abilityChoice' ? offer.effect : undefined;
+      const max = effect?.max ?? 20;
+      if (effect) hint = `+${effect.value} to each pick, up to ${max}.`;
+      describe = (a) => {
+        const now = score(a as Ability);
+        const full = effect && now >= max && !current.includes(a);
+        return {
+          detail: `Score ${now}`,
+          ...(full ? { unmet: [`Already ${now}; the most is ${max}`] } : {}),
+        };
+      };
       break;
+    }
     case 'backgroundAbility': {
       const bg = index.get({ kind: 'background', id: offer.key.owner.id });
       const spreads = backgroundSpreads(bg?.abilityOptions ?? []);
       const mine = spreads.find((s) => sameSpread(s, current));
+      // Scores before this pick: the sheet's, less the increases picked now.
+      const before = (a: Ability) => score(a) - current.filter((v) => v === a).length;
+      const result = (spread: readonly Ability[]) =>
+        [...new Set(spread)]
+          .map((a) => {
+            const from = before(a);
+            const to = Math.min(20, from + spread.filter((v) => v === a).length);
+            return `${ABILITY_NAMES[a]} ${from} → ${to}`;
+          })
+          .join(' · ');
       return {
         joined: true,
+        hint: 'Increase one score by 2 and another by 1, or three scores by 1. No score can go above 20.',
         options: spreads.map((s) => ({
           value: (s === mine ? current : s).join(),
           label: spreadLabel(s),
+          detail: result(s),
         })),
       };
     }
     case 'proficiency': {
-      const o = proficiencyOptions(offer, ctx);
+      const effect = offer.effect?.type === 'proficiencyChoice' ? offer.effect : undefined;
+      const o = proficiencyOptions(
+        ignore && effect
+          ? { ...offer, from: 'any', effect: { ...effect, filter: undefined } as typeof effect }
+          : offer,
+        ctx,
+      );
       values = o.options;
       taken = o.taken;
       label = (v) => index.get({ kind: 'item', id: v })?.name ?? readable(v);
+      const languages = new Map(
+        catalog
+          .of('rule')
+          .filter((r) => r.ruleKind === 'language')
+          .map((r) => [r.name.toLowerCase(), r.languageType]),
+      );
+      describe = (v) => {
+        if (v in SKILL_ABILITY)
+          return { group: 'Skills', detail: ABILITY_NAMES[SKILL_ABILITY[v as Skill]] };
+        const tool = index.get({ kind: 'item', id: v });
+        if (tool) return { group: TOOL_GROUPS[tool.toolType ?? ''] ?? 'Tools' };
+        const type = languages.get(v);
+        if (type !== undefined) return { group: `${readable(type || 'other')} languages` };
+        return {};
+      };
       break;
     }
     case 'expertise':
-      values = from ?? queryOptions('proficientSkillsWithoutExpertise', sheet, catalog);
+      values = ignore ? [...SKILLS] : expertiseOptions(offer, sheet, catalog);
+      describe = (v) =>
+        v in SKILL_ABILITY ? { detail: ABILITY_NAMES[SKILL_ABILITY[v as Skill]] } : {};
       break;
     case 'resistance':
-    case 'equipment':
       values = from ?? [];
       break;
+    case 'equipment': {
+      values = from ?? [];
+      const owner = offer.key.owner;
+      const options =
+        owner.kind === 'class'
+          ? index.get({ kind: 'class', id: owner.id })?.startingEquipment
+          : owner.kind === 'background'
+            ? index.get({ kind: 'background', id: owner.id })?.equipment
+            : undefined;
+      label = (v) => `Option ${v}`;
+      describe = (v) => {
+        const option = options?.find((o) => o.key === v);
+        return option ? { detail: equipmentOptionText(option, index) } : {};
+      };
+      break;
+    }
     case 'option':
       values = from ?? [];
       label = (v) => optionLabel(offer, v);
@@ -159,15 +309,24 @@ export function offerOptions(
       const categories = offer.effect?.type === 'featChoice' ? offer.effect.categories : [];
       const feats = catalog
         .of('feat')
-        .filter((f) => !categories.length || categories.includes(f.category));
+        .filter((f) => ignore || !categories.length || categories.includes(f.category));
+      const pctx = prereqContext(sheet, index);
       valueKind = 'feat';
       values = feats.map((f) => f.id);
       taken = new Set(feats.filter((f) => !f.repeatable && picked.has(f.id)).map((f) => f.id));
       label = nameOf('feat');
+      describe = (id) => {
+        const feat = index.get({ kind: 'feat', id });
+        return {
+          ...prereqFacts(feat, pctx),
+          group: FEAT_GROUPS[feat?.category ?? ''] ?? 'Other feats',
+        };
+      };
       break;
     }
     case 'optionalFeature': {
       const types = offer.effect?.type === 'optionalFeatureChoice' ? offer.effect.featureTypes : [];
+      const pctx = prereqContext(sheet, index);
       valueKind = 'optionalFeature';
       values = catalog
         .of('optionalFeature')
@@ -175,33 +334,60 @@ export function offerOptions(
         .map((o) => o.id);
       taken = picked;
       label = nameOf('optionalFeature');
+      describe = (id) => prereqFacts(index.get({ kind: 'optionalFeature', id }), pctx);
       break;
     }
     case 'spell':
       valueKind = 'spell';
-      values = spellOptions(offer, ctx);
+      values = ignore ? catalog.of('spell').map((s) => s.id) : spellOptions(offer, ctx);
       taken = knownSpells(sheet);
       label = nameOf('spell');
+      describe = (id) => {
+        const spell = index.get({ kind: 'spell', id });
+        return spell ? { detail: spellDetail(spell), group: spellGroup(spell) } : {};
+      };
       break;
-    case 'weaponMastery':
+    case 'weaponMastery': {
       valueKind = 'item';
-      values =
-        typeof offer.from === 'object' && 'query' in offer.from
-          ? queryOptions(offer.from.query, sheet, catalog)
-          : (from ?? queryOptions('proficientWeapons', sheet, catalog));
+      values = ignore
+        ? baseWeapons(catalog).map((w) => w.id)
+        : weaponMasteryOptions(offer, sheet, catalog, carriedWeapons(ctx));
       taken = new Set(sheet.masteries.map((m) => m.value));
       label = nameOf('item');
+      describe = (id) => {
+        const w = (index.get({ kind: 'item', id }) as Item | undefined)?.weapon;
+        if (!w) return {};
+        const mastery = w.masteryId ? index.get({ kind: 'rule', id: w.masteryId })?.name : '';
+        return {
+          group: `${readable(w.category)} weapons`,
+          detail: [`${readable(w.category)} ${w.ranged ? 'ranged' : 'melee'}`, mastery]
+            .filter(Boolean)
+            .join(' · '),
+        };
+      };
       break;
+    }
   }
 
   const mine = new Set(current);
   const all = [...values, ...current.filter((v) => !values.includes(v))];
+  const options: ChoiceOption[] = all.map((value) => ({
+    value,
+    label: label(value),
+    ...(taken.has(value) && !mine.has(value) ? { taken: true } : {}),
+    ...describe(value),
+  }));
+  // Common groups first (Standard languages before Rare ones); otherwise as listed.
+  const rank = (o: ChoiceOption) => {
+    const i = GROUP_ORDER.indexOf(o.group ?? '');
+    return i < 0 ? GROUP_ORDER.length : i;
+  };
   return {
-    options: all.map((value) => ({
-      value,
-      label: label(value),
-      ...(taken.has(value) && !mine.has(value) ? { taken: true } : {}),
-    })),
+    options: options
+      .map((o, i) => ({ o, i }))
+      .sort((a, b) => rank(a.o) - rank(b.o) || a.i - b.i)
+      .map(({ o }) => o),
     ...(valueKind ? { valueKind } : {}),
+    ...(hint ? { hint } : {}),
   };
 }

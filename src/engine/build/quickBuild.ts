@@ -129,7 +129,7 @@ function equip(c: Character, deps: QuickBuildDeps): Character {
   const owners: { ref: Ref; options: ClassDef['startingEquipment'] }[] = [];
   const cls = deps.index.get({ kind: 'class', id: c.log[0]?.classRef.id ?? '' });
   if (cls) owners.push({ ref: { kind: 'class', id: cls.id }, options: cls.startingEquipment });
-  const bg = origin
+  const bg = origin?.backgroundRef
     ? deps.index.get({ kind: 'background', id: origin.backgroundRef.id })
     : undefined;
   if (bg) owners.push({ ref: { kind: 'background', id: bg.id }, options: bg.equipment });

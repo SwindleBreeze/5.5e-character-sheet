@@ -62,7 +62,7 @@ passive investigation 12  [Base 10, INT modifier +2]
 armor: light (Pactbinder)
 weapons: simple (Lorekeeper)
 tools: –
-languages: arenic (Arena Hand)
+languages: common (Arena Hand); arenic (Arena Hand)
 masteries: –
 resistances: poison (Mossling)
 immunities: –
@@ -140,7 +140,7 @@ class: Pact Magic; level 1; entry 5
 class: Hex Strike; level 1; entry 5
 class: Pact Blade; level 2; entry 6
 species: Mossling; entry 0; size 1/1; spellsSet 1/1; spells.0.ability 1/1
-background: Arena Hand; entry 0; tools 0/1; languages 1/1; ability 3/3
+background: Arena Hand; entry 0; creationLanguages 2/2; tools 0/1; languages 1/1; ability 3/3
 feat: Spark Initiate; Gladiator; from Arena Hand; entry 0; spells.0.ability 1/1; spells.0.known.0 0/2
 
 ## Choices and issues

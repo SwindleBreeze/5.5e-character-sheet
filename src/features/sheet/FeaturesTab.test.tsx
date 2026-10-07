@@ -163,7 +163,7 @@ describe('Features tab', () => {
     );
     const dialog = within(await screen.findByRole('dialog'));
     const athletics = await dialog.findByRole('radio', { name: /Athletics/ });
-    expect(dialog.getAllByText(/you have it already/)).toHaveLength(2);
+    expect(dialog.getAllByText(/have it already/i)).toHaveLength(2);
     await user.click(athletics);
     expect((athletics as HTMLInputElement).checked).toBe(false);
     await user.click(dialog.getByRole('checkbox', { name: /Ignore rules/ }));
@@ -205,6 +205,35 @@ describe('Features tab', () => {
         via: 'retrain',
       }),
     });
+  });
+
+  it('a picked feat’s own choices open below it, inline', async () => {
+    const user = userEvent.setup();
+    renderTab(character());
+    const asi = within(row('Ability Score Improvement'));
+    await user.click(asi.getByRole('button', { name: 'Change Feat (Ability Score Improvement)' }));
+    const dialog = within(await screen.findByRole('dialog'));
+    // Prerequisites are shown; the fixture's General feat needs level 4 and STR or CHA 13.
+    expect(await dialog.findByText(/Prerequisite: Level 4\+/)).toBeTruthy();
+    // An Origin feat: listed with Ignore rules.
+    expect(dialog.queryByRole('radio', { name: 'Spark Initiate' })).toBeNull();
+    await user.click(dialog.getByRole('checkbox', { name: 'Ignore rules' }));
+    await user.click(dialog.getByRole('checkbox', { name: 'Arena Veteran' }));
+    await user.click(dialog.getByRole('checkbox', { name: 'Spark Initiate' }));
+    await user.click(dialog.getByRole('button', { name: 'Save' }));
+    // Spark Initiate asks for a spellcasting ability and two cantrips.
+    expect(await dialog.findByText(/comes with choices of its own/)).toBeTruthy();
+    const ability = within(dialog.getByRole('region', { name: 'Spellcasting ability' }));
+    await user.click(ability.getByRole('radio', { name: 'Intelligence' }));
+    const spark = { kind: 'feat', id: 'spark initiate|tst' } as const;
+    expect(recordOf(latest, { owner: spark, slot: 'spells.0.ability' })?.record).toMatchObject({
+      values: ['int'],
+      via: 'levelUp',
+    });
+    // The feat it replaced took its picks with it.
+    expect(recordOf(latest, { owner: veteran, slot: 'skills' })).toBeUndefined();
+    await user.click(dialog.getByRole('button', { name: 'Done' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it('adds a gift, tracks its uses and removes it once used up', async () => {

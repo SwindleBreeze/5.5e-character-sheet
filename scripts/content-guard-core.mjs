@@ -40,6 +40,11 @@ const CONTENT_KEYS = new Set([
   'reward',
   'facility',
   'charoption',
+  'classFluff',
+  'subclassFluff',
+  'raceFluff',
+  'backgroundFluff',
+  'featFluff',
   'entities',
 ]);
 

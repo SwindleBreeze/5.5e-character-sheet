@@ -15,6 +15,7 @@ import { useConcentrationStatus } from './play/useConcentrationStatus.tsx';
 import { useHpActions } from './play/useHpActions.tsx';
 import { classSummary, nameOf, type SheetBindings } from './sheetBindings.ts';
 import { AttentionSheet } from './attention/AttentionSheet.tsx';
+import { usePublishBindings } from './liveBindings.ts';
 import styles from './SheetHeader.module.css';
 
 export function SheetHeader({
@@ -28,6 +29,7 @@ export function SheetHeader({
   const explain = useExplain();
   const count = attentionCount(attentionItems(sheet, character, index), character);
   const bindings = { character, sheet, index, apply };
+  usePublishBindings(bindings);
   const hpActions = useHpActions(bindings);
   const openConcentration = useConcentrationStatus(bindings);
   const concentration = character.state.concentration;

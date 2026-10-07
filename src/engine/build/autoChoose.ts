@@ -10,7 +10,7 @@ import {
   type Feat,
   type Id,
 } from '../../schema/index.ts';
-import { queryOptions } from '../choices/queries.ts';
+import { expertiseOptions, weaponMasteryOptions } from '../choices/queries.ts';
 import type { Offer } from '../collect/types.ts';
 import type { ContentIndex } from '../content/contentIndex.ts';
 import type { DerivedSheet } from '../derive/types.ts';
@@ -55,7 +55,8 @@ export function proficiencyOptions(
       ? effect.category
       : [effect.category]
     : ['skill'];
-  const filter = effect?.filter;
+  // One kind, or several joined with `|` (Monk: artisan's tools or a musical instrument).
+  const kinds = effect?.filter?.split('|');
   const skillsTaken = new Set<string>(SKILLS.filter((s) => sheet.skills[s].proficiency !== 'none'));
   const taken = new Set([
     ...skillsTaken,
@@ -70,7 +71,10 @@ export function proficiencyOptions(
       options.push(
         ...catalog
           .of('item')
-          .filter((i) => i.itemKind === 'tool' && !i.rarity && (!filter || i.toolType === filter))
+          .filter(
+            (i) =>
+              i.itemKind === 'tool' && !i.rarity && (!kinds || kinds.includes(i.toolType ?? '')),
+          )
           .map((i) => i.id),
       );
     }
@@ -78,12 +82,25 @@ export function proficiencyOptions(
       options.push(
         ...catalog
           .of('rule')
-          .filter((r) => r.ruleKind === 'language' && (!filter || r.languageType === filter))
+          .filter(
+            (r) => r.ruleKind === 'language' && (!kinds || kinds.includes(r.languageType ?? '')),
+          )
           .map((r) => r.name.toLowerCase()),
       );
     }
   }
   return { options, taken };
+}
+
+/** Base weapons in the character's inventory (a +1 Longsword counts as a Longsword). */
+export function carriedWeapons(ctx: AutoContext): Set<Id> {
+  const out = new Set<Id>();
+  for (const row of ctx.character.inventory) {
+    if (!row.itemRef) continue;
+    const item = ctx.index.get({ kind: 'item', id: row.itemRef.id });
+    out.add(item?.baseItemId ?? row.itemRef.id);
+  }
+  return out;
 }
 
 export function spellOptions(offer: Offer, ctx: AutoContext): Id[] {
@@ -156,10 +173,7 @@ export function autoChoose(offer: Offer, count: number, ctx: AutoContext): AutoP
       return { values: values.length >= count ? values : firstN(options, count) };
     }
     case 'expertise': {
-      const options = Array.isArray(offer.from)
-        ? offer.from
-        : queryOptions('proficientSkillsWithoutExpertise', sheet, catalog);
-      return { values: firstN(options, count) };
+      return { values: firstN(expertiseOptions(offer, sheet, catalog), count) };
     }
     case 'resistance':
     case 'option':
@@ -207,12 +221,7 @@ export function autoChoose(offer: Offer, count: number, ctx: AutoContext): AutoP
       };
     }
     case 'weaponMastery': {
-      const options =
-        typeof offer.from === 'object' && 'query' in offer.from
-          ? queryOptions(offer.from.query, sheet, catalog)
-          : Array.isArray(offer.from)
-            ? offer.from
-            : queryOptions('proficientWeapons', sheet, catalog);
+      const options = weaponMasteryOptions(offer, sheet, catalog, carriedWeapons(ctx));
       const values = firstN(options, count, new Set(sheet.masteries.map((m) => m.value)));
       return { values, valueKinds: ['item'], labels: values.map((v) => nameOf('item', v)) };
     }

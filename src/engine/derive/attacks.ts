@@ -52,16 +52,18 @@ const PROPERTY_NAMES: Record<string, string> = {
   V: 'Versatile',
 };
 
-/** Whether the character is proficient with a weapon (category, item, or 2024 text rules). */
-export function weaponProficient(item: Item, profs: Proficiencies): boolean {
+/**
+ * Whether weapon proficiencies (lowercased values: a category, an item id, or 2024 text such
+ * as Rogue's) cover a weapon.
+ */
+export function weaponProficient(item: Item, weapons: ReadonlySet<string>): boolean {
   const w = item.weapon;
   if (!w) return false;
-  if (profs.weapons.has(w.category)) return true;
-  if (profs.weapons.has(item.id) || (item.baseItemId && profs.weapons.has(item.baseItemId)))
-    return true;
+  if (weapons.has(w.category)) return true;
+  if (weapons.has(item.id) || (item.baseItemId && weapons.has(item.baseItemId))) return true;
   const props = new Set(w.properties.map(propertyAbbr));
   // "Martial weapons that have the Finesse or Light property" (2024 Rogue).
-  for (const text of profs.weapons.keys()) {
+  for (const text of weapons) {
     if (!text.includes(w.category)) continue;
     const needs = (['finesse', 'light'] as const).filter((p) => text.includes(p));
     if (needs.some((p) => props.has(p === 'finesse' ? 'F' : 'L'))) return true;
@@ -341,7 +343,7 @@ export function deriveAttacks(
       use: { kind: 'attackAction' },
       traits,
       ownAbilities: own,
-      proficient: weaponProficient(item, profs),
+      proficient: weaponProficient(item, new Set(profs.weapons.keys())),
       baseDie,
       damageType: item.weapon.damageType,
       distance: distanceOf(item, traits.range === 'ranged'),

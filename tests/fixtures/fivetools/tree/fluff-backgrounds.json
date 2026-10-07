@@ -1,0 +1,6 @@
+{
+  "_fixture": true,
+  "backgroundFluff": [
+    { "name": "Arena Hand", "source": "TST", "entries": ["You swept the sand between bouts."] }
+  ]
+}

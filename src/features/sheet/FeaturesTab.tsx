@@ -4,16 +4,17 @@
 
 import { useRef, useState, type ReactNode } from 'react';
 import type { DerivedFeature, DerivedFeatureChoice } from '../../engine/derive/types.ts';
-import { addGift, removeGift, setPick } from '../../engine/play/features.ts';
-import { decodeChoiceKey, refKey } from '../../schema/index.ts';
+import { addGift, removeGift } from '../../engine/play/features.ts';
+import { refKey } from '../../schema/index.ts';
 import { Button } from '../../ui/Button.tsx';
 import { useSheet } from '../../ui/sheetContext.ts';
 import { columnsFor, useContainerWidth } from '../../ui/useContainerWidth.ts';
 import { SectionHeader } from './components/stats.tsx';
 import { AddGiftSheet } from './features/AddGiftSheet.tsx';
-import { ChoiceSheet } from './features/ChoiceSheet.tsx';
 import { FeatureRow } from './features/FeatureRow.tsx';
-import { choiceTitle } from './features/labels.ts';
+import { choiceTitle } from '../choices/labels.ts';
+import { LiveChoiceSheet } from '../choices/LiveChoiceSheet.tsx';
+import { usePublishBindings } from './liveBindings.ts';
 import type { SheetBindings } from './sheetBindings.ts';
 import mainStyles from './MainTab.module.css';
 import inventory from './inventory/inventory.module.css';
@@ -91,6 +92,7 @@ function groupFeatures(bindings: SheetBindings, top: DerivedFeature[]): [Group[]
 
 export function FeaturesTab(bindings: SheetBindings) {
   const { character, sheet, apply } = bindings;
+  usePublishBindings(bindings);
   const ref = useRef<HTMLDivElement>(null);
   const columns = Math.min(2, columnsFor(useContainerWidth(ref)));
   const ui = useSheet();
@@ -118,17 +120,7 @@ export function FeaturesTab(bindings: SheetBindings) {
       key: `choice:${choice.key}`,
       title: `${choiceTitle(choice)}: ${feature.name}`,
       render: () => (
-        <ChoiceSheet
-          choice={choice}
-          character={character}
-          sheet={sheet}
-          onSave={(spec) => {
-            ui.close();
-            apply((c) =>
-              setPick(c, decodeChoiceKey(choice.key), { ...spec, entryIndex: feature.entryIndex }),
-            );
-          }}
-        />
+        <LiveChoiceSheet bindings={bindings} choiceKey={choice.key} onClose={ui.close} />
       ),
     });
 

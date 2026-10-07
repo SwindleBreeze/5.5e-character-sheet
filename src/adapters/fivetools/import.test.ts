@@ -479,6 +479,28 @@ describe('importFivetools (fixture tree)', () => {
     });
   });
 
+  it('keeps flavor text apart from the rules, without images (plan §9.3b)', async () => {
+    const r = await run();
+    expect(get(r, 'class', 'brute|tst').fluff).toEqual([
+      {
+        type: 'section',
+        entries: ['Brutes settle arguments by lifting the other side over their heads.'],
+      },
+    ]);
+    expect(get(r, 'subclass', 'spark|brute|tst|tst').fluff).toEqual([
+      'Sparks crackle around these brutes when they are angry.',
+    ]);
+    const mossling = ['Mosslings are small folk who grow a coat of soft moss in damp seasons.'];
+    expect(get(r, 'species', 'mossling|tst').fluff).toEqual(mossling);
+    // A lineage without its own takes its species'; a `_copy` takes its parent's.
+    expect(get(r, 'species', 'mossling; deep lineage|tst').fluff).toEqual(mossling);
+    expect(get(r, 'species', 'stoneborn|old').fluff).toEqual(mossling);
+    expect(get(r, 'background', 'arena hand|tst').fluff).toEqual([
+      'You swept the sand between bouts.',
+    ]);
+    expect(get(r, 'feat', 'arena veteran|tst').fluff).toBeUndefined();
+  });
+
   it('is deterministic, so re-importing keeps every id and slot', async () => {
     const a = await run();
     const b = await run('elsewhere/5etools/data/');

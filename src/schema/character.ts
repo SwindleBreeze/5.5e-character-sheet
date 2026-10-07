@@ -47,8 +47,11 @@ export interface LevelEntry {
   classLevel: number;
   /** Set on the entry where the subclass was chosen. */
   subclassRef?: Ref;
-  /** Only on log[0]. */
-  origin?: { speciesRef: Ref; backgroundRef: Ref };
+  /**
+   * Only on log[0]. Both are set on a finished character; a draft in the creation wizard may
+   * have one before the other.
+   */
+  origin?: { speciesRef?: Ref; backgroundRef?: Ref };
   hp: HpGain;
   choices: ChoiceRecord[];
 }
@@ -184,8 +187,13 @@ export interface Character {
   scoreMethod: ScoreMethod;
   /** The build. log[0] is character level 1. */
   log: LevelEntry[];
-  /** Set while the character is still in the creation wizard. */
-  draft?: { step: string };
+  /**
+   * Set while the character is still in the creation wizard (plan §9.3 step 4.4): the step it
+   * is on, the items picked for "any …" starting equipment entries (keyed by
+   * `<owner ref key>#<option>#<entry index>`), and the dice of rolled ability scores. Cleared
+   * when it is created.
+   */
+  draft?: { step: string; anyItems?: Record<string, Id>; rolls?: number[][] };
   inventory: InventoryItem[];
   currency: Currency;
   state: PlayState;

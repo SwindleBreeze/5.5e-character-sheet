@@ -1,0 +1,14 @@
+{
+  "_fixture": true,
+  "raceFluff": [
+    {
+      "name": "Mossling",
+      "source": "TST",
+      "entries": [
+        "Mosslings are small folk who grow a coat of soft moss in damp seasons.",
+        { "type": "image", "href": { "type": "internal", "path": "races/TST/Mossling.webp" } }
+      ]
+    },
+    { "name": "Stoneborn", "source": "OLD", "_copy": { "name": "Mossling", "source": "TST" } }
+  ]
+}
