@@ -15,12 +15,25 @@ describe('routes', () => {
     ['/library', 'Library'],
     ['/library/import', 'Import'],
     ['/settings', 'Settings'],
-    ['/new/draft/class', 'New character'],
     ['/dev/design', 'Design gallery'],
     ['/nowhere', 'Not found'],
   ])('renders %s', async (path, heading) => {
     renderApp(path);
     expect(await screen.findByRole('heading', { level: 1, name: heading })).toBeInTheDocument();
+  });
+
+  it('starts a new character: saves a draft and opens its first step', async () => {
+    renderApp('/new/draft/class');
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'New character' }),
+    ).toBeInTheDocument();
+    // Wait for the draft to be saved and opened, so the save doesn't outlive the test.
+    expect(await screen.findByRole('link', { name: '1. Class' })).toHaveAttribute(
+      'aria-current',
+      'step',
+    );
+    const drafts = (await createCharacterRepo().list()).filter((c) => c.draft);
+    expect(drafts).toHaveLength(1);
   });
 
   it('shows the bottom navigation on top-level screens and links between them', async () => {

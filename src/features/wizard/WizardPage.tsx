@@ -48,21 +48,38 @@ import styles from './wizard.module.css';
 
 const TITLE = 'New character';
 
-/** `#/new/draft/…`: make a draft and go to it. */
+/**
+ * `#/new/draft/…`: make a draft and go to it. Made once (React may run the effect twice); if
+ * the page is left before the save lands, it stays where the player went.
+ */
 function StartDraft() {
   const navigate = useNavigate();
   const started = useRef(false);
+  const mounted = useRef(true);
+  const [failed, setFailed] = useState<string | null>(null);
   useEffect(() => {
-    if (started.current) return;
-    started.current = true;
-    void repos()
-      .characters.save(newDraft())
-      .then((c) => navigate(`/new/${c.id}/class`, { replace: true }));
+    mounted.current = true;
+    if (!started.current) {
+      started.current = true;
+      repos()
+        .characters.save(newDraft())
+        .then((c) => {
+          if (mounted.current) navigate(`/new/${c.id}/class`, { replace: true });
+        })
+        .catch((err: unknown) => {
+          if (mounted.current) setFailed(err instanceof Error ? err.message : String(err));
+        });
+    }
+    return () => {
+      mounted.current = false;
+    };
   }, [navigate]);
   return (
     <>
       <TopBar title={TITLE} backTo="/" />
-      <div className={page.empty}>Starting…</div>
+      <div className={page.empty}>
+        {failed ? `The new character couldn’t be saved on this device (${failed}).` : 'Starting…'}
+      </div>
     </>
   );
 }
