@@ -271,4 +271,36 @@ describe.skipIf(!root)('class golden checks (local data)', () => {
     expect(values(eleven.defenses.resistances)).toEqual(['necrotic', 'psychic', 'radiant']);
     expect(values(eleven.defenses.conditionImmunities)).toEqual(['frightened']);
   });
+
+  it("Ranger: Favored Enemy's free casts, Roving, Tireless and the four subclasses", () => {
+    const mark = (s: DerivedSheet) =>
+      s.spellcasting.granted.find((g) => g.spellId === "hunter's mark|xphb" && g.usesMax)?.usesMax;
+    expect(mark(build('ranger', 1))).toBe(2);
+    expect(mark(build('ranger', 9, 'hunter'))).toBe(4);
+
+    const six = build('ranger', 6, 'hunter');
+    expect(six.speed.walk?.value).toBe(40);
+    expect(six.speed.climb?.value).toBe(40);
+    expect(six.speed.swim?.value).toBe(40);
+
+    const gloom = build('ranger', 11, 'gloom stalker');
+    const three = build('ranger', 3, 'gloom stalker');
+    expect(three.initiative.bonus.value).toBe(three.abilities.dex.mod + three.abilities.wis.mod);
+    expect(resource(gloom, 'Dreadful Strike')?.max.value).toBe(
+      Math.max(1, gloom.abilities.wis.mod),
+    );
+    expect(attack(gloom, 'Scimitar').riders.find((r) => r.id === 'dreadful-strike')?.dice).toBe(
+      '2d8',
+    );
+    expect(gloom.saves.wis.proficiency).toBe('proficient');
+
+    const fey = build('ranger', 3, 'fey wanderer');
+    expect(attack(fey, 'Scimitar').riders.find((r) => r.id === 'dreadful-strikes')?.dice).toBe(
+      '1d4',
+    );
+    expect(resource(build('ranger', 18, 'hunter'), 'Tireless')?.max.value).toBeGreaterThanOrEqual(
+      1,
+    );
+    expect(build('ranger', 18, 'hunter').senses.map((x) => x.value.sense)).toContain('blindsight');
+  });
 });
