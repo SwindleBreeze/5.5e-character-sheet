@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { Character, ClassDef, Spell } from '../../schema/index.ts';
-import { testCharacter } from '../../test/characters.ts';
+import { testCharacter, type TestChoice } from '../../test/characters.ts';
 import { fixtureIndex } from '../../test/fixtureIndex.ts';
 import { FIXTURE_FEATURE_EFFECTS } from '../../test/fixtureFeatureEffects.ts';
 import type { ContentIndex } from '../content/contentIndex.ts';
@@ -22,7 +22,7 @@ const pact = { kind: 'class', id: 'pactbinder|tst' } as const;
 const spells = ['spell'] as const;
 
 /** Lorekeeper 5 / Pactbinder 2, INT 16, CHA 13. */
-function scholar(): Character {
+function scholar(extra: TestChoice[] = []): Character {
   const c = testCharacter({
     classes: [
       { classId: 'lorekeeper|tst', levels: 5, subclassId: 'ink|lorekeeper|tst|tst' },
@@ -56,6 +56,7 @@ function scholar(): Character {
         valueKinds: [...spells],
         atLevel: 6,
       },
+      ...extra,
     ],
   });
   c.state.prepared['lorekeeper|tst'] = ['ink cloud|tst', 'dim lantern|tst'];
@@ -146,6 +147,35 @@ describe('spellcasting (P11)', () => {
       ['spell:pactbinder|tst:glitter burst|tst', undefined, 12, '', 0],
       ['spell:pactbinder|tst:spark bolt|tst', 4, undefined, '2d8', 0],
     ]);
+  });
+
+  it('a spell bonus for the cantrip picked in a slot (Agonizing Blast)', () => {
+    const key = 'classFeature:hex strike|pactbinder|tst|1|tst';
+    const owner = { kind: 'classFeature', id: 'hex strike|pactbinder|tst|1|tst' } as const;
+    const registry = {
+      ...FIXTURE_FEATURE_EFFECTS,
+      [key]: {
+        ...FIXTURE_FEATURE_EFFECTS[key]!,
+        effects: [
+          ...FIXTURE_FEATURE_EFFECTS[key]!.effects,
+          {
+            type: 'optionChoice',
+            choice: { slot: 'cantrip', count: 1, from: { query: 'knownDamageCantrips' } },
+            labels: [],
+          },
+          { type: 'spellMod', filter: '', spells: { fromChoice: 'cantrip' }, damageBonus: '5' },
+        ],
+      },
+    } satisfies typeof FIXTURE_FEATURE_EFFECTS;
+    const c = scholar([
+      { owner, slot: 'cantrip', values: ['spark bolt|tst'], valueKinds: [...spells], atLevel: 6 },
+    ]);
+    const d = derive(c, index, { registry });
+    const bonus = (id: string) => d.attacks.find((a) => a.id === id)?.damageBonus.value;
+    // Every caster's Spark Bolt gets it; the cantrip not picked doesn't.
+    expect(bonus('spell:pactbinder|tst:spark bolt|tst')).toBe(5);
+    expect(bonus('spell:lorekeeper|tst:spark bolt|tst')).toBe(3 + 5);
+    expect(bonus('spell:pactbinder|tst:glitter burst|tst')).toBe(0);
   });
 
   it('a granted spell comes at its level (Mossling Grey: Dim Lantern at level 3)', () => {

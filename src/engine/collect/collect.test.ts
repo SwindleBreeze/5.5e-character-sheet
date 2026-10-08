@@ -195,6 +195,36 @@ describe('collectEffects', () => {
     expect(offerKeys(grey).some((k) => k.startsWith('species:mossling|tst#spells.0'))).toBe(false);
   });
 
+  it("reads another owner's pick (Nature's Ward follows the land)", () => {
+    const key = 'classFeature:hardened hide|brute|tst|1|tst';
+    const registry = {
+      ...FIXTURE_FEATURE_EFFECTS,
+      [key]: {
+        level: 'A' as const,
+        effects: ['0', '1'].map((value): Effect => ({
+          type: 'ifChoice',
+          owner: { kind: 'species', id: 'mossling|tst' },
+          slot: 'spellsSet',
+          value,
+          effects: [{ type: 'resistance', value: value === '0' ? 'fire' : 'cold' }],
+        })),
+      },
+    };
+    const c = testCharacter(
+      bruteSpec({
+        choices: [
+          { owner: { kind: 'species', id: 'mossling|tst' }, slot: 'spellsSet', values: ['1'] },
+        ],
+      }),
+    );
+    const got = collectEffects(c, index, { registry, holds: () => true });
+    expect(
+      effectsOf(got, 'resistance')
+        .filter((a) => a.source.ref.kind === 'classFeature')
+        .map((a) => a.effect),
+    ).toEqual([{ type: 'resistance', value: 'cold' }]);
+  });
+
   it('applies `when` effects only while the predicate holds', () => {
     const speedBonus = (holds: boolean) =>
       effectsOf(collect(testCharacter(bruteSpec()), { holds: () => holds }), 'speedBonus');

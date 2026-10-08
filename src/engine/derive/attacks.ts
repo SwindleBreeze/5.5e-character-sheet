@@ -321,7 +321,12 @@ export function deriveAttacks(
     const wieldTraits = weaponTraits(item, hand);
     // Holding a weapon in the off hand changes nothing by itself (2024): only the Light extra
     // attack below drops the ability modifier, so only it carries the `offHand` tag.
-    const traits = { ...wieldTraits, tags: wieldTraits.tags.filter((t) => t !== 'offHand') };
+    // `onlyWeapon`: in one hand (or drawn into one) with no other weapon held (Dueling).
+    const alone = hand !== 'both' && wield.wielded.every((w) => w.row.uid === row.uid);
+    const traits = {
+      ...wieldTraits,
+      tags: [...wieldTraits.tags.filter((t) => t !== 'offHand'), ...(alone ? ['onlyWeapon'] : [])],
+    };
     const finesse = traits.properties.includes('F');
     const own: Ability[] = traits.range === 'ranged' ? ['dex'] : finesse ? ['str', 'dex'] : ['str'];
     const twoHands = hand === 'both';

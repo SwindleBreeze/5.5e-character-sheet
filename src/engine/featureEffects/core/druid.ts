@@ -133,9 +133,17 @@ export const DRUID: FeatureEffectsMap = {
     ],
     { unoffered: AT_TABLE },
   ),
-  [S('land', "nature's ward", 10)]: numbers([{ type: 'conditionImmunity', value: 'poisoned' }], {
-    notes: 'Its Resistance follows the land you picked: add it yourself.',
-  }),
+  // The land picked for Circle of the Land Spells: Arid, Polar, Temperate, Tropical.
+  [S('land', "nature's ward", 10)]: numbers([
+    { type: 'conditionImmunity', value: 'poisoned' },
+    ...['fire', 'cold', 'lightning', 'poison'].map((value, i): Effect => ({
+      type: 'ifChoice',
+      owner: { kind: 'subclass', id: 'land|druid|xphb|xphb' },
+      slot: 'spellsSet',
+      value: String(i),
+      effects: [{ type: 'resistance', value }],
+    })),
+  ]),
   [S('land', "nature's sanctuary", 14)]: numbers([
     action({
       id: 'natures-sanctuary',

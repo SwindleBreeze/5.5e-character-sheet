@@ -61,7 +61,10 @@ export interface AttackFilter {
   /** The attack uses one of these abilities. */
   ability?: Ability[];
   itemIds?: Id[];
-  /** Derived tags, e.g. `monkWeapon`, `pactWeapon`, `offHand`. */
+  /**
+   * Derived tags, e.g. `monkWeapon`, `pactWeapon`, `offHand`, `onlyWeapon` (a weapon used in
+   * one hand with no other weapon held).
+   */
   tags?: string[];
   /** At least one of these filters matches too (Sneak Attack: a Finesse or a Ranged weapon). */
   any?: AttackFilter[];
@@ -231,7 +234,11 @@ export type Effect =
   | { type: 'note'; text: string }
   /** Pick one of several named alternatives; `ifChoice` effects depend on the pick. */
   | { type: 'optionChoice'; choice: ChoiceSlot<string>; labels: string[] }
-  | { type: 'ifChoice'; slot: string; value: string; effects: Effect[] }
+  /**
+   * Effects that depend on a pick. `owner`: the pick is another entity's (Nature's Ward reads
+   * the Circle of the Land's land), else the effect's own owner's.
+   */
+  | { type: 'ifChoice'; slot: string; value: string; effects: Effect[]; owner?: Ref }
   /** Pick entities offered as options (5etools `type: options` entries, plan P14). */
   | { type: 'featureOptions'; optionKind: EntityKind; choice: ChoiceSlot<Id> }
   /** Effects that start at a level: class level for class content, else character level. */
@@ -310,6 +317,8 @@ export type Effect =
       damageBonus?: Formula;
       /** Spells matching the filter count as spells of this caster. */
       countsAsClassSpell?: boolean;
+      /** Only the spells picked in this slot of the same owner (Agonizing Blast's cantrip). */
+      spells?: { fromChoice: string };
     }
   /** P12: hit points that absorb damage after temporary HP (Arcane Ward). */
   | { type: 'ward'; name: string; max: Formula }

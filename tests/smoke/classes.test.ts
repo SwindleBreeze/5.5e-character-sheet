@@ -12,6 +12,7 @@ import { derive } from '../../src/engine/derive/derive.ts';
 import type { DerivedSheet } from '../../src/engine/derive/types.ts';
 import { featureEffects } from '../../src/engine/featureEffects/index.ts';
 import { setPick } from '../../src/engine/play/features.ts';
+import { equipItem } from '../../src/engine/play/inventory.ts';
 import { toggle } from '../../src/engine/play/reducers.ts';
 import { decodeChoiceKey } from '../../src/schema/index.ts';
 import type { ContentEntity } from '../../src/schema/index.ts';
@@ -172,6 +173,11 @@ describe.skipIf(!root)('class golden checks (local data)', () => {
 
     const stars = build('druid', 14, 'stars', ['starry-form']);
     expect(values(stars.defenses.resistances)).toEqual(['bludgeoning', 'piercing', 'slashing']);
+
+    // Nature's Ward: Poisoned immunity and the Resistance of the land picked (Arid: Fire).
+    const land = build('druid', 10, 'land');
+    expect(values(land.defenses.resistances)).toEqual(['fire']);
+    expect(values(land.defenses.conditionImmunities)).toEqual(['poisoned']);
     // Spends Wild Shape through its switch, not through a second action too.
     expect(stars.actions.filter((a) => a.name === 'Starry Form')).toEqual([]);
   });
@@ -370,6 +376,11 @@ describe.skipIf(!root)('class golden checks (local data)', () => {
     expect(values(build('warlock', 10, 'archfey').defenses.conditionImmunities)).toEqual([
       'charmed',
     ]);
+    // Agonizing Blast, the first invocation picked, adds Charisma to the cantrip picked for it.
+    const agonizing = build('warlock', 2);
+    expect(attack(agonizing, 'Chill Touch').damageBonus.parts).toEqual([
+      expect.objectContaining({ label: 'Agonizing Blast', value: agonizing.abilities.cha.mod }),
+    ]);
 
     // Pact of the Blade and Thirsting Blade, picked as the level 5 invocations.
     const registry = featureEffects();
@@ -454,6 +465,36 @@ describe.skipIf(!root)('class golden checks (local data)', () => {
     expect(breath.roll).toBe('2d10');
     expect(breath.saveDc).toBe(8 + red.abilities.con.mod + 3);
     expect(red.toggles.map((t) => t.name)).toContain('Draconic Flight');
+
+    // Dueling: +2 damage with a one-handed melee weapon and no other weapon held.
+    let duelist = quickBuild(
+      {
+        name: 'Duelist',
+        speciesId: 'human|xphb',
+        backgroundId: 'soldier|xphb',
+        classes: [{ classId: 'fighter|xphb', levels: 1 }],
+      },
+      { index, catalog, registry, now: 1 },
+    );
+    const style = derive(duelist, index, { registry })
+      .features.flatMap((f) => f.choices)
+      .find((x) => x.key.includes('fighting-style'))!;
+    duelist = setPick(duelist, decodeChoiceKey(style.key), {
+      values: ['dueling|xphb'],
+      labels: [],
+      valueKinds: ['feat'],
+      entryIndex: style.entryIndex,
+    });
+    const dueling = (a: { damageBonus: { parts: { label: string }[] } }) =>
+      a.damageBonus.parts.some((p) => p.label === 'Dueling');
+    // The quick-builder puts the Greatsword in both hands: the Flail is a second weapon.
+    expect(dueling(attack(derive(duelist, index, { registry }), 'Flail'))).toBe(false);
+    const flail = duelist.inventory.find((r) => r.itemRef?.id === 'flail|xphb')!;
+    duelist = equipItem(duelist, flail.uid, 'mainHand', index);
+    const duel = derive(duelist, index, { registry });
+    expect(dueling(attack(duel, 'Flail'))).toBe(true);
+    expect(dueling(attack(duel, 'Greatsword'))).toBe(false);
+    expect(dueling(attack(duel, 'Spear'))).toBe(false);
 
     expect(as('gnome|xphb').saves.wis.mode).toBe('advantage');
     expect(

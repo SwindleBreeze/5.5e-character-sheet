@@ -371,7 +371,13 @@ export function collectEffects(
           if (effect.level <= level) apply(effect.effects, source);
           continue;
         case 'ifChoice':
-          if (recordFor(source.ref, effect.slot, source.n)?.values.includes(effect.value)) {
+          if (
+            recordFor(
+              effect.owner ?? source.ref,
+              effect.slot,
+              effect.owner ? undefined : source.n,
+            )?.values.includes(effect.value)
+          ) {
             apply(effect.effects, source);
           }
           continue;

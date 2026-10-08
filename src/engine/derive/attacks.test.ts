@@ -399,6 +399,29 @@ describe('feature attacks, filters with alternatives, proficient-only floors (ph
     expect(sly('Unarmed Strike')).toBe(false);
   });
 
+  it('`onlyWeapon`: a weapon in one hand, or drawn into one, with no other weapon held', () => {
+    const registry = withEffects([
+      {
+        type: 'attackMod',
+        label: 'Dueling',
+        filter: { range: 'melee', source: ['weapon'], tags: ['onlyWeapon'] },
+        damage: 2,
+      },
+    ]);
+    const bonus = (inventory: Partial<InventoryItem>[], name: string) =>
+      derive(brute(inventory), index, { registry })
+        .attacks.find((a) => a.name === name)!
+        .damageBonus.parts.some((p) => p.label === 'Dueling');
+    expect(bonus([row('net blade|tst', 'mainHand')], 'net blade')).toBe(true);
+    // Stowed: drawn into an empty hand, it is still the only weapon.
+    expect(bonus([row('net blade|tst')], 'net blade')).toBe(true);
+    expect(bonus([row('net blade|tst', 'mainHand'), row('shiv|tst', 'offHand')], 'net blade')).toBe(
+      false,
+    );
+    expect(bonus([row('net blade|tst'), row('shiv|tst', 'mainHand')], 'net blade')).toBe(false);
+    expect(bonus([row('walking staff|tst', 'bothHands')], 'walking staff')).toBe(false);
+  });
+
   it('a proficient-only floor leaves rolls without proficiency alone', () => {
     const registry = withEffects([
       { type: 'rollFloor', target: 'save:str', value: 10, proficientOnly: true },

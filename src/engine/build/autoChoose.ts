@@ -10,7 +10,7 @@ import {
   type Feat,
   type Id,
 } from '../../schema/index.ts';
-import { expertiseOptions, weaponMasteryOptions } from '../choices/queries.ts';
+import { expertiseOptions, queryOptions, weaponMasteryOptions } from '../choices/queries.ts';
 import type { Offer } from '../collect/types.ts';
 import type { ContentIndex } from '../content/contentIndex.ts';
 import type { DerivedSheet } from '../derive/types.ts';
@@ -191,8 +191,18 @@ export function autoChoose(offer: Offer, count: number, ctx: AutoContext): AutoP
     case 'resistance':
     case 'option':
     case 'equipment': {
-      const from = Array.isArray(offer.from) ? offer.from : [];
+      const from = Array.isArray(offer.from)
+        ? offer.from
+        : offer.from && typeof offer.from === 'object'
+          ? queryOptions(offer.from.query, sheet, catalog)
+          : [];
       const values = firstN(from, count);
+      if (
+        typeof offer.from === 'object' &&
+        !Array.isArray(offer.from) &&
+        /Cantrips$/.test(offer.from.query)
+      )
+        return { values, valueKinds: ['spell'], labels: values.map((v) => nameOf('spell', v)) };
       const labels = offer.labels ? values.map((v) => offer.labels![from.indexOf(v)] ?? v) : values;
       return { values, labels };
     }

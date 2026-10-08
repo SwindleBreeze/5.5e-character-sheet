@@ -34,7 +34,7 @@ import { checkPrereqs, prereqContext, type PrereqContext } from '../prereq.ts';
 import { distanceOf } from '../derive/attacks.ts';
 import { masteryHasSave, masterySaveNote, masteryWhen } from '../explain/mastery.ts';
 import { isRangedWeapon } from '../static/attackTraits.ts';
-import { baseWeapons, expertiseOptions, weaponMasteryOptions } from './queries.ts';
+import { baseWeapons, expertiseOptions, queryOptions, weaponMasteryOptions } from './queries.ts';
 
 export interface ChoiceOption {
   value: string;
@@ -315,6 +315,19 @@ export function offerOptions(
       break;
     }
     case 'option':
+      if (offer.from && typeof offer.from === 'object' && !Array.isArray(offer.from)) {
+        // Picked among what the character has (Agonizing Blast: a known cantrip).
+        values = queryOptions(offer.from.query, sheet, catalog);
+        if (/Cantrips$/.test(offer.from.query)) {
+          valueKind = 'spell';
+          label = nameOf('spell');
+          describe = (id) => {
+            const spell = index.get({ kind: 'spell', id });
+            return spell ? { detail: spellDetail(spell) } : {};
+          };
+        }
+        break;
+      }
       values = from ?? [];
       label = (v) => optionLabel(offer, v);
       break;

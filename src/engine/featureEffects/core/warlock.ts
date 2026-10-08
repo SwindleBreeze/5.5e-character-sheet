@@ -194,10 +194,14 @@ export const WARLOCK: FeatureEffectsMap = {
   [S('great old one', 'create thrall', 14)]: text(),
 
   // ---- Eldritch Invocations (not part of the class gate; mapped where numbers change) ----
-  [I('agonizing blast')]: text({
-    needs: 'a pick among the cantrips the character knows',
-    notes: 'Add your Charisma modifier to the chosen cantrip’s damage yourself.',
-  }),
+  [I('agonizing blast')]: numbers([
+    {
+      type: 'optionChoice',
+      choice: { slot: 'cantrip', count: 1, from: { query: 'knownDamageCantrips' } },
+      labels: [],
+    },
+    { type: 'spellMod', filter: '', spells: { fromChoice: 'cantrip' }, damageBonus: 'mod.cha' },
+  ]),
   [I("devil's sight")]: numbers([{ type: 'sense', sense: "devil's sight", range: 120 }]),
   [I('eldritch mind')]: numbers([
     { type: 'rollMode', target: 'save:concentration', mode: 'advantage' },

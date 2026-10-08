@@ -43,20 +43,14 @@ export const FEATS: FeatureEffectsMap = {
     },
   ]),
   [F('defense')]: numbers([when({ armor: 'any' }, [{ type: 'acBonus', value: 1 }])]),
-  [F('dueling')]: numbers(
-    [
-      {
-        type: 'attackMod',
-        label: 'Dueling',
-        filter: { range: 'melee', source: ['weapon'], notProperties: ['2H'] },
-        damage: 2,
-      },
-    ],
+  [F('dueling')]: numbers([
     {
-      notes:
-        'Only while holding no other weapon: the sheet adds it to every one-handed melee weapon.',
+      type: 'attackMod',
+      label: 'Dueling',
+      filter: { range: 'melee', source: ['weapon'], notProperties: ['2H'], tags: ['onlyWeapon'] },
+      damage: 2,
     },
-  ),
+  ]),
   [F('great weapon fighting')]: text(),
   [F('interception')]: numbers([
     action({ id: 'interception', name: 'Interception', actionType: 'reaction', roll: '1d10 + pb' }),

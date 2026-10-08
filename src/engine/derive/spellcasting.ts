@@ -220,7 +220,10 @@ export function deriveSpellcasting(
   const casters: DerivedCaster[] = inputs.map((c) => {
     const mod = mods[c.ability];
     const general = spellMods.filter(
-      (m) => !m.effect.filter && (!m.effect.casterKey || m.effect.casterKey === c.key),
+      (m) =>
+        !m.effect.filter &&
+        !m.effect.spells &&
+        (!m.effect.casterKey || m.effect.casterKey === c.key),
     );
     const dcParts: Contribution[] = [
       { label: 'Base', value: 8, kind: 'base' },
@@ -428,11 +431,12 @@ export function deriveSpellcasting(
     const dice = scaling && step !== undefined ? cellToValue(scaling.byLevel[step]) : 0;
     const damageParts: Contribution[] = [];
     for (const { effect, source } of spellMods) {
-      if (
-        effect.damageBonus === undefined ||
-        !effect.filter ||
-        !matchesSpellFilter(s, effect.filter)
-      )
+      if (effect.damageBonus === undefined) continue;
+      // Picked spells (Agonizing Blast's cantrip), else the spells its filter matches.
+      const picked = effect.spells
+        ? valuesOf(ctx.recon, choiceKey(source.ref, effect.spells.fromChoice, source.n))
+        : undefined;
+      if (picked ? !picked.includes(id) : !effect.filter || !matchesSpellFilter(s, effect.filter))
         continue;
       if (effect.casterKey && effect.casterKey !== key) continue;
       damageParts.push(
