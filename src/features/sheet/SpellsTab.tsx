@@ -189,6 +189,7 @@ export function SpellsTab({ character, sheet, index, apply }: SheetBindings) {
               many={sc.casters.length > 1 || !!sc.granted.length}
               onOpen={() => openSpell(e)}
               quick={!armorUntrained && e.spell ? quickWay(sheet, e) : undefined}
+              ritual={!armorUntrained && e.spell ? ritualWay(sheet, e) : undefined}
               onCast={(way) => cast(e, way)}
               onFreeUses={(left) =>
                 apply((c) => {
@@ -494,6 +495,13 @@ function quickWay(sheet: DerivedSheet, e: SpellEntry): CastWay | undefined {
   return ways.find((w) => w.kind !== 'ritual') ?? ways[0];
 }
 
+/** Casting it as a Ritual, when that is a second way next to the quick one (no slot spent). */
+function ritualWay(sheet: DerivedSheet, e: SpellEntry): CastWay | undefined {
+  const ways = castWays(sheet, e.spell!, e.from);
+  const ritual = ways.find((w) => w.kind === 'ritual');
+  return ritual && ways[0] !== ritual ? ritual : undefined;
+}
+
 /** `Cast`, `Cast · L1`, `Cast · Pact`, `Cast · free`, `Ritual`. */
 function quickLabel(way: CastWay): string {
   switch (way.kind) {
@@ -517,6 +525,7 @@ function SpellRow({
   onOpen,
   onFreeUses,
   quick,
+  ritual,
   onCast,
 }: {
   entry: SpellEntry;
@@ -530,6 +539,8 @@ function SpellRow({
   onFreeUses: (left: number) => void;
   /** The way the row's Cast button uses; none when it can't be cast now. */
   quick: CastWay | undefined;
+  /** A Ritual casting as well (a prepared ritual spell): a second button. */
+  ritual?: CastWay | undefined;
   onCast: (way: CastWay) => void;
 }) {
   const s = e.spell;
@@ -576,6 +587,16 @@ function SpellRow({
           onClick={() => onCast(quick)}
         >
           {quickLabel(quick)}
+        </Button>
+      )}
+      {ritual && (
+        <Button
+          size="sm"
+          className={styles.quickCast}
+          aria-label={`Cast ${s?.name ?? name}: ${castWayLabel(ritual)}`}
+          onClick={() => onCast(ritual)}
+        >
+          Ritual
         </Button>
       )}
       <span className={styles.meta}>

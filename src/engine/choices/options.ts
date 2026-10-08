@@ -19,7 +19,7 @@ import {
   type Skill,
   type Spell,
 } from '../../schema/index.ts';
-import { firstSentence, prereqsText, spellRange, spellTime } from '../../richtext/entityMeta.ts';
+import { prereqsText, spellRange, spellTime, summaryOf } from '../../richtext/entityMeta.ts';
 import {
   carriedWeapons,
   knownSpells,
@@ -51,6 +51,8 @@ export interface ChoiceOption {
   unknown?: string[];
   /** What it does, in a sentence of its own text (a spell's first sentence). */
   summary?: string;
+  /** The text goes on past the summary: where to read it (`Press Read to see them.`). */
+  more?: string;
   /** A rule that goes with it (a weapon's mastery property): its text, imported, and when it applies. */
   about?: { title: string; text: string; when?: string; note?: string };
 }
@@ -385,11 +387,12 @@ export function offerOptions(
       describe = (id) => {
         const spell = index.get({ kind: 'spell', id });
         if (!spell) return {};
-        const summary = firstSentence(spell.entries);
+        const { text: summary, more } = summaryOf(spell.entries);
         return {
           detail: spellDetail(spell),
           group: spellGroup(spell),
           ...(summary ? { summary } : {}),
+          ...(more ? { more } : {}),
         };
       };
       break;

@@ -177,6 +177,7 @@ export function ChoicePicker({ choice, ctx, onSave, instant, showRetrain }: Choi
       o.summary && (
         <span key="summary" className={styles.about}>
           {o.summary}
+          {o.more && <span className={styles.readHint}> {o.more}</span>}
         </span>
       ),
       o.about && (
