@@ -7,7 +7,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { importFivetools } from '../../src/adapters/fivetools/index.ts';
 import { createContentIndex, type ContentIndex } from '../../src/engine/content/contentIndex.ts';
 import { coverageGate, coverageReport } from '../../src/engine/featureEffects/coverage.ts';
-import { DONE_CLASSES } from '../../src/engine/featureEffects/done.ts';
+import { DONE_CLASSES, SUPPLEMENT_SOURCES } from '../../src/engine/featureEffects/done.ts';
 import { featureEffects } from '../../src/engine/featureEffects/index.ts';
 import { validateFeatureEffects } from '../../src/engine/featureEffects/validate.ts';
 import type { ContentEntity } from '../../src/schema/index.ts';
@@ -34,13 +34,18 @@ describe.skipIf(!root)('featureEffects (local data)', () => {
     expect(kinds.filter((k) => k === 'classFeature')).toHaveLength(283);
     expect(kinds.filter((k) => k === 'subclassFeature')).toHaveLength(309);
     expect(report.counts.mapped + report.counts.data + report.counts.none).toBe(592);
-    expect(report.unofferedChoices.every((r) => r.choiceInText && !r.offered)).toBe(true);
-    // Shrinks as phases 4–6 add mappings; a jump means the offer detection broke.
-    expect(report.unofferedChoices.length).toBeLessThanOrEqual(80);
+    // Every choice a feature's text asks for is offered, or has a written reason (step 6.17).
+    expect(report.unofferedChoices).toEqual([]);
+    expect(report.needsPrimitive.map((r) => r.feature.id)).toEqual([]);
   });
 
   it('every class marked done passes the coverage gate (plan §10.2)', () => {
-    const report = coverageReport(index, featureEffects(), new Set(['XPHB']));
+    // With the 2024 supplements' subclasses (and the Artificer) too.
+    const report = coverageReport(
+      index,
+      featureEffects(),
+      new Set(['XPHB', ...SUPPLEMENT_SOURCES]),
+    );
     const problems = Object.fromEntries(
       DONE_CLASSES.map((id) => [id, coverageGate(report, id)] as const),
     );
