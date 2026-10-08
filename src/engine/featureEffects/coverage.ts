@@ -26,6 +26,8 @@ export interface CoverageRow {
   feature: ClassFeature | SubclassFeature;
   /** `Fighter` or `Fighter: Battle Master`. */
   owner: string;
+  /** The class the feature belongs to (a subclass feature's class too). */
+  classId: string;
   level: number;
   status: CoverageStatus;
   automation?: AutomationLevel;
@@ -36,14 +38,31 @@ export interface CoverageRow {
    * level, or it is the subclass pick.
    */
   offered: boolean;
+  /** The mapping's reason for not offering the choice its text asks for. */
+  unofferedReason?: string;
+  /** A primitive full automation would need. */
+  needs?: string;
+}
+
+/** One class and its subclasses' features, for per-class progress. */
+export interface ClassCoverage {
+  classId: string;
+  name: string;
+  total: number;
+  counts: Record<CoverageStatus, number>;
+  byAutomation: Record<AutomationLevel, number>;
+  unoffered: number;
 }
 
 export interface CoverageReport {
   rows: CoverageRow[];
   counts: Record<CoverageStatus, number>;
   byAutomation: Record<AutomationLevel, number>;
-  /** Features whose text says to choose, with nothing offered for it. */
+  /** Features whose text says to choose, with nothing offered for it and no reason given. */
   unofferedChoices: CoverageRow[];
+  byClass: ClassCoverage[];
+  /** Mapped features whose full automation needs a primitive the engine lacks. */
+  needsPrimitive: CoverageRow[];
 }
 
 const CHOICE_TEXT = /\bchoose\b|\bof your choice\b/i;
@@ -89,6 +108,7 @@ export function coverageReport(
 
   const add = (
     feature: ClassFeature | SubclassFeature | undefined,
+    classId: string,
     owner: string,
     ownerLevels: Set<number>,
     /** The class feature where a subclass is picked: that pick is the log's, not a slot's. */
@@ -105,12 +125,15 @@ export function coverageReport(
     const row: CoverageRow = {
       feature,
       owner,
+      classId,
       level: feature.level,
       status: mapping ? 'mapped' : dataEffects.length ? 'data' : 'none',
       choiceInText: CHOICE_TEXT.test(entryText(feature.entries)),
       offered,
     };
     if (mapping) row.automation = mapping.level;
+    if (mapping?.unoffered) row.unofferedReason = mapping.unoffered;
+    if (mapping?.needs) row.needs = mapping.needs;
     rows.push(row);
     // Features written inside this one belong to the same owner (Frenzy in Berserker), and
     // so do the ones it offers as options (Divine Order: Protector, Thaumaturge). An option is
@@ -118,14 +141,14 @@ export function coverageReport(
     for (const ref of nestedFeatureRefs(feature)) {
       const nested = index.get(ref);
       if (nested?.kind === 'classFeature' || nested?.kind === 'subclassFeature')
-        add(nested, owner, ownerLevels);
+        add(nested, classId, owner, ownerLevels);
     }
     for (const effect of walkEffects(feature.effects)) {
       if (effect.type !== 'featureOptions' || !Array.isArray(effect.choice.from)) continue;
       for (const id of effect.choice.from) {
         const option = index.get({ kind: effect.optionKind, id });
         if (option?.kind === 'classFeature' || option?.kind === 'subclassFeature')
-          add(option, owner, ownerLevels);
+          add(option, classId, owner, ownerLevels);
       }
     }
   };
@@ -139,6 +162,7 @@ export function coverageReport(
     for (const f of cls.features) {
       add(
         index.get({ kind: 'classFeature', id: f.featureId }),
+        cls.id,
         cls.name,
         levels,
         f.gainSubclassFeature && f.level === cls.subclassLevel,
@@ -152,6 +176,7 @@ export function coverageReport(
       for (const f of sub.features) {
         add(
           index.get({ kind: 'subclassFeature', id: f.featureId }),
+          cls.id,
           `${cls.name}: ${sub.shortName}`,
           subLevels,
         );
@@ -159,16 +184,51 @@ export function coverageReport(
     }
   }
 
-  const counts: Record<CoverageStatus, number> = { mapped: 0, data: 0, none: 0 };
-  const byAutomation: Record<AutomationLevel, number> = { A: 0, B: 0, C: 0 };
-  for (const r of rows) {
-    counts[r.status]++;
-    if (r.automation) byAutomation[r.automation]++;
-  }
+  const tally = (list: readonly CoverageRow[]) => {
+    const counts: Record<CoverageStatus, number> = { mapped: 0, data: 0, none: 0 };
+    const byAutomation: Record<AutomationLevel, number> = { A: 0, B: 0, C: 0 };
+    for (const r of list) {
+      counts[r.status]++;
+      if (r.automation) byAutomation[r.automation]++;
+    }
+    return { counts, byAutomation };
+  };
+  const unexplained = unexplainedChoice;
   return {
     rows,
-    counts,
-    byAutomation,
-    unofferedChoices: rows.filter((r) => r.choiceInText && !r.offered),
+    ...tally(rows),
+    unofferedChoices: rows.filter(unexplained),
+    byClass: classes.map((cls) => {
+      const own = rows.filter((r) => r.classId === cls.id);
+      return {
+        classId: cls.id,
+        name: cls.name,
+        total: own.length,
+        ...tally(own),
+        unoffered: own.filter(unexplained).length,
+      };
+    }),
+    needsPrimitive: rows.filter((r) => r.needs),
   };
+}
+
+/**
+ * The coverage gate (plan §10.2, step 6.1): what keeps a class from being done. Every feature
+ * of the class and its subclasses has a mapping (an automation level, even C for text), and
+ * every choice its text asks for is offered or has a reason it isn't.
+ */
+export function coverageGate(report: CoverageReport, classId: string): string[] {
+  return report.rows
+    .filter((r) => r.classId === classId)
+    .flatMap((r) => {
+      const where = `${r.owner} ${r.level}: ${r.feature.name}`;
+      return [
+        ...(r.status !== 'mapped' ? [`${where} has no mapping`] : []),
+        ...(unexplainedChoice(r) ? [`${where} asks for a choice nothing offers`] : []),
+      ];
+    });
+}
+
+function unexplainedChoice(r: CoverageRow): boolean {
+  return r.choiceInText && !r.offered && !r.unofferedReason;
 }

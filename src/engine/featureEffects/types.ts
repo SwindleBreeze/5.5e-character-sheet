@@ -15,6 +15,13 @@ export interface FeatureMapping {
   level: AutomationLevel;
   /** What the mapping leaves to the player, shown with the feature. */
   notes?: string;
+  /**
+   * Why a choice the feature's text asks for is not offered by the app (made at the table each
+   * time it is used, say). The coverage gate accepts an unoffered choice only with a reason.
+   */
+  unoffered?: string;
+  /** A primitive the engine lacks that full automation would need (the coverage report lists them). */
+  needs?: string;
 }
 
 export type FeatureEffectsMap = Readonly<Record<RefKey, FeatureMapping>>;

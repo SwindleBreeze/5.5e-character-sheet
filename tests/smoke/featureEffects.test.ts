@@ -6,7 +6,8 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { importFivetools } from '../../src/adapters/fivetools/index.ts';
 import { createContentIndex, type ContentIndex } from '../../src/engine/content/contentIndex.ts';
-import { coverageReport } from '../../src/engine/featureEffects/coverage.ts';
+import { coverageGate, coverageReport } from '../../src/engine/featureEffects/coverage.ts';
+import { DONE_CLASSES } from '../../src/engine/featureEffects/done.ts';
 import { featureEffects } from '../../src/engine/featureEffects/index.ts';
 import { validateFeatureEffects } from '../../src/engine/featureEffects/validate.ts';
 import type { ContentEntity } from '../../src/schema/index.ts';
@@ -36,5 +37,13 @@ describe.skipIf(!root)('featureEffects (local data)', () => {
     expect(report.unofferedChoices.every((r) => r.choiceInText && !r.offered)).toBe(true);
     // Shrinks as phases 4–6 add mappings; a jump means the offer detection broke.
     expect(report.unofferedChoices.length).toBeLessThanOrEqual(80);
+  });
+
+  it('every class marked done passes the coverage gate (plan §10.2)', () => {
+    const report = coverageReport(index, featureEffects(), new Set(['XPHB']));
+    const problems = Object.fromEntries(
+      DONE_CLASSES.map((id) => [id, coverageGate(report, id)] as const),
+    );
+    expect(problems).toEqual(Object.fromEntries(DONE_CLASSES.map((id) => [id, []])));
   });
 });

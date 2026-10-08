@@ -4,7 +4,8 @@ import { fixtureIndex } from '../../test/fixtureIndex.ts';
 import { FIXTURE_FEATURE_EFFECTS } from '../../test/fixtureFeatureEffects.ts';
 import type { ContentIndex } from '../content/contentIndex.ts';
 import { nestedFeatureRefs } from '../content/refs.ts';
-import { coverageReport } from './coverage.ts';
+import { coverageGate, coverageReport } from './coverage.ts';
+import { suggestMapping } from './suggest.ts';
 import { checkMapping, createFeatureEffectsRegistry, MappingError } from './registry.ts';
 import type { FeatureEffectsMap } from './types.ts';
 import { validateFeatureEffects } from './validate.ts';
@@ -175,7 +176,81 @@ describe('coverageReport', () => {
     expect(report.unofferedChoices.map((r) => r.feature.name)).toEqual([]);
   });
 
+  it('counts per class, and the gate lists what keeps a class from being done', () => {
+    const report = coverageReport(index, FIXTURE_FEATURE_EFFECTS, new Set(['TST']));
+    const brute = report.byClass.find((c) => c.name === 'Brute')!;
+    expect(brute.total).toBe(brute.counts.mapped + brute.counts.data + brute.counts.none);
+    const gate = coverageGate(report, 'brute|tst');
+    // Every unmapped Brute feature is listed; mapped ones are not.
+    expect(gate.some((p) => p.startsWith('Brute 1: Fury'))).toBe(false);
+    expect(gate.length).toBe(brute.counts.data + brute.counts.none);
+    // Mapping every feature, as text where nothing else applies, clears the gate.
+    const all = { ...FIXTURE_FEATURE_EFFECTS };
+    for (const r of report.rows.filter((x) => x.classId === 'brute|tst' && x.status !== 'mapped'))
+      all[`${r.feature.kind}:${r.feature.id}`] = { level: 'C', effects: [] };
+    expect(coverageGate(coverageReport(index, all, new Set(['TST'])), 'brute|tst')).toEqual([]);
+  });
+
   it('lists only the sources asked for', () => {
     expect(coverageReport(index, {}, new Set(['XPHB'])).rows).toEqual([]);
+  });
+});
+
+describe('suggestMapping', () => {
+  const feature = (text: string) =>
+    ({
+      kind: 'classFeature',
+      id: 'x|tst',
+      name: 'Battle Cry',
+      source: 'TST',
+      classId: 'brute|tst',
+      level: 1,
+      entries: [text],
+      effects: [],
+    }) as never;
+
+  it('drafts uses, resistances, advantage, senses, speed and AC from the text', () => {
+    expect(
+      suggestMapping(
+        feature(
+          'You can use this feature a number of times equal to your Proficiency Bonus, and you regain all expended uses when you finish a Long Rest. You have Resistance to Fire damage and Advantage on Wisdom saving throws. You gain Darkvision with a range of 60 feet, your Speed increases by 10 feet, and you gain a +1 bonus to Armor Class.',
+        ),
+      ),
+    ).toEqual({
+      level: 'A',
+      effects: [
+        {
+          type: 'resource',
+          resourceId: 'battle-cry',
+          name: 'Battle Cry',
+          max: 'pb',
+          recharge: 'long',
+        },
+        { type: 'resistance', value: 'fire' },
+        { type: 'rollMode', target: 'save:wis', mode: 'advantage' },
+        { type: 'sense', sense: 'darkvision', range: 60 },
+        { type: 'speedBonus', value: 10 },
+        { type: 'acBonus', value: 1 },
+      ],
+    });
+  });
+
+  it('a modifier’s worth of uses back on a Short or Long Rest; plain text is level C', () => {
+    expect(
+      suggestMapping(
+        feature(
+          'You can do this a number of times equal to your {@b Charisma} modifier (minimum of once). You regain all expended uses when you finish a Short or Long Rest.',
+        ),
+      ).effects,
+    ).toEqual([
+      {
+        type: 'resource',
+        resourceId: 'battle-cry',
+        name: 'Battle Cry',
+        max: 'max(1, mod.cha)',
+        recharge: 'short',
+      },
+    ]);
+    expect(suggestMapping(feature('You shout.'))).toEqual({ level: 'C', effects: [] });
   });
 });
