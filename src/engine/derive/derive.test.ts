@@ -228,6 +228,14 @@ describe('derive: defenses', () => {
       'Mossling',
       'Arena Mail (needs STR 15)',
     ]);
+    // The attuned cloak adds 1 to every saving throw too, and nothing once unattuned.
+    const cloak = (s: ReturnType<typeof run>) =>
+      s.saves.wis.bonus.parts.find((p) => p.label === 'Cloak of Cheers')?.value;
+    expect(cloak(d)).toBe(1);
+    expect(d.concentration.bonus.parts.map((p) => p.label)).toContain('Cloak of Cheers');
+    c.inventory[1]!.attuned = false;
+    expect(cloak(run(c))).toBeUndefined();
+    c.inventory[1]!.attuned = true;
     c.overrides.ac = 21;
     expect(run(c).ac.value).toBe(21);
   });

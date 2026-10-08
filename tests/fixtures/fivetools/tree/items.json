@@ -9,6 +9,7 @@
       "reqAttune": true,
       "wondrous": true,
       "bonusAc": "+1",
+      "bonusSavingThrow": "+1",
       "resist": ["thunder"],
       "entries": ["The crowd protects you."]
     },
