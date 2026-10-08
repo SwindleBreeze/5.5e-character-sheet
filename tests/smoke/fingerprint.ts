@@ -3,7 +3,9 @@
 // damage, spell save DC, initiative and speed, saving throw proficiencies, spell slots, then
 // each counter's maximum, a ward, the resistances and the switches. Names only, never text.
 
+import type { ContentIndex } from '../../src/engine/content/contentIndex.ts';
 import type { DerivedSheet } from '../../src/engine/derive/types.ts';
+import type { SourceCode, Subclass } from '../../src/schema/index.ts';
 
 const signed = (n: number) => (n < 0 ? `${n}` : `+${n}`);
 
@@ -35,4 +37,14 @@ export function fingerprint(s: DerivedSheet): string {
   ]
     .filter(Boolean)
     .join(' | ');
+}
+
+/**
+ * The books a golden build of a subclass enables: the 2024 Player's Handbook, the subclass's
+ * own and its class's (EFA for the Reanimator, from RHW). The quick-builder's alphabetical
+ * picks (an Epic Boon) then don't change when another book is added.
+ */
+export function goldenSources(sub: Subclass, index: ContentIndex): SourceCode[] {
+  const cls = index.get({ kind: 'class', id: sub.classId });
+  return [...new Set(['XPHB', sub.source, ...(cls ? [cls.source] : [])])];
 }
