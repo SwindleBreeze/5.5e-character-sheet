@@ -126,6 +126,7 @@
         "Martial Arts|Wanderer|TST|1",
         "Focus|Wanderer|TST|2",
         "Unarmored Movement|Wanderer|TST|2",
+        "Beast Form|Wanderer|TST|2",
         { "classFeature": "Wanderer Way|Wanderer|TST|3", "gainSubclassFeature": true },
         "Ability Score Improvement|Wanderer|TST|4",
         "Extra Attack|Wanderer|TST|5",
@@ -184,6 +185,26 @@
       "classSource": "TST",
       "level": 2,
       "entries": ["Without armor or a shield, your speed increases."]
+    },
+    {
+      "name": "Beast Form",
+      "source": "TST",
+      "className": "Wanderer",
+      "classSource": "TST",
+      "level": 2,
+      "entries": [
+        "You can take the shape of a Beast you know. The {@creature Pebble Crab|TST} likes to watch.",
+        {
+          "type": "table",
+          "caption": "Forms",
+          "colLabels": ["Wanderer Level", "Known Forms", "Max CR", "Fly Speed"],
+          "rows": [
+            ["2", "2", "1/4", "No"],
+            ["4", "3", "1/2", "No"],
+            ["6", "4", "1", "Yes"]
+          ]
+        }
+      ]
     },
     {
       "name": "Wanderer Way",

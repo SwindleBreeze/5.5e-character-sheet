@@ -2,7 +2,8 @@
 // registry and a report. Writing to the database is the caller's job (plan §6.2).
 //
 // Pipeline: locate → read manifest → resolve `_copy` → expand `_versions` → merge subraces →
-// shared item text → deity reprints → work out editions → convert → spell lists → filter sources → build the registry.
+// shared item text → deity reprints → work out editions → convert → creatures → spell lists →
+// filter sources → build the registry.
 
 import {
   ENTITY_KINDS,
@@ -20,6 +21,7 @@ import {
   convertSubclassFeature,
 } from './convert/class.ts';
 import type { ConvertContext } from './convert/common.ts';
+import { convertCreature, namedCreatureIds, selectCreatures } from './convert/creature.ts';
 import {
   convertCharOption,
   convertDeity,
@@ -151,6 +153,9 @@ export async function importFivetools(
   const records = manifest.records as Record<string, RawEntity[]>;
 
   progress('resolve');
+  // Creatures are picked and resolved after the player content is converted (below).
+  const monsters = records.monster ?? [];
+  records.monster = [];
   resolveCopies(records, report);
   // Subraces merge into their race first; the merged record may itself carry `_versions`
   // (2014 Dragonborn colours), which only make sense on the merged text.
@@ -165,7 +170,10 @@ export async function importFivetools(
   resolveItemEntries(records, report);
   linkDeityReprints(records.deity ?? [], manifest.sources);
 
-  const editions = sourceEditions(Object.values(records).flat(), manifest.sources);
+  const editions = sourceEditions(
+    [...Object.values(records).flat(), ...monsters],
+    manifest.sources,
+  );
   const ctx: ConvertContext = {
     origin: {
       adapter: '5etools',
@@ -180,11 +188,11 @@ export async function importFivetools(
   progress('convert');
   const entities: EntitiesByKind = {};
   const seen = new Map<EntityKind, Set<string>>();
-  for (const [prop, kind, convert] of CONVERTERS) {
+  const convertAll = (prop: string, kind: EntityKind, convert: Converter, raws: RawEntity[]) => {
     const list = (entities[kind] ??= []) as ContentEntity[];
     const ids = seen.get(kind) ?? new Set<string>();
     seen.set(kind, ids);
-    for (const raw of records[prop] ?? []) {
+    for (const raw of raws) {
       let entity: ContentEntity;
       try {
         entity = convert(raw, ctx);
@@ -204,7 +212,18 @@ export async function importFivetools(
       list.push(entity);
       if (kind === 'class' || kind === 'subclass') ctx.parentEdition.set(entity.id, entity.edition);
     }
-  }
+  };
+  for (const [prop, kind, convert] of CONVERTERS)
+    convertAll(prop, kind, convert, records[prop] ?? []);
+
+  // Creatures last: which ones are kept depends on what the player content above names. Only
+  // those are resolved, so the rest of the bestiary costs nothing but reading it.
+  const picked = selectCreatures(monsters, namedCreatureIds(Object.values(entities).flat()));
+  const creatureRecords = { monster: picked.records };
+  resolveCopies(creatureRecords, report);
+  creatureRecords.monster = creatureRecords.monster.filter(picked.isKept);
+  expandAllVersions(creatureRecords, ['monster'], report);
+  convertAll('monster', 'creature', convertCreature, creatureRecords.monster);
 
   progress('finish');
   applySpellLists(entities.spell ?? [], manifest.spellLookup);

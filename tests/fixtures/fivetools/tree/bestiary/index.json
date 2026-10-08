@@ -1,0 +1,5 @@
+{
+  "_fixture": true,
+  "TST": "bestiary-tst.json",
+  "OLD": "bestiary-old.json"
+}

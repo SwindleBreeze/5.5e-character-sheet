@@ -40,6 +40,9 @@ export const INDEXED_FOLDERS = ['class', 'spells'];
 /** Class flavor text: `class/fluff-index.json` maps classes to their fluff files. */
 export const FLUFF_INDEX = 'class/fluff-index.json';
 
+/** Creatures (plan §10.3, step 7.6): `bestiary/index.json` maps sources to files. Optional. */
+export const BESTIARY_INDEX = 'bestiary/index.json';
+
 export const SPELL_LOOKUP_FILE = 'generated/gendata-spell-source-lookup.json';
 export const SPELL_SOURCES_FALLBACK = 'spells/sources.json';
 export const BOOK_FILES = ['books.json', 'adventures.json'];
@@ -77,6 +80,8 @@ export const IMPORTED_PROPS = [
   'reward',
   'facility',
   'charoption',
+  // Only the creatures player options summon or name, and Beasts, are kept (index.ts).
+  'monster',
   // Not entities: flavor text, attached to the entities it describes (plan §9.3b).
   'classFluff',
   'subclassFluff',
@@ -207,7 +212,8 @@ export async function readManifest(
     ...FLUFF_FILES,
     ...(await indexedFiles(fs, root, 'class', report, FLUFF_INDEX, false)),
   ];
-  for (const file of [...OPTIONAL_ROOT_FILES, ...fluff]) {
+  const bestiary = await indexedFiles(fs, root, 'bestiary', report, BESTIARY_INDEX, false);
+  for (const file of [...OPTIONAL_ROOT_FILES, ...fluff, ...bestiary]) {
     const json = await readJson(fs, root + file, report, false);
     if (json) collect(json, records, report);
   }

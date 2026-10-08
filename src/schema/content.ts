@@ -402,6 +402,61 @@ export interface CharOption extends BaseEntity {
   prerequisites: Prereqs;
 }
 
+/** One Armor Class line: a number with what it comes from, or a rule in words (summons). */
+export interface CreatureAc {
+  value?: number;
+  /** `natural armor`, `in Wolf form`… */
+  note?: TaggedString;
+  /** Text instead of a number: `11 + the spell's level` (2024 summons). */
+  special?: TaggedString;
+}
+
+export interface CreatureSpeed {
+  mode: MoveMode;
+  ft: number;
+  /** `(hover)`, `(Air only)`, `(requires level 4+ spell)`. */
+  note?: string;
+}
+
+/**
+ * A creature from the bestiary, kept only when player options summon or name it, or it is a
+ * Beast (Wild Shape; plan §10.3, step 7.6). Its traits and actions are its `entries`.
+ */
+export interface Creature extends BaseEntity {
+  kind: 'creature';
+  size: Size[];
+  /** `beast`, `fey`; a choice of types is joined with ` or `. */
+  creatureType: string;
+  /** Type tags, e.g. `['demon']`. */
+  typeTags?: string[];
+  /** A swarm of smaller creatures (Wild Shape forms can't be swarms). */
+  swarm?: boolean;
+  /** Alignment codes, e.g. `['N', 'G']`. */
+  alignment?: string[];
+  ac: CreatureAc[];
+  hp: { average?: number; formula?: string; special?: TaggedString };
+  speed: CreatureSpeed[];
+  abilities: Record<Ability, number>;
+  /** Save and skill bonuses as written: `{ dex: '+4' }`, `{ perception: '+5' }`. */
+  saves?: Partial<Record<Ability, string>>;
+  skills?: Record<string, string>;
+  senses: TaggedString[];
+  passive?: number;
+  languages: TaggedString[];
+  /** Challenge rating as written (`1/4`, `2`); missing for summons, which scale instead. */
+  cr?: string;
+  /** Initiative bonus: Dexterity modifier, plus the creature's PB when it is proficient. */
+  initiative?: number;
+  /** Damage and condition defenses, as text. */
+  defenses?: { vulnerable?: string; resist?: string; immune?: string; conditionImmune?: string };
+  /** What its Proficiency Bonus is, when it is someone else's (`equals your Proficiency Bonus`). */
+  pbNote?: string;
+  /** The spell (and its lowest level) or class that summons it (5etools `summonedBy…`). */
+  summon?: { spellId?: Id; spellLevel?: number; classId?: Id };
+  /** Find Familiar can give this form (5etools `familiar`). */
+  familiar?: boolean;
+}
+
 export interface EntityByKind {
   spell: Spell;
   class: ClassDef;
@@ -418,6 +473,7 @@ export interface EntityByKind {
   reward: Reward;
   facility: Facility;
   charOption: CharOption;
+  creature: Creature;
 }
 
 export type ContentEntity = EntityByKind[EntityKind];
