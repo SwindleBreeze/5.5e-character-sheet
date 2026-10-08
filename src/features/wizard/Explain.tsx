@@ -8,16 +8,23 @@ import { Entries } from '../../richtext/Entries.tsx';
 import { EntitySheet } from '../../richtext/EntitySheet.tsx';
 import styles from './wizard.module.css';
 
+/**
+ * What it gives: plain lines (label, value), then its named traits in full, each under its name
+ * (a trait's text can run long, so it takes the whole width).
+ */
 export function BenefitList({ benefits, label }: { benefits: readonly Benefit[]; label: string }) {
   const plain = benefits.filter((b) => !b.trait);
   const traits = benefits.filter((b) => b.trait);
   const list = (items: readonly Benefit[], name: string) => (
     <dl className={styles.benefits} aria-label={name}>
       {items.map((b) => (
-        <div key={`${b.label}|${b.text}`} className={styles.benefit}>
+        <div
+          key={`${b.label}|${b.text}`}
+          className={b.entries ? `${styles.benefit} ${styles.trait}` : styles.benefit}
+        >
           <dt>{b.label}</dt>
           <dd>
-            {b.text}
+            {b.entries ? <Entries entries={b.entries} /> : b.text}
             {b.why && <span className={styles.why}>{b.why}</span>}
           </dd>
         </div>
@@ -92,14 +99,20 @@ export function WhatYouGet({
       : undefined;
   if (!benefits.length && !parent) return null;
   const title = parent ? `What the ${entity.name} adds` : `Everything the ${entity.name} gives`;
+  // A lineage or ancestry: what it adds, then, as plainly, what every one of the species has.
   const body = (
     <>
       <BenefitList benefits={benefits} label={title} />
       {parent && (
-        <details>
-          <summary>What every {parent.name} has</summary>
-          <BenefitList benefits={benefitsOf(parent, index)} label={parent.name} />
-        </details>
+        <section className={styles.gives} aria-label={`What every ${parent.name} has`}>
+          <h3 className={styles.subTitle}>What every {parent.name} has</h3>
+          <BenefitList
+            benefits={benefitsOf(parent, index).filter(
+              (b) => !b.trait || !benefits.some((own) => own.trait && own.label === b.label),
+            )}
+            label={parent.name}
+          />
+        </section>
       )}
     </>
   );

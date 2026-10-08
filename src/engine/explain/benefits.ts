@@ -36,6 +36,8 @@ export interface Benefit {
   why?: string;
   /** A named trait from the entity's text (listed apart, under "Traits"). */
   trait?: boolean;
+  /** A trait's full text: `text` is its first sentence. */
+  entries?: Entry[];
 }
 
 const WHY = {
@@ -105,7 +107,8 @@ export function namedTraits(entries: readonly Entry[]): Benefit[] {
   for (const e of entries) {
     if (typeof e !== 'object' || !('entries' in e) || !('name' in e) || !e.name) continue;
     const text = firstSentence(e.entries as Entry[]);
-    if (text) out.push({ label: stripTags(e.name), text, trait: true });
+    if (text)
+      out.push({ label: stripTags(e.name), text, trait: true, entries: e.entries as Entry[] });
   }
   return out;
 }

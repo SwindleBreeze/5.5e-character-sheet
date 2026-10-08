@@ -722,6 +722,19 @@ details.gives > summary {
   margin: 0;
 }
 
+/* A named trait: its name above, its full text across the whole width. */
+.trait {
+  grid-template-columns: 1fr;
+}
+
+.trait dt {
+  color: var(--color-text);
+}
+
+.trait dd :where(p) {
+  margin: 0 0 var(--space-1);
+}
+
 .why {
   color: var(--color-text-muted);
   font-size: var(--font-size-xs);
