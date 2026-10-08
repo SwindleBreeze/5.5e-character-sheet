@@ -14,6 +14,7 @@ import {
   unitWeight,
 } from '../../../engine/items/items.ts';
 import {
+  chooseGroupItem,
   descendants,
   equipItem,
   moveItem,
@@ -298,6 +299,8 @@ function ItemDetails({ row, bindings }: { row: InventoryItem; bindings: SheetBin
         />
       </label>
 
+      {item?.groupItemIds?.length ? <GroupPick row={row} bindings={bindings} /> : null}
+
       <div className={styles.actions}>
         {item?.packContents && (
           <Button size="sm" onClick={() => apply((c) => unpackItem(c, row.uid, index))}>
@@ -323,6 +326,43 @@ function ItemDetails({ row, bindings }: { row: InventoryItem; bindings: SheetBin
         <p className={styles.help}>What is inside it stays, where it was.</p>
       )}
     </div>
+  );
+}
+
+/**
+ * An item group (a Druidic Focus, an Arcane Focus) is one item of the group, not all of them:
+ * which one this is.
+ */
+function GroupPick({ row, bindings }: { row: InventoryItem; bindings: SheetBindings }) {
+  const { index, apply } = bindings;
+  const id = useId();
+  const { item } = rowItems(index, row);
+  const members = (item?.groupItemIds ?? [])
+    .map((m) => index.get({ kind: 'item', id: m }))
+    .filter((m) => !!m);
+  if (!item || !members.length) return null;
+  return (
+    <label className={styles.field} htmlFor={id}>
+      <span className={styles.fieldLabel}>Which {item.name}?</span>
+      <select
+        id={id}
+        value=""
+        onChange={(e) => apply((c) => chooseGroupItem(c, row.uid, e.target.value, index))}
+      >
+        <option value="" disabled>
+          Choose one…
+        </option>
+        {members.map((m) => (
+          <option key={m.id} value={m.id}>
+            {m.name}
+          </option>
+        ))}
+      </select>
+      <span className={styles.help}>
+        {/^[aeiou]/i.test(item.name) ? 'An' : 'A'} {item.name} is one of these, not all of them.
+        Pick the one you carry.
+      </span>
+    </label>
   );
 }
 

@@ -5,10 +5,8 @@
 
 import type { AutoContext } from '../../engine/build/autoChoose.ts';
 import {
-  anyEquipmentType,
   anyItemKey,
-  EQUIPMENT_TYPES,
-  equipmentTypeItems,
+  grantPool,
   pickedEquipment,
   startingEquipmentOwners,
 } from '../../engine/build/equipment.ts';
@@ -189,16 +187,16 @@ export function wizardTodos(character: Character, ctx: AutoContext | undefined):
     if (needsVariant && step === 'species') continue;
     if (fillable(p, ctx)) out.push({ step, text: pendingText(p, sheet) });
   }
-  // "Any …" equipment entries: an item to pick, when any item fits.
+  // "Any …" equipment entries and item groups: an item to pick, when any item fits.
   for (const owner of startingEquipmentOwners(character, index)) {
     const option = pickedEquipment(character, owner.ref, owner.options);
     option?.items.forEach((g, i) => {
-      const code = anyEquipmentType(g);
-      if (!code || character.draft?.anyItems?.[anyItemKey(owner.ref, option.key, i)]) return;
-      if (!equipmentTypeItems(ctx.catalog, code).length) return;
+      if (character.draft?.anyItems?.[anyItemKey(owner.ref, option.key, i)]) return;
+      const pool = grantPool(g, ctx.catalog, index);
+      if (!pool?.items.length) return;
       out.push({
         step: owner.ref.kind === 'background' ? 'background' : 'class',
-        text: `${owner.name}: which ${EQUIPMENT_TYPES[code]?.label.toLowerCase() ?? 'item'}`,
+        text: `${owner.name}: which ${pool.label.toLowerCase()}`,
       });
     });
   }

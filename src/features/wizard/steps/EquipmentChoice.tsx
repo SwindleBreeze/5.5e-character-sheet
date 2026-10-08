@@ -1,15 +1,14 @@
 // Starting equipment, chosen where it comes from (plan §9.3 step 4.4, §9.3b step 4B.5): inside
 // the class's and the background's card. An option of gear, or gold to buy your own; an "any …"
-// entry (any musical instrument, any simple weapon) gets an item picker. Armor, a Shield and a
+// entry (any musical instrument, any simple weapon) or an item group (a Druidic Focus: which
+// one) gets an item picker. Armor, a Shield and a
 // weapon are put on for the character (`syncStartingEquipment`).
 
 import { useId } from 'react';
 import {
-  anyEquipmentType,
   anyItemKey,
-  EQUIPMENT_TYPES,
   equipmentOptionText,
-  equipmentTypeItems,
+  grantPool,
   pickedEquipment,
   startingEquipmentOwners,
 } from '../../../engine/build/equipment.ts';
@@ -83,16 +82,16 @@ export function EquipmentChoice({ b, owner: ownerRef }: { b: WizardBindings; own
         })}
       </ul>
       {picked?.items.map((grant, i) => {
-        const code = anyEquipmentType(grant);
-        if (!code) return null;
+        const pool = grantPool(grant, content.catalog, content.index);
+        if (!pool) return null;
         const key = anyItemKey(owner.ref, picked.key, i);
-        const items = equipmentTypeItems(content.catalog, code);
+        const items = pool.items;
         // Tools the character is proficient with first (a Bard's instruments).
         const sorted = [
           ...items.filter((it) => tools.has(it.id)),
           ...items.filter((it) => !tools.has(it.id)),
         ];
-        const label = `Which ${EQUIPMENT_TYPES[code]!.label}?`;
+        const label = `Which ${pool.label}?`;
         return (
           <label key={key} className={`${inventory.field} ${styles.anyItem}`}>
             <span className={inventory.fieldLabel}>{label}</span>

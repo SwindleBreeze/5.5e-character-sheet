@@ -140,13 +140,15 @@ export function applyEquipment(
   const hasSlot = (slot: InventoryItem['equipped']) => n.inventory.some((r) => r.equipped === slot);
   const prefix = opts.uidPrefix ?? `${now.toString(36)}-`;
   option.items.forEach((grant, i) => {
-    const itemId = grant.itemId ?? opts.picks?.[i];
+    // A pick replaces an "any …" entry or an item group (a Druidic Focus: which one).
+    const picked = opts.picks?.[i];
+    const itemId = picked ?? grant.itemId;
     const item = itemId ? index.get({ kind: 'item', id: itemId }) : undefined;
     const any = anyEquipmentType(grant);
     const row: InventoryItem = {
       uid: `${prefix}${n.inventory.length}-${i}`,
       name:
-        (grant.itemId ? grant.special : undefined) ??
+        (grant.itemId && !picked ? grant.special : undefined) ??
         item?.name ??
         (any ? `Any ${EQUIPMENT_TYPES[any]!.label}` : (grant.special ?? itemId ?? 'Item')),
       quantity: grant.quantity,

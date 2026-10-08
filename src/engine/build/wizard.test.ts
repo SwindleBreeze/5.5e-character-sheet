@@ -11,6 +11,7 @@ import {
   anyItemKey,
   equipmentOptionText,
   equipmentTypeItems,
+  grantPool,
   syncStartingEquipment,
   unpickedAnyItems,
 } from './equipment.ts';
@@ -113,6 +114,18 @@ describe('starting equipment', () => {
     expect(applyEquipment(newDraft(0), anyWeapon, index, 0).inventory[0]?.name).toBe(
       'Any simple weapon',
     );
+  });
+
+  it('an item group is one item of the group, picked (a Druidic Focus: which one)', () => {
+    const focus = { itemId: 'lantern focus|tst', quantity: 1 };
+    expect(grantPool(focus, catalog, index)).toEqual({
+      label: 'Lantern Focus',
+      items: [expect.objectContaining({ id: 'torch|tst' }), expect.anything()],
+    });
+    expect(grantPool({ itemId: 'torch|tst', quantity: 1 }, catalog, index)).toBeUndefined();
+    const option = { key: 'A', items: [focus], valueCp: 0 };
+    const picked = applyEquipment(newDraft(0), option, index, 0, { picks: { 0: 'torch|tst' } });
+    expect(picked.inventory.map((r) => [r.name, r.itemRef?.id])).toEqual([['Torch', 'torch|tst']]);
   });
 
   it('a draft’s inventory and coins follow its picks, made again each time', () => {

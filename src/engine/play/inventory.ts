@@ -277,6 +277,27 @@ export function setItemNotes(c: Character, uid: string, notes: string): Characte
   return n;
 }
 
+/**
+ * Make an item-group row one item of its group (a Druidic Focus becomes a Yew Wand). It keeps
+ * its place, quantity and notes; it is put away, since the new item may be held differently.
+ */
+export function chooseGroupItem(
+  c: Character,
+  uid: string,
+  itemId: string,
+  index: ContentIndex,
+): Character {
+  const row = find(c, uid);
+  const group = row?.itemRef ? index.get({ kind: 'item', id: row.itemRef.id }) : undefined;
+  if (!row || !group?.groupItemIds?.includes(itemId)) return c;
+  const n = clone(c);
+  const target = find(n, uid)!;
+  target.itemRef = { kind: 'item', id: itemId };
+  target.name = index.get({ kind: 'item', id: itemId })?.name ?? nameFromId(itemId);
+  delete target.equipped;
+  return n;
+}
+
 /** Name, weight and value of a custom item. */
 export function updateCustomItem(
   c: Character,
