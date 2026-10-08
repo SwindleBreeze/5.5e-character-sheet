@@ -294,3 +294,20 @@ export function firstSentence(entries: readonly Entry[] | undefined, max = 180):
   const sentence = end >= 0 ? text.slice(0, end + 1) : text;
   return sentence.length > max ? `${sentence.slice(0, max - 1).trimEnd()}…` : sentence;
 }
+
+/**
+ * A summary line and, when the text goes on, what the Read button would show: the list an
+ * opening sentence leads into (`…as follows:`), or the rest of the text.
+ */
+export function summaryOf(entries: readonly Entry[] | undefined): { text: string; more?: string } {
+  const text = firstSentence(entries);
+  if (!text) return { text };
+  if (/[:…]$/.test(text) || /as follows\.?$/i.test(text))
+    return {
+      text,
+      more: text.endsWith('…') ? 'Press Read for the rest.' : 'Press Read to see them.',
+    };
+  const all = (entries ?? []).map((e) => (typeof e === 'string' ? stripTags(e).trim() : e));
+  const goesOn = all.length > 1 || (typeof all[0] === 'string' && all[0].length > text.length);
+  return goesOn ? { text, more: 'Press Read for the full text.' } : { text };
+}

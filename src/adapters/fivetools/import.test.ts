@@ -353,6 +353,19 @@ describe('importFivetools (fixture tree)', () => {
     expect(get<Item>(r, 'item', 'ring of loud shouting|tst').entries).toEqual([
       'You resist thunder and psychic damage. The ring is set with a tiny bell.',
     ]);
+    // Spells it casts: at will, for its charges, once a day.
+    expect(
+      get<Item>(r, 'item', 'ring of loud shouting|tst').effects.find(
+        (e) => e.type === 'grantSpells',
+      ),
+    ).toEqual({
+      type: 'grantSpells',
+      spells: [
+        { mode: 'innate', spell: { id: 'glitter burst|tst' }, uses: 'atWill' },
+        { mode: 'innate', spell: { id: 'rolling boom|tst' }, uses: { charges: 2 } },
+        { mode: 'innate', spell: { id: 'dim lantern|tst' }, uses: { count: 1, recharge: 'dawn' } },
+      ],
+    });
     // Item groups are items that list their members.
     const group = get<Item>(r, 'item', 'lantern focus|tst');
     expect(group).toMatchObject({

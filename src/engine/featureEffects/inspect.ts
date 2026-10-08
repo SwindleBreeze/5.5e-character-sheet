@@ -88,6 +88,8 @@ export function effectFormulas(e: Effect): Formula[] {
       return defined(e.dcBonus, e.attackBonus, e.damageBonus);
     case 'ward':
       return [e.max];
+    case 'attack':
+      return [e.damage];
     default:
       return [];
   }
@@ -113,7 +115,10 @@ export function readSlots(e: Effect): string[] {
     case 'spellcasting':
       return boundSlot(e.ability);
     case 'ifChoice':
-      return [e.slot];
+      // Another entity's pick is checked against that entity (`namedRefs`), not this one.
+      return e.owner ? [] : [e.slot];
+    case 'spellMod':
+      return e.spells ? [e.spells.fromChoice] : [];
     default:
       return [];
   }
@@ -147,6 +152,8 @@ export function namedRefs(e: Effect): Ref[] {
         : [];
     case 'when':
       return predicateRefs(e.when);
+    case 'ifChoice':
+      return e.owner ? [e.owner] : [];
     case 'spellcasting':
       return e.tableOwner ? [e.tableOwner] : [];
     case 'attackMod':

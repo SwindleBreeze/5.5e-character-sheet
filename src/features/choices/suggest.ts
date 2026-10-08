@@ -30,9 +30,21 @@ export function classFocus(
 const names = (abilities: readonly Ability[]) =>
   abilities.map((a) => ABILITY_NAMES[a]).join(' or ');
 
+/**
+ * The class a pick is judged by: the class it comes from (a multiclass's skills, a feature of the
+ * new class), else the character's first class.
+ */
+function focusFor(offer: Offer, ctx: AutoContext) {
+  const id = offer.source.classId;
+  const cls = id ? ctx.index.get({ kind: 'class', id }) : undefined;
+  return cls
+    ? { cls, primary: new Set(cls.primaryAbility.flat()) }
+    : classFocus(ctx.character, ctx.index);
+}
+
 /** Why an option suits the character, or nothing. */
 export function suggestion(offer: Offer, value: string, ctx: AutoContext): string | undefined {
-  const focus = classFocus(ctx.character, ctx.index);
+  const focus = focusFor(offer, ctx);
   switch (offer.kind) {
     case 'backgroundAbility': {
       if (!focus) return undefined;
@@ -64,7 +76,9 @@ export function suggestion(offer: Offer, value: string, ctx: AutoContext): strin
         : undefined;
     }
     case 'weaponMastery':
-      return carriedWeapons(ctx).has(value) ? 'You start with one' : undefined;
+      // Creating: the starting equipment; later (a level, a multiclass): what is carried now.
+      if (!carriedWeapons(ctx).has(value)) return undefined;
+      return ctx.character.draft ? 'You start with one' : 'You have one in your inventory';
     default:
       return undefined;
   }

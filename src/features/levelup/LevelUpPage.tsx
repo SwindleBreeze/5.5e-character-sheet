@@ -16,6 +16,7 @@ import { levelUpOptions, readLevelUp, setLevelHp, takeLevel } from '../../engine
 import { derive } from '../../engine/derive/derive.ts';
 import { featureEffects } from '../../engine/featureEffects/index.ts';
 import { setPick } from '../../engine/play/features.ts';
+import { setPrepared } from '../../engine/play/reducers.ts';
 import { decodeChoiceKey, type Character } from '../../schema/index.ts';
 import { Button } from '../../ui/Button.tsx';
 import { FeatureChoices } from '../choices/FeatureChoices.tsx';
@@ -24,10 +25,12 @@ import { useCharacterActions } from '../sheet/useCharacterActions.ts';
 import { fillable, isSpellOffer } from '../wizard/progress.ts';
 import wizard from '../wizard/wizard.module.css';
 import { levelPicks, type LevelUpBindings } from './bindings.ts';
+import { preparingCasters } from './preparing.ts';
 import {
   ClassStep,
   FeaturesList,
   HpStep,
+  PreparedSection,
   RetrainSection,
   ReviewStep,
   SubclassStep,
@@ -50,7 +53,7 @@ const LEADS: Record<LevelUpStep, string> = {
   subclass:
     'This level is where your class branches: pick the subclass that shapes the rest of it.',
   features: 'What this level gives you, and the choices it asks for.',
-  spells: 'The spells this level adds.',
+  spells: 'The spells this level adds, and the ones you prepare.',
   review: 'Check the new level, then apply it to your character.',
 };
 
@@ -113,7 +116,9 @@ export function LevelUpPage() {
     'hp',
     ...(plan?.subclassDue ? (['subclass'] as const) : []),
     'features',
-    ...(spellPicks?.features.length ? (['spells'] as const) : []),
+    ...(spellPicks?.features.length || (plan && preparingCasters(plan, before).length)
+      ? (['spells'] as const)
+      : []),
     'review',
   ];
   const current = steps.includes(step) ? step : 'class';
@@ -244,7 +249,19 @@ export function LevelUpPage() {
           </>
         ) : null;
       case 'spells':
-        return picks(true);
+        return (
+          <>
+            {spellPicks?.features.length ? picks(true) : null}
+            {plan && (
+              <PreparedSection
+                plan={plan}
+                before={before}
+                sources={base.enabledSources}
+                onPrepared={(key, ids) => b.change((c) => setPrepared(c, key, ids))}
+              />
+            )}
+          </>
+        );
       case 'review':
         return plan ? <ReviewStep plan={plan} before={before} todos={todos} /> : null;
     }

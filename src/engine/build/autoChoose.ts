@@ -10,11 +10,11 @@ import {
   type Feat,
   type Id,
 } from '../../schema/index.ts';
-import { expertiseOptions, weaponMasteryOptions } from '../choices/queries.ts';
+import { expertiseOptions, queryOptions, weaponMasteryOptions } from '../choices/queries.ts';
 import type { Offer } from '../collect/types.ts';
 import type { ContentIndex } from '../content/contentIndex.ts';
 import type { DerivedSheet } from '../derive/types.ts';
-import { matchesSpellFilter } from '../spells/filter.ts';
+import { levelsUpTo, matchesSpellFilter } from '../spells/filter.ts';
 import type { Catalog } from './catalog.ts';
 
 export interface AutoContext {
@@ -57,7 +57,10 @@ export function proficiencyOptions(
     : ['skill'];
   // One kind, or several joined with `|` (Monk: artisan's tools or a musical instrument).
   const kinds = effect?.filter?.split('|');
-  const skillsTaken = new Set<string>(SKILLS.filter((s) => sheet.skills[s].proficiency !== 'none'));
+  // Half proficiency (Jack of All Trades) isn't having the skill.
+  const skillsTaken = new Set<string>(
+    SKILLS.filter((s) => ['proficient', 'expertise'].includes(sheet.skills[s].proficiency)),
+  );
   const taken = new Set([
     ...skillsTaken,
     ...lower(sheet.proficiencies.tools),
@@ -103,13 +106,23 @@ export function carriedWeapons(ctx: AutoContext): Set<Id> {
   return out;
 }
 
+/**
+ * `level=castable` in a mapping's filter: cantrips and the levels the character has spell slots
+ * for (Magical Discoveries: "a cantrip or a spell for which you have spell slots").
+ */
+function castable(filter: string, ctx: AutoContext): string {
+  if (!filter.includes('level=castable')) return filter;
+  const max = Math.max(0, ...ctx.sheet.spellcasting.casters.map((c) => c.maxSpellLevel));
+  return filter.replace('level=castable', levelsUpTo(max, 0));
+}
+
 export function spellOptions(offer: Offer, ctx: AutoContext): Id[] {
   if (Array.isArray(offer.from)) return offer.from;
   const grant =
     offer.effect?.type === 'grantSpells'
       ? offer.effect.spells.find((g) => 'slot' in g.spell && g.spell.slot === offer.key.slot)
       : undefined;
-  const filter = grant && 'choose' in grant.spell ? (grant.spell.choose ?? '') : '';
+  const filter = castable(grant && 'choose' in grant.spell ? (grant.spell.choose ?? '') : '', ctx);
   return ctx.catalog
     .of('spell')
     .filter((s) => matchesSpellFilter(s, filter))
@@ -178,8 +191,18 @@ export function autoChoose(offer: Offer, count: number, ctx: AutoContext): AutoP
     case 'resistance':
     case 'option':
     case 'equipment': {
-      const from = Array.isArray(offer.from) ? offer.from : [];
+      const from = Array.isArray(offer.from)
+        ? offer.from
+        : offer.from && typeof offer.from === 'object'
+          ? queryOptions(offer.from.query, sheet, catalog)
+          : [];
       const values = firstN(from, count);
+      if (
+        typeof offer.from === 'object' &&
+        !Array.isArray(offer.from) &&
+        /Cantrips$/.test(offer.from.query)
+      )
+        return { values, valueKinds: ['spell'], labels: values.map((v) => nameOf('spell', v)) };
       const labels = offer.labels ? values.map((v) => offer.labels![from.indexOf(v)] ?? v) : values;
       return { values, labels };
     }

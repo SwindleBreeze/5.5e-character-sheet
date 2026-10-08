@@ -12,7 +12,7 @@ import type {
   Item,
 } from '../../schema/index.ts';
 import type { ContentIndex } from '../content/contentIndex.ts';
-import { equipSlots, isContainer, SLOT_HANDS, variantName } from '../items/items.ts';
+import { equipSlots, isContainer, SLOT_HANDS, variantName, wearArea } from '../items/items.ts';
 
 export type MakeUid = () => string;
 
@@ -205,6 +205,10 @@ export function equipItem(
   };
   const others = () => n.inventory.filter((r) => r !== target && r.equipped);
   for (const r of others()) if (CLEARS[slot].includes(r.equipped!)) stow(r);
+  // One item per body area: new boots take the old ones off.
+  const area = slot === 'worn' ? wearArea(itemOf(target)) : undefined;
+  if (area)
+    for (const r of others()) if (r.equipped === 'worn' && wearArea(itemOf(r)) === area) stow(r);
   const hands = () => others().reduce((h, r) => h + SLOT_HANDS[r.equipped!], SLOT_HANDS[slot]);
   for (const s of FREES[slot]) {
     if (hands() <= 2) break;
@@ -274,6 +278,27 @@ export function setItemNotes(c: Character, uid: string, notes: string): Characte
   if (!row) return c;
   if (notes.trim()) row.notes = notes;
   else delete row.notes;
+  return n;
+}
+
+/**
+ * Make an item-group row one item of its group (a Druidic Focus becomes a Yew Wand). It keeps
+ * its place, quantity and notes; it is put away, since the new item may be held differently.
+ */
+export function chooseGroupItem(
+  c: Character,
+  uid: string,
+  itemId: string,
+  index: ContentIndex,
+): Character {
+  const row = find(c, uid);
+  const group = row?.itemRef ? index.get({ kind: 'item', id: row.itemRef.id }) : undefined;
+  if (!row || !group?.groupItemIds?.includes(itemId)) return c;
+  const n = clone(c);
+  const target = find(n, uid)!;
+  target.itemRef = { kind: 'item', id: itemId };
+  target.name = index.get({ kind: 'item', id: itemId })?.name ?? nameFromId(itemId);
+  delete target.equipped;
   return n;
 }
 

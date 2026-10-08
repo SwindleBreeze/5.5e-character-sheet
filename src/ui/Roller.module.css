@@ -93,3 +93,10 @@
     transform: translateY(8px);
   }
 }
+
+/* With a bottom sheet open (a Concentration save waiting on the roll), the toasts move to the
+   top so they don't cover the sheet's result and buttons. */
+:global(body:has([data-vaul-drawer][data-state='open'])) .region {
+  top: calc(var(--safe-top, 0px) + var(--space-3));
+  bottom: auto;
+}

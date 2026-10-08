@@ -193,6 +193,8 @@ describe('creation wizard', () => {
     expect(deep.getByText('120 ft.')).toBeInTheDocument();
     // A lineage without flavor text of its own shows its species'.
     expect(deep.getByText(/coat of soft moss/)).toBeInTheDocument();
+    // What every Mossling has: shown, not folded away.
+    expect(deep.getByRole('region', { name: 'What every Mossling has' })).toBeVisible();
   });
 
   it('a draft is saved as it goes and continued from the characters list', async () => {

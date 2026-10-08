@@ -21,6 +21,7 @@ import {
   setCurrency,
   spendAmmo,
   unpackItem,
+  chooseGroupItem,
 } from './inventory.ts';
 import { longRest } from './reducers.ts';
 
@@ -184,6 +185,37 @@ describe('containers', () => {
     expect(pack?.containerUid).toBeUndefined();
     expect(torches).toMatchObject({ name: 'Torch', quantity: 2, containerUid: pack?.uid });
     expect(unpackItem(next, 'kit', index, uid).inventory.some((r) => r.uid === 'kit')).toBe(false);
+  });
+});
+
+describe('body areas (2024)', () => {
+  it('one cloak at a time: wearing a second takes the first off; a ring is no limit', () => {
+    const c = character([
+      row('a', 'cloak of cheers|tst', { equipped: 'worn' }),
+      row('b', 'cloak of cheers|tst'),
+      row('ring', 'ring of loud shouting|tst', { equipped: 'worn' }),
+    ]);
+    const next = equipItem(c, 'b', 'worn', index);
+    expect(next.inventory.map((r) => [r.uid, r.equipped])).toEqual([
+      ['a', undefined],
+      ['b', 'worn'],
+      ['ring', 'worn'],
+    ]);
+  });
+});
+
+describe('item groups', () => {
+  it('a group row becomes the one item of the group picked', () => {
+    const c = character([row('focus', 'lantern focus|tst', { notes: 'from my teacher' })]);
+    const next = chooseGroupItem(c, 'focus', 'torch|tst', index);
+    expect(next.inventory[0]).toMatchObject({
+      uid: 'focus',
+      name: 'Torch',
+      itemRef: item('torch|tst'),
+      notes: 'from my teacher',
+    });
+    // Only an item of that group.
+    expect(chooseGroupItem(c, 'focus', 'shiv|tst', index)).toBe(c);
   });
 });
 

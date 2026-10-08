@@ -17,6 +17,8 @@ export interface CardItem {
   group?: string;
   /** Why it suits the character (`Good for a Barbarian: raises Strength`), highlighted. */
   suggested?: string | undefined;
+  /** Why the rules don't allow it (`You can't take this yet: …`): shown, and it can't be picked. */
+  blocked?: string;
 }
 
 export function EntityCards({
@@ -63,6 +65,7 @@ export function EntityCards({
         key={item.id}
         className={styles.card}
         data-selected={on}
+        data-blocked={!!item.blocked && !on}
         aria-label={on ? item.name : undefined}
       >
         <div className={styles.cardHead}>
@@ -72,10 +75,15 @@ export function EntityCards({
               name={label}
               checked={on}
               aria-labelledby={nameId}
+              aria-disabled={!!item.blocked}
               aria-describedby={
-                item.detail || item.suggested || item.chips?.length ? detailId : undefined
+                item.detail || item.suggested || item.blocked || item.chips?.length
+                  ? detailId
+                  : undefined
               }
-              onChange={() => onSelect(item.id)}
+              onChange={() => {
+                if (!item.blocked) onSelect(item.id);
+              }}
             />
             <span className={styles.pickText}>
               <span id={nameId} className={styles.pickName}>
@@ -83,6 +91,7 @@ export function EntityCards({
               </span>
               <span id={detailId} className={styles.pickDetail}>
                 {item.detail}
+                {item.blocked && <span className={styles.blocked}>{item.blocked}</span>}
                 {item.suggested && <span className={styles.suggested}>{item.suggested}</span>}
                 {item.chips?.length ? (
                   <span className={styles.chips}>

@@ -29,6 +29,7 @@ import { nameOf } from '../sheetBindings.ts';
 import { damageRoll } from './damage.ts';
 import { attackUseLabel } from './labels.ts';
 import styles from './actions.module.css';
+import { speciesName } from './sourceLabel.ts';
 
 const UNARMED_STRIKE = ruleId('variantrule', 'Unarmed Strike', 'XPHB');
 
@@ -443,6 +444,12 @@ function RiderChip({
     <>
       {r.name} +{r.dice}
       {r.damageType ? ` ${r.damageType}` : ''}
+      {r.from && (
+        <span className={styles.chipNote}>
+          {' '}
+          · {r.from.kind === 'species' ? `${speciesName(r.from.name)} trait` : 'feat'}
+        </span>
+      )}
       {r.oncePerTurn && (
         <span className={styles.chipNote}>
           {usedThisTurn ? ' · used this turn' : ' · once per turn'}

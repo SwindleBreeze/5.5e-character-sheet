@@ -77,6 +77,8 @@ export interface DerivedRider {
   optIn: boolean;
   /** Paid when the rider is added to a damage roll. */
   cost?: DerivedCost;
+  /** Where it comes from, when that isn't the attack's own class: a species trait, a feat. */
+  from?: { kind: 'species' | 'feat'; name: string };
 }
 
 /**
@@ -229,6 +231,9 @@ export interface DerivedGrantedSpell {
   /** For uses paid from a resource: which one, and the cost of one cast. */
   resourceKey?: string;
   cost?: number;
+  /** For casts paid from an item's charges: its inventory row and the charges left. */
+  chargesRow?: string;
+  chargesLeft?: number;
   castAtLevel?: number;
 }
 
@@ -269,6 +274,8 @@ export interface DerivedCost {
   slot?: { minLevel: number };
   /** Hit Dice to spend; `amount` says how many. */
   hitDice?: true;
+  /** Charges of an item to spend: its inventory row, and how many it has left. */
+  charges?: { rowUid: string; left: number };
 }
 
 /** P7/P8: what using something does to the character, with formulas already worked out. */

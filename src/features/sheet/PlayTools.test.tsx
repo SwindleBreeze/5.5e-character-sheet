@@ -125,7 +125,7 @@ describe('play tools', () => {
     await user.click(screen.getByRole('button', { name: '4' }));
     await user.click(screen.getByRole('button', { name: 'Damage' }));
     const prompt = within(await screen.findByRole('dialog', { name: 'Concentration' }));
-    expect(prompt.getByText('DC 12')).toBeTruthy();
+    expect(prompt.getByText('DC').parentElement).toHaveTextContent('DC12');
     await user.click(prompt.getByRole('button', { name: 'Lost it' }));
     await saved();
     expect((await stored(c.id)).state).toMatchObject({ damage: 24, concentration: null });

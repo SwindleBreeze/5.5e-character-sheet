@@ -5,7 +5,7 @@
 // sentence, and reads in full in place. In the wizard (`instant`) every tap is saved.
 
 import { useState } from 'react';
-import { firstSentence } from '../../../richtext/entityMeta.ts';
+import { summaryOf } from '../../../richtext/entityMeta.ts';
 import { EntitySheet } from '../../../richtext/EntitySheet.tsx';
 import { spellDetail } from '../../../engine/choices/options.ts';
 import choices from '../../choices/choices.module.css';
@@ -120,7 +120,7 @@ export function PrepareSheet({
             .map((s) => {
               const on = picked.includes(s.id);
               const blocked = !on && full;
-              const summary = firstSentence(s.entries);
+              const { text: summary, more } = summaryOf(s.entries);
               return (
                 <div key={s.id} className={choices.option}>
                   <label className={choices.check} data-blocked={blocked}>
@@ -147,7 +147,12 @@ export function PrepareSheet({
                   </Button>
                   <span className={choices.text}>
                     <span className={choices.detail}>{spellDetail(s)}</span>
-                    {summary && <span className={choices.about}>{summary}</span>}
+                    {summary && (
+                      <span className={choices.about}>
+                        {summary}
+                        {more && <span className={choices.readHint}> {more}</span>}
+                      </span>
+                    )}
                   </span>
                   {reading === s.id && (
                     <div className={choices.reading}>

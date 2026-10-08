@@ -395,7 +395,7 @@ const GRANT_MODE: Record<SpellMode, SpellGrant['mode']> = {
 };
 
 /** `fireball|xphb#3` → the spell id and the level it is cast at; `#c` only marks a cantrip. */
-function spellRef(ref: string): { id: string; castAtLevel?: number } {
+export function spellRef(ref: string): { id: string; castAtLevel?: number } {
   const [uid = '', suffix = ''] = ref.split('#');
   const [name = '', source = 'PHB'] = uid.split('|');
   const out: { id: string; castAtLevel?: number } = { id: nameSourceId(name, source || 'PHB') };

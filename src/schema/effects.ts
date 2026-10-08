@@ -14,7 +14,7 @@ import type {
   Retrain,
   Skill,
 } from './common.ts';
-import type { ClassSpellcasting } from './content.ts';
+import type { ClassSpellcasting, ItemBonus } from './content.ts';
 
 export type ProficiencyCategory = 'skill' | 'save' | 'armor' | 'weapon' | 'tool' | 'language';
 
@@ -61,8 +61,13 @@ export interface AttackFilter {
   /** The attack uses one of these abilities. */
   ability?: Ability[];
   itemIds?: Id[];
-  /** Derived tags, e.g. `monkWeapon`, `pactWeapon`, `offHand`. */
+  /**
+   * Derived tags, e.g. `monkWeapon`, `pactWeapon`, `offHand`, `onlyWeapon` (a weapon used in
+   * one hand with no other weapon held).
+   */
   tags?: string[];
+  /** At least one of these filters matches too (Sneak Attack: a Finesse or a Ranged weapon). */
+  any?: AttackFilter[];
 }
 
 /** P9: what a roll modifier applies to. `attack:<tag>` narrows to attacks with that tag. */
@@ -82,6 +87,8 @@ export type Cost =
   | { resource: string; amount: Formula }
   | { slot: { minLevel: number } }
   | { hitDice: Formula }
+  /** Charges of the item that has the effect (a Staff of Striking's extra damage). */
+  | { charges: Formula }
   | { action: ActionType };
 
 /** P7/P8: what happens to the character when something is used. */
@@ -143,13 +150,16 @@ export interface SpellGrant {
    * - `resource` and `cost`: paid from a `resource` effect of the same entity: a charm's
    *   charges, or one counter several spells share ("cast one of these once").
    * - `resourceName` and `cost`: paid from a resource defined elsewhere, e.g. Focus Points.
+   * - `charges`: paid from the granting item's own charges (its inventory row).
    */
   uses?:
     | { count: Formula; recharge: Recharge }
     | { resource: string; cost: number }
     | { resourceName: string; cost: number }
     | 'atWill'
-    | 'ritual';
+    | 'ritual'
+    /** Paid from the charges of the item that grants it (a Wand of Fireballs: 1 charge). */
+    | { charges: number };
   /** The spell is cast at this level (5etools `#3` suffix). */
   castAtLevel?: number;
   /** Spellcasting ability: fixed, a choice, or the ability this entity increased. */
@@ -227,9 +237,18 @@ export type Effect =
       endsOn?: ('shortRest' | 'longRest')[];
     }
   | { type: 'note'; text: string }
+  /**
+   * An item's own bonus doesn't apply as the data gives it (Bracers of Defense: only without armor
+   * or a Shield). The item's mapping adds it back under its condition, or leaves it as a note.
+   */
+  | { type: 'itemBonusOff'; bonus: ItemBonus }
   /** Pick one of several named alternatives; `ifChoice` effects depend on the pick. */
   | { type: 'optionChoice'; choice: ChoiceSlot<string>; labels: string[] }
-  | { type: 'ifChoice'; slot: string; value: string; effects: Effect[] }
+  /**
+   * Effects that depend on a pick. `owner`: the pick is another entity's (Nature's Ward reads
+   * the Circle of the Land's land), else the effect's own owner's.
+   */
+  | { type: 'ifChoice'; slot: string; value: string; effects: Effect[]; owner?: Ref }
   /** Pick entities offered as options (5etools `type: options` entries, plan P14). */
   | { type: 'featureOptions'; optionKind: EntityKind; choice: ChoiceSlot<Id> }
   /** Effects that start at a level: class level for class content, else character level. */
@@ -250,6 +269,8 @@ export type Effect =
       critRange?: number;
       /** Attacks per Attack action, counting the first: the largest wins. */
       extraAttacks?: number;
+      /** The Light extra attack adds the ability modifier to its damage (Two-Weapon Fighting). */
+      offHandAbility?: boolean;
     }
   /** P4: extra damage listed under matching attacks. */
   | {
@@ -270,8 +291,11 @@ export type Effect =
   | { type: 'rollBonus'; target: RollTarget; value: Formula; note?: string }
   /** P9: half proficiency on these rolls when not proficient (Jack of All Trades). */
   | { type: 'halfProficiency'; targets: RollTarget[] }
-  /** P9: a d20 roll below this counts as this (Reliable Talent: 10). */
-  | { type: 'rollFloor'; target: RollTarget; value: number }
+  /**
+   * P9: a d20 roll below this counts as this (Reliable Talent: 10). `proficientOnly`: only on
+   * rolls the character is proficient in.
+   */
+  | { type: 'rollFloor'; target: RollTarget; value: number; proficientOnly?: boolean }
   /** P6: a later feature changes a resource. */
   | {
       type: 'resourceModify';
@@ -303,9 +327,26 @@ export type Effect =
       damageBonus?: Formula;
       /** Spells matching the filter count as spells of this caster. */
       countsAsClassSpell?: boolean;
+      /** Only the spells picked in this slot of the same owner (Agonizing Blast's cantrip). */
+      spells?: { fromChoice: string };
     }
   /** P12: hit points that absorb damage after temporary HP (Arcane Ward). */
   | { type: 'ward'; name: string; max: Formula }
+  /**
+   * P15: an attack a feature gives, made like a weapon attack without an item (Psychic Blade).
+   * `properties` are item-property abbreviations (`F`, `T`); `abilities`, the best one is used.
+   */
+  | {
+      type: 'attack';
+      id: string;
+      name: string;
+      damage: Formula;
+      damageType: string;
+      range: 'melee' | 'ranged';
+      distance: string;
+      abilities: Ability[];
+      properties?: string[];
+    }
   /** Count as `steps` sizes larger when determining carrying capacity (Powerful Build). */
   | { type: 'carrySize'; steps: number };
 

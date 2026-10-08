@@ -92,7 +92,7 @@ describe('Inventory tab', () => {
 
     const held = screen.getByRole('list', { name: 'Worn and held' });
     expect(within(held).getByRole('listitem', { name: 'Net Blade' })).toHaveTextContent(
-      'Main hand',
+      'Equipped · main hand',
     );
     const pack = within(screen.getByRole('list', { name: 'Carried' })).getByRole('listitem', {
       name: 'Backpack',
@@ -113,19 +113,22 @@ describe('Inventory tab', () => {
     await open(user, 'Buckler');
     // Its rules text shows as the row opens.
     expect(within(rowNamed('Buckler')).getByText('Armor class')).toBeInTheDocument();
-    await user.selectOptions(
-      within(rowNamed('Buckler')).getByRole('combobox', { name: 'Worn or held' }),
-      'shield',
-    );
+    await user.click(within(rowNamed('Buckler')).getByRole('button', { name: 'Equip' }));
     // The Versatile Net Blade moves to the main hand.
     expect(latest.inventory.map((r) => r.equipped)).toEqual(['mainHand', 'shield', undefined]);
+    // Equipped, it says so and comes off in one tap.
+    const buckler = within(rowNamed('Buckler'));
+    expect(buckler.getAllByText('Equipped')).not.toHaveLength(0);
+    await user.click(buckler.getByRole('button', { name: 'Unequip' }));
+    expect(latest.inventory[1]?.equipped).toBeUndefined();
+    await user.click(within(rowNamed('Buckler')).getByRole('button', { name: 'Equip' }));
 
     await open(user, 'Arena Mail');
     const mail = within(rowNamed('Arena Mail'));
     expect(
       mail.getByText('Heavy armor takes 10 minutes to don and 5 minutes to doff.'),
     ).toBeInTheDocument();
-    await user.selectOptions(mail.getByRole('combobox', { name: 'Worn or held' }), 'armor');
+    await user.click(mail.getByRole('button', { name: 'Equip' }));
     expect(screen.getByRole('list', { name: 'Inventory warnings' })).toHaveTextContent(
       'You lack heavy armor training for your Arena Mail',
     );
@@ -135,10 +138,7 @@ describe('Inventory tab', () => {
     const user = userEvent.setup();
     renderTab(brute([row('shivs', 'shiv|tst', { quantity: 2 })]));
     await open(user, 'Shiv');
-    await user.selectOptions(
-      within(rowNamed('Shiv')).getByRole('combobox', { name: 'Worn or held' }),
-      'mainHand',
-    );
+    await user.click(within(rowNamed('Shiv')).getByRole('button', { name: 'Equip · main hand' }));
     const held = within(
       within(screen.getByRole('list', { name: 'Worn and held' })).getByRole('listitem', {
         name: 'Shiv',

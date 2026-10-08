@@ -65,3 +65,52 @@
 .menu a {
   text-decoration: none;
 }
+
+/* ---- Concentration after damage ---- */
+
+.saveRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+}
+
+.saveCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  text-align: center;
+}
+
+.saveLabel {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.saveValue {
+  font-size: var(--font-size-2xl);
+  line-height: 1.1;
+}
+
+.saveHint {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+
+.saveResult {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-positive-soft);
+}
+
+.saveResult[data-kept='false'] {
+  background: var(--color-negative-soft);
+}

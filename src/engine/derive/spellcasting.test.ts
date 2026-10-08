@@ -1,12 +1,14 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { Character, ClassDef, Spell } from '../../schema/index.ts';
-import { testCharacter } from '../../test/characters.ts';
+import { testCharacter, type TestChoice } from '../../test/characters.ts';
 import { fixtureIndex } from '../../test/fixtureIndex.ts';
 import { FIXTURE_FEATURE_EFFECTS } from '../../test/fixtureFeatureEffects.ts';
 import type { ContentIndex } from '../content/contentIndex.ts';
 import { casterLevelShare, MULTICLASS_SLOTS, slotRow } from '../rules/slots.ts';
 import { spellChoiceEffects } from '../spells/casters.ts';
 import { levelsUpTo, matchesSpellFilter } from '../spells/filter.ts';
+import { castSpellAs } from '../play/reducers.ts';
+import { castWays } from '../play/casting.ts';
 import { derive } from './derive.ts';
 import type { DerivedSheet } from './types.ts';
 
@@ -22,7 +24,7 @@ const pact = { kind: 'class', id: 'pactbinder|tst' } as const;
 const spells = ['spell'] as const;
 
 /** Lorekeeper 5 / Pactbinder 2, INT 16, CHA 13. */
-function scholar(): Character {
+function scholar(extra: TestChoice[] = []): Character {
   const c = testCharacter({
     classes: [
       { classId: 'lorekeeper|tst', levels: 5, subclassId: 'ink|lorekeeper|tst|tst' },
@@ -56,6 +58,7 @@ function scholar(): Character {
         valueKinds: [...spells],
         atLevel: 6,
       },
+      ...extra,
     ],
   });
   c.state.prepared['lorekeeper|tst'] = ['ink cloud|tst', 'dim lantern|tst'];
@@ -146,6 +149,105 @@ describe('spellcasting (P11)', () => {
       ['spell:pactbinder|tst:glitter burst|tst', undefined, 12, '', 0],
       ['spell:pactbinder|tst:spark bolt|tst', 4, undefined, '2d8', 0],
     ]);
+  });
+
+  it("a caster feature's spells without uses are the caster's; its cantrip comes on top", () => {
+    const key = 'classFeature:keen mind|lorekeeper|tst|2|tst';
+    const registry = {
+      ...FIXTURE_FEATURE_EFFECTS,
+      [key]: {
+        ...FIXTURE_FEATURE_EFFECTS[key]!,
+        effects: [
+          ...FIXTURE_FEATURE_EFFECTS[key]!.effects,
+          {
+            type: 'grantSpells',
+            spells: [
+              { mode: 'innate', spell: { id: 'glitter burst|tst' } },
+              { mode: 'innate', spell: { id: 'rolling boom|tst' } },
+            ],
+          },
+        ],
+      },
+    } satisfies typeof FIXTURE_FEATURE_EFFECTS;
+    const c = testCharacter({
+      classes: [{ classId: 'lorekeeper|tst', levels: 5 }],
+      choices: [
+        { owner: lore, slot: 'cantrips.1', values: ['spark bolt|tst'], valueKinds: [...spells] },
+      ],
+    });
+    const before = run(c).spellcasting.casters[0]!;
+    const after = derive(c, index, { registry }).spellcasting.casters[0]!;
+    expect(after.cantrips).toEqual(['spark bolt|tst', 'glitter burst|tst']);
+    expect(after.cantripsMax).toBe(before.cantripsMax + 1);
+    // A levelled spell granted that way is always prepared.
+    expect(after.alwaysPrepared).toContain('rolling boom|tst');
+  });
+
+  it("an item's spells: paid in its charges, at will, or once a day; never with slots", () => {
+    const c = scholar();
+    c.inventory.push({
+      uid: 'ring',
+      itemRef: { kind: 'item', id: 'ring of loud shouting|tst' },
+      name: 'Ring of Loud Shouting',
+      quantity: 1,
+      attuned: false,
+      equipped: 'worn',
+    });
+    let d = run(c);
+    const boom = () => d.spellcasting.granted.find((g) => g.spellId === 'rolling boom|tst')!;
+    const spell = index.get({ kind: 'spell', id: 'rolling boom|tst' }) as Spell;
+    expect(boom()).toMatchObject({ chargesRow: 'ring', chargesLeft: 3, cost: 2 });
+    expect(castWays(d, spell, { granted: boom() })).toEqual([
+      { kind: 'free', level: 3, left: 1, charges: 2 },
+    ]);
+    const cast = castSpellAs(
+      c,
+      d,
+      { ref: { kind: 'spell', id: spell.id }, concentration: false, granted: boom() },
+      { kind: 'free', level: 3, left: 1, charges: 2 },
+    );
+    expect(cast.inventory.find((r) => r.uid === 'ring')?.chargesUsed).toBe(2);
+    d = run(cast);
+    expect(castWays(d, spell, { granted: boom() })).toEqual([]);
+    expect(d.spellcasting.granted.find((g) => g.spellId === 'glitter burst|tst')?.uses).toBe(
+      'atWill',
+    );
+    // Taken off, the ring casts nothing.
+    expect(
+      run({
+        ...cast,
+        inventory: cast.inventory.filter((r) => r.uid !== 'ring'),
+      }).spellcasting.granted.some((g) => g.source.kind === 'item'),
+    ).toBe(false);
+  });
+
+  it('a spell bonus for the cantrip picked in a slot (Agonizing Blast)', () => {
+    const key = 'classFeature:hex strike|pactbinder|tst|1|tst';
+    const owner = { kind: 'classFeature', id: 'hex strike|pactbinder|tst|1|tst' } as const;
+    const registry = {
+      ...FIXTURE_FEATURE_EFFECTS,
+      [key]: {
+        ...FIXTURE_FEATURE_EFFECTS[key]!,
+        effects: [
+          ...FIXTURE_FEATURE_EFFECTS[key]!.effects,
+          {
+            type: 'optionChoice',
+            choice: { slot: 'cantrip', count: 1, from: { query: 'knownDamageCantrips' } },
+            labels: [],
+          },
+          { type: 'spellMod', filter: '', spells: { fromChoice: 'cantrip' }, damageBonus: '5' },
+        ],
+      },
+    } satisfies typeof FIXTURE_FEATURE_EFFECTS;
+    const c = scholar([
+      { owner, slot: 'cantrip', values: ['spark bolt|tst'], valueKinds: [...spells], atLevel: 6 },
+    ]);
+    const d = derive(c, index, { registry });
+    const bonus = (id: string) => d.attacks.find((a) => a.id === id)?.damageBonus.value;
+    // Every caster's Spark Bolt gets it; the cantrip not picked doesn't.
+    expect(bonus('spell:pactbinder|tst:spark bolt|tst')).toBe(5);
+    expect(bonus('spell:lorekeeper|tst:spark bolt|tst')).toBe(3 + 5);
+    expect(bonus('spell:pactbinder|tst:glitter burst|tst')).toBe(0);
   });
 
   it('a granted spell comes at its level (Mossling Grey: Dim Lantern at level 3)', () => {

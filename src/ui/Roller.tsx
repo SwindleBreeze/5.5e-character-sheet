@@ -65,13 +65,20 @@ export function RollerProvider({
   return (
     <RollerContext.Provider value={api}>
       {children}
-      <div className={styles.region} role="status" aria-live="polite" aria-label="Rolls">
+      <div
+        className={styles.region}
+        role="status"
+        aria-live="polite"
+        aria-label="Rolls"
+        data-roller=""
+      >
         {shown.map((r) =>
           !r.result ? (
             <button
               key={r.id}
               type="button"
               className={styles.toast}
+              data-roller=""
               onClick={() => dismiss(r.id)}
               aria-label={`${r.label}${r.detail ? `: ${r.detail}` : ''}. Dismiss`}
             >
@@ -85,6 +92,7 @@ export function RollerProvider({
               key={r.id}
               type="button"
               className={styles.toast}
+              data-roller=""
               data-natural={
                 r.result.natural === undefined
                   ? undefined

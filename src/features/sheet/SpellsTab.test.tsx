@@ -241,6 +241,15 @@ describe('Spells tab', () => {
     expect(latest.state.concentration).toEqual({ kind: 'spell', id: 'dim lantern|tst' });
   });
 
+  it('a prepared ritual spell offers its Ritual casting right on its row', async () => {
+    const user = userEvent.setup();
+    renderTab(duo());
+    const lantern = within(screen.getByRole('listitem', { name: 'Dim Lantern' }));
+    expect(lantern.getByRole('button', { name: /: Level 1 slot/ })).toBeInTheDocument();
+    await user.click(lantern.getByRole('button', { name: /: As a Ritual/ }));
+    expect(latest.state.slotsUsed.every((n) => !n)).toBe(true);
+  });
+
   it('changes prepared spells; the spellbook keeps the rest, castable only as Rituals', async () => {
     const user = userEvent.setup();
     renderTab(duo());

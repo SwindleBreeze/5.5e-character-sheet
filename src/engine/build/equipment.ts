@@ -30,6 +30,27 @@ export function equipmentTypeItems(catalog: Catalog, code: string): Item[] {
   return pool.filter(type.matches);
 }
 
+/**
+ * An entry the player picks an item for: an "any …" entry (any musical instrument), or an item
+ * group (a Druidic Focus is a Sprig of Mistletoe, a Wooden Staff or a Yew Wand). Its label
+ * reads `Which <label>?`.
+ */
+export function grantPool(
+  grant: EquipmentItemGrant,
+  catalog: Catalog,
+  index: ContentIndex,
+): { label: string; items: Item[] } | undefined {
+  const code = anyEquipmentType(grant);
+  if (code)
+    return { label: EQUIPMENT_TYPES[code]!.label, items: equipmentTypeItems(catalog, code) };
+  const group = grant.itemId ? index.get({ kind: 'item', id: grant.itemId }) : undefined;
+  if (!group?.groupItemIds?.length) return undefined;
+  const items = group.groupItemIds
+    .map((id) => index.get({ kind: 'item', id }))
+    .filter((i): i is Item => !!i);
+  return items.length ? { label: group.name, items } : undefined;
+}
+
 function plural(name: string, quantity: number): string {
   return quantity > 1 ? `${quantity} × ${name}` : name;
 }

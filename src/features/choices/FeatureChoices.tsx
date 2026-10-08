@@ -44,22 +44,31 @@ export function FeatureChoices({
           (n) => !seen.has(refKey(n.ref)) && n.choices.length,
         );
         const below = new Set([...seen, refKey(f.ref), ...nested.map((n) => refKey(n.ref))]);
+        const nestedPicks = (n: DerivedFeature) => (
+          <div key={refKey(n.ref)} className={styles.nested}>
+            <h4 className={styles.nestedTitle}>{n.name}</h4>
+            <FeatureChoices
+              features={[n]}
+              ctx={ctx}
+              onPick={onPick}
+              seen={below}
+              {...(only ? { only } : {})}
+            />
+          </div>
+        );
+        // A picked option's own picks go right under it; any other (none, usually) below.
+        const values = new Set(c.values);
         return (
           <section key={c.key} className={styles.choice} aria-label={title}>
             <h3 className={styles.choiceTitle}>{title}</h3>
-            <ChoicePicker choice={c} ctx={ctx} instant onSave={(pick) => onPick(c, f, pick)} />
-            {nested.map((n) => (
-              <div key={refKey(n.ref)} className={styles.nested}>
-                <h4 className={styles.nestedTitle}>{n.name}</h4>
-                <FeatureChoices
-                  features={[n]}
-                  ctx={ctx}
-                  onPick={onPick}
-                  seen={below}
-                  {...(only ? { only } : {})}
-                />
-              </div>
-            ))}
+            <ChoicePicker
+              choice={c}
+              ctx={ctx}
+              instant
+              onSave={(pick) => onPick(c, f, pick)}
+              under={(value) => nested.filter((n) => n.ref.id === value).map(nestedPicks)}
+            />
+            {nested.filter((n) => !values.has(n.ref.id)).map(nestedPicks)}
           </section>
         );
       })}

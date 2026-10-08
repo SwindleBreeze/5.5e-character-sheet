@@ -37,7 +37,8 @@ import {
   valuesOf,
   type DeriveContext,
 } from './context.ts';
-import { magicWorks } from '../items/items.ts';
+import { chargesOf, magicWorks } from '../items/items.ts';
+import { itemBonusOff } from './itemBonuses.ts';
 import { buildRoll } from './rolls.ts';
 import { findResource, findResourceByName } from './resources.ts';
 import type {
@@ -77,7 +78,7 @@ function itemSpellBonus(ctx: DeriveContext, bonus: 'spellAttack' | 'spellSaveDc'
     const variant: Item | undefined = row.variantRef
       ? ctx.index.get({ kind: 'item', id: row.variantRef.id })
       : undefined;
-    if (!magicWorks(row, item, variant)) continue;
+    if (!magicWorks(row, item, variant) || itemBonusOff(ctx, row, bonus)) continue;
     const value = (item?.bonuses?.[bonus] ?? 0) + (variant?.bonuses?.[bonus] ?? 0);
     if (value)
       out.push({ label: variant?.name ?? item?.name ?? row.name, value, source: row.itemRef });
@@ -220,7 +221,10 @@ export function deriveSpellcasting(
   const casters: DerivedCaster[] = inputs.map((c) => {
     const mod = mods[c.ability];
     const general = spellMods.filter(
-      (m) => !m.effect.filter && (!m.effect.casterKey || m.effect.casterKey === c.key),
+      (m) =>
+        !m.effect.filter &&
+        !m.effect.spells &&
+        (!m.effect.casterKey || m.effect.casterKey === c.key),
     );
     const dcParts: Contribution[] = [
       { label: 'Base', value: 8, kind: 'base' },
@@ -253,6 +257,7 @@ export function deriveSpellcasting(
     const known: Id[] = [];
     const book: Id[] = [];
     const always: Id[] = [];
+    const extraCantrips = new Set<Id>();
     const listIds: Id[] = [];
     const listFilters = [...c.listFilters];
     for (const { effect, source } of grants) {
@@ -264,11 +269,22 @@ export function deriveSpellcasting(
           if (grant.mode === 'expanded') listFilters.push(grant.spell.all);
           continue;
         }
+        // The class's own cantrip picks (`cantrips.<level>`) count toward its number; cantrips a
+        // feature adds (Thaumaturge, Primal Lore, Tinker's Magic's Mending) come on top.
+        const own = 'slot' in grant.spell && grant.spell.slot.startsWith('cantrips.');
         for (const id of grantIds(ctx, grant, source)) {
+          const cantrip = spell(id)?.level === 0;
           if (grant.mode === 'spellbook') book.push(id);
           else if (grant.mode === 'alwaysPrepared') always.push(id);
           else if (grant.mode === 'expanded') listIds.push(id);
-          else if (grant.mode === 'known') (spell(id)?.level === 0 ? cantrips : known).push(id);
+          else if (grant.mode === 'known' || grant.mode === 'innate') {
+            // A caster's feature granting a spell without uses of its own: it is that
+            // caster's spell (innate ones are always prepared).
+            if (cantrip) {
+              cantrips.push(id);
+              if (!own) extraCantrips.add(id);
+            } else (grant.mode === 'known' ? known : always).push(id);
+          }
         }
       }
     }
@@ -351,7 +367,9 @@ export function deriveSpellcasting(
       ),
       maxSpellLevel: topLevel,
       cantrips: [...new Set(cantrips)],
-      cantripsMax: owner ? cantripCount(c.sc, owner, c.level) : cantrips.length,
+      cantripsMax: owner
+        ? cantripCount(c.sc, owner, c.level) + extraCantrips.size
+        : cantrips.length,
       prepared: [...new Set(prepared)],
       preparedMax,
       ...(swapLimit !== undefined ? { swapLimit } : {}),
@@ -392,6 +410,24 @@ export function deriveSpellcasting(
             g.usesMax = Math.max(0, Math.floor(evalNumber(ctx, uses.count, source)));
             g.usesKey = `${refKey(source.ref)}${source.n === undefined ? '' : `@${source.n}`}#spell:${spellId}`;
             g.usesUsed = Math.min(g.usesMax, ctx.character.state.resourcesUsed[g.usesKey] ?? 0);
+          } else if (typeof uses === 'object' && 'charges' in uses) {
+            // The item's row in use, and what its charges allow.
+            const row = ctx.character.inventory.find(
+              (x) =>
+                x.equipped &&
+                source.ref.kind === 'item' &&
+                (x.itemRef?.id === source.ref.id || x.variantRef?.id === source.ref.id),
+            );
+            if (row) {
+              const charges = chargesOf(
+                row,
+                ctx.index.get({ kind: 'item', id: row.itemRef!.id }),
+                row.variantRef ? ctx.index.get({ kind: 'item', id: row.variantRef.id }) : undefined,
+              );
+              g.chargesRow = row.uid;
+              g.chargesLeft = Math.max(0, (charges?.max ?? 0) - (charges?.used ?? 0));
+            }
+            g.cost = uses.charges;
           } else if (typeof uses === 'object') {
             const r =
               'resource' in uses
@@ -428,11 +464,12 @@ export function deriveSpellcasting(
     const dice = scaling && step !== undefined ? cellToValue(scaling.byLevel[step]) : 0;
     const damageParts: Contribution[] = [];
     for (const { effect, source } of spellMods) {
-      if (
-        effect.damageBonus === undefined ||
-        !effect.filter ||
-        !matchesSpellFilter(s, effect.filter)
-      )
+      if (effect.damageBonus === undefined) continue;
+      // Picked spells (Agonizing Blast's cantrip), else the spells its filter matches.
+      const picked = effect.spells
+        ? valuesOf(ctx.recon, choiceKey(source.ref, effect.spells.fromChoice, source.n))
+        : undefined;
+      if (picked ? !picked.includes(id) : !effect.filter || !matchesSpellFilter(s, effect.filter))
         continue;
       if (effect.casterKey && effect.casterKey !== key) continue;
       damageParts.push(

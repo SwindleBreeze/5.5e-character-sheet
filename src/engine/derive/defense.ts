@@ -20,6 +20,7 @@ import {
   withOverride,
   type DeriveContext,
 } from './context.ts';
+import { itemBonusOff } from './itemBonuses.ts';
 import type { Contribution, Derived, DerivedClass, DerivedSheet, SourcedValue } from './types.ts';
 
 type Mods = Record<Ability, number>;
@@ -106,12 +107,15 @@ export function deriveAc(ctx: DeriveContext, mods: Mods): Derived & { calculatio
     derived(b.parts).value > derived(a.parts).value ? b : a,
   );
   const parts = [...best.parts];
+  // Items whose mapping turns their AC bonus off (it applies only in some cases, re-added there).
+  const acOf = (row: InventoryItem, item: Item | undefined, variant: Item | undefined) =>
+    itemBonusOff(ctx, row, 'ac') ? 0 : itemAcBonus(row, item, variant);
   // A Shield gives its AC only with Shield training (2024).
   if (shield && !ctx.gear?.untrainedShield) {
     const name = shield.item?.name ?? shield.row.name;
     parts.push({
       label: name,
-      value: shield.info.ac + itemAcBonus(shield.row, shield.item, shield.variant),
+      value: shield.info.ac + acOf(shield.row, shield.item, shield.variant),
     });
   }
   // Other items in use with an AC bonus (rings, cloaks), when attuned if they need it.
@@ -123,7 +127,7 @@ export function deriveAc(ctx: DeriveContext, mods: Mods): Derived & { calculatio
       ? ctx.index.get({ kind: 'item', id: row.variantRef.id })
       : undefined;
     if (needsAttunement(item, variant) && !row.attuned) continue;
-    const bonus = itemAcBonus(row, item, variant);
+    const bonus = acOf(row, item, variant);
     if (bonus && !item?.weapon)
       parts.push({ label: item?.name ?? row.name, value: bonus, source: row.itemRef });
   }

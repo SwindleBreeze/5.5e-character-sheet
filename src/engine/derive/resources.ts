@@ -1,6 +1,7 @@
 // Resources (plan §9.2, step 3.8; P6): counters with a maximum and a recharge, changed by
 // later features, plus other ways to restore them.
 
+import { chargesOf } from '../items/items.ts';
 import { refKey, type Cost, type Ref } from '../../schema/index.ts';
 import type { EffectSource } from '../collect/types.ts';
 import { formatValue } from '../formula/dice.ts';
@@ -33,8 +34,14 @@ export function findResource(
 
 /** A resource by its display name (5etools `consumes`, `resourceName`). */
 export function findResourceByName(resources: readonly DerivedResource[], name: string) {
-  const want = name.toLowerCase().replace(/s$/, '');
-  return resources.find((r) => r.name.toLowerCase().replace(/s$/, '') === want);
+  // One or many: `Focus Point` / `Focus Points`, `Superiority Die` / `Superiority Dice`.
+  const one = (n: string) =>
+    n
+      .toLowerCase()
+      .replace(/\bdice$/, 'die')
+      .replace(/s$/, '');
+  const want = one(name);
+  return resources.find((r) => one(r.name) === want);
 }
 
 export function costOf(
@@ -52,6 +59,29 @@ export function costOf(
   }
   if ('slot' in cost) {
     return { label: `a level ${cost.slot.minLevel}+ spell slot`, slot: cost.slot };
+  }
+  if ('charges' in cost) {
+    // The item in use whose effect this is, and what it has left.
+    const amount = Math.max(0, Math.floor(evalNumber(ctx, cost.charges, source)));
+    const row = ctx.character.inventory.find(
+      (r) =>
+        r.equipped &&
+        source?.ref.kind === 'item' &&
+        (r.itemRef?.id === source.ref.id || r.variantRef?.id === source.ref.id),
+    );
+    const out: DerivedCost = {
+      label: `${amount} ${amount === 1 ? 'charge' : 'charges'}`,
+      amount,
+    };
+    if (row) {
+      const ch = chargesOf(
+        row,
+        ctx.index.get({ kind: 'item', id: row.itemRef!.id }),
+        row.variantRef ? ctx.index.get({ kind: 'item', id: row.variantRef.id }) : undefined,
+      );
+      out.charges = { rowUid: row.uid, left: Math.max(0, (ch?.max ?? 0) - (ch?.used ?? 0)) };
+    }
+    return out;
   }
   if ('hitDice' in cost) {
     const n = Math.max(0, Math.floor(evalNumber(ctx, cost.hitDice, source)));

@@ -104,6 +104,8 @@ function riderList(
       : undefined;
     if (type) rider.damageType = type;
     if (effect.cost) rider.cost = costOf(ctx, effect.cost, resources, source);
+    if (source.ref.kind === 'species' || source.ref.kind === 'feat')
+      rider.from = { kind: source.ref.kind, name: source.name };
     out.push(rider);
   }
   return out;
@@ -148,8 +150,10 @@ function buildAttack(
     { label: `${ability.toUpperCase()} modifier`, value: mods[ability] },
   ];
   const damageParts: Contribution[] = [];
-  const offHand = traits.tags.includes('offHand');
-  // The Light extra attack adds no positive ability modifier to damage (2024).
+  // The Light extra attack adds no positive ability modifier to damage (2024), unless a
+  // feature says so (Two-Weapon Fighting).
+  const offHand =
+    traits.tags.includes('offHand') && !applied.some(({ effect }) => effect.offHandAbility);
   if (!offHand || mods[ability] < 0) {
     damageParts.push({ label: `${ability.toUpperCase()} modifier`, value: mods[ability] });
   }
@@ -319,7 +323,13 @@ export function deriveAttacks(
     const wieldTraits = weaponTraits(item, hand);
     // Holding a weapon in the off hand changes nothing by itself (2024): only the Light extra
     // attack below drops the ability modifier, so only it carries the `offHand` tag.
-    const traits = { ...wieldTraits, tags: wieldTraits.tags.filter((t) => t !== 'offHand') };
+    // `onlyWeapon`: in one hand (or drawn into one) with no other weapon held (Dueling).
+    const alone = hand !== 'both' && wield.wielded.every((w) => w.row.uid === row.uid);
+    const traits = {
+      ...wieldTraits,
+      ...(variant ? { variantId: variant.id } : {}),
+      tags: [...wieldTraits.tags.filter((t) => t !== 'offHand'), ...(alone ? ['onlyWeapon'] : [])],
+    };
     const finesse = traits.properties.includes('F');
     const own: Ability[] = traits.range === 'ranged' ? ['dex'] : finesse ? ['str', 'dex'] : ['str'];
     const twoHands = hand === 'both';
@@ -392,6 +402,37 @@ export function deriveAttacks(
       if (mastery) extra.mastery = mastery;
       attacks.push(extra);
     }
+  }
+
+  // Attacks a feature gives (P15): like a weapon the character is proficient with.
+  for (const { effect, source } of effectsOfType(ctx.collected, 'attack')) {
+    attacks.push(
+      buildAttack(
+        ctx,
+        {
+          id: `feature:${effect.id}`,
+          name: effect.name,
+          kind: 'weapon',
+          use: { kind: 'attackAction' },
+          traits: {
+            range: effect.range,
+            source: 'weapon',
+            properties: (effect.properties ?? []).map((p) => p.toUpperCase()),
+            tags: [],
+          },
+          ownAbilities: effect.abilities,
+          proficient: true,
+          baseDie: evalValue(ctx, effect.damage, source),
+          damageType: effect.damageType,
+          distance: effect.distance,
+          ready: true,
+        },
+        scores,
+        mods,
+        pb,
+        resources,
+      ),
+    );
   }
 
   // Unarmed Strike: 1 + Strength, always proficient (2024).

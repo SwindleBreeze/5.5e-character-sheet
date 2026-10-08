@@ -118,7 +118,11 @@ export function evaluateNumber(formula: Formula, scope: FormulaScope): number {
 export function cellToValue(cell: string | number | undefined): Value {
   if (cell === undefined) return 0;
   if (typeof cell === 'number') return cell;
-  const text = cell.trim();
+  // Tagged dice (`{@dice D6}`, Psi Warrior's table) read as their text.
+  const text = cell
+    .replace(/\{@\w+ ([^|}]*)[^}]*\}/g, '$1')
+    .trim()
+    .replace(/^(\d*)D(\d)/, '$1d$2');
   // Dice, possibly several: `1d6`, `2d6+1d4`, `1d8 + 2`.
   if (/d\d/.test(text) && /^[\dd\s+-]+$/.test(text)) return evaluateFormula(text, mapScope({}));
   const n = /^[+-]?\d+(?:\.\d+)?/.exec(text);

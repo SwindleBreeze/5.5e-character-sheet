@@ -5,22 +5,29 @@ import type { ContentIndex } from '../../engine/content/contentIndex.ts';
 import type { ClassOption, LevelUpPlan } from '../../engine/build/levelUp.ts';
 import type { DerivedSheet } from '../../engine/derive/types.ts';
 import { EntityView } from '../../richtext/EntitySheet.tsx';
+import { Glance } from '../sheet/features/Glance.tsx';
+import { glanceResources } from '../sheet/features/glanceResources.ts';
 import type { AutoContext } from '../../engine/build/autoChoose.ts';
 import type { DerivedFeatureChoice } from '../../engine/derive/types.ts';
 import { ChoicePicker } from '../choices/ChoicePicker.tsx';
 import { choiceTitle } from '../choices/labels.ts';
 import type { PickSave } from '../choices/picks.ts';
 import { isSpellOffer } from '../wizard/progress.ts';
-import type { HpGain, Ref } from '../../schema/index.ts';
+import { refKey, type HpGain, type Id, type Ref, type SourceCode } from '../../schema/index.ts';
+import { PrepareSheet } from '../sheet/spells/PrepareSheet.tsx';
+import { preparingCasters } from './preparing.ts';
+import { Badge } from '../../ui/Badge.tsx';
 import { Button } from '../../ui/Button.tsx';
 import { useRoller } from '../../ui/rollerContext.ts';
 import { useSheet } from '../../ui/sheetContext.ts';
 import choices from '../choices/choices.module.css';
+import inventory from '../sheet/inventory/inventory.module.css';
 import { signed } from '../sheet/components/format.ts';
 import { EntityCards } from '../wizard/EntityCards.tsx';
 import { AboutFlavor, ReadSheet } from '../wizard/Explain.tsx';
 import wizard from '../wizard/wizard.module.css';
 import type { LevelUpBindings } from './bindings.ts';
+import { featureKinds } from './featureKinds.ts';
 import styles from './levelUp.module.css';
 
 function useRead(index: ContentIndex) {
@@ -44,19 +51,38 @@ export function ClassStep({
   index: ContentIndex;
 }) {
   const read = useRead(index);
+  const [ignore, setIgnore] = useState(false);
   const selected = b.plan?.classId;
+  const anyUnmet = options.some((o) => o.prereq && !o.prereq.met);
   return (
     <>
+      {anyUnmet && (
+        <div className={styles.rulesRow}>
+          <p className={choices.help}>
+            Multiclassing into a class takes 13 or more in its primary ability and in that of every
+            class you have (2024 rules). A class you don’t qualify for can’t be taken.
+          </p>
+          <label className={inventory.check}>
+            <input type="checkbox" checked={ignore} onChange={(e) => setIgnore(e.target.checked)} />
+            Ignore rules (your DM allows it)
+          </label>
+        </div>
+      )}
       <EntityCards
         label="Classes"
         grouped
         items={options.map((o) => {
           const cls = index.get({ kind: 'class', id: o.classId });
+          const unmet = o.prereq && !o.prereq.met ? o.prereq.unmet.join('; ') : undefined;
           return {
             id: o.classId,
             name: `${o.name} ${o.classLevel}`,
             group: o.multiclass ? 'A new class (multiclassing)' : 'Your classes',
-            ...(o.prereq && !o.prereq.met ? { detail: `Needs ${o.prereq.unmet.join('; ')}` } : {}),
+            ...(unmet
+              ? ignore
+                ? { detail: `Needs ${unmet}` }
+                : { blocked: `You can’t take this level: needs ${unmet}` }
+              : {}),
             ...(o.prereq?.met ? { suggested: 'Requirement met' } : {}),
             chips: cls ? [`d${cls.hitDie} hit die`] : [],
           };
@@ -68,8 +94,8 @@ export function ClassStep({
       />
       {b.plan?.multiclass && b.plan.prereq && !b.plan.prereq.met && (
         <p className={wizard.notice}>
-          The 2024 rules ask for 13 or more in the primary ability of the new class and of every
-          class you have: {b.plan.prereq.unmet.join('; ')}. Your DM may allow it anyway.
+          You don’t meet the 2024 requirement for this class: {b.plan.prereq.unmet.join('; ')}. Take
+          it only if your DM allows it.
         </p>
       )}
     </>
@@ -204,7 +230,7 @@ export function SubclassStep({
   );
 }
 
-/** What this level brings, with each feature's text. */
+/** What this level brings: each feature's name, what it adds, and its text behind Read more. */
 export function FeaturesList({
   plan,
   index,
@@ -234,10 +260,28 @@ export function FeaturesList({
     <section className={styles.features} aria-label="New features">
       {features.map((f) => {
         const entity = index.get(f.ref);
+        const derived = plan.sheet.features.find((x) => refKey(x.ref) === refKey(f.ref));
+        const kinds = featureKinds(derived, plan.sheet);
+        // Name, what it adds and how it's used at a glance; the text itself folded.
         return (
           <article key={f.ref.id} className={styles.feature} aria-label={f.name}>
-            <h3 className={choices.choiceTitle}>{f.name}</h3>
-            {entity && <EntityView entity={entity} bare />}
+            <h3 className={`${choices.choiceTitle} ${styles.featureHead}`}>
+              {f.name}
+              {kinds.map((k) => (
+                <Badge key={k} variant="accent">
+                  {k}
+                </Badge>
+              ))}
+            </h3>
+            {entity && (
+              <Glance entries={entity.entries} resources={glanceResources(derived, plan.sheet)} />
+            )}
+            {entity && (
+              <details className={styles.readMore}>
+                <summary>Read more</summary>
+                <EntityView entity={entity} bare />
+              </details>
+            )}
           </article>
         );
       })}
@@ -355,5 +399,48 @@ export function RetrainSection({
         </section>
       ))}
     </details>
+  );
+}
+
+/** Prepared spells after this level: what changed, and the list to prepare from, in place. */
+export function PreparedSection({
+  plan,
+  before,
+  sources,
+  onPrepared,
+}: {
+  plan: LevelUpPlan;
+  before: DerivedSheet;
+  sources: SourceCode[] | null;
+  onPrepared: (casterKey: string, ids: Id[]) => void;
+}) {
+  const casters = preparingCasters(plan, before);
+  if (!casters.length) return null;
+  return (
+    <>
+      {casters.map(({ caster, room, higher, slots }) => (
+        <section
+          key={caster.key}
+          className={choices.choice}
+          aria-label={`${caster.name}: prepared spells`}
+        >
+          <h3 className={choices.choiceTitle}>{caster.name}: prepared spells</h3>
+          <p className={choices.help}>
+            {caster.prepared.length} of {caster.preparedMax} prepared
+            {room > 0 ? `: you can prepare ${room} more.` : '.'}
+            {higher && ` You can now prepare spells up to level ${caster.maxSpellLevel}.`}
+            {slots && ` Your spell slots: ${slots.after} (were ${slots.before || 'none'}).`} You can
+            also change them after any Long Rest.
+          </p>
+          <PrepareSheet
+            caster={caster}
+            sources={sources}
+            current={plan.character.state.prepared[caster.key] ?? []}
+            instant
+            onSave={(ids) => onPrepared(caster.key, ids)}
+          />
+        </section>
+      ))}
+    </>
   );
 }

@@ -7,6 +7,7 @@ import {
   SKILLS,
   type Ability,
   type Id,
+  type Item,
   type ProficiencyCategory,
   type RollTarget,
   type Skill,
@@ -16,6 +17,8 @@ import type { EffectSource } from '../collect/types.ts';
 import { formatValue, isDice } from '../formula/dice.ts';
 import type { AttackTraits } from '../static/attackTraits.ts';
 import { resolveBound } from '../static/bound.ts';
+import { magicWorks } from '../items/items.ts';
+import { itemBonusOff } from './itemBonuses.ts';
 import {
   contribution,
   derived,
@@ -127,7 +130,7 @@ export type RollKind =
   | { type: 'initiative' }
   | { type: 'concentration' }
   | { type: 'death' }
-  /** `attack:<x>` matches `all`, or the attack's source, range or one of its tags. */
+  /** `attack:<x>` matches `all`, or the attack's source, range, ability or one of its tags. */
   | { type: 'attack'; traits: AttackTraits };
 
 /** Whether a roll-modifier target applies to a roll. Initiative is a Dexterity check. */
@@ -149,7 +152,13 @@ export function targetMatches(target: RollTarget, kind: RollKind): boolean {
       if (!target.startsWith('attack:')) return false;
       const what = target.slice('attack:'.length);
       const t = kind.traits;
-      return what === 'all' || what === t.source || what === t.range || t.tags.includes(what);
+      return (
+        what === 'all' ||
+        what === t.source ||
+        what === t.range ||
+        what === t.ability ||
+        t.tags.includes(what)
+      );
     }
   }
 }
@@ -172,6 +181,23 @@ function rollAbility(kind: RollKind): Ability | undefined {
 }
 
 /** One d20 roll: base parts, proficiency, roll modifiers, exhaustion. */
+/** Items in use that add to every saving throw or ability check, with Attunement if needed. */
+function itemRollBonus(ctx: DeriveContext, bonus: 'savingThrow' | 'abilityCheck'): Contribution[] {
+  const out: Contribution[] = [];
+  for (const row of ctx.character.inventory) {
+    if (!row.equipped || !row.itemRef) continue;
+    const item = ctx.index.get({ kind: 'item', id: row.itemRef.id });
+    const variant: Item | undefined = row.variantRef
+      ? ctx.index.get({ kind: 'item', id: row.variantRef.id })
+      : undefined;
+    if (!magicWorks(row, item, variant) || itemBonusOff(ctx, row, bonus)) continue;
+    const value = (item?.bonuses?.[bonus] ?? 0) + (variant?.bonuses?.[bonus] ?? 0);
+    if (value)
+      out.push({ label: variant?.name ?? item?.name ?? row.name, value, source: row.itemRef });
+  }
+  return out;
+}
+
 export function buildRoll(
   ctx: DeriveContext,
   kind: RollKind,
@@ -203,6 +229,15 @@ export function buildRoll(
     else parts.push(contribution(source.name, v, source));
   }
 
+  // Magic items in use: a bonus to every saving throw (a Cloak of Protection) or check.
+  const itemBonus =
+    kind.type === 'save' || kind.type === 'concentration' || kind.type === 'death'
+      ? 'savingThrow'
+      : kind.type === 'check' || kind.type === 'initiative'
+        ? 'abilityCheck'
+        : undefined;
+  if (itemBonus) parts.push(...itemRollBonus(ctx, itemBonus));
+
   const advantage: string[] = [];
   const disadvantage: string[] = [];
   for (const { effect, source } of effectsOfType(ctx.collected, 'rollMode')) {
@@ -220,6 +255,7 @@ export function buildRoll(
 
   let floor: number | undefined;
   for (const { effect } of effectsOfType(ctx.collected, 'rollFloor')) {
+    if (effect.proficientOnly && proficiency === 'none') continue;
     if (targetMatches(effect.target, kind)) floor = Math.max(floor ?? 0, effect.value);
   }
 

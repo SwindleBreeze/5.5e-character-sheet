@@ -52,8 +52,11 @@ export function choiceTitle(c: DerivedFeatureChoice): string {
     case 'equipment':
       return 'Starting equipment';
     case 'option':
-      return c.offer.key.owner.kind === 'species' && c.offer.key.slot === 'size'
-        ? 'Size'
+      if (c.offer.key.owner.kind === 'species' && c.offer.key.slot === 'size') return 'Size';
+      return typeof c.offer.from === 'object' &&
+        !Array.isArray(c.offer.from) &&
+        c.offer.from.query.endsWith('Cantrips')
+        ? 'Cantrip'
         : 'Option';
     default:
       return 'Chosen';

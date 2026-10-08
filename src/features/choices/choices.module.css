@@ -163,6 +163,22 @@
   font-size: var(--font-size-sm);
 }
 
+/* A picked option's own picks, right under it. */
+.under {
+  flex-basis: 100%;
+  min-width: 0;
+}
+
+.under:empty {
+  display: none;
+}
+
+/* The text goes on: where to read the rest. */
+.readHint {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
 .when {
   color: var(--color-text-muted);
 }

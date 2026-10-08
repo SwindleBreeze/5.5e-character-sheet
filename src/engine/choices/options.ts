@@ -11,6 +11,7 @@ import {
   SKILLS,
   type Ability,
   type Background,
+  type Effect,
   type EntityKind,
   type Feat,
   type Item,
@@ -19,7 +20,7 @@ import {
   type Skill,
   type Spell,
 } from '../../schema/index.ts';
-import { firstSentence, prereqsText, spellRange, spellTime } from '../../richtext/entityMeta.ts';
+import { prereqsText, spellRange, spellTime, summaryOf } from '../../richtext/entityMeta.ts';
 import {
   carriedWeapons,
   knownSpells,
@@ -28,13 +29,16 @@ import {
   type AutoContext,
 } from '../build/autoChoose.ts';
 import type { Offer } from '../collect/types.ts';
+import type { ContentIndex } from '../content/contentIndex.ts';
 import { equipmentOptionText } from '../build/equipment.ts';
 import { SIZE_NAMES } from '../items/items.ts';
+import { walkEffects } from '../effects/walk.ts';
+import { effectBenefits } from '../explain/benefits.ts';
 import { checkPrereqs, prereqContext, type PrereqContext } from '../prereq.ts';
 import { distanceOf } from '../derive/attacks.ts';
 import { masteryHasSave, masterySaveNote, masteryWhen } from '../explain/mastery.ts';
 import { isRangedWeapon } from '../static/attackTraits.ts';
-import { baseWeapons, expertiseOptions, weaponMasteryOptions } from './queries.ts';
+import { baseWeapons, expertiseOptions, queryOptions, weaponMasteryOptions } from './queries.ts';
 
 export interface ChoiceOption {
   value: string;
@@ -51,6 +55,8 @@ export interface ChoiceOption {
   unknown?: string[];
   /** What it does, in a sentence of its own text (a spell's first sentence). */
   summary?: string;
+  /** The text goes on past the summary: where to read it (`Press Read to see them.`). */
+  more?: string;
   /** A rule that goes with it (a weapon's mastery property): its text, imported, and when it applies. */
   about?: { title: string; text: string; when?: string; note?: string };
 }
@@ -122,6 +128,44 @@ export function optionLabel(offer: Offer, value: string): string {
     return SIZE_NAMES[value as Size] ?? value;
   const from = Array.isArray(offer.from) ? (offer.from as string[]) : [];
   return offer.labels?.[from.indexOf(value)] ?? value;
+}
+
+/**
+ * What one value of an option pick brings, from the owner's effects that depend on it (a Circle
+ * of the Land's land: its spells): `Spell: Blur, Burning Hands and Fire Bolt (cantrip)`.
+ */
+export function optionWhat(
+  offer: Offer,
+  value: string,
+  index: ContentIndex,
+): Partial<ChoiceOption> {
+  const owner = index.get(offer.key.owner);
+  if (!owner || !('effects' in owner) || !Array.isArray(owner.effects)) return {};
+  const effects = [...walkEffects(owner.effects as Effect[])].flatMap((e) =>
+    e.type === 'ifChoice' && e.slot === offer.key.slot && e.value === value ? e.effects : [],
+  );
+  // Fixed spells, by the level they come at: `Spells: Blur, Fire Bolt; at level 5: Fireball`.
+  const byLevel = new Map<number, string[]>();
+  let mode = '';
+  const rest = effects.filter((e) => {
+    if (e.type !== 'grantSpells' || !e.spells.every((g) => 'id' in g.spell)) return true;
+    for (const g of e.spells) {
+      const id = (g.spell as { id: string }).id;
+      const at = g.atLevel ?? 0;
+      byLevel.set(at, [...(byLevel.get(at) ?? []), index.get({ kind: 'spell', id })?.name ?? id]);
+      if (g.mode === 'alwaysPrepared') mode = ' (always prepared)';
+    }
+    return false;
+  });
+  const levels = [...byLevel.keys()].sort((a, b) => a - b);
+  const spells = levels
+    .map((l, i) => `${i ? `at level ${l}: ` : ''}${byLevel.get(l)!.join(', ')}`)
+    .join('; ');
+  const lines = [
+    ...(spells ? [`Spells${mode}: ${spells}`] : []),
+    ...effectBenefits(rest, index).map((b) => `${b.label}: ${b.text}`),
+  ];
+  return lines.length ? { summary: lines.join(' · ') } : {};
 }
 
 /** The same pick in any order: background increases are compared this way. */
@@ -315,8 +359,22 @@ export function offerOptions(
       break;
     }
     case 'option':
+      if (offer.from && typeof offer.from === 'object' && !Array.isArray(offer.from)) {
+        // Picked among what the character has (Agonizing Blast: a known cantrip).
+        values = queryOptions(offer.from.query, sheet, catalog);
+        if (/Cantrips$/.test(offer.from.query)) {
+          valueKind = 'spell';
+          label = nameOf('spell');
+          describe = (id) => {
+            const spell = index.get({ kind: 'spell', id });
+            return spell ? { detail: spellDetail(spell) } : {};
+          };
+        }
+        break;
+      }
       values = from ?? [];
       label = (v) => optionLabel(offer, v);
+      describe = (v) => optionWhat(offer, v, index);
       break;
     case 'featureOptions':
       valueKind =
@@ -372,11 +430,12 @@ export function offerOptions(
       describe = (id) => {
         const spell = index.get({ kind: 'spell', id });
         if (!spell) return {};
-        const summary = firstSentence(spell.entries);
+        const { text: summary, more } = summaryOf(spell.entries);
         return {
           detail: spellDetail(spell),
           group: spellGroup(spell),
           ...(summary ? { summary } : {}),
+          ...(more ? { more } : {}),
         };
       };
       break;
