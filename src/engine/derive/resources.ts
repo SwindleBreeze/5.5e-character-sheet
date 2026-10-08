@@ -33,8 +33,14 @@ export function findResource(
 
 /** A resource by its display name (5etools `consumes`, `resourceName`). */
 export function findResourceByName(resources: readonly DerivedResource[], name: string) {
-  const want = name.toLowerCase().replace(/s$/, '');
-  return resources.find((r) => r.name.toLowerCase().replace(/s$/, '') === want);
+  // One or many: `Focus Point` / `Focus Points`, `Superiority Die` / `Superiority Dice`.
+  const one = (n: string) =>
+    n
+      .toLowerCase()
+      .replace(/\bdice$/, 'die')
+      .replace(/s$/, '');
+  const want = one(name);
+  return resources.find((r) => one(r.name) === want);
 }
 
 export function costOf(

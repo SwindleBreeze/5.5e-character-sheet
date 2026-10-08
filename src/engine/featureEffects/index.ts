@@ -7,6 +7,7 @@ import { BARBARIAN } from './core/barbarian.ts';
 import { BARD } from './core/bard.ts';
 import { CLERIC } from './core/cleric.ts';
 import { DRUID } from './core/druid.ts';
+import { FIGHTER } from './core/fighter.ts';
 import { registerFeatureEffects } from './registry.ts';
 
 registerFeatureEffects(CORE_LEVELS_1_TO_3);
@@ -15,5 +16,6 @@ registerFeatureEffects(BARBARIAN);
 registerFeatureEffects(BARD);
 registerFeatureEffects(CLERIC);
 registerFeatureEffects(DRUID);
+registerFeatureEffects(FIGHTER);
 
 export { featureEffects, registerFeatureEffects } from './registry.ts';

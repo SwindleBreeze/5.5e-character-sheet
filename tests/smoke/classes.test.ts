@@ -173,4 +173,40 @@ describe.skipIf(!root)('class golden checks (local data)', () => {
     // Spends Wild Shape through its switch, not through a second action too.
     expect(stars.actions.filter((a) => a.name === 'Starry Form')).toEqual([]);
   });
+
+  it('Fighter: Second Wind, Action Surge, Indomitable, attacks and the four subclasses', () => {
+    const one = build('fighter', 1);
+    expect(resource(one, 'Second Wind')?.max.value).toBe(2);
+    expect(one.actions.find((a) => a.name === 'Second Wind')?.outcomes).toEqual([
+      { heal: '1d10 + 1' },
+    ]);
+    expect(build('fighter', 5).attacksPerAction.value).toBe(2);
+    expect(build('fighter', 11).attacksPerAction.value).toBe(3);
+
+    const twenty = build('fighter', 20, 'champion');
+    expect(twenty.attacksPerAction.value).toBe(4);
+    expect(resource(twenty, 'Action Surge')?.max.value).toBe(2);
+    expect(resource(twenty, 'Indomitable')?.max.value).toBe(3);
+    expect(attack(twenty, 'Greatsword').critRange).toBe(18);
+    expect(twenty.deathSave.mode).toBe('advantage');
+    expect(build('fighter', 3, 'champion').initiative.mode).toBe('advantage');
+
+    const master = build('fighter', 10, 'battle master');
+    expect(resource(master, 'Superiority Dice')).toMatchObject({ die: '1d10', recharge: 'short' });
+    expect(resource(master, 'Superiority Dice')?.max.value).toBe(5);
+    // Maneuvers spend from it.
+    const maneuver = master.actions.find((a) => a.name === 'Ambush')!;
+    expect(maneuver.costs[0]?.resourceKey).toBe(resource(master, 'Superiority Dice')?.key);
+
+    const psi = build('fighter', 11, 'psi warrior');
+    expect(resource(psi, 'Psionic Energy Dice')).toMatchObject({
+      die: '1d10',
+      recharge: 'shortOne',
+    });
+    expect(resource(psi, 'Psionic Energy Dice')?.max.value).toBe(8);
+    expect(psi.actions.filter((a) => a.name === 'Psionic Strike')).toEqual([]);
+    expect(attack(psi, 'Greatsword').riders.find((r) => r.id === 'psionic-strike')?.dice).toBe(
+      `1d10 + ${psi.abilities.int.mod}`,
+    );
+  });
 });

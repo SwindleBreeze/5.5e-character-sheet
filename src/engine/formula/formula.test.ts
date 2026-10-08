@@ -162,6 +162,7 @@ describe('formula helpers', () => {
       },
     ],
     ['1d8 + 2', dice(1, 8, 2)],
+    ['{@dice D6}', dice(1, 6)],
     ['+10 ft.', 10],
     ['1st', 1],
     ['5th', 5],
