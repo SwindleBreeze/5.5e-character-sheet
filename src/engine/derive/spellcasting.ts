@@ -256,6 +256,7 @@ export function deriveSpellcasting(
     const known: Id[] = [];
     const book: Id[] = [];
     const always: Id[] = [];
+    const extraCantrips = new Set<Id>();
     const listIds: Id[] = [];
     const listFilters = [...c.listFilters];
     for (const { effect, source } of grants) {
@@ -267,11 +268,22 @@ export function deriveSpellcasting(
           if (grant.mode === 'expanded') listFilters.push(grant.spell.all);
           continue;
         }
+        // The class's own cantrip picks (`cantrips.<level>`) count toward its number; cantrips a
+        // feature adds (Thaumaturge, Primal Lore, Tinker's Magic's Mending) come on top.
+        const own = 'slot' in grant.spell && grant.spell.slot.startsWith('cantrips.');
         for (const id of grantIds(ctx, grant, source)) {
+          const cantrip = spell(id)?.level === 0;
           if (grant.mode === 'spellbook') book.push(id);
           else if (grant.mode === 'alwaysPrepared') always.push(id);
           else if (grant.mode === 'expanded') listIds.push(id);
-          else if (grant.mode === 'known') (spell(id)?.level === 0 ? cantrips : known).push(id);
+          else if (grant.mode === 'known' || grant.mode === 'innate') {
+            // A caster's feature granting a spell without uses of its own: it is that
+            // caster's spell (innate ones are always prepared).
+            if (cantrip) {
+              cantrips.push(id);
+              if (!own) extraCantrips.add(id);
+            } else (grant.mode === 'known' ? known : always).push(id);
+          }
         }
       }
     }
@@ -354,7 +366,9 @@ export function deriveSpellcasting(
       ),
       maxSpellLevel: topLevel,
       cantrips: [...new Set(cantrips)],
-      cantripsMax: owner ? cantripCount(c.sc, owner, c.level) : cantrips.length,
+      cantripsMax: owner
+        ? cantripCount(c.sc, owner, c.level) + extraCantrips.size
+        : cantrips.length,
       prepared: [...new Set(prepared)],
       preparedMax,
       ...(swapLimit !== undefined ? { swapLimit } : {}),

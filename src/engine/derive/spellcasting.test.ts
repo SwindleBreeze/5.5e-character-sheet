@@ -149,6 +149,38 @@ describe('spellcasting (P11)', () => {
     ]);
   });
 
+  it("a caster feature's spells without uses are the caster's; its cantrip comes on top", () => {
+    const key = 'classFeature:keen mind|lorekeeper|tst|2|tst';
+    const registry = {
+      ...FIXTURE_FEATURE_EFFECTS,
+      [key]: {
+        ...FIXTURE_FEATURE_EFFECTS[key]!,
+        effects: [
+          ...FIXTURE_FEATURE_EFFECTS[key]!.effects,
+          {
+            type: 'grantSpells',
+            spells: [
+              { mode: 'innate', spell: { id: 'glitter burst|tst' } },
+              { mode: 'innate', spell: { id: 'rolling boom|tst' } },
+            ],
+          },
+        ],
+      },
+    } satisfies typeof FIXTURE_FEATURE_EFFECTS;
+    const c = testCharacter({
+      classes: [{ classId: 'lorekeeper|tst', levels: 5 }],
+      choices: [
+        { owner: lore, slot: 'cantrips.1', values: ['spark bolt|tst'], valueKinds: [...spells] },
+      ],
+    });
+    const before = run(c).spellcasting.casters[0]!;
+    const after = derive(c, index, { registry }).spellcasting.casters[0]!;
+    expect(after.cantrips).toEqual(['spark bolt|tst', 'glitter burst|tst']);
+    expect(after.cantripsMax).toBe(before.cantripsMax + 1);
+    // A levelled spell granted that way is always prepared.
+    expect(after.alwaysPrepared).toContain('rolling boom|tst');
+  });
+
   it('a spell bonus for the cantrip picked in a slot (Agonizing Blast)', () => {
     const key = 'classFeature:hex strike|pactbinder|tst|1|tst';
     const owner = { kind: 'classFeature', id: 'hex strike|pactbinder|tst|1|tst' } as const;

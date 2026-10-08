@@ -15,14 +15,10 @@ const ATTUNEMENT = 'an effect that raises the attunement limit (fixed at 3)';
 
 export const SUP_ARTIFICER: FeatureEffectsMap = {
   [C('spellcasting', 1)]: text(),
-  // Mending, known on top of the class's cantrips; items made from a short list, Int mod per
-  // Long Rest.
+  // Mending comes from the class data, on top of the class's cantrips; items made from a short
+  // list, Int mod per Long Rest.
   [C("tinker's magic", 1)]: numbers(
     [
-      {
-        type: 'grantSpells',
-        spells: [{ mode: 'known', ability: 'int', spell: { id: 'mending|xphb' } }],
-      },
       uses('tinkers-magic', "Tinker's Magic", intUses, 'long'),
       action({
         id: 'tinkers-magic',

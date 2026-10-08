@@ -56,8 +56,10 @@ describe.skipIf(!root)('Artificer class features (local data)', () => {
     expect(actionOf(one, "Tinker's Magic")?.actionType).toBe('action');
     const caster = one.spellcasting.casters.find((c) => c.key === 'artificer|efa')!;
     expect(caster.ability).toBe('int');
+    // Mending comes on top of the two cantrips the class picks.
     expect(caster.cantrips).toContain('mending|xphb');
-    expect(caster.cantripsMax).toBe(2);
+    expect(caster.cantripsMax).toBe(3);
+    expect(caster.cantrips).toHaveLength(3);
     expect(slots(one)).toEqual([2]);
     expect(resource(one, 'Flash of Genius')).toBeUndefined();
   });
@@ -93,6 +95,7 @@ describe.skipIf(!root)('Artificer class features (local data)', () => {
     expect(slots(twenty)).toEqual([4, 3, 3, 3, 2]);
     const caster = twenty.spellcasting.casters.find((c) => c.key === 'artificer|efa')!;
     expect(caster.preparedMax).toBe(15);
-    expect(caster.cantripsMax).toBe(4);
+    // Four from the table, and Mending.
+    expect(caster.cantripsMax).toBe(5);
   });
 });
