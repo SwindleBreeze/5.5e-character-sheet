@@ -64,7 +64,10 @@ export function costOf(
     // The item in use whose effect this is, and what it has left.
     const amount = Math.max(0, Math.floor(evalNumber(ctx, cost.charges, source)));
     const row = ctx.character.inventory.find(
-      (r) => r.equipped && source?.ref.kind === 'item' && r.itemRef?.id === source.ref.id,
+      (r) =>
+        r.equipped &&
+        source?.ref.kind === 'item' &&
+        (r.itemRef?.id === source.ref.id || r.variantRef?.id === source.ref.id),
     );
     const out: DerivedCost = {
       label: `${amount} ${amount === 1 ? 'charge' : 'charges'}`,

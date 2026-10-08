@@ -31,6 +31,10 @@ import { SUP_WARLOCK } from './supplements/warlock.ts';
 import { SUP_WIZARD } from './supplements/wizard.ts';
 import { SUP_FEATS } from './supplements/feats.ts';
 import { SUP_SPECIES } from './supplements/species.ts';
+import { ITEMS_A_TO_C } from './items/itemsAtoC.ts';
+import { ITEMS_D_TO_H } from './items/itemsDtoH.ts';
+import { ITEMS_I_TO_Q } from './items/itemsItoQ.ts';
+import { ITEMS_R_TO_Z } from './items/itemsRtoZ.ts';
 import { registerFeatureEffects } from './registry.ts';
 
 registerFeatureEffects(CORE_LEVELS_1_TO_3);
@@ -64,5 +68,10 @@ registerFeatureEffects(SUP_WARLOCK);
 registerFeatureEffects(SUP_WIZARD);
 registerFeatureEffects(SUP_FEATS);
 registerFeatureEffects(SUP_SPECIES);
+// The 2024 Dungeon Master's Guide's magic items (step 7.12).
+registerFeatureEffects(ITEMS_A_TO_C);
+registerFeatureEffects(ITEMS_D_TO_H);
+registerFeatureEffects(ITEMS_I_TO_Q);
+registerFeatureEffects(ITEMS_R_TO_Z);
 
 export { featureEffects, registerFeatureEffects } from './registry.ts';

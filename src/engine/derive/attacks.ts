@@ -327,6 +327,7 @@ export function deriveAttacks(
     const alone = hand !== 'both' && wield.wielded.every((w) => w.row.uid === row.uid);
     const traits = {
       ...wieldTraits,
+      ...(variant ? { variantId: variant.id } : {}),
       tags: [...wieldTraits.tags.filter((t) => t !== 'offHand'), ...(alone ? ['onlyWeapon'] : [])],
     };
     const finesse = traits.properties.includes('F');

@@ -38,6 +38,7 @@ import {
   type DeriveContext,
 } from './context.ts';
 import { chargesOf, magicWorks } from '../items/items.ts';
+import { itemBonusOff } from './itemBonuses.ts';
 import { buildRoll } from './rolls.ts';
 import { findResource, findResourceByName } from './resources.ts';
 import type {
@@ -77,7 +78,7 @@ function itemSpellBonus(ctx: DeriveContext, bonus: 'spellAttack' | 'spellSaveDc'
     const variant: Item | undefined = row.variantRef
       ? ctx.index.get({ kind: 'item', id: row.variantRef.id })
       : undefined;
-    if (!magicWorks(row, item, variant)) continue;
+    if (!magicWorks(row, item, variant) || itemBonusOff(ctx, row, bonus)) continue;
     const value = (item?.bonuses?.[bonus] ?? 0) + (variant?.bonuses?.[bonus] ?? 0);
     if (value)
       out.push({ label: variant?.name ?? item?.name ?? row.name, value, source: row.itemRef });
@@ -412,7 +413,10 @@ export function deriveSpellcasting(
           } else if (typeof uses === 'object' && 'charges' in uses) {
             // The item's row in use, and what its charges allow.
             const row = ctx.character.inventory.find(
-              (x) => x.equipped && x.itemRef?.id === source.ref.id && source.ref.kind === 'item',
+              (x) =>
+                x.equipped &&
+                source.ref.kind === 'item' &&
+                (x.itemRef?.id === source.ref.id || x.variantRef?.id === source.ref.id),
             );
             if (row) {
               const charges = chargesOf(

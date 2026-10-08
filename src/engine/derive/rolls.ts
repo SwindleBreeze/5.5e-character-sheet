@@ -18,6 +18,7 @@ import { formatValue, isDice } from '../formula/dice.ts';
 import type { AttackTraits } from '../static/attackTraits.ts';
 import { resolveBound } from '../static/bound.ts';
 import { magicWorks } from '../items/items.ts';
+import { itemBonusOff } from './itemBonuses.ts';
 import {
   contribution,
   derived,
@@ -189,7 +190,7 @@ function itemRollBonus(ctx: DeriveContext, bonus: 'savingThrow' | 'abilityCheck'
     const variant: Item | undefined = row.variantRef
       ? ctx.index.get({ kind: 'item', id: row.variantRef.id })
       : undefined;
-    if (!magicWorks(row, item, variant)) continue;
+    if (!magicWorks(row, item, variant) || itemBonusOff(ctx, row, bonus)) continue;
     const value = (item?.bonuses?.[bonus] ?? 0) + (variant?.bonuses?.[bonus] ?? 0);
     if (value)
       out.push({ label: variant?.name ?? item?.name ?? row.name, value, source: row.itemRef });

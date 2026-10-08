@@ -236,6 +236,21 @@ describe('derive: defenses', () => {
     c.inventory[1]!.attuned = false;
     expect(cloak(run(c))).toBeUndefined();
     c.inventory[1]!.attuned = true;
+    // A mapping can turn an item's own bonus off (it applies only in some cases).
+    const off = derive(c, index, {
+      registry: {
+        ...FIXTURE_FEATURE_EFFECTS,
+        'item:cloak of cheers|tst': {
+          level: 'A',
+          effects: [
+            { type: 'itemBonusOff', bonus: 'ac' },
+            { type: 'itemBonusOff', bonus: 'savingThrow' },
+          ],
+        },
+      },
+    });
+    expect(off.ac.value).toBe(17);
+    expect(cloak(off)).toBeUndefined();
     c.overrides.ac = 21;
     expect(run(c).ac.value).toBe(21);
   });

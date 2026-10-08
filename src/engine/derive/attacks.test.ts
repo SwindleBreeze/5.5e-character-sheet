@@ -422,6 +422,31 @@ describe('feature attacks, filters with alternatives, proficient-only floors (ph
     expect(bonus([row('walking staff|tst', 'bothHands')], 'walking staff')).toBe(false);
   });
 
+  it("a filter naming a magic variant matches the weapon it's applied to", () => {
+    const registry = withEffects([
+      {
+        type: 'damageRider',
+        id: 'arena-flare',
+        name: 'Arena Flare',
+        dice: '1d6',
+        filter: { itemIds: ['+1 arena weapon|tst'] },
+        optIn: false,
+      },
+    ]);
+    const d = derive(
+      brute([
+        row('net blade|tst', 'mainHand', { variantRef: item('+1 arena weapon|tst') }),
+        row('shiv|tst'),
+      ]),
+      index,
+      { registry },
+    );
+    const rider = (name: string) =>
+      d.attacks.find((a) => a.name === name)!.riders.some((r) => r.id === 'arena-flare');
+    expect(rider('net blade')).toBe(true);
+    expect(rider('shiv')).toBe(false);
+  });
+
   it('a proficient-only floor leaves rolls without proficiency alone', () => {
     const registry = withEffects([
       { type: 'rollFloor', target: 'save:str', value: 10, proficientOnly: true },

@@ -14,7 +14,7 @@ import type {
   Retrain,
   Skill,
 } from './common.ts';
-import type { ClassSpellcasting } from './content.ts';
+import type { ClassSpellcasting, ItemBonus } from './content.ts';
 
 export type ProficiencyCategory = 'skill' | 'save' | 'armor' | 'weapon' | 'tool' | 'language';
 
@@ -237,6 +237,11 @@ export type Effect =
       endsOn?: ('shortRest' | 'longRest')[];
     }
   | { type: 'note'; text: string }
+  /**
+   * An item's own bonus doesn't apply as the data gives it (Bracers of Defense: only without armor
+   * or a Shield). The item's mapping adds it back under its condition, or leaves it as a note.
+   */
+  | { type: 'itemBonusOff'; bonus: ItemBonus }
   /** Pick one of several named alternatives; `ifChoice` effects depend on the pick. */
   | { type: 'optionChoice'; choice: ChoiceSlot<string>; labels: string[] }
   /**

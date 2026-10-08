@@ -13,6 +13,8 @@ export interface AttackTraits {
   /** The ability the attack uses, once known. */
   ability?: Ability;
   itemId?: Id;
+  /** The magic variant applied to it (a Flame Tongue longsword), for filters naming it. */
+  variantId?: Id;
   /** Derived tags: `monkWeapon`, `offHand`, `twoHanded`. */
   tags: string[];
 }
@@ -68,7 +70,13 @@ export function matchesFilter(filter: AttackFilter, t: AttackTraits): boolean {
   }
   // Before the ability is chosen (the `wielding` predicate), any ability matches.
   if (filter.ability && t.ability && !filter.ability.includes(t.ability)) return false;
-  if (filter.itemIds && (!t.itemId || !filter.itemIds.includes(t.itemId))) return false;
+  if (
+    filter.itemIds &&
+    !filter.itemIds.some(
+      (id) => id === t.itemId || (t.variantId !== undefined && id === t.variantId),
+    )
+  )
+    return false;
   if (filter.tags && !filter.tags.every((tag) => t.tags.includes(tag))) return false;
   if (filter.any && !filter.any.some((f) => matchesFilter(f, t))) return false;
   return true;
