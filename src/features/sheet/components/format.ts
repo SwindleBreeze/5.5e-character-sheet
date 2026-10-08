@@ -65,3 +65,22 @@ export function rollBreakdown(
 export function extraDice(r: DerivedRoll): string {
   return r.dice.map((d) => (d.dice.startsWith('-') ? d.dice : `+${d.dice}`)).join('');
 }
+
+/** Advantage that applies only in a situation: "Advantage against being Charmed: Fey Ancestry". */
+export function situationalLines(roll: DerivedRoll): string[] {
+  return (roll.situational ?? []).map(
+    (s) =>
+      `${s.mode === 'advantage' ? 'Advantage' : 'Disadvantage'} against ${s.against}: ${s.source}`,
+  );
+}
+
+/** What changes a roll beyond its bonus: advantage and why, added dice, a floor on the d20. */
+export function rollNoteLines(r: DerivedRoll): string[] {
+  return [
+    ...r.advantage.map((a) => `Advantage: ${a}`),
+    ...r.disadvantage.map((a) => `Disadvantage: ${a}`),
+    ...situationalLines(r),
+    ...r.dice.map((d) => `Adds ${d.dice}: ${d.label}`),
+    ...(r.floor ? [`A d20 roll below ${r.floor} counts as ${r.floor}`] : []),
+  ];
+}

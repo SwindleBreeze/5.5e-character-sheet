@@ -13,6 +13,7 @@ import {
   dc,
   notIncapacitated,
   numbers,
+  savesAgainst,
   TARGETS,
   text,
   toggled,
@@ -248,6 +249,7 @@ export const SUP_FEATS: FeatureEffectsMap = {
   ]),
   [F('transmuted anatomy|au')]: numbers([
     { type: 'speedBonus', value: 5 },
+    savesAgainst('effects that would force you to shape-shift'),
     ...limited('resilient-anatomy', 'Resilient Anatomy', 'pb', 'long', 'reaction', {
       roll: '1d4',
     }),

@@ -6,11 +6,12 @@
 
 import { refKey, type Effect } from '../../../schema/index.ts';
 import {
-  AT_TABLE,
-  TARGETS,
   action,
+  AT_TABLE,
   fromData,
   numbers,
+  savesAgainst,
+  TARGETS,
   text,
   toggled,
   uses,
@@ -69,18 +70,16 @@ function enspelled(kind: string, schools: string): Record<string, FeatureMapping
 }
 
 const DRAGON_SCALE = (color: string) =>
-  numbers(
-    [
-      uses(`${color}-dragon-scale-mail`, `${titleOf(color)} Dragon Scale Mail`, 1, 'dawn'),
-      action({
-        id: `${color}-dragon-scale-mail`,
-        name: `${titleOf(color)} Dragon Scale Mail`,
-        actionType: 'action',
-        costs: [{ resource: `${color}-dragon-scale-mail`, amount: 1 }],
-      }),
-    ],
-    { notes: "Advantage on saves against a dragon's breath is applied at the table." },
-  );
+  numbers([
+    uses(`${color}-dragon-scale-mail`, `${titleOf(color)} Dragon Scale Mail`, 1, 'dawn'),
+    action({
+      id: `${color}-dragon-scale-mail`,
+      name: `${titleOf(color)} Dragon Scale Mail`,
+      actionType: 'action',
+      costs: [{ resource: `${color}-dragon-scale-mail`, amount: 1 }],
+    }),
+    savesAgainst('the breath weapons of Dragons'),
+  ]);
 
 const VECNA_TOUCH: Effect = {
   type: 'damageRider',
@@ -391,9 +390,10 @@ export const ITEMS_D_TO_H: FeatureEffectsMap = {
   [I('helm of teleportation')]: fromData(),
   [I("heward's handy haversack")]: text(),
   [I("heward's handy spice pouch")]: text(),
-  [I('holy avenger')]: numbers([rider('holy avenger', '2d10', 'radiant')], {
-    notes: 'Its aura’s Advantage on saves against magic is applied at the table.',
-  }),
+  [I('holy avenger')]: numbers([
+    rider('holy avenger', '2d10', 'radiant'),
+    savesAgainst('spells and other magical effects (the aura, while the sword is drawn)'),
+  ]),
   [I('horn of blasting')]: numbers([
     action({
       id: 'horn-of-blasting',

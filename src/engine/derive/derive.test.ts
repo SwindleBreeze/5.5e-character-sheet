@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import type { Character } from '../../schema/index.ts';
+import { refKey, type Character } from '../../schema/index.ts';
+import { savesAgainst } from '../featureEffects/core/helpers.ts';
 import { testCharacter, type TestChoice } from '../../test/characters.ts';
 import { fixtureIndex } from '../../test/fixtureIndex.ts';
 import { FIXTURE_FEATURE_EFFECTS } from '../../test/fixtureFeatureEffects.ts';
@@ -129,6 +130,52 @@ describe('derive: abilities and rolls', () => {
     // Passive scores get +5 for advantage.
     expect(d.passives.perception.value).toBe(14);
     expect(d.skills.athletics.passive.value).toBe(22);
+  });
+
+  it('advantage in a situation is listed with the roll, not applied to it', () => {
+    const registry = {
+      ...FIXTURE_FEATURE_EFFECTS,
+      [refKey(species)]: {
+        ...FIXTURE_FEATURE_EFFECTS[refKey(species)],
+        level: 'A' as const,
+        effects: [
+          ...(FIXTURE_FEATURE_EFFECTS[refKey(species)]?.effects ?? []),
+          savesAgainst('being Charmed'),
+          {
+            type: 'rollMode' as const,
+            target: 'attack:all' as const,
+            mode: 'disadvantage' as const,
+            note: 'Not the shiv',
+            filter: { source: ['weapon' as const], notItemIds: ['shiv|tst'] },
+          },
+        ],
+      },
+    };
+    const c = brute();
+    c.inventory.push(
+      {
+        uid: 'shiv',
+        itemRef: item('shiv|tst'),
+        name: 'shiv',
+        quantity: 1,
+        attuned: false,
+        equipped: 'mainHand',
+      },
+      { uid: 'bow', itemRef: item('arc bow|tst'), name: 'arc bow', quantity: 1, attuned: false },
+    );
+    const d = derive(c, index, { registry });
+    expect(d.saves.wis).toMatchObject({
+      mode: 'normal',
+      advantage: [],
+      situational: [{ mode: 'advantage', against: 'being Charmed', source: 'Mossling' }],
+    });
+    expect(d.concentration.situational).toHaveLength(1);
+    expect(d.checks.wis.situational).toBeUndefined();
+    const shiv = d.attacks.find((a) => a.name === 'shiv')!;
+    const bow = d.attacks.find((a) => a.name === 'arc bow')!;
+    expect(shiv.toHit?.mode).toBe('normal');
+    expect(bow.toHit).toMatchObject({ mode: 'disadvantage', disadvantage: ['Not the shiv'] });
+    expect(d.attacks.find((a) => a.id === 'unarmed')!.toHit?.mode).toBe('normal');
   });
 
   it('exhaustion: −2 per level on d20 tests, −5 ft per level of speed', () => {

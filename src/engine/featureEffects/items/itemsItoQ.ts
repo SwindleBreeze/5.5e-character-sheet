@@ -7,13 +7,22 @@
 
 import { refKey, type Ability, type Effect } from '../../../schema/index.ts';
 import type { FeatureEffectsMap, FeatureMapping } from '../types.ts';
-import { action, AT_TABLE, fromData, numbers, TARGETS, text, uses, when } from '../core/helpers.ts';
+import {
+  action,
+  AT_TABLE,
+  fromData,
+  numbers,
+  savesAgainst,
+  TARGETS,
+  text,
+  uses,
+  when,
+} from '../core/helpers.ts';
 
 const I = (name: string) => refKey({ kind: 'item', id: `${name}|xdmg` });
 const own = (name: string) => ({ itemIds: [`${name}|xdmg`] });
 
-const CONDITION_SAVES = 'rollMode on saves against a single condition';
-const vsPoisoned = 'Advantage on saves to avoid or end Poisoned is not shown on the save rows.';
+const vsPoisoned = savesAgainst('being Poisoned');
 /** Variant weapons are rows of their base weapon, so a filter can only name the base. */
 
 /** An Ioun Stone that raises one score by 2, to at most 20. */
@@ -290,14 +299,11 @@ export const ITEMS_I_TO_Q: FeatureEffectsMap = {
   [I('mithral armor')]: text({
     needs: "a way to waive worn armor's Strength requirement and Stealth Disadvantage",
   }),
-  [I('mantle of spell resistance')]: text({
-    notes: 'Advantage on saves against spells is not shown on the save rows.',
-    needs: 'rollMode on saves against spells',
-  }),
+  [I('mantle of spell resistance')]: numbers([savesAgainst('spells')]),
   [I("nature's mantle")]: numbers([
     action({ id: 'natures-mantle', name: "Hide (Nature's Mantle)", actionType: 'bonus' }),
   ]),
-  [I('necklace of adaptation')]: text({ notes: vsPoisoned, needs: CONDITION_SAVES }),
+  [I('necklace of adaptation')]: numbers([vsPoisoned]),
   [I('necklace of prayer beads')]: text({ unoffered: 'The DM picks each bead’s type.' }),
   [I('pearl of power')]: numbers([
     uses('pearl-of-power', 'Pearl of Power', 1, 'dawn'),
@@ -309,20 +315,18 @@ export const ITEMS_I_TO_Q: FeatureEffectsMap = {
       outcomes: [{ regainSlot: { maxLevel: 3 } }],
     }),
   ]),
-  [I('periapt of health')]: numbers(
-    [
-      uses('periapt-of-health', 'Periapt of Health', 1, 'dawn'),
-      action({
-        id: 'periapt-of-health',
-        name: 'Periapt of Health',
-        actionType: 'action',
-        costs: [{ resource: 'periapt-of-health', amount: 1 }],
-        roll: '2d4 + 2',
-        outcomes: [{ heal: '2d4 + 2' }],
-      }),
-    ],
-    { notes: vsPoisoned, needs: CONDITION_SAVES },
-  ),
+  [I('periapt of health')]: numbers([
+    uses('periapt-of-health', 'Periapt of Health', 1, 'dawn'),
+    action({
+      id: 'periapt-of-health',
+      name: 'Periapt of Health',
+      actionType: 'action',
+      costs: [{ resource: 'periapt-of-health', amount: 1 }],
+      roll: '2d4 + 2',
+      outcomes: [{ heal: '2d4 + 2' }],
+    }),
+    vsPoisoned,
+  ]),
   [I('periapt of proof against poison')]: numbers([
     { type: 'conditionImmunity', value: 'poisoned' },
   ]),

@@ -97,10 +97,10 @@ export const GOLDENS: Record<string, Record<number, string>> = {
   },
   'battle smith|artificer|efa|efa': {
     1: "AC 14 HP 11 PB +2 ×1 | Dagger +4 1d4+2 | DC 12 init +4 speed 30 | saves CON INT slots 1:2 | Tinker's Magic 2",
-    3: "AC 14 HP 27 PB +2 ×1 | Dagger +4 1d4+2 | DC 12 init +4 speed 30 | saves CON INT slots 1:3 | Tinker's Magic 2 | switches Magic weapon (Battle Ready)",
-    5: "AC 14 HP 48 PB +3 ×2 | Dagger +5 1d4+2 | DC 13 init +5 speed 30 | saves CON INT slots 1:4 2:2 | Tinker's Magic 2 | switches Magic weapon (Battle Ready)",
-    11: "AC 14 HP 113 PB +4 ×2 | Dagger +6 1d4+2 | DC 14 init +6 speed 30 | saves CON INT slots 1:4 2:3 3:3 | Tinker's Magic 2, Drain Magic Item 1, Transmute Magic Item 1, Flash of Genius 2, Spell-Storing Item 4, Arcane Jolt 2 | switches Magic weapon (Battle Ready)",
-    20: "AC 14 HP 203 PB +6 ×2 | Dagger +8 1d4+2 | DC 16 init +8 speed 30 | saves CON INT slots 1:4 2:3 3:3 4:3 5:2 | Tinker's Magic 2, Drain Magic Item 1, Transmute Magic Item 1, Flash of Genius 2, Spell-Storing Item 4, Arcane Jolt 2 | switches Magic weapon (Battle Ready)",
+    3: "AC 14 HP 27 PB +2 ×1 | Dagger +4 1d4+2 | DC 12 init +4 speed 30 | saves CON INT slots 1:3 | Tinker's Magic 2 | switches Other weapons count as magic (Battle Ready)",
+    5: "AC 14 HP 48 PB +3 ×2 | Dagger +5 1d4+2 | DC 13 init +5 speed 30 | saves CON INT slots 1:4 2:2 | Tinker's Magic 2 | switches Other weapons count as magic (Battle Ready)",
+    11: "AC 14 HP 113 PB +4 ×2 | Dagger +6 1d4+2 | DC 14 init +6 speed 30 | saves CON INT slots 1:4 2:3 3:3 | Tinker's Magic 2, Drain Magic Item 1, Transmute Magic Item 1, Flash of Genius 2, Spell-Storing Item 4, Arcane Jolt 2 | switches Other weapons count as magic (Battle Ready)",
+    20: "AC 14 HP 203 PB +6 ×2 | Dagger +8 1d4+2 | DC 16 init +8 speed 30 | saves CON INT slots 1:4 2:3 3:3 4:3 5:2 | Tinker's Magic 2, Drain Magic Item 1, Transmute Magic Item 1, Flash of Genius 2, Spell-Storing Item 4, Arcane Jolt 2 | switches Other weapons count as magic (Battle Ready)",
   },
   'beast master|ranger|xphb|xphb': {
     1: 'AC 15 HP 12 PB +2 ×1 | Scimitar +5 1d6+3 | DC 12 init +5 speed 30 | saves STR DEX slots 1:2 | no counters',

@@ -8,6 +8,7 @@ import type { FeatureEffectsMap } from '../types.ts';
 import {
   action,
   AT_TABLE,
+  attacksAgainst,
   dc,
   fromData,
   notIncapacitated,
@@ -218,6 +219,7 @@ export const PALADIN: FeatureEffectsMap = {
   [S('vengeance', 'oath of vengeance spells', 3)]: text(),
   [S('vengeance', 'vow of enmity', 3)]: numbers([
     action({ id: 'vow-of-enmity', name: 'Vow of Enmity', actionType: 'other', costs: [divinity] }),
+    attacksAgainst('the target of your Vow of Enmity'),
   ]),
   [S('vengeance', 'relentless avenger', 7)]: text(),
   [S('vengeance', 'soul of vengeance', 15)]: text(),

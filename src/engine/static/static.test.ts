@@ -81,6 +81,19 @@ describe('equipment and wield state (P2)', () => {
     expect(matchesFilter({ itemIds: ['shiv|tst'] }, shiv)).toBe(true);
     expect(matchesFilter({ ability: ['str'] }, shiv)).toBe(true);
     expect(matchesFilter({ ability: ['str'] }, { ...shiv, ability: 'dex' })).toBe(false);
+    // Every weapon but one (a cursed weapon's hold), by the item or its variant.
+    expect(matchesFilter({ notItemIds: ['shiv|tst'] }, shiv)).toBe(false);
+    expect(matchesFilter({ notItemIds: ['axe|tst'] }, shiv)).toBe(true);
+    expect(matchesFilter({ notItemIds: ['axe|tst'] }, { ...shiv, variantId: 'axe|tst' })).toBe(
+      false,
+    );
+    // Magic weapons: a magic item, or a mundane one with a magic variant.
+    expect(matchesFilter({ magic: true }, shiv)).toBe(false);
+    expect(matchesFilter({ magic: false }, shiv)).toBe(true);
+    expect(matchesFilter({ magic: true }, { ...shiv, magic: true })).toBe(true);
+    expect(weaponTraits({ ...(index.get(item('shiv|tst')) as Item), rarity: 'rare' }).magic).toBe(
+      true,
+    );
   });
 });
 

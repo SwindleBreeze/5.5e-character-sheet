@@ -6,7 +6,18 @@
 // Consumables, vehicles and properties decided at the table stay text.
 
 import { refKey, type Effect } from '../../../schema/index.ts';
-import { action, AT_TABLE, fromData, numbers, text, toggled, uses, when } from '../core/helpers.ts';
+import {
+  action,
+  AT_TABLE,
+  fromData,
+  numbers,
+  onlyThisWeapon,
+  savesAgainst,
+  text,
+  toggled,
+  uses,
+  when,
+} from '../core/helpers.ts';
 import type { FeatureEffectsMap, FeatureMapping } from '../types.ts';
 
 const I = (id: string) => refKey({ kind: 'item', id: `${id}|xdmg` });
@@ -75,9 +86,10 @@ function wraps(n: number): FeatureMapping {
 }
 
 // ---- Dragon Scale Mail: AC and resistance are data; the dragon sense is once a dawn ----
-const dragonScale = numbers(oncePerDawn('dragon-scale-mail', 'Dragon Sense'), {
-  notes: 'Advantage on saves against Dragons’ breath weapons is situational.',
-});
+const dragonScale = numbers([
+  ...oncePerDawn('dragon-scale-mail', 'Dragon Sense'),
+  savesAgainst('Dragons’ breath weapons'),
+]);
 
 // ---- Elemental summoners: once a dawn ----
 const summoner = (id: string, name: string) => numbers(oncePerDawn(id, name));
@@ -222,16 +234,20 @@ export const ITEMS_A_TO_C: FeatureEffectsMap = {
       { type: 'proficiency', category: 'language', value: 'dwarvish' },
       { type: 'abilityBonus', ability: 'con', value: 2, max: 20 },
       { type: 'sense', sense: 'darkvision', range: 60 },
+      savesAgainst('being Poisoned'),
+      {
+        type: 'rollMode',
+        target: 'skill:persuasion',
+        mode: 'advantage',
+        against: 'dwarves and duergar',
+      },
     ],
-    {
-      notes:
-        'Darkvision and the poison benefits are for wearers who aren’t dwarves or duergar; the advantages are situational.',
-    },
+    { notes: 'Darkvision and the poison benefits are for wearers who aren’t dwarves or duergar.' },
   ),
-  [I('berserker axe')]: numbers([{ type: 'hpBonus', perLevel: 1 }], {
-    notes: 'Cursed: attacks with other weapons have Disadvantage.',
-    needs: 'disadvantage on attacks with every weapon but one item',
-  }),
+  [I('berserker axe')]: numbers([
+    { type: 'hpBonus', perLevel: 1 },
+    ...onlyThisWeapon('berserker axe|xdmg', 'Berserker Axe'),
+  ]),
   [I('black dragon scale mail')]: dragonScale,
   [I('blue dragon scale mail')]: dragonScale,
   [I('brass dragon scale mail')]: dragonScale,

@@ -12,6 +12,7 @@ import {
   fromData,
   numbers,
   restoredBy,
+  savesAgainst,
   TARGETS,
   text,
   toggled,
@@ -89,7 +90,10 @@ export const SORCERER: FeatureEffectsMap = {
     { unoffered: TARGETS },
   ),
   [S('aberrant', 'psionic sorcery', 6)]: text(),
-  [S('aberrant', 'psychic defenses', 6)]: numbers([{ type: 'resistance', value: 'psychic' }]),
+  [S('aberrant', 'psychic defenses', 6)]: numbers([
+    { type: 'resistance', value: 'psychic' },
+    savesAgainst('being Charmed or Frightened'),
+  ]),
   [S('aberrant', 'revelation in flesh', 14)]: numbers(
     [
       action({

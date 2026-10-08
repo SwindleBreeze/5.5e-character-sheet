@@ -76,8 +76,33 @@ const PULSE: AttackFilter = {
   notProperties: ['F', 'L', 'H', '2H', 'R', 'T', 'V'],
 };
 
-// ---- Battle Smith: attacks with a magic weapon (no item filter for magic yet) ----
+// ---- Battle Smith: attacks with a magic weapon. The sheet knows magic items and variants; a
+// switch makes the other weapons count (one made magic by a spell). ----
 const magicWeapon = { toggle: 'battle-ready' };
+const battleReady: Extract<Effect, { type: 'attackMod' }> = {
+  type: 'attackMod',
+  label: 'Battle Ready',
+  filter: { source: ['weapon'] },
+  abilities: ['int'],
+};
+const arcaneJolt: Extract<Effect, { type: 'damageRider' }> = {
+  type: 'damageRider',
+  id: 'arcane-jolt',
+  name: 'Arcane Jolt',
+  dice: 'steps(level.artificer, 9, 2d6, 15, 4d6)',
+  damageType: 'force',
+  filter: { source: ['weapon'] },
+  oncePerTurn: true,
+  cost: { resource: 'arcane-jolt', amount: 1 },
+  optIn: true,
+};
+/** On magic weapons always; on the others while the switch is on. */
+const onMagicWeapons = (
+  effect: Extract<Effect, { type: 'attackMod' | 'damageRider' }>,
+): Effect[] => {
+  const on = (magic: boolean): Effect => ({ ...effect, filter: { ...effect.filter, magic } });
+  return [on(true), when(magicWeapon, [on(false)])];
+};
 
 // ---- Cartographer ----
 const mapHolder = { toggle: 'atlas-map' };
@@ -370,27 +395,18 @@ export const SUP_ARTIFICER_SUBCLASSES: FeatureEffectsMap = {
     notes: 'Crafting weapons takes half the time.',
   }),
   [S('battle smith', 'battle smith spells', 3)]: text(),
-  // Intelligence for attacks with a magic weapon: a switch, as the sheet can't tell magic
-  // weapons apart in a filter.
-  [S('battle smith', 'battle ready', 3)]: toggled(
-    [
-      { type: 'proficiency', category: 'weapon', value: 'martial' },
-      {
-        type: 'toggle',
-        toggleId: 'battle-ready',
-        name: 'Magic weapon (Battle Ready)',
-        effects: [
-          {
-            type: 'attackMod',
-            label: 'Battle Ready',
-            filter: { source: ['weapon'] },
-            abilities: ['int'],
-          },
-        ],
-      },
-    ],
-    { needs: 'an attack filter for magic weapons (a switch stands in)' },
-  ),
+  // Intelligence for attacks with a magic weapon; the switch is for a weapon made magic by a
+  // spell, which the sheet can't see.
+  [S('battle smith', 'battle ready', 3)]: toggled([
+    { type: 'proficiency', category: 'weapon', value: 'martial' },
+    {
+      type: 'toggle',
+      toggleId: 'battle-ready',
+      name: 'Other weapons count as magic (Battle Ready)',
+      effects: [],
+    },
+    ...onMagicWeapons(battleReady),
+  ]),
   [S('battle smith', 'steel defender', 3)]: numbers([
     action({ id: 'command-steel-defender', name: 'Command Steel Defender', actionType: 'bonus' }),
     action({
@@ -408,19 +424,7 @@ export const SUP_ARTIFICER_SUBCLASSES: FeatureEffectsMap = {
   [S('battle smith', 'arcane jolt', 9)]: numbers(
     [
       uses('arcane-jolt', 'Arcane Jolt', intUses, 'long'),
-      when(magicWeapon, [
-        {
-          type: 'damageRider',
-          id: 'arcane-jolt',
-          name: 'Arcane Jolt',
-          dice: 'steps(level.artificer, 9, 2d6, 15, 4d6)',
-          damageType: 'force',
-          filter: { source: ['weapon'] },
-          oncePerTurn: true,
-          cost: spend('arcane-jolt'),
-          optIn: true,
-        },
-      ]),
+      ...onMagicWeapons(arcaneJolt),
       action({
         id: 'arcane-jolt-healing',
         name: 'Arcane Jolt: Restorative Energy',

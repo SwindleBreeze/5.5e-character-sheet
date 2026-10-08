@@ -5,7 +5,7 @@
 
 import { refKey } from '../../../schema/index.ts';
 import type { FeatureEffectsMap } from '../types.ts';
-import { action, dc, numbers, text, uses, when } from './helpers.ts';
+import { action, attacksAgainst, dc, numbers, text, uses, when } from './helpers.ts';
 
 const F = (id: string) => refKey({ kind: 'feat', id: `${id}|xphb` });
 
@@ -107,7 +107,7 @@ export const FEATS: FeatureEffectsMap = {
   [F('elemental adept')]: text({
     unoffered: 'Its damage type is noted at the table; the app doesn’t track spell damage types.',
   }),
-  [F('grappler')]: text(),
+  [F('grappler')]: numbers([attacksAgainst('a creature you have Grappled')]),
   [F('great weapon master')]: numbers([
     {
       type: 'attackMod',
@@ -135,7 +135,9 @@ export const FEATS: FeatureEffectsMap = {
     }),
   ]),
   [F('medium armor master')]: text(),
-  [F('mounted combatant')]: text(),
+  [F('mounted combatant')]: numbers([
+    attacksAgainst('smaller unmounted creatures within 5 feet of your mount, while mounted'),
+  ]),
   [F('piercer')]: text(),
   [F('poisoner')]: text(),
   [F('polearm master')]: text(),

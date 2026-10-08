@@ -61,6 +61,10 @@ export interface AttackFilter {
   /** The attack uses one of these abilities. */
   ability?: Ability[];
   itemIds?: Id[];
+  /** Every weapon but these (a Berserker Axe's curse: attacks with other weapons). */
+  notItemIds?: Id[];
+  /** A magic weapon (`true`: a magic item, or a mundane one with a magic variant) or not. */
+  magic?: boolean;
   /**
    * Derived tags, e.g. `monkWeapon`, `pactWeapon`, `offHand`, `onlyWeapon` (a weapon used in
    * one hand with no other weapon held).
@@ -286,7 +290,19 @@ export type Effect =
       optIn: boolean;
     }
   /** P9: advantage or disadvantage on a roll. */
-  | { type: 'rollMode'; target: RollTarget; mode: 'advantage' | 'disadvantage'; note?: string }
+  | {
+      type: 'rollMode';
+      target: RollTarget;
+      mode: 'advantage' | 'disadvantage';
+      note?: string;
+      /**
+       * Only in a situation (`being Charmed`, `spells`): listed with the roll, not applied to it
+       * (Fey Ancestry: Advantage on saves against being Charmed).
+       */
+      against?: string;
+      /** For attack targets: only attacks that match (Berserker Axe: every weapon but itself). */
+      filter?: AttackFilter;
+    }
   /** P9: a bonus to a roll. */
   | { type: 'rollBonus'; target: RollTarget; value: Formula; note?: string }
   /** P9: half proficiency on these rolls when not proficient (Jack of All Trades). */

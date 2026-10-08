@@ -15,7 +15,7 @@ import {
 import { choiceKey } from '../collect/collect.ts';
 import type { EffectSource } from '../collect/types.ts';
 import { formatValue, isDice } from '../formula/dice.ts';
-import type { AttackTraits } from '../static/attackTraits.ts';
+import { matchesFilter, type AttackTraits } from '../static/attackTraits.ts';
 import { resolveBound } from '../static/bound.ts';
 import { magicWorks } from '../items/items.ts';
 import { itemBonusOff } from './itemBonuses.ts';
@@ -240,8 +240,15 @@ export function buildRoll(
 
   const advantage: string[] = [];
   const disadvantage: string[] = [];
+  const situational: NonNullable<DerivedRoll['situational']> = [];
   for (const { effect, source } of effectsOfType(ctx.collected, 'rollMode')) {
     if (!targetMatches(effect.target, kind)) continue;
+    if (effect.filter && (kind.type !== 'attack' || !matchesFilter(effect.filter, kind.traits)))
+      continue;
+    if (effect.against) {
+      situational.push({ mode: effect.mode, against: effect.against, source: source.name });
+      continue;
+    }
     (effect.mode === 'advantage' ? advantage : disadvantage).push(effect.note ?? source.name);
   }
   // Armor without training: Disadvantage on D20 Tests that involve Strength or Dexterity.
@@ -276,6 +283,7 @@ export function buildRoll(
     disadvantage,
   };
   if (floor !== undefined) roll.floor = floor;
+  if (situational.length) roll.situational = situational;
   return roll;
 }
 

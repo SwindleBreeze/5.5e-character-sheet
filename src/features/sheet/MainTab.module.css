@@ -113,3 +113,11 @@
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
 }
+
+/* Advantage that applies only in a situation, under the rows it concerns. */
+.sectionNote {
+  margin: var(--space-2) 0 0;
+  padding: 0 var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}

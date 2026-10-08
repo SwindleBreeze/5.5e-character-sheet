@@ -46,6 +46,8 @@ export interface DerivedRoll {
   disadvantage: string[];
   /** A d20 below this counts as this (Reliable Talent). */
   floor?: number;
+  /** Advantage or Disadvantage in a situation only (against being Charmed), with its source. */
+  situational?: { mode: 'advantage' | 'disadvantage'; against: string; source: string }[];
 }
 
 export interface DerivedSkill extends DerivedRoll {
