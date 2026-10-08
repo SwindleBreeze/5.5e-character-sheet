@@ -16,6 +16,8 @@ import type { SheetBindings } from '../sheetBindings.ts';
 import inventory from '../inventory/inventory.module.css';
 import styles from './features.module.css';
 import { choiceTitle, choiceValues } from '../../choices/labels.ts';
+import { Glance } from './Glance.tsx';
+import { glanceResources } from './glanceResources.ts';
 
 export function FeatureRow({
   feature,
@@ -84,6 +86,7 @@ export function FeatureRow({
         </span>
         {meta.length > 0 && <span className={inventory.muted}>{meta.join(' · ')}</span>}
       </div>
+      <Glance entries={entries} resources={glanceResources(feature, sheet)} countersShown />
 
       {resources.length > 0 && (
         <div className={styles.counters}>

@@ -77,3 +77,9 @@
   flex: 1 1 100%;
   padding-bottom: var(--space-2);
 }
+
+/* A feature at a glance: how it is used, its uses, a save, how long it lasts. */
+.glance {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}

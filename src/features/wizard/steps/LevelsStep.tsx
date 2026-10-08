@@ -17,6 +17,8 @@ import { Button } from '../../../ui/Button.tsx';
 import page from '../../../app/Page.module.css';
 import choices from '../../choices/choices.module.css';
 import { FeatureChoices } from '../../choices/FeatureChoices.tsx';
+import { Glance } from '../../sheet/features/Glance.tsx';
+import { glanceResources } from '../../sheet/features/glanceResources.ts';
 import { RollInput } from '../../levelup/steps.tsx';
 import inventory from '../../sheet/inventory/inventory.module.css';
 import { choiceContext, type WizardBindings } from '../bindings.ts';
@@ -86,6 +88,19 @@ export function LevelsStep(b: WizardBindings) {
                   )}
                 </summary>
                 <div className={styles.levelBody}>
+                  {gained.length > 0 && (
+                    <ul className={styles.levelFeatures} aria-label="New features">
+                      {gained.map((f) => (
+                        <li key={refKey(f.ref)}>
+                          <strong>{f.name}</strong>
+                          <Glance
+                            entries={content.index.get(f.ref)?.entries ?? []}
+                            resources={glanceResources(f, sheet)}
+                          />
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                   <label className={styles.menu}>
                     <span className={inventory.fieldLabel}>Class</span>
                     <select

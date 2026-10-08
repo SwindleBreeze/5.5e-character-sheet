@@ -5,13 +5,15 @@ import type { ContentIndex } from '../../engine/content/contentIndex.ts';
 import type { ClassOption, LevelUpPlan } from '../../engine/build/levelUp.ts';
 import type { DerivedSheet } from '../../engine/derive/types.ts';
 import { EntityView } from '../../richtext/EntitySheet.tsx';
+import { Glance } from '../sheet/features/Glance.tsx';
+import { glanceResources } from '../sheet/features/glanceResources.ts';
 import type { AutoContext } from '../../engine/build/autoChoose.ts';
 import type { DerivedFeatureChoice } from '../../engine/derive/types.ts';
 import { ChoicePicker } from '../choices/ChoicePicker.tsx';
 import { choiceTitle } from '../choices/labels.ts';
 import type { PickSave } from '../choices/picks.ts';
 import { isSpellOffer } from '../wizard/progress.ts';
-import type { HpGain, Ref } from '../../schema/index.ts';
+import { refKey, type HpGain, type Ref } from '../../schema/index.ts';
 import { Button } from '../../ui/Button.tsx';
 import { useRoller } from '../../ui/rollerContext.ts';
 import { useSheet } from '../../ui/sheetContext.ts';
@@ -237,6 +239,15 @@ export function FeaturesList({
         return (
           <article key={f.ref.id} className={styles.feature} aria-label={f.name}>
             <h3 className={choices.choiceTitle}>{f.name}</h3>
+            {entity && (
+              <Glance
+                entries={entity.entries}
+                resources={glanceResources(
+                  plan.sheet.features.find((x) => refKey(x.ref) === refKey(f.ref)),
+                  plan.sheet,
+                )}
+              />
+            )}
             {entity && <EntityView entity={entity} bare />}
           </article>
         );

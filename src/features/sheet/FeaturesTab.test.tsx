@@ -122,6 +122,11 @@ describe('Features tab', () => {
     expect(section('Species').getByRole('listitem', { name: 'Mossling' })).toBeTruthy();
     expect(section('Background').getByRole('listitem', { name: 'Arena Hand' })).toBeTruthy();
 
+    // At a glance: how it is used, from its text.
+    expect(row('Showmanship').querySelector('[data-kind="glance"]')?.textContent).toBe(
+      'Bonus Action',
+    );
+
     // A counter, spent in place.
     expect(within(row('Arena Training')).getByRole('group', { name: /left$/ })).toBeTruthy();
   });
