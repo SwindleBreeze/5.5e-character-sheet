@@ -9,6 +9,7 @@ import { CLERIC } from './core/cleric.ts';
 import { DRUID } from './core/druid.ts';
 import { FIGHTER } from './core/fighter.ts';
 import { MONK } from './core/monk.ts';
+import { PALADIN } from './core/paladin.ts';
 import { registerFeatureEffects } from './registry.ts';
 
 registerFeatureEffects(CORE_LEVELS_1_TO_3);
@@ -19,5 +20,6 @@ registerFeatureEffects(CLERIC);
 registerFeatureEffects(DRUID);
 registerFeatureEffects(FIGHTER);
 registerFeatureEffects(MONK);
+registerFeatureEffects(PALADIN);
 
 export { featureEffects, registerFeatureEffects } from './registry.ts';

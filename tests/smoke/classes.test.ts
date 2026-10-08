@@ -242,4 +242,33 @@ describe.skipIf(!root)('class golden checks (local data)', () => {
       `1d12 + ${twenty.abilities.wis.mod}`,
     );
   });
+
+  it('Paladin: Lay on Hands, Channel Divinity, Aura of Protection, Radiant Strikes, the four oaths', () => {
+    const one = build('paladin', 1);
+    expect(resource(one, 'Lay on Hands')).toMatchObject({ pool: true, recharge: 'long' });
+    expect(resource(one, 'Lay on Hands')?.max.value).toBe(5);
+
+    const six = build('paladin', 6, 'glory');
+    const five = build('paladin', 5, 'glory');
+    // Aura of Protection: the Charisma modifier (at least +1) on every save.
+    expect(six.saves.wis.bonus.value).toBe(
+      five.saves.wis.bonus.value + Math.max(1, six.abilities.cha.mod),
+    );
+    expect(resource(six, 'Channel Divinity')?.max.value).toBe(2);
+    expect(build('paladin', 7, 'glory').speed.walk?.value).toBe(40);
+
+    const plain = build('paladin', 3, 'devotion');
+    const sacred = build('paladin', 3, 'devotion', ['sacred-weapon']);
+    expect(attack(sacred, 'Longsword').toHit!.bonus.value).toBe(
+      attack(plain, 'Longsword').toHit!.bonus.value + Math.max(1, plain.abilities.cha.mod),
+    );
+
+    const eleven = build('paladin', 11, 'ancients');
+    expect(resource(eleven, 'Channel Divinity')?.max.value).toBe(3);
+    expect(attack(eleven, 'Longsword').riders.find((r) => r.id === 'radiant-strikes')?.dice).toBe(
+      '1d8',
+    );
+    expect(values(eleven.defenses.resistances)).toEqual(['necrotic', 'psychic', 'radiant']);
+    expect(values(eleven.defenses.conditionImmunities)).toEqual(['frightened']);
+  });
 });
