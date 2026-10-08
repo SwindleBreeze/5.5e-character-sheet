@@ -336,4 +336,22 @@ describe.skipIf(!root)('class golden checks (local data)', () => {
     expect(fifteen.saves.cha.proficiency).toBe('proficient');
     expect(fifteen.initiative.mode).toBe('advantage');
   });
+
+  it('Sorcerer: Innate Sorcery, Sorcery Points, Sorcerous Restoration and the four subclasses', () => {
+    const caster = (s: DerivedSheet) => s.spellcasting.casters.find((c) => c.name === 'Sorcerer')!;
+    const plain = build('sorcerer', 2);
+    const innate = build('sorcerer', 2, undefined, ['innate-sorcery']);
+    expect(resource(plain, 'Innate Sorcery')?.max.value).toBe(2);
+    expect(caster(innate).dc.value).toBe(caster(plain).dc.value + 1);
+    expect(resource(plain, 'Sorcery Points')?.max.value).toBe(2);
+
+    const draconic = build('sorcerer', 6, 'draconic');
+    const wild = build('sorcerer', 6, 'wild magic');
+    expect(draconic.hp.max.value).toBe(wild.hp.max.value + 6);
+    expect(draconic.ac.value).toBe(10 + draconic.abilities.dex.mod + draconic.abilities.cha.mod);
+    expect(draconic.defenses.resistances).toHaveLength(1);
+    expect(resource(draconic, 'Sorcerous Restoration')?.max.value).toBe(1);
+    expect(resource(build('sorcerer', 20, 'clockwork'), 'Sorcery Points')?.max.value).toBe(20);
+    expect(values(build('sorcerer', 6, 'aberrant').defenses.resistances)).toEqual(['psychic']);
+  });
 });
