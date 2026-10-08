@@ -10,6 +10,8 @@ export interface Settings {
   autoBackupHandle: FileSystemFileHandle | null;
   /** What the last content import did, shown on the import screen. */
   lastImport: ImportSummary | null;
+  /** The install card was put away on the Characters screen (it stays in Settings). */
+  installCardDismissed: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -17,6 +19,7 @@ export const DEFAULT_SETTINGS: Settings = {
   lastBackupAt: null,
   autoBackupHandle: null,
   lastImport: null,
+  installCardDismissed: false,
 };
 
 export function createSettingsRepo(db: AppDb = getDb()) {

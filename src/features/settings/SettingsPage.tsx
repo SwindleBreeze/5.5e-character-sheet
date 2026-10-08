@@ -1,13 +1,11 @@
-import { useMemo } from 'react';
 import { Link } from 'react-router';
 import { TopBar } from '../../app/TopBar.tsx';
 import page from '../../app/Page.module.css';
 import { useTheme } from '../../app/theme/useTheme.ts';
 import type { ThemePref } from '../../app/theme/theme.ts';
-import { detectEnv, shouldShowInstallGuide } from '../../db/storage.ts';
 import { SourceToggles } from '../sources/SourceToggles.tsx';
 import { BackupCard } from './BackupCard.tsx';
-import { InstallGuide } from './InstallGuide.tsx';
+import { InstallCard } from './InstallCard.tsx';
 import { StorageCard } from './StorageCard.tsx';
 import styles from './SettingsPage.module.css';
 
@@ -19,7 +17,6 @@ const THEMES: { value: ThemePref; label: string }[] = [
 
 export function SettingsPage() {
   const [theme, setTheme] = useTheme();
-  const showInstallGuide = useMemo(() => shouldShowInstallGuide(detectEnv()), []);
 
   return (
     <>
@@ -59,7 +56,7 @@ export function SettingsPage() {
           </p>
         </section>
 
-        {showInstallGuide && <InstallGuide />}
+        <InstallCard />
         <BackupCard />
         <StorageCard />
 
