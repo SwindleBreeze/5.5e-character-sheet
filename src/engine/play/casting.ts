@@ -6,6 +6,7 @@
 //   at a higher level) if it is prepared, or, for a Wizard, if it is in the spellbook;
 // - spells from feats, species and items have their own free uses; a feat's or species'
 //   spell can also be cast with a slot, an item's (paid from its charges) can't.
+// - an item's spell paid in charges is cast while the item has that many charges left.
 
 import type { DerivedGrantedSpell, DerivedSheet } from '../derive/types.ts';
 import type { Spell } from '../../schema/index.ts';
@@ -15,7 +16,8 @@ export type CastWay =
   | { kind: 'cantrip' }
   | { kind: 'slot'; level: number; pact?: boolean; left: number }
   | { kind: 'ritual' }
-  | { kind: 'free'; level: number; left?: number }
+  /** A free cast: the grant's own uses, or (`charges`) that many of the item's charges. */
+  | { kind: 'free'; level: number; left?: number; charges?: number }
   | { kind: 'atWill'; level: number };
 
 /** Where the character has a spell from. */
@@ -33,6 +35,8 @@ export function isConcentration(spell: Spell): boolean {
 /** Free uses of a granted spell that are left, or undefined when it has none to count. */
 function freeLeft(sheet: DerivedSheet, g: DerivedGrantedSpell): number | undefined {
   if (g.usesMax !== undefined) return g.usesMax - (g.usesUsed ?? 0);
+  if (g.chargesRow !== undefined)
+    return Math.floor((g.chargesLeft ?? 0) / Math.max(1, g.cost ?? 1));
   if (g.resourceKey) {
     const r = sheet.resources.find((x) => x.key === g.resourceKey);
     return r ? Math.floor((r.max.value - r.used) / Math.max(1, g.cost ?? 1)) : 0;
@@ -47,14 +51,17 @@ export function castWays(sheet: DerivedSheet, spell: Spell, from: SpellSource): 
   const level = g?.castAtLevel ?? spell.level;
 
   if (g?.uses === 'atWill') out.push({ kind: 'atWill', level });
-  else if (g && (g.usesKey || g.resourceKey)) {
+  else if (g && (g.usesKey || g.resourceKey || g.chargesRow)) {
     const left = freeLeft(sheet, g) ?? 0;
-    if (left > 0) out.push({ kind: 'free', level, left });
+    if (left > 0)
+      out.push({ kind: 'free', level, left, ...(g.chargesRow ? { charges: g.cost ?? 1 } : {}) });
   }
 
   const prepared = from.caster?.status === 'prepared' || from.caster?.status === 'always';
   // A feat's or species' spell (its own counter) is also cast with slots; an item's isn't.
-  const slotsAllowed = prepared || (g && !g.resourceKey && g.uses !== 'ritual');
+  // An item's spells are cast with the item, never with the character's slots.
+  const fromItem = g?.source.kind === 'item';
+  const slotsAllowed = prepared || (g && !fromItem && !g.resourceKey && g.uses !== 'ritual');
   if (slotsAllowed) {
     for (const s of slotChoices(sheet, spell.level)) out.push({ kind: 'slot', ...s });
   }
@@ -62,7 +69,7 @@ export function castWays(sheet: DerivedSheet, spell: Spell, from: SpellSource): 
   const ritualAllowed =
     prepared ||
     from.caster?.status === 'spellbook' ||
-    (g && !g.resourceKey) ||
+    (g && !fromItem && !g.resourceKey) ||
     g?.uses === 'ritual';
   if (spell.ritual && ritualAllowed) out.push({ kind: 'ritual' });
   return out;
@@ -80,6 +87,8 @@ export function castWayLabel(way: CastWay): string {
     case 'ritual':
       return 'As a Ritual (10 minutes longer, no slot)';
     case 'free':
+      if (way.charges !== undefined)
+        return `${way.charges} ${way.charges === 1 ? 'charge' : 'charges'} (enough for ${way.left})`;
       return way.left !== undefined ? `Free use (${way.left} left)` : 'Free use';
     case 'atWill':
       return 'At will';

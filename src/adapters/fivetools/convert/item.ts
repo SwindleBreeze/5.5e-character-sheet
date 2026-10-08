@@ -9,9 +9,10 @@ import {
   type Item,
   type ItemBonus,
   type ItemKind,
+  type SpellGrant,
 } from '../../../schema/index.ts';
 import { stripTags } from '../../../richtext/tagRegistry.ts';
-import { defenseEffects } from '../effectsFromData.ts';
+import { defenseEffects, spellRef } from '../effectsFromData.ts';
 import { asArray, isObject, num, strArray, type RawEntity } from '../raw.ts';
 import { uidToId } from '../uid.ts';
 import { baseFields, type ConvertContext } from './common.ts';
@@ -129,8 +130,41 @@ function chargeFields(item: Item, raw: RawEntity) {
   if (tags.length) item.attunementTags = tags;
 }
 
+/**
+ * Spells an item casts (5etools `attachedSpells`): paid in its charges (`charges: { "1": […] }`,
+ * a cost of 0 is at will), at will, or a number of times a day (`daily: { "1": […] }`, `1e` for
+ * each). A plain list or `other` only names spells the text talks about; those stay text.
+ */
+function attachedSpellEffects(raw: RawEntity): Effect[] {
+  const block = isObject(raw.attachedSpells) ? raw.attachedSpells : null;
+  if (!block) return [];
+  const spells: SpellGrant[] = [];
+  const add = (refs: unknown, uses: SpellGrant['uses']) => {
+    for (const r of asArray(refs)) {
+      if (typeof r !== 'string') continue;
+      const ref = spellRef(r);
+      spells.push({
+        mode: 'innate',
+        spell: { id: ref.id },
+        ...(uses !== undefined ? { uses } : {}),
+        ...(ref.castAtLevel !== undefined ? { castAtLevel: ref.castAtLevel } : {}),
+      });
+    }
+  };
+  add(block.will, 'atWill');
+  for (const [key, refs] of Object.entries(isObject(block.charges) ? block.charges : {})) {
+    const cost = Number(key);
+    if (Number.isInteger(cost)) add(refs, cost === 0 ? 'atWill' : { charges: cost });
+  }
+  for (const [key, refs] of Object.entries(isObject(block.daily) ? block.daily : {})) {
+    const count = Number(key.replace(/e$/, ''));
+    if (Number.isInteger(count) && count > 0) add(refs, { count, recharge: 'dawn' });
+  }
+  return spells.length ? [{ type: 'grantSpells', spells }] : [];
+}
+
 function itemEffects(raw: RawEntity): Effect[] {
-  const out = defenseEffects(raw);
+  const out = [...defenseEffects(raw), ...attachedSpellEffects(raw)];
   const ability = isObject(raw.ability) ? raw.ability : null;
   if (ability && isObject(ability.static)) {
     for (const [ab, v] of Object.entries(ability.static)) {

@@ -37,7 +37,7 @@ import {
   valuesOf,
   type DeriveContext,
 } from './context.ts';
-import { magicWorks } from '../items/items.ts';
+import { chargesOf, magicWorks } from '../items/items.ts';
 import { buildRoll } from './rolls.ts';
 import { findResource, findResourceByName } from './resources.ts';
 import type {
@@ -409,6 +409,21 @@ export function deriveSpellcasting(
             g.usesMax = Math.max(0, Math.floor(evalNumber(ctx, uses.count, source)));
             g.usesKey = `${refKey(source.ref)}${source.n === undefined ? '' : `@${source.n}`}#spell:${spellId}`;
             g.usesUsed = Math.min(g.usesMax, ctx.character.state.resourcesUsed[g.usesKey] ?? 0);
+          } else if (typeof uses === 'object' && 'charges' in uses) {
+            // The item's row in use, and what its charges allow.
+            const row = ctx.character.inventory.find(
+              (x) => x.equipped && x.itemRef?.id === source.ref.id && source.ref.kind === 'item',
+            );
+            if (row) {
+              const charges = chargesOf(
+                row,
+                ctx.index.get({ kind: 'item', id: row.itemRef!.id }),
+                row.variantRef ? ctx.index.get({ kind: 'item', id: row.variantRef.id }) : undefined,
+              );
+              g.chargesRow = row.uid;
+              g.chargesLeft = Math.max(0, (charges?.max ?? 0) - (charges?.used ?? 0));
+            }
+            g.cost = uses.charges;
           } else if (typeof uses === 'object') {
             const r =
               'resource' in uses

@@ -30,6 +30,13 @@
       "type": "RG|TST",
       "rarity": "rare",
       "resist": ["thunder", "psychic"],
+      "charges": 3,
+      "recharge": "dawn",
+      "attachedSpells": {
+        "will": ["glitter burst|tst"],
+        "charges": { "2": ["rolling boom|tst"] },
+        "daily": { "1": ["dim lantern|tst"] }
+      },
       "detail1": "a tiny bell",
       "entries": ["{#itemEntry Ring of Shouting|TST}"]
     },

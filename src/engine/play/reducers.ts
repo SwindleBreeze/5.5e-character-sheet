@@ -146,6 +146,14 @@ export function spendFreeCast(
     return n;
   }
   if (spell.resourceKey) return spendResource(c, sheet, spell.resourceKey, spell.cost ?? 1);
+  if (spell.chargesRow) {
+    // Paid from the item's charges.
+    const n = clone(c);
+    const row = n.inventory.find((r) => r.uid === spell.chargesRow);
+    const cost = Math.min(spell.cost ?? 1, spell.chargesLeft ?? 0);
+    if (row && cost > 0) row.chargesUsed = (row.chargesUsed ?? 0) + cost;
+    return n;
+  }
   return c;
 }
 

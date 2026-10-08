@@ -7,6 +7,8 @@ import type { ContentIndex } from '../content/contentIndex.ts';
 import { casterLevelShare, MULTICLASS_SLOTS, slotRow } from '../rules/slots.ts';
 import { spellChoiceEffects } from '../spells/casters.ts';
 import { levelsUpTo, matchesSpellFilter } from '../spells/filter.ts';
+import { castSpellAs } from '../play/reducers.ts';
+import { castWays } from '../play/casting.ts';
 import { derive } from './derive.ts';
 import type { DerivedSheet } from './types.ts';
 
@@ -179,6 +181,44 @@ describe('spellcasting (P11)', () => {
     expect(after.cantripsMax).toBe(before.cantripsMax + 1);
     // A levelled spell granted that way is always prepared.
     expect(after.alwaysPrepared).toContain('rolling boom|tst');
+  });
+
+  it("an item's spells: paid in its charges, at will, or once a day; never with slots", () => {
+    const c = scholar();
+    c.inventory.push({
+      uid: 'ring',
+      itemRef: { kind: 'item', id: 'ring of loud shouting|tst' },
+      name: 'Ring of Loud Shouting',
+      quantity: 1,
+      attuned: false,
+      equipped: 'worn',
+    });
+    let d = run(c);
+    const boom = () => d.spellcasting.granted.find((g) => g.spellId === 'rolling boom|tst')!;
+    const spell = index.get({ kind: 'spell', id: 'rolling boom|tst' }) as Spell;
+    expect(boom()).toMatchObject({ chargesRow: 'ring', chargesLeft: 3, cost: 2 });
+    expect(castWays(d, spell, { granted: boom() })).toEqual([
+      { kind: 'free', level: 3, left: 1, charges: 2 },
+    ]);
+    const cast = castSpellAs(
+      c,
+      d,
+      { ref: { kind: 'spell', id: spell.id }, concentration: false, granted: boom() },
+      { kind: 'free', level: 3, left: 1, charges: 2 },
+    );
+    expect(cast.inventory.find((r) => r.uid === 'ring')?.chargesUsed).toBe(2);
+    d = run(cast);
+    expect(castWays(d, spell, { granted: boom() })).toEqual([]);
+    expect(d.spellcasting.granted.find((g) => g.spellId === 'glitter burst|tst')?.uses).toBe(
+      'atWill',
+    );
+    // Taken off, the ring casts nothing.
+    expect(
+      run({
+        ...cast,
+        inventory: cast.inventory.filter((r) => r.uid !== 'ring'),
+      }).spellcasting.granted.some((g) => g.source.kind === 'item'),
+    ).toBe(false);
   });
 
   it('a spell bonus for the cantrip picked in a slot (Agonizing Blast)', () => {

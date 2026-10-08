@@ -508,7 +508,9 @@ function quickLabel(way: CastWay): string {
     case 'slot':
       return way.pact ? 'Cast · Pact' : `Cast · L${way.level}`;
     case 'free':
-      return 'Cast · free';
+      return way.charges !== undefined
+        ? `Cast · ${way.charges} ${way.charges === 1 ? 'charge' : 'charges'}`
+        : 'Cast · free';
     case 'ritual':
       return 'Ritual';
     default:

@@ -231,6 +231,9 @@ export interface DerivedGrantedSpell {
   /** For uses paid from a resource: which one, and the cost of one cast. */
   resourceKey?: string;
   cost?: number;
+  /** For casts paid from an item's charges: its inventory row and the charges left. */
+  chargesRow?: string;
+  chargesLeft?: number;
   castAtLevel?: number;
 }
 

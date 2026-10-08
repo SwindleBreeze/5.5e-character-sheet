@@ -148,13 +148,16 @@ export interface SpellGrant {
    * - `resource` and `cost`: paid from a `resource` effect of the same entity: a charm's
    *   charges, or one counter several spells share ("cast one of these once").
    * - `resourceName` and `cost`: paid from a resource defined elsewhere, e.g. Focus Points.
+   * - `charges`: paid from the granting item's own charges (its inventory row).
    */
   uses?:
     | { count: Formula; recharge: Recharge }
     | { resource: string; cost: number }
     | { resourceName: string; cost: number }
     | 'atWill'
-    | 'ritual';
+    | 'ritual'
+    /** Paid from the charges of the item that grants it (a Wand of Fireballs: 1 charge). */
+    | { charges: number };
   /** The spell is cast at this level (5etools `#3` suffix). */
   castAtLevel?: number;
   /** Spellcasting ability: fixed, a choice, or the ability this entity increased. */
