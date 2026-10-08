@@ -51,6 +51,12 @@ describe('what suits the class (plan step 4C.3)', () => {
     expect(originSuggestion(index.get(arenaHand) as Background, classFocus(c, index))).toBe(
       'Good for a Brute: raises Strength',
     );
+    // A pick that comes from another class (a multiclass's skills) goes by that class.
+    const fromLore = { ...skills, source: { ...skills.source, classId: 'lorekeeper|tst' } };
+    expect(suggestion(fromLore, 'arcana', ctx)).toBe(
+      'Uses Intelligence, the Lorekeeper’s primary ability',
+    );
+    expect(suggestion(fromLore, 'athletics', ctx)).toBeUndefined();
     // No class yet: nothing to go by.
     expect(originSuggestion(index.get(arenaHand) as Background, undefined)).toBeUndefined();
   });

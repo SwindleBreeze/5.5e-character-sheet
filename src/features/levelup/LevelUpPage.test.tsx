@@ -123,6 +123,28 @@ describe('level-up flow (plan §9.4, step 5.2)', () => {
     expect(next(/Hit points ›/)).toHaveAttribute('aria-disabled', 'false');
   });
 
+  it('a caster that can prepare more is shown its list on the Spells step', async () => {
+    const user = userEvent.setup();
+    const c = await saved('lorekeeper|tst', 2);
+    renderApp(`/c/${c.id}/level-up`);
+    await user.click(await screen.findByRole('radio', { name: 'Lorekeeper 3' }));
+    await user.click(next(/Hit points ›/));
+    // Through the steps to Spells, taking the first option where a pick is due.
+    for (let i = 0; i < 6 && !screen.queryByRole('heading', { name: 'Spells', level: 2 }); i++) {
+      const forward = footer().getAllByRole('button').at(-1)!;
+      if (forward.getAttribute('aria-disabled') === 'true') {
+        const radio = screen.getAllByRole('radio').find((r) => !(r as HTMLInputElement).checked);
+        if (radio) await user.click(radio);
+      }
+      await user.click(forward);
+    }
+    const section = within(
+      await screen.findByRole('region', { name: 'Lorekeeper: prepared spells' }),
+    );
+    expect(section.getByText(/of \d+ prepared/)).toBeInTheDocument();
+    expect(section.getByText(/up to level 2/)).toBeInTheDocument();
+  });
+
   it('undo the last level from the sheet, after confirming', async () => {
     const user = userEvent.setup();
     const c = await saved('brute|tst', 4);

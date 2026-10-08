@@ -13,7 +13,9 @@ import { ChoicePicker } from '../choices/ChoicePicker.tsx';
 import { choiceTitle } from '../choices/labels.ts';
 import type { PickSave } from '../choices/picks.ts';
 import { isSpellOffer } from '../wizard/progress.ts';
-import { refKey, type HpGain, type Ref } from '../../schema/index.ts';
+import { refKey, type HpGain, type Id, type Ref, type SourceCode } from '../../schema/index.ts';
+import { PrepareSheet } from '../sheet/spells/PrepareSheet.tsx';
+import { preparingCasters } from './preparing.ts';
 import { Badge } from '../../ui/Badge.tsx';
 import { Button } from '../../ui/Button.tsx';
 import { useRoller } from '../../ui/rollerContext.ts';
@@ -397,5 +399,48 @@ export function RetrainSection({
         </section>
       ))}
     </details>
+  );
+}
+
+/** Prepared spells after this level: what changed, and the list to prepare from, in place. */
+export function PreparedSection({
+  plan,
+  before,
+  sources,
+  onPrepared,
+}: {
+  plan: LevelUpPlan;
+  before: DerivedSheet;
+  sources: SourceCode[] | null;
+  onPrepared: (casterKey: string, ids: Id[]) => void;
+}) {
+  const casters = preparingCasters(plan, before);
+  if (!casters.length) return null;
+  return (
+    <>
+      {casters.map(({ caster, room, higher, slots }) => (
+        <section
+          key={caster.key}
+          className={choices.choice}
+          aria-label={`${caster.name}: prepared spells`}
+        >
+          <h3 className={choices.choiceTitle}>{caster.name}: prepared spells</h3>
+          <p className={choices.help}>
+            {caster.prepared.length} of {caster.preparedMax} prepared
+            {room > 0 ? `: you can prepare ${room} more.` : '.'}
+            {higher && ` You can now prepare spells up to level ${caster.maxSpellLevel}.`}
+            {slots && ` Your spell slots: ${slots.after} (were ${slots.before || 'none'}).`} You can
+            also change them after any Long Rest.
+          </p>
+          <PrepareSheet
+            caster={caster}
+            sources={sources}
+            current={plan.character.state.prepared[caster.key] ?? []}
+            instant
+            onSave={(ids) => onPrepared(caster.key, ids)}
+          />
+        </section>
+      ))}
+    </>
   );
 }
