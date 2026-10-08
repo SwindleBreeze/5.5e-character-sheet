@@ -12,6 +12,9 @@ import {
   rowItems,
   SLOT_NAMES,
   unitWeight,
+  WEAR_AREA_NAMES,
+  wearArea,
+  type WearArea,
 } from '../../../engine/items/items.ts';
 import {
   chooseGroupItem,
@@ -81,7 +84,7 @@ export function ItemRow({
           {quantityText(row)}
         </button>
         <span className={styles.badges}>
-          {row.equipped && <Badge variant="accent">{SLOT_NAMES[row.equipped]}</Badge>}
+          {row.equipped && <Badge variant="accent">{equippedText(row.equipped)}</Badge>}
           {attunement && row.attuned && <Badge variant="accent">Attuned</Badge>}
           {attunement && !row.attuned && <Badge>Needs Attunement</Badge>}
           {!item && !attunement && row.attuned && <Badge variant="accent">Attuned</Badge>}
@@ -151,27 +154,22 @@ function ItemDetails({ row, bindings }: { row: InventoryItem; bindings: SheetBin
       )}
 
       {(slots.length > 0 || row.equipped) && (
-        <label className={styles.field}>
-          <span className={styles.fieldLabel}>Worn or held</span>
-          <select
-            value={row.equipped ?? ''}
-            onChange={(e) =>
-              apply((c) =>
-                equipItem(c, row.uid, (e.target.value || null) as EquipSlot | null, index),
-              )
-            }
-          >
-            <option value="">Not worn or held</option>
-            {slots.map((s) => (
-              <option key={s} value={s}>
-                {SLOT_NAMES[s]}
-              </option>
-            ))}
-            {row.equipped && !slots.includes(row.equipped) && (
-              <option value={row.equipped}>{SLOT_NAMES[row.equipped]}</option>
-            )}
-          </select>
-        </label>
+        <EquipControl
+          row={row}
+          slots={slots}
+          onEquip={(slot) => apply((c) => equipItem(c, row.uid, slot, index))}
+          area={wearArea(item)}
+          sameArea={
+            wearArea(item)
+              ? character.inventory.find(
+                  (r) =>
+                    r.uid !== row.uid &&
+                    r.equipped === 'worn' &&
+                    wearArea(rowItems(index, r).item) === wearArea(item),
+                )?.name
+              : undefined
+          }
+        />
       )}
       {row.quantity > 1 && slots.length > 0 && !row.equipped && (
         <p className={styles.help}>Wearing or holding one leaves the rest here.</p>
@@ -324,6 +322,72 @@ function ItemDetails({ row, bindings }: { row: InventoryItem; bindings: SheetBin
       </div>
       {confirmRemove && sheet.inventory.containers[row.uid] && (
         <p className={styles.help}>What is inside it stays, where it was.</p>
+      )}
+    </div>
+  );
+}
+
+/** `Equipped`, or `Equipped · main hand` where the hand matters. */
+function equippedText(slot: EquipSlot): string {
+  return slot === 'mainHand' || slot === 'offHand' || slot === 'bothHands'
+    ? `Equipped · ${SLOT_NAMES[slot].toLowerCase()}`
+    : 'Equipped';
+}
+
+/**
+ * Equip or unequip in one tap. An item that goes in one place has one button; a weapon that can
+ * be held in either hand or both has one per way. Equipped, it says where, and can move.
+ */
+function EquipControl({
+  row,
+  slots,
+  onEquip,
+  area,
+  sameArea,
+}: {
+  row: InventoryItem;
+  slots: EquipSlot[];
+  onEquip: (slot: EquipSlot | null) => void;
+  area: WearArea | undefined;
+  /** Another worn item in the same body area, taken off when this one is put on. */
+  sameArea: string | undefined;
+}) {
+  const label = (s: EquipSlot) =>
+    s === 'worn' ? 'Wear' : `Equip · ${SLOT_NAMES[s].toLowerCase()}`;
+  const moves = slots.filter((s) => s !== row.equipped);
+  return (
+    <div className={styles.equip} role="group" aria-label="Equip">
+      {row.equipped ? (
+        <>
+          <span className={styles.equipped}>{equippedText(row.equipped)}</span>
+          <Button size="sm" onClick={() => onEquip(null)}>
+            Unequip
+          </Button>
+          {moves.map((s) => (
+            <Button key={s} size="sm" variant="ghost" onClick={() => onEquip(s)}>
+              Move to {SLOT_NAMES[s].toLowerCase()}
+            </Button>
+          ))}
+        </>
+      ) : (
+        <>
+          <span className={styles.muted}>Not equipped</span>
+          {slots.map((s, i) => (
+            <Button
+              key={s}
+              size="sm"
+              variant={i === 0 ? 'primary' : 'secondary'}
+              onClick={() => onEquip(s)}
+            >
+              {slots.length === 1 && s !== 'worn' ? 'Equip' : label(s)}
+            </Button>
+          ))}
+        </>
+      )}
+      {area && !row.equipped && sameArea && (
+        <p className={styles.help}>
+          You wear one {WEAR_AREA_NAMES[area]} at a time: wearing this takes off {sameArea}.
+        </p>
       )}
     </div>
   );

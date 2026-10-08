@@ -110,6 +110,35 @@ export function equipSlots(item?: Item): EquipSlot[] {
   return ['mainHand', 'offHand', 'worn'];
 }
 
+/**
+ * Where a worn item goes on the body (2024 Dungeon Master's Guide): a character wears one pair of
+ * footwear, one pair of gloves or gauntlets, one pair of bracers, one item of headwear and one
+ * cloak at a time (one suit of armor is the armor slot). Read from the item's name; rings,
+ * amulets, belts and the rest have no such limit beyond attunement.
+ */
+export type WearArea = 'footwear' | 'gloves' | 'bracers' | 'headwear' | 'cloak';
+
+const WEAR_AREAS: [WearArea, RegExp][] = [
+  ['footwear', /\b(boots|slippers|shoes|sandals)\b/i],
+  ['gloves', /\b(gloves|gauntlets)\b/i],
+  ['bracers', /\bbracers\b/i],
+  ['headwear', /\b(helm|helmet|hat|cap|circlet|crown|headband|diadem|tiara)\b/i],
+  ['cloak', /\b(cloak|cape|mantle)\b/i],
+];
+
+export const WEAR_AREA_NAMES: Record<WearArea, string> = {
+  footwear: 'footwear',
+  gloves: 'gloves or gauntlets',
+  bracers: 'bracers',
+  headwear: 'headwear',
+  cloak: 'cloak',
+};
+
+export function wearArea(item: Item | undefined): WearArea | undefined {
+  if (!item || item.weapon || item.armor || item.itemKind === 'shield') return undefined;
+  return WEAR_AREAS.find(([, re]) => re.test(item.name))?.[0];
+}
+
 export const SLOT_NAMES: Record<EquipSlot, string> = {
   armor: 'Armor',
   shield: 'Shield',

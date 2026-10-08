@@ -188,6 +188,22 @@ describe('containers', () => {
   });
 });
 
+describe('body areas (2024)', () => {
+  it('one cloak at a time: wearing a second takes the first off; a ring is no limit', () => {
+    const c = character([
+      row('a', 'cloak of cheers|tst', { equipped: 'worn' }),
+      row('b', 'cloak of cheers|tst'),
+      row('ring', 'ring of loud shouting|tst', { equipped: 'worn' }),
+    ]);
+    const next = equipItem(c, 'b', 'worn', index);
+    expect(next.inventory.map((r) => [r.uid, r.equipped])).toEqual([
+      ['a', undefined],
+      ['b', 'worn'],
+      ['ring', 'worn'],
+    ]);
+  });
+});
+
 describe('item groups', () => {
   it('a group row becomes the one item of the group picked', () => {
     const c = character([row('focus', 'lantern focus|tst', { notes: 'from my teacher' })]);

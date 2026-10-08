@@ -350,3 +350,21 @@
   background: var(--color-surface-2);
   font-size: var(--font-size-sm);
 }
+
+/* Equip or unequip, in one tap. */
+.equip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.equipped {
+  color: var(--color-accent);
+  font-weight: 700;
+}
+
+.equip .help {
+  flex-basis: 100%;
+  margin: 0;
+}

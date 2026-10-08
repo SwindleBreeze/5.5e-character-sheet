@@ -12,7 +12,7 @@ import type {
   Item,
 } from '../../schema/index.ts';
 import type { ContentIndex } from '../content/contentIndex.ts';
-import { equipSlots, isContainer, SLOT_HANDS, variantName } from '../items/items.ts';
+import { equipSlots, isContainer, SLOT_HANDS, variantName, wearArea } from '../items/items.ts';
 
 export type MakeUid = () => string;
 
@@ -205,6 +205,10 @@ export function equipItem(
   };
   const others = () => n.inventory.filter((r) => r !== target && r.equipped);
   for (const r of others()) if (CLEARS[slot].includes(r.equipped!)) stow(r);
+  // One item per body area: new boots take the old ones off.
+  const area = slot === 'worn' ? wearArea(itemOf(target)) : undefined;
+  if (area)
+    for (const r of others()) if (r.equipped === 'worn' && wearArea(itemOf(r)) === area) stow(r);
   const hands = () => others().reduce((h, r) => h + SLOT_HANDS[r.equipped!], SLOT_HANDS[slot]);
   for (const s of FREES[slot]) {
     if (hands() <= 2) break;
