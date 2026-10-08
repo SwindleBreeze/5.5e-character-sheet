@@ -120,13 +120,20 @@ export function deriveActions(
   }
 
   // Features that spend a named resource (5etools `consumes`, plan P14): maneuvers, metamagic.
+  const switches = new Set(
+    effectsOfType(ctx.collected, 'toggle').map(
+      ({ source }) => `${source.ref.kind}:${source.ref.id}`,
+    ),
+  );
   for (const owner of ctx.collected.owners) {
     const entity = ctx.index.get(owner.ref);
     const consumes = entity && 'consumes' in entity ? entity.consumes : undefined;
     if (!consumes) continue;
-    // A mapping that gives the feature its own action (with its roll or DC) replaces this one.
+    // A mapping that gives the feature its own action (with its roll or DC), or a switch that
+    // pays the cost, replaces this one.
     if (out.some((a) => a.source?.kind === owner.ref.kind && a.source.id === owner.ref.id))
       continue;
+    if (switches.has(`${owner.ref.kind}:${owner.ref.id}`)) continue;
     const resource = findResourceByName(resources, consumes.name);
     const amount = consumes.amount ?? 1;
     out.push({

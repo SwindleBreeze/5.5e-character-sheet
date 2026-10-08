@@ -2,4 +2,9 @@
 // (`coverageGate`) on real data, checked by the smoke tests. A class is added here when its
 // step in phase 6 is finished.
 
-export const DONE_CLASSES: readonly string[] = ['barbarian|xphb', 'bard|xphb', 'cleric|xphb'];
+export const DONE_CLASSES: readonly string[] = [
+  'barbarian|xphb',
+  'bard|xphb',
+  'cleric|xphb',
+  'druid|xphb',
+];

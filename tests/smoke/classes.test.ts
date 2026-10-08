@@ -148,4 +148,29 @@ describe.skipIf(!root)('class golden checks (local data)', () => {
     expect(resource(war, 'War Priest')?.recharge).toBe('short');
     expect(resource(build('cleric', 18, 'life'), 'Channel Divinity')?.max.value).toBe(4);
   });
+
+  it('Druid: Wild Shape and the circles that hang off it', () => {
+    const two = build('druid', 2);
+    expect(resource(two, 'Wild Shape')).toMatchObject({ recharge: 'shortOne' });
+    expect(resource(two, 'Wild Shape')?.max.value).toBe(2);
+    expect(resource(build('druid', 6, 'land'), 'Wild Shape')?.max.value).toBe(3);
+    expect(resource(build('druid', 17, 'land'), 'Wild Shape')?.max.value).toBe(4);
+
+    const plain = build('druid', 6, 'moon');
+    const shaped = build('druid', 6, 'moon', ['wild-shape']);
+    // Improved Circle Forms: Wisdom added to Constitution saves while in a form.
+    expect(shaped.saves.con.bonus.value).toBe(
+      plain.saves.con.bonus.value + plain.abilities.wis.mod,
+    );
+
+    const sea = build('druid', 10, 'sea', ['wrath-of-the-sea']);
+    expect(sea.speed.swim?.value).toBe(sea.speed.walk?.value);
+    expect(sea.speed.fly?.value).toBe(sea.speed.walk?.value);
+    expect(values(sea.defenses.resistances)).toEqual(['cold', 'lightning', 'thunder']);
+
+    const stars = build('druid', 14, 'stars', ['starry-form']);
+    expect(values(stars.defenses.resistances)).toEqual(['bludgeoning', 'piercing', 'slashing']);
+    // Spends Wild Shape through its switch, not through a second action too.
+    expect(stars.actions.filter((a) => a.name === 'Starry Form')).toEqual([]);
+  });
 });
