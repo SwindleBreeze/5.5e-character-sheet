@@ -78,6 +78,13 @@ export function SheetProvider({ children }: { children: ReactNode }) {
             onAnimationEnd={(e) => {
               if (e.target === e.currentTarget && open) setSettled(true);
             }}
+            // A roll's toast sits above the sheet: tapping it (to dismiss it) is not a tap
+            // outside, so a sheet waiting on that roll (a Concentration save) stays open. Each
+            // toast carries the mark: by the time this runs it may be gone from the page.
+            onInteractOutside={(e) => {
+              if (e.target instanceof Element && e.target.closest('[data-roller]'))
+                e.preventDefault();
+            }}
           >
             <div className={styles.handle} aria-hidden="true" />
             <header className={styles.header}>

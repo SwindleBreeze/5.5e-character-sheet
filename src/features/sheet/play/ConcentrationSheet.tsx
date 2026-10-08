@@ -7,6 +7,7 @@ import { concentrationDc } from '../../../engine/play/reducers.ts';
 import { Button } from '../../../ui/Button.tsx';
 import { RollButton } from '../components/RollButton.tsx';
 import inventory from '../inventory/inventory.module.css';
+import styles from './play.module.css';
 
 export function ConcentrationSheet({
   effect,
@@ -44,32 +45,41 @@ export function ConcentrationSheet({
     );
   }
 
+  const kept = rolled !== null && rolled >= dc;
   return (
-    <div className={inventory.form}>
+    <div className={`${inventory.form} ${styles.concentration}`}>
       <p>
-        You took {damage} damage while concentrating on <strong>{effect}</strong>. Make a
-        Constitution saving throw to keep it going.
+        You took {damage} damage while concentrating on <strong>{effect}</strong>. Roll a
+        Constitution saving throw: meet the DC and it goes on.
       </p>
-      <p>
-        <strong className="numeric">DC {dc}</strong>{' '}
-        <span className={inventory.muted}>
-          (10 or half the damage, whichever is higher, up to 30)
-        </span>
-      </p>
-      <div className={inventory.field}>
-        <span className={inventory.fieldLabel}>Your save</span>
-        <RollButton label="Concentration save" roll={save} onRolled={(r) => setRolled(r.total)} />
-        {rolled !== null && (
-          <span className={rolled >= dc ? undefined : inventory.warn}>
-            {rolled} — {rolled >= dc ? 'you keep concentrating' : 'Concentration ends'}
-          </span>
-        )}
+      <div className={styles.saveRow}>
+        <div className={styles.saveCard}>
+          <span className={styles.saveLabel}>DC</span>
+          <strong className={`${styles.saveValue} numeric`}>{dc}</strong>
+          <span className={styles.saveHint}>10, or half the damage if higher</span>
+        </div>
+        <div className={styles.saveCard}>
+          <span className={styles.saveLabel}>Your save</span>
+          <RollButton
+            label="Concentration save"
+            roll={save}
+            size="lg"
+            onRolled={(r) => setRolled(r.total)}
+          />
+          <span className={styles.saveHint}>Tap to roll, or roll your own dice</span>
+        </div>
       </div>
+      {rolled !== null && (
+        <p className={styles.saveResult} data-kept={kept} aria-live="polite">
+          You rolled <strong className="numeric">{rolled}</strong>:{' '}
+          {kept ? 'you keep concentrating.' : 'your Concentration ends.'}
+        </p>
+      )}
       <div className={inventory.actions}>
-        <Button variant="primary" onClick={onKeep}>
+        <Button variant={rolled === null || kept ? 'primary' : 'secondary'} onClick={onKeep}>
           Kept it
         </Button>
-        <Button variant="danger" onClick={onLose}>
+        <Button variant={rolled !== null && !kept ? 'primary' : 'danger'} onClick={onLose}>
           Lost it
         </Button>
       </div>
