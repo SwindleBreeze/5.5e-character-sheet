@@ -71,6 +71,21 @@ describe('ChoicePicker', () => {
     expect(latest.log[0]?.choices).toEqual([]);
   });
 
+  it('an option says what it brings, from what depends on it (a lineage’s spells)', () => {
+    const mossling = testCharacter({
+      classes: [{ classId: 'brute|tst', levels: 3 }],
+      speciesId: 'mossling|tst',
+      backgroundId: 'arena hand|tst',
+    });
+    render(<Harness initial={mossling} slot="spellsSet" />);
+    expect(screen.getByRole('radio', { name: 'Grey' })).toHaveAccessibleDescription(
+      /Spells: Dim Lantern/,
+    );
+    expect(screen.getByRole('radio', { name: 'Green' })).toHaveAccessibleDescription(
+      /Glitter Burst/,
+    );
+  });
+
   it('Ignore rules lists every spell, under its level, with filters for level, school and ritual', async () => {
     const user = userEvent.setup();
     render(<Harness initial={lorekeeper()} slot="cantrips.1" />);

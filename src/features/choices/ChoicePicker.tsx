@@ -8,7 +8,7 @@
 // It writes through `onSave` (the caller records it with `setPick`): with a Save button in a
 // sheet, or on every tap (`instant`) where the character is shown live, as in the wizard.
 
-import { useId, useState } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import {
   offerOptions,
   type ChoiceOption,
@@ -19,6 +19,7 @@ import type { DerivedFeatureChoice } from '../../engine/derive/types.ts';
 import type { Spell } from '../../schema/index.ts';
 import { EntitySheet } from '../../richtext/EntitySheet.tsx';
 import { InlineText } from '../../richtext/InlineText.tsx';
+import { Badge } from '../../ui/Badge.tsx';
 import { Button } from '../../ui/Button.tsx';
 import inventory from '../sheet/inventory/inventory.module.css';
 import styles from './choices.module.css';
@@ -95,9 +96,21 @@ export interface ChoicePickerProps {
   instant?: boolean;
   /** Say when the rules let the pick change (the sheet; not while creating). */
   showRetrain?: boolean;
+  /**
+   * Shown under a picked option, right where it was picked: the picks the option brings with it
+   * (an Ability Score Improvement's abilities).
+   */
+  under?: (value: string) => ReactNode;
 }
 
-export function ChoicePicker({ choice, ctx, onSave, instant, showRetrain }: ChoicePickerProps) {
+export function ChoicePicker({
+  choice,
+  ctx,
+  onSave,
+  instant,
+  showRetrain,
+  under,
+}: ChoicePickerProps) {
   const [ignore, setIgnore] = useState(false);
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<string[] | null>(null);
@@ -189,11 +202,6 @@ export function ChoicePicker({ choice, ctx, onSave, instant, showRetrain }: Choi
           {o.about.note && <> {o.about.note}</>}
         </span>
       ),
-      o.taken && (
-        <span key="taken" className={styles.detail}>
-          You have it already.
-        </span>
-      ),
       o.unmet?.length && (
         <span key="unmet" className={styles.unmet}>
           Not met: {o.unmet.join(', ')}
@@ -225,6 +233,7 @@ export function ChoicePicker({ choice, ctx, onSave, instant, showRetrain }: Choi
             Suggested
           </span>
         )}
+        {o.taken && <Badge variant="warning">You have it already</Badge>}
         {valueKind && (
           <Button
             size="sm"
@@ -247,6 +256,7 @@ export function ChoicePicker({ choice, ctx, onSave, instant, showRetrain }: Choi
             <EntitySheet entityRef={{ kind: valueKind, id: o.value }} />
           </div>
         )}
+        {on && under && <div className={styles.under}>{under(o.value)}</div>}
       </li>
     );
   };

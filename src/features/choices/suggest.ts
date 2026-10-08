@@ -64,7 +64,9 @@ export function suggestion(offer: Offer, value: string, ctx: AutoContext): strin
         : undefined;
     }
     case 'weaponMastery':
-      return carriedWeapons(ctx).has(value) ? 'You start with one' : undefined;
+      // Creating: the starting equipment; later (a level, a multiclass): what is carried now.
+      if (!carriedWeapons(ctx).has(value)) return undefined;
+      return ctx.character.draft ? 'You start with one' : 'You have one in your inventory';
     default:
       return undefined;
   }

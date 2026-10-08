@@ -67,6 +67,9 @@ describe('level-up flow (plan §9.4, step 5.2)', () => {
     await user.click(screen.getByRole('radio', { name: 'Path of the Spark' }));
     await user.click(next(/Features ›/));
     expect(screen.getByRole('article', { name: 'Brute Path' })).toBeInTheDocument();
+    // Each feature's text is folded, under its name and what it adds.
+    const spark = within(screen.getAllByRole('article')[0]!);
+    expect(spark.getByText('Read more')).toBeInTheDocument();
 
     // The subclass casts: a Spells step, with a cantrip and two spells to pick.
     await user.click(next(/Spells ›/));
@@ -101,14 +104,22 @@ describe('level-up flow (plan §9.4, step 5.2)', () => {
     expect(after.log[2]!.choices.length).toBeGreaterThan(0);
   });
 
-  it('multiclassing: the 2024 requirement is shown, and warned, not blocked', async () => {
+  it('multiclassing: a class without its requirement can’t be taken, unless rules are ignored', async () => {
     const user = userEvent.setup();
     const c = await saved('brute|tst', 1);
     renderApp(`/c/${c.id}/level-up`);
     const pact = await screen.findByRole('radio', { name: 'Pactbinder 1' });
+    expect(pact).toHaveAccessibleDescription(
+      /You can’t take this level: needs Pactbinder: Charisma 13\+/,
+    );
+    expect(pact).toHaveAttribute('aria-disabled', 'true');
+    await user.click(pact);
+    expect(pact).not.toBeChecked();
+
+    await user.click(screen.getByRole('checkbox', { name: /Ignore rules/ }));
     expect(pact).toHaveAccessibleDescription(/Needs Pactbinder: Charisma 13\+/);
     await user.click(pact);
-    expect(screen.getByText(/Your DM may allow it anyway/)).toBeInTheDocument();
+    expect(screen.getByText(/Take it only if your DM allows it/)).toBeInTheDocument();
     expect(next(/Hit points ›/)).toHaveAttribute('aria-disabled', 'false');
   });
 

@@ -836,3 +836,14 @@ details.gives > summary {
   padding: 0;
   list-style: none;
 }
+
+/* An option the rules don't allow (a multiclass without the ability scores for it). */
+.blocked {
+  display: block;
+  color: var(--color-danger);
+  font-weight: 700;
+}
+
+.card[data-blocked='true'] .pickName {
+  color: var(--color-text-muted);
+}

@@ -43,3 +43,25 @@
   font-family: var(--font-stat);
   font-size: var(--font-size-lg);
 }
+
+.rulesRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.featureHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+}
+
+.readMore > summary {
+  color: var(--color-accent);
+  font-weight: 700;
+  cursor: pointer;
+  min-height: var(--tap-min);
+  display: flex;
+  align-items: center;
+}
