@@ -20,6 +20,7 @@ import { useRoller } from '../../../ui/rollerContext.ts';
 import { useSheet } from '../../../ui/sheetContext.ts';
 import styles from './actions.module.css';
 import { leftOf, RECHARGE_TEXT } from './labels.ts';
+import { sourceLabel } from './sourceLabel.ts';
 
 function Costs({ sheet, costs }: { sheet: DerivedSheet; costs: readonly DerivedCost[] }) {
   const shown = costs.filter((c) => c.label);
@@ -96,7 +97,9 @@ export function ActionCard({
             <span className={styles.name}>{a.name}</span>
           )}
         </div>
-        {a.sourceName !== a.name && <span className={styles.use}>{a.sourceName}</span>}
+        {a.sourceName !== a.name && (
+          <span className={styles.use}>{sourceLabel(a.source, a.sourceName)}</span>
+        )}
       </div>
       <Costs sheet={sheet} costs={a.costs} />
       {a.description && (
@@ -179,7 +182,9 @@ export function ToggleCard({
             <span className={styles.on}>On{activeOption ? `: ${activeOption}` : ''}</span>
           )}
         </div>
-        {t.sourceName !== t.name && <span className={styles.use}>{t.sourceName}</span>}
+        {t.sourceName !== t.name && (
+          <span className={styles.use}>{sourceLabel(t.source, t.sourceName)}</span>
+        )}
       </div>
       <Costs sheet={sheet} costs={t.costs} />
       {t.onActivate.map((o, i) => (
@@ -253,7 +258,12 @@ export function ResourceCard({
           </button>
           {r.die && <span className={styles.use}>{r.die}</span>}
         </div>
-        <span className={styles.use}>Recharge: {RECHARGE_TEXT[r.recharge]}</span>
+        <span className={styles.use}>
+          {r.source.kind === 'species' || r.source.kind === 'feat'
+            ? `${sourceLabel(r.source, r.sourceName)} · `
+            : ''}
+          Recharge: {RECHARGE_TEXT[r.recharge]}
+        </span>
       </div>
       <div className={styles.rolls}>
         <Counter

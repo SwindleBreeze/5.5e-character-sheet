@@ -104,6 +104,8 @@ function riderList(
       : undefined;
     if (type) rider.damageType = type;
     if (effect.cost) rider.cost = costOf(ctx, effect.cost, resources, source);
+    if (source.ref.kind === 'species' || source.ref.kind === 'feat')
+      rider.from = { kind: source.ref.kind, name: source.name };
     out.push(rider);
   }
   return out;

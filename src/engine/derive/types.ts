@@ -77,6 +77,8 @@ export interface DerivedRider {
   optIn: boolean;
   /** Paid when the rider is added to a damage roll. */
   cost?: DerivedCost;
+  /** Where it comes from, when that isn't the attack's own class: a species trait, a feat. */
+  from?: { kind: 'species' | 'feat'; name: string };
 }
 
 /**
