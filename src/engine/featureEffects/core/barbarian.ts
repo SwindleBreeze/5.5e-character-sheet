@@ -153,17 +153,8 @@ export const BARBARIAN: FeatureEffectsMap = {
 
   // ---- Path of the Wild Heart ----
   [`${S('wild heart', 'path of the wild heart')}|3|xphb`]: text(),
-  [`${S('wild heart', 'animal speaker')}|3|xphb`]: numbers([
-    {
-      type: 'grantSpells',
-      spells: ['beast sense|xphb', 'speak with animals|xphb'].map((id) => ({
-        mode: 'innate' as const,
-        ability: 'wis' as const,
-        uses: 'ritual' as const,
-        spell: { id },
-      })),
-    },
-  ]),
+  // The rituals come from the subclass's own data.
+  [`${S('wild heart', 'animal speaker')}|3|xphb`]: text(),
   [`${S('wild heart', 'rage of the wilds')}|3|xphb`]: toggled(
     [
       when(raging, [
@@ -221,19 +212,7 @@ export const BARBARIAN: FeatureEffectsMap = {
       effects: [{ type: 'speed', mode: 'swim', value: 'walk' }],
     },
   ]),
-  [`${S('wild heart', 'nature speaker')}|10|xphb`]: numbers([
-    {
-      type: 'grantSpells',
-      spells: [
-        {
-          mode: 'innate',
-          ability: 'wis',
-          uses: 'ritual',
-          spell: { id: 'commune with nature|xphb' },
-        },
-      ],
-    },
-  ]),
+  [`${S('wild heart', 'nature speaker')}|10|xphb`]: text(),
   [`${S('wild heart', 'power of the wilds')}|14|xphb`]: toggled(
     [
       when(raging, [

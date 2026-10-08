@@ -4,10 +4,12 @@
 import { CORE_LEVELS_1_TO_3 } from './core/levels1to3.ts';
 import { CORE_LEVELS_4_TO_20 } from './core/levels4to20.ts';
 import { BARBARIAN } from './core/barbarian.ts';
+import { BARD } from './core/bard.ts';
 import { registerFeatureEffects } from './registry.ts';
 
 registerFeatureEffects(CORE_LEVELS_1_TO_3);
 registerFeatureEffects(CORE_LEVELS_4_TO_20);
 registerFeatureEffects(BARBARIAN);
+registerFeatureEffects(BARD);
 
 export { featureEffects, registerFeatureEffects } from './registry.ts';

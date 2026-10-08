@@ -86,7 +86,10 @@ function offerLevels(effects: readonly Effect[]): Set<number> {
   const visit = (list: readonly Effect[], level: number) => {
     for (const e of list) {
       if (e.type === 'atLevel') visit(e.effects, e.level);
-      else if (effectSlots([e]).length) levels.add(level);
+      else if (e.type === 'grantSpells') {
+        // A spell pick names its own level (Magical Discoveries: the College of Lore's at 6).
+        for (const g of e.spells) if ('slot' in g.spell) levels.add(g.atLevel ?? level);
+      } else if (effectSlots([e]).length) levels.add(level);
     }
   };
   visit(effects, 1);

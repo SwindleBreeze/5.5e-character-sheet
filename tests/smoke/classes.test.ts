@@ -86,4 +86,39 @@ describe.skipIf(!root)('class golden checks (local data)', () => {
     expect(resource(twenty, 'Warrior of the Gods')?.max.value).toBe(7);
     expect(twenty.abilities.str.score.value).toBeGreaterThanOrEqual(21);
   });
+
+  it('Bard: Bardic Inspiration, Jack of All Trades and the four colleges', () => {
+    const one = build('bard', 1);
+    expect(resource(one, 'Bardic Inspiration')).toMatchObject({ die: '1d6', recharge: 'long' });
+    expect(resource(one, 'Bardic Inspiration')?.max.value).toBe(Math.max(1, one.abilities.cha.mod));
+
+    const five = build('bard', 5);
+    expect(resource(five, 'Bardic Inspiration')).toMatchObject({ die: '1d8', recharge: 'short' });
+    // Half proficiency (round down) on a skill the Bard isn't proficient in.
+    const [skill, roll] = Object.entries(five.skills).find(([, v]) => v.proficiency === 'half')!;
+    expect(roll.bonus.value, skill).toBe(five.abilities[roll.ability].mod + 1);
+
+    const lore = build('bard', 6, 'lore');
+    expect(
+      Object.values(lore.skills).filter(
+        (v) => v.proficiency === 'proficient' || v.proficiency === 'expertise',
+      ).length,
+    ).toBeGreaterThanOrEqual(
+      Object.values(five.skills).filter(
+        (v) => v.proficiency === 'proficient' || v.proficiency === 'expertise',
+      ).length + 3,
+    );
+    // Magical Discoveries: two spells picked through the college's own data.
+    const discoveries = lore.features
+      .find((f) => f.name === 'College of Lore')!
+      .choices.flatMap((c) => c.values);
+    expect(discoveries).toHaveLength(2);
+    for (const id of discoveries)
+      expect(index.get({ kind: 'spell', id })!.level).toBeLessThanOrEqual(3);
+
+    expect(build('bard', 6, 'valor').attacksPerAction.value).toBe(2);
+    const twenty = build('bard', 20, 'glamour');
+    expect(resource(twenty, 'Bardic Inspiration')?.die).toBe('1d12');
+    expect(resource(twenty, 'Mantle of Majesty')?.max.value).toBe(1);
+  });
 });

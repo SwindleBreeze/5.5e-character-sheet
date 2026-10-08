@@ -51,3 +51,22 @@ export const notIncapacitated: Predicate = { not: { condition: 'condition/incapa
 export const AT_TABLE = 'Chosen at the table each time it is used.';
 /** The creatures it affects are picked at the table. */
 export const TARGETS = 'Which creatures it affects is decided at the table.';
+
+/** A save DC of 8 + an ability modifier + Proficiency Bonus (a spell save DC included). */
+export const dc = (ability: string) => `8 + mod.${ability} + pb`;
+
+/** Spells always prepared (a class's or subclass's own). */
+export function alwaysPrepared(ids: string[]): Effect {
+  return {
+    type: 'grantSpells',
+    spells: ids.map((id) => ({ mode: 'alwaysPrepared' as const, spell: { id } })),
+  };
+}
+
+/** Uses of a once-per-rest feature that another resource can restore (a Bardic Inspiration). */
+export function restoredBy(
+  resourceId: string,
+  cost: import('../../../schema/index.ts').Cost,
+): Effect {
+  return { type: 'restoreWith', resourceId, amount: 1, costs: [cost] };
+}
