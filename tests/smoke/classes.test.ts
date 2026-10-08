@@ -11,7 +11,9 @@ import { createContentIndex, type ContentIndex } from '../../src/engine/content/
 import { derive } from '../../src/engine/derive/derive.ts';
 import type { DerivedSheet } from '../../src/engine/derive/types.ts';
 import { featureEffects } from '../../src/engine/featureEffects/index.ts';
+import { setPick } from '../../src/engine/play/features.ts';
 import { toggle } from '../../src/engine/play/reducers.ts';
+import { decodeChoiceKey } from '../../src/schema/index.ts';
 import type { ContentEntity } from '../../src/schema/index.ts';
 import { nodeFileSource } from './nodeFileSource.ts';
 
@@ -353,5 +355,51 @@ describe.skipIf(!root)('class golden checks (local data)', () => {
     expect(resource(draconic, 'Sorcerous Restoration')?.max.value).toBe(1);
     expect(resource(build('sorcerer', 20, 'clockwork'), 'Sorcery Points')?.max.value).toBe(20);
     expect(values(build('sorcerer', 6, 'aberrant').defenses.resistances)).toEqual(['psychic']);
+  });
+
+  it('Warlock: Magical Cunning, the four patrons, and the pact weapon invocations', () => {
+    expect(resource(build('warlock', 2), 'Magical Cunning')?.max.value).toBe(1);
+    const celestial = build('warlock', 5, 'celestial');
+    expect(resource(celestial, 'Healing Light')).toMatchObject({ die: '1d6', pool: true });
+    expect(resource(celestial, 'Healing Light')?.max.value).toBe(6);
+    expect(values(build('warlock', 10, 'great old one').defenses.resistances)).toEqual(['psychic']);
+    expect(build('warlock', 10, 'fiend').defenses.resistances).toHaveLength(1);
+    expect(values(build('warlock', 10, 'archfey').defenses.conditionImmunities)).toEqual([
+      'charmed',
+    ]);
+
+    // Pact of the Blade and Thirsting Blade, picked as the level 5 invocations.
+    const registry = featureEffects();
+    let c = quickBuild(
+      {
+        name: 'Blade',
+        speciesId: 'human|xphb',
+        backgroundId: 'soldier|xphb',
+        classes: [{ classId: 'warlock|xphb', levels: 5, subclassId: 'fiend|warlock|xphb|xphb' }],
+      },
+      { index, catalog, registry, now: 1 },
+    );
+    let s = derive(c, index, { registry });
+    // Every invocation pick: Pact of the Blade and Thirsting Blade in, Devouring Blade out
+    // (the quick-builder picks alphabetically, without checking prerequisites).
+    const picks = s.features
+      .flatMap((f) => f.choices)
+      .filter((x) => x.offer.kind === 'optionalFeature');
+    picks.forEach((pick, i) => {
+      const keep = pick.values.filter((v) => !v.includes('blade|'));
+      const add = i === 0 ? ['pact of the blade|xphb', 'thirsting blade|xphb'] : [];
+      c = setPick(c, decodeChoiceKey(pick.key), {
+        values: [...add, ...keep].slice(0, Math.max(pick.values.length, add.length)),
+        labels: [],
+        valueKinds: ['optionalFeature'],
+        entryIndex: pick.entryIndex,
+      });
+    });
+    s = derive(c, index, { registry });
+    c = toggle(c, s, 'pact-weapon', true, { free: true });
+    s = derive(c, index, { registry });
+    expect(s.attacksPerAction.value).toBe(2);
+    const melee = s.attacks.find((a) => a.kind === 'weapon' && a.range === 'melee')!;
+    expect(melee.ability).toBe('cha');
   });
 });
