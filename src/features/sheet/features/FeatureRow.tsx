@@ -15,6 +15,7 @@ import { RECHARGE_TEXT } from '../actions/labels.ts';
 import type { SheetBindings } from '../sheetBindings.ts';
 import inventory from '../inventory/inventory.module.css';
 import styles from './features.module.css';
+import { optionWhat } from '../../../engine/choices/options.ts';
 import { choiceTitle, choiceValues } from '../../choices/labels.ts';
 import { Glance } from './Glance.tsx';
 import { glanceResources } from './glanceResources.ts';
@@ -122,17 +123,31 @@ export function FeatureRow({
           {choices.map(({ c, f }) => {
             const shown = choiceValues(c, bindings.index);
             const missing = c.count - c.values.length;
+            // What an option brings, right here (a Circle of the Land's land: its spells).
+            const what =
+              c.offer.kind === 'option'
+                ? c.values
+                    .map((v) => optionWhat(c.offer, v, bindings.index).summary)
+                    .filter(Boolean)
+                : [];
             return (
               <li key={c.key} className={styles.pick}>
                 <span className={styles.pickTitle}>{choiceTitle(c)}</span>
                 <span className={styles.pickValues}>
-                  {shown.join(', ')}
-                  {missing > 0 && (
-                    <span className={inventory.warn}>
-                      {shown.length ? ' · ' : ''}
-                      {missing} to choose
+                  <span>
+                    {shown.join(', ')}
+                    {missing > 0 && (
+                      <span className={inventory.warn}>
+                        {shown.length ? ' · ' : ''}
+                        {missing} to choose
+                      </span>
+                    )}
+                  </span>
+                  {what.map((w) => (
+                    <span key={w} className={styles.pickWhat}>
+                      {w}
                     </span>
-                  )}
+                  ))}
                 </span>
                 <Button
                   size="sm"

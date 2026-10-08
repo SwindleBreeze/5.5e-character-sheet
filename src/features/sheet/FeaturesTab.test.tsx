@@ -131,6 +131,19 @@ describe('Features tab', () => {
     expect(within(row('Arena Training')).getByRole('group', { name: /left$/ })).toBeTruthy();
   });
 
+  it('an option pick says what it brings, without reading the whole feature', () => {
+    const c = character();
+    c.log[0]!.choices.push({
+      key: { owner: { kind: 'species', id: 'mossling|tst' }, slot: 'spellsSet' },
+      values: ['1'],
+      labels: ['Grey'],
+    } as Character['log'][number]['choices'][number]);
+    renderTab(c);
+    const picks = within(within(row('Mossling')).getByRole('list', { name: 'Mossling choices' }));
+    expect(picks.getByText('Grey')).toBeTruthy();
+    expect(picks.getByText(/^Spells.*Dim Lantern/)).toBeTruthy();
+  });
+
   it('opens a feature to read its text', async () => {
     const user = userEvent.setup();
     renderTab(character());

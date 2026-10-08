@@ -134,7 +134,11 @@ export function optionLabel(offer: Offer, value: string): string {
  * What one value of an option pick brings, from the owner's effects that depend on it (a Circle
  * of the Land's land: its spells): `Spell: Blur, Burning Hands and Fire Bolt (cantrip)`.
  */
-function optionWhat(offer: Offer, value: string, index: ContentIndex): Partial<ChoiceOption> {
+export function optionWhat(
+  offer: Offer,
+  value: string,
+  index: ContentIndex,
+): Partial<ChoiceOption> {
   const owner = index.get(offer.key.owner);
   if (!owner || !('effects' in owner) || !Array.isArray(owner.effects)) return {};
   const effects = [...walkEffects(owner.effects as Effect[])].flatMap((e) =>
