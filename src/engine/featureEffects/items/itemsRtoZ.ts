@@ -90,7 +90,6 @@ const DAMAGE_TYPES = [
 ];
 
 /** Weapon variants: the engine can't aim a rider at the weapon a variant is applied to. */
-const VARIANT_RIDER = 'an attack filter for the base weapon a variant item is applied to';
 
 export const ITEMS_R_TO_Z: FeatureEffectsMap = {
   [I('red dragon scale mail')]: dragonScale('red'),
@@ -452,8 +451,8 @@ export const ITEMS_R_TO_Z: FeatureEffectsMap = {
   [I('sword of vengeance')]: text({
     needs: 'Disadvantage on attacks with weapons other than the one this variant is applied to',
   }),
-  [I('sword of wounding')]: text({ needs: VARIANT_RIDER }),
-  [I('vicious weapon')]: text({ needs: VARIANT_RIDER }),
+  [I('sword of wounding')]: text(),
+  [I('vicious weapon')]: text(),
   [I('vorpal sword')]: text(),
   [I('silvered weapon')]: text(),
   [I('smoldering armor')]: text(),

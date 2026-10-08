@@ -15,7 +15,6 @@ const own = (name: string) => ({ itemIds: [`${name}|xdmg`] });
 const CONDITION_SAVES = 'rollMode on saves against a single condition';
 const vsPoisoned = 'Advantage on saves to avoid or end Poisoned is not shown on the save rows.';
 /** Variant weapons are rows of their base weapon, so a filter can only name the base. */
-const VARIANT_FILTER = 'an attack filter that matches a variant item (it matches the base weapon)';
 
 /** An Ioun Stone that raises one score by 2, to at most 20. */
 const iounScore = (ability: Ability): FeatureMapping =>
@@ -259,14 +258,13 @@ export const ITEMS_I_TO_Q: FeatureEffectsMap = {
         name: 'Oathbow (sworn enemy)',
         dice: '3d6',
         damageType: 'piercing',
-        filter: { range: 'ranged', itemIds: ['longbow|xphb', 'shortbow|xphb'] },
+        filter: { itemIds: ['oathbow|xdmg'] },
         optIn: true,
       },
     ],
     {
       notes:
         'Advantage against the sworn enemy, and Disadvantage with other weapons while it lives.',
-      needs: VARIANT_FILTER,
       unoffered: AT_TABLE,
     },
   ),
