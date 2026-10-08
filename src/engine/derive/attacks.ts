@@ -148,8 +148,10 @@ function buildAttack(
     { label: `${ability.toUpperCase()} modifier`, value: mods[ability] },
   ];
   const damageParts: Contribution[] = [];
-  const offHand = traits.tags.includes('offHand');
-  // The Light extra attack adds no positive ability modifier to damage (2024).
+  // The Light extra attack adds no positive ability modifier to damage (2024), unless a
+  // feature says so (Two-Weapon Fighting).
+  const offHand =
+    traits.tags.includes('offHand') && !applied.some(({ effect }) => effect.offHandAbility);
   if (!offHand || mods[ability] < 0) {
     damageParts.push({ label: `${ability.toUpperCase()} modifier`, value: mods[ability] });
   }

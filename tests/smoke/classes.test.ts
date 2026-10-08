@@ -287,7 +287,10 @@ describe.skipIf(!root)('class golden checks (local data)', () => {
 
     const gloom = build('ranger', 11, 'gloom stalker');
     const three = build('ranger', 3, 'gloom stalker');
-    expect(three.initiative.bonus.value).toBe(three.abilities.dex.mod + three.abilities.wis.mod);
+    // Dexterity, Wisdom (Dread Ambusher) and Proficiency (Alert, the human's origin feat).
+    expect(three.initiative.bonus.value).toBe(
+      three.abilities.dex.mod + three.abilities.wis.mod + 2,
+    );
     expect(resource(gloom, 'Dreadful Strike')?.max.value).toBe(
       Math.max(1, gloom.abilities.wis.mod),
     );
@@ -415,5 +418,46 @@ describe.skipIf(!root)('class golden checks (local data)', () => {
     expect(resource(build('wizard', 3, 'diviner'), 'Portent')?.max.value).toBe(2);
     expect(resource(build('wizard', 14, 'diviner'), 'Portent')?.max.value).toBe(3);
     expect(resource(build('wizard', 10, 'illusionist'), 'Illusory Self')?.recharge).toBe('short');
+  });
+
+  it('feats and species: Alert, Tough, fighting styles, Breath Weapon, Dwarven Toughness…', () => {
+    const registry = featureEffects();
+    const as = (speciesId: string, classId = 'fighter|xphb', levels = 5) =>
+      derive(
+        quickBuild(
+          {
+            name: 'Origin',
+            speciesId,
+            backgroundId: 'soldier|xphb',
+            classes: [{ classId, levels }],
+          },
+          { index, catalog, registry, now: 1 },
+        ),
+        index,
+        { registry },
+      );
+    // Human: the quick-builder's origin feat is Alert, adding Proficiency to Initiative.
+    const human = as('human|xphb');
+    expect(human.initiative.bonus.value).toBe(human.abilities.dex.mod + 3);
+
+    const dwarf = as('dwarf|xphb');
+    const orc = as('orc|xphb');
+    // Dwarven Toughness: +1 hit point per level.
+    expect(dwarf.hp.max.value - dwarf.abilities.con.mod * 5).toBe(
+      orc.hp.max.value - orc.abilities.con.mod * 5 + 5,
+    );
+    expect(resource(dwarf, 'Stonecunning')?.max.value).toBe(3);
+    expect(resource(orc, 'Adrenaline Rush')).toMatchObject({ recharge: 'short' });
+
+    const red = as('dragonborn (red)|xphb');
+    const breath = red.actions.find((a) => a.name === 'Breath Weapon (Fire)')!;
+    expect(breath.roll).toBe('2d10');
+    expect(breath.saveDc).toBe(8 + red.abilities.con.mod + 3);
+    expect(red.toggles.map((t) => t.name)).toContain('Draconic Flight');
+
+    expect(as('gnome|xphb').saves.wis.mode).toBe('advantage');
+    expect(
+      as('goliath; stone giant ancestry|xphb').actions.some((a) => a.name === "Stone's Endurance"),
+    ).toBe(true);
   });
 });

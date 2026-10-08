@@ -252,6 +252,8 @@ export type Effect =
       critRange?: number;
       /** Attacks per Attack action, counting the first: the largest wins. */
       extraAttacks?: number;
+      /** The Light extra attack adds the ability modifier to its damage (Two-Weapon Fighting). */
+      offHandAbility?: boolean;
     }
   /** P4: extra damage listed under matching attacks. */
   | {
