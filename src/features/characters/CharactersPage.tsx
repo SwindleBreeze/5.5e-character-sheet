@@ -11,6 +11,7 @@ import { Button } from '../../ui/Button.tsx';
 import { useSheet } from '../../ui/sheetContext.ts';
 import { InstallGuide } from '../settings/InstallGuide.tsx';
 import { BackupReminder } from './BackupReminder.tsx';
+import { StaleContentNotice } from './StaleContentNotice.tsx';
 import styles from './CharactersPage.module.css';
 
 function summary(character: Character): string {
@@ -82,6 +83,7 @@ export function CharactersPage() {
       <div className={page.content}>
         {showInstallGuide && <InstallGuide compact />}
         {characters && characters.length > 0 && <BackupReminder characters={characters} />}
+        <StaleContentNotice />
         {sources !== undefined && sources.length === 0 && (
           <section className={page.card} aria-labelledby="first-run-title">
             <h2 id="first-run-title" className={page.cardTitle}>

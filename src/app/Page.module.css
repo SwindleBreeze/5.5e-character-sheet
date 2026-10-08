@@ -41,3 +41,19 @@
   text-align: center;
   color: var(--color-text-muted);
 }
+
+/* A screen over the app that needs an answer first (the browser cleared the app's data). */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay, 50);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: var(--color-overlay);
+}
+
+.overlay > .card {
+  max-width: 32rem;
+}
