@@ -209,4 +209,37 @@ describe.skipIf(!root)('class golden checks (local data)', () => {
       `1d10 + ${psi.abilities.int.mod}`,
     );
   });
+
+  it('Monk: Martial Arts, Focus Points, Unarmored Defense and Movement, the four subclasses', () => {
+    const unarmed = (s: DerivedSheet) => attack(s, 'Unarmed Strike');
+    const one = build('monk', 1);
+    expect(one.ac.value).toBe(10 + one.abilities.dex.mod + one.abilities.wis.mod);
+    expect(unarmed(one).damageDice).toBe('1d6');
+    expect(unarmed(one).ability).toBe('dex');
+
+    const five = build('monk', 5, 'open hand');
+    expect(resource(five, 'Focus Points')).toMatchObject({ recharge: 'short' });
+    expect(resource(five, 'Focus Points')?.max.value).toBe(5);
+    expect(unarmed(five).damageDice).toBe('1d8');
+    expect(five.speed.walk?.value).toBe(40);
+    expect(five.attacksPerAction.value).toBe(2);
+    expect(five.actions.find((a) => a.name === 'Stunning Strike')?.saveDc).toBe(
+      8 + five.abilities.wis.mod + 3,
+    );
+    // Flurry of Blows: one action, paid with a Focus Point.
+    const flurry = five.actions.filter((a) => a.name === 'Flurry of Blows');
+    expect(flurry).toHaveLength(1);
+    expect(flurry[0]!.costs[0]?.resourceKey).toBe(resource(five, 'Focus Points')?.key);
+
+    const elements = build('monk', 11, 'elements', ['elemental-attunement']);
+    expect(elements.speed.fly?.value).toBe(elements.speed.walk?.value);
+    expect(unarmed(elements).damageDice).toBe('1d10');
+
+    const twenty = build('monk', 20, 'mercy');
+    expect(twenty.speed.walk?.value).toBe(60);
+    expect(Object.values(twenty.saves).every((r) => r.proficiency !== 'none')).toBe(true);
+    expect(unarmed(twenty).riders.find((r) => r.id === 'hand-of-harm')?.dice).toBe(
+      `1d12 + ${twenty.abilities.wis.mod}`,
+    );
+  });
 });
