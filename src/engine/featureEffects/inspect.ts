@@ -88,6 +88,8 @@ export function effectFormulas(e: Effect): Formula[] {
       return defined(e.dcBonus, e.attackBonus, e.damageBonus);
     case 'ward':
       return [e.max];
+    case 'attack':
+      return [e.damage];
     default:
       return [];
   }

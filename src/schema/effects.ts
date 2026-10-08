@@ -63,6 +63,8 @@ export interface AttackFilter {
   itemIds?: Id[];
   /** Derived tags, e.g. `monkWeapon`, `pactWeapon`, `offHand`. */
   tags?: string[];
+  /** At least one of these filters matches too (Sneak Attack: a Finesse or a Ranged weapon). */
+  any?: AttackFilter[];
 }
 
 /** P9: what a roll modifier applies to. `attack:<tag>` narrows to attacks with that tag. */
@@ -270,8 +272,11 @@ export type Effect =
   | { type: 'rollBonus'; target: RollTarget; value: Formula; note?: string }
   /** P9: half proficiency on these rolls when not proficient (Jack of All Trades). */
   | { type: 'halfProficiency'; targets: RollTarget[] }
-  /** P9: a d20 roll below this counts as this (Reliable Talent: 10). */
-  | { type: 'rollFloor'; target: RollTarget; value: number }
+  /**
+   * P9: a d20 roll below this counts as this (Reliable Talent: 10). `proficientOnly`: only on
+   * rolls the character is proficient in.
+   */
+  | { type: 'rollFloor'; target: RollTarget; value: number; proficientOnly?: boolean }
   /** P6: a later feature changes a resource. */
   | {
       type: 'resourceModify';
@@ -306,6 +311,21 @@ export type Effect =
     }
   /** P12: hit points that absorb damage after temporary HP (Arcane Ward). */
   | { type: 'ward'; name: string; max: Formula }
+  /**
+   * P15: an attack a feature gives, made like a weapon attack without an item (Psychic Blade).
+   * `properties` are item-property abbreviations (`F`, `T`); `abilities`, the best one is used.
+   */
+  | {
+      type: 'attack';
+      id: string;
+      name: string;
+      damage: Formula;
+      damageType: string;
+      range: 'melee' | 'ranged';
+      distance: string;
+      abilities: Ability[];
+      properties?: string[];
+    }
   /** Count as `steps` sizes larger when determining carrying capacity (Powerful Build). */
   | { type: 'carrySize'; steps: number };
 

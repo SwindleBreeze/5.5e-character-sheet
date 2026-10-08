@@ -394,6 +394,37 @@ export function deriveAttacks(
     }
   }
 
+  // Attacks a feature gives (P15): like a weapon the character is proficient with.
+  for (const { effect, source } of effectsOfType(ctx.collected, 'attack')) {
+    attacks.push(
+      buildAttack(
+        ctx,
+        {
+          id: `feature:${effect.id}`,
+          name: effect.name,
+          kind: 'weapon',
+          use: { kind: 'attackAction' },
+          traits: {
+            range: effect.range,
+            source: 'weapon',
+            properties: (effect.properties ?? []).map((p) => p.toUpperCase()),
+            tags: [],
+          },
+          ownAbilities: effect.abilities,
+          proficient: true,
+          baseDie: evalValue(ctx, effect.damage, source),
+          damageType: effect.damageType,
+          distance: effect.distance,
+          ready: true,
+        },
+        scores,
+        mods,
+        pb,
+        resources,
+      ),
+    );
+  }
+
   // Unarmed Strike: 1 + Strength, always proficient (2024).
   const unarmed = buildAttack(
     ctx,

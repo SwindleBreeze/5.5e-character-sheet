@@ -303,4 +303,37 @@ describe.skipIf(!root)('class golden checks (local data)', () => {
     );
     expect(build('ranger', 18, 'hunter').senses.map((x) => x.value.sense)).toContain('blindsight');
   });
+
+  it('Rogue: Sneak Attack, Reliable Talent, Cunning Strike and the four subclasses', () => {
+    const sneak = (s: DerivedSheet, name: string) =>
+      attack(s, name).riders.find((r) => r.id === 'sneak-attack')?.dice;
+    const one = build('rogue', 1);
+    // A Finesse weapon or a Ranged one, not others.
+    expect(sneak(one, 'Dagger')).toBe('1d6');
+    const ranged = one.attacks.find((a) => a.range === 'ranged' && a.kind === 'weapon');
+    if (ranged) expect(sneak(one, ranged.name)).toBe('1d6');
+    expect(sneak(one, 'Unarmed Strike')).toBeUndefined();
+
+    const seven = build('rogue', 7, 'thief');
+    expect(sneak(seven, 'Dagger')).toBe('4d6');
+    const proficient = Object.values(seven.skills).find((v) => v.proficiency === 'proficient')!;
+    const untrained = Object.values(seven.skills).find((v) => v.proficiency === 'none')!;
+    expect(proficient.floor).toBe(10);
+    expect(untrained.floor).toBeUndefined();
+    expect(seven.speed.climb?.value).toBe(seven.speed.walk?.value);
+    expect(seven.actions.find((a) => a.name === 'Cunning Strike')?.saveDc).toBe(
+      8 + seven.abilities.dex.mod + 3,
+    );
+
+    const soulknife = build('rogue', 5, 'soulknife');
+    const blade = attack(soulknife, 'Psychic Blade');
+    expect(blade).toMatchObject({ damageDice: '1d6', damageType: 'psychic', ability: 'dex' });
+    expect(sneak(soulknife, 'Psychic Blade')).toBe('3d6');
+    expect(resource(soulknife, 'Psionic Energy Dice')).toMatchObject({ die: '1d8' });
+
+    const fifteen = build('rogue', 15, 'assassin');
+    expect(fifteen.saves.wis.proficiency).toBe('proficient');
+    expect(fifteen.saves.cha.proficiency).toBe('proficient');
+    expect(fifteen.initiative.mode).toBe('advantage');
+  });
 });

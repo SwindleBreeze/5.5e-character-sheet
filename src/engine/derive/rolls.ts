@@ -226,6 +226,7 @@ export function buildRoll(
 
   let floor: number | undefined;
   for (const { effect } of effectsOfType(ctx.collected, 'rollFloor')) {
+    if (effect.proficientOnly && proficiency === 'none') continue;
     if (targetMatches(effect.target, kind)) floor = Math.max(floor ?? 0, effect.value);
   }
 

@@ -70,5 +70,6 @@ export function matchesFilter(filter: AttackFilter, t: AttackTraits): boolean {
   if (filter.ability && t.ability && !filter.ability.includes(t.ability)) return false;
   if (filter.itemIds && (!t.itemId || !filter.itemIds.includes(t.itemId))) return false;
   if (filter.tags && !filter.tags.every((tag) => t.tags.includes(tag))) return false;
+  if (filter.any && !filter.any.some((f) => matchesFilter(f, t))) return false;
   return true;
 }

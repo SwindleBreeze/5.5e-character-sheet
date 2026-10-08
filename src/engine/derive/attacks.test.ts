@@ -334,3 +334,81 @@ describe('Ammunition (2024)', () => {
     expect(shield.attacks.find((a) => a.name === 'wrist bow')?.notes).toContain('Loading');
   });
 });
+
+describe('feature attacks, filters with alternatives, proficient-only floors (phase 6)', () => {
+  /** The fixture mappings with test effects added to Brute's Hardened Hide. */
+  const withEffects = (effects: import('../../schema/index.ts').Effect[]) => {
+    const key = 'classFeature:hardened hide|brute|tst|1|tst';
+    const base = FIXTURE_FEATURE_EFFECTS[key]!;
+    return {
+      ...FIXTURE_FEATURE_EFFECTS,
+      [key]: { ...base, effects: [...base.effects, ...effects] },
+    };
+  };
+
+  it('a feature attack (P15) is made like a weapon the character is proficient with', () => {
+    const registry = withEffects([
+      {
+        type: 'attack',
+        id: 'mind-blade',
+        name: 'Mind Blade',
+        damage: '1d6',
+        damageType: 'psychic',
+        range: 'melee',
+        distance: '5 ft. or 60/120 ft.',
+        abilities: ['str', 'dex'],
+        properties: ['F', 'T'],
+      },
+    ]);
+    const d = derive(brute([]), index, { registry });
+    const blade = d.attacks.find((a) => a.name === 'Mind Blade')!;
+    // Strength 18 beats Dexterity 13; proficient: +4 + 3.
+    expect(summary(blade)).toEqual({
+      name: 'Mind Blade',
+      ready: true,
+      ability: 'str',
+      toHit: 7,
+      damage: '1d6 + 4',
+    });
+    expect(blade.damageType).toBe('psychic');
+  });
+
+  it('a filter with alternatives matches when any of them does', () => {
+    const registry = withEffects([
+      {
+        type: 'damageRider',
+        id: 'sly',
+        name: 'Sly',
+        dice: '1d6',
+        filter: { source: ['weapon'], any: [{ properties: ['F'] }, { range: 'ranged' }] },
+        optIn: true,
+      },
+    ]);
+    const d = derive(
+      brute([row('arc bow|tst'), row('net blade|tst'), row('walking staff|tst')]),
+      index,
+      {
+        registry,
+      },
+    );
+    const sly = (name: string) =>
+      d.attacks.find((a) => a.name === name)!.riders.some((r) => r.id === 'sly');
+    expect(sly('arc bow')).toBe(true); // ranged
+    expect(sly('net blade')).toBe(true); // Finesse
+    expect(sly('walking staff')).toBe(false);
+    expect(sly('Unarmed Strike')).toBe(false);
+  });
+
+  it('a proficient-only floor leaves rolls without proficiency alone', () => {
+    const registry = withEffects([
+      { type: 'rollFloor', target: 'save:str', value: 10, proficientOnly: true },
+      { type: 'rollFloor', target: 'save:int', value: 10, proficientOnly: true },
+    ]);
+    const d = derive(brute([]), index, { registry });
+    // Brute saves: Strength and Constitution.
+    expect(d.saves.str.proficiency).toBe('proficient');
+    expect(d.saves.str.floor).toBe(10);
+    expect(d.saves.int.proficiency).toBe('none');
+    expect(d.saves.int.floor).toBeUndefined();
+  });
+});
