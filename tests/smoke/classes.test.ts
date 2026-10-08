@@ -402,4 +402,18 @@ describe.skipIf(!root)('class golden checks (local data)', () => {
     const melee = s.attacks.find((a) => a.kind === 'weapon' && a.range === 'melee')!;
     expect(melee.ability).toBe('cha');
   });
+
+  it('Wizard: Arcane Recovery and the four subclasses', () => {
+    const one = build('wizard', 1);
+    expect(resource(one, 'Arcane Recovery')?.max.value).toBe(1);
+    expect(one.actions.find((a) => a.name === 'Arcane Recovery')?.outcomes).toEqual([
+      expect.objectContaining({ regainSlot: expect.anything() }),
+    ]);
+
+    const abjurer = build('wizard', 6, 'abjurer');
+    expect(abjurer.hp.ward?.max.value).toBe(2 * 6 + abjurer.abilities.int.mod);
+    expect(resource(build('wizard', 3, 'diviner'), 'Portent')?.max.value).toBe(2);
+    expect(resource(build('wizard', 14, 'diviner'), 'Portent')?.max.value).toBe(3);
+    expect(resource(build('wizard', 10, 'illusionist'), 'Illusory Self')?.recharge).toBe('short');
+  });
 });

@@ -14,6 +14,7 @@ import { RANGER } from './core/ranger.ts';
 import { ROGUE } from './core/rogue.ts';
 import { SORCERER } from './core/sorcerer.ts';
 import { WARLOCK } from './core/warlock.ts';
+import { WIZARD } from './core/wizard.ts';
 import { registerFeatureEffects } from './registry.ts';
 
 registerFeatureEffects(CORE_LEVELS_1_TO_3);
@@ -29,5 +30,6 @@ registerFeatureEffects(RANGER);
 registerFeatureEffects(ROGUE);
 registerFeatureEffects(SORCERER);
 registerFeatureEffects(WARLOCK);
+registerFeatureEffects(WIZARD);
 
 export { featureEffects, registerFeatureEffects } from './registry.ts';
