@@ -199,7 +199,7 @@ describe('choice options', () => {
       label: 'Arc Bow',
       group: 'Martial weapons',
       detail: 'Martial ranged · 1d6 piercing · 60/240 ft. · Ammunition, Two-Handed',
-      about: { name: 'Quickcut', text: 'A second quick strike.' },
+      about: { title: 'Mastery: Quickcut', text: 'A second quick strike.' },
     });
     // Versatile: the two-handed die too.
     expect(options.find((o) => o.value === 'walking staff|tst')?.detail).toBe(

@@ -32,6 +32,7 @@ import { equipmentOptionText } from '../build/equipment.ts';
 import { SIZE_NAMES } from '../items/items.ts';
 import { checkPrereqs, prereqContext, type PrereqContext } from '../prereq.ts';
 import { distanceOf } from '../derive/attacks.ts';
+import { masteryHasSave, masterySaveNote, masteryWhen } from '../explain/mastery.ts';
 import { isRangedWeapon } from '../static/attackTraits.ts';
 import { baseWeapons, expertiseOptions, weaponMasteryOptions } from './queries.ts';
 
@@ -50,8 +51,8 @@ export interface ChoiceOption {
   unknown?: string[];
   /** What it does, in a sentence of its own text (a spell's first sentence). */
   summary?: string;
-  /** A rule that goes with it, in its imported words (a weapon's mastery property). */
-  about?: { name: string; text: string };
+  /** A rule that goes with it (a weapon's mastery property): its text, imported, and when it applies. */
+  about?: { title: string; text: string; when?: string; note?: string };
 }
 
 export interface OptionsSettings {
@@ -170,6 +171,16 @@ export function spellDetail(spell: Spell): string {
 
 const spellGroup = (spell: Spell) =>
   spell.level === 0 ? 'Cantrips' : `${ORDINAL[spell.level]}-level spells`;
+
+function masteryAbout(name: string, text: string): NonNullable<ChoiceOption['about']> {
+  const when = masteryWhen(name);
+  return {
+    title: `Mastery: ${name}`,
+    text,
+    ...(when ? { when } : {}),
+    ...(masteryHasSave(text) ? { note: masterySaveNote() } : {}),
+  };
+}
 
 function prereqFacts(
   entity: Feat | OptionalFeature | undefined,
@@ -399,7 +410,7 @@ export function offerOptions(
           ]
             .filter(Boolean)
             .join(' · '),
-          ...(mastery ? { about: { name: mastery.name, text: text ?? '' } } : {}),
+          ...(mastery ? { about: masteryAbout(mastery.name, text ?? '') } : {}),
         };
       };
       break;

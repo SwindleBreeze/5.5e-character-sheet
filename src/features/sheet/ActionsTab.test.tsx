@@ -123,9 +123,11 @@ describe('Actions tab', () => {
     renderTab(c);
     const blade = card('net blade');
     expect(blade.querySelector('[data-kind="mastery"]')?.textContent).toBe(
-      'Mastery: Snare The target is slowed.',
+      'Weapon mastery: SnareThe target is slowed.',
     );
-    expect(within(blade).getByRole('button', { name: 'Mastery: Snare' })).toBeInTheDocument();
+    expect(
+      within(blade).getByRole('button', { name: 'Weapon mastery: Snare' }),
+    ).toBeInTheDocument();
     // The Shiv's mastery isn't one the character has.
     expect(card('shiv').querySelector('[data-kind="mastery"]')).toBeNull();
   });

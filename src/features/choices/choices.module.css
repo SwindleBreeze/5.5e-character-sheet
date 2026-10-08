@@ -163,6 +163,10 @@
   font-size: var(--font-size-sm);
 }
 
+.when {
+  color: var(--color-text-muted);
+}
+
 .why {
   color: var(--color-positive);
   font-size: var(--font-size-sm);

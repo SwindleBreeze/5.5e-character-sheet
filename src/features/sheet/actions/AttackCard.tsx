@@ -17,6 +17,7 @@ import { ruleId, type Character, type Ref } from '../../../schema/index.ts';
 import type { ContentIndex } from '../../../engine/content/contentIndex.ts';
 import { EntitySheet } from '../../../richtext/EntitySheet.tsx';
 import { InlineText } from '../../../richtext/InlineText.tsx';
+import { masteryHasSave, masterySaveNote, masteryWhen } from '../../../engine/explain/mastery.ts';
 import { Badge } from '../../../ui/Badge.tsx';
 import { useRoller } from '../../../ui/rollerContext.ts';
 import { useSheet } from '../../../ui/sheetContext.ts';
@@ -317,8 +318,9 @@ export function AttackCard({
 }
 
 /**
- * The weapon's mastery property, in its own words: it applies on its own when the attack
- * hits (Graze when it misses), alongside the damage. Topple's save DC is worked out.
+ * The weapon's mastery property: when it applies (on a hit, on a miss, always), its text, and
+ * for one that asks the target for a save, who rolls and the DC worked out. It comes on top of
+ * the attack: nothing to choose before rolling.
  */
 function MasteryLine({
   mastery,
@@ -332,26 +334,27 @@ function MasteryLine({
   openRule: (ref: Ref, title: string) => void;
 }) {
   const rule = index.get({ kind: 'rule', id: mastery.id });
-  const text = rule?.entries.find((e): e is string => typeof e === 'string');
+  const text = rule?.entries.find((e): e is string => typeof e === 'string') ?? '';
+  const when = masteryWhen(mastery.name);
   return (
-    <p className={styles.rule} data-kind="mastery">
-      <button
-        type="button"
-        className={styles.inlineLink}
-        onClick={() => openRule({ kind: 'rule', id: mastery.id }, mastery.name)}
-      >
-        Mastery: {mastery.name}
-      </button>
+    <div className={styles.mastery} data-kind="mastery">
+      <p className={styles.masteryHead}>
+        <button
+          type="button"
+          className={styles.inlineLink}
+          onClick={() => openRule({ kind: 'rule', id: mastery.id }, mastery.name)}
+        >
+          Weapon mastery: {mastery.name}
+        </button>
+        {when && <span className={styles.masteryWhen}>{when}</span>}
+      </p>
       {text && (
-        <>
-          {' '}
+        <p className={styles.rule}>
           <InlineText text={text} />
-        </>
+          {masteryHasSave(text) && <strong> {masterySaveNote(dc)}</strong>}
+        </p>
       )}
-      {/\bsaving throw\b/.test(text ?? '') && /\{@dc 8\}/.test(text ?? '') && (
-        <strong> Your DC: {dc}.</strong>
-      )}
-    </p>
+    </div>
   );
 }
 

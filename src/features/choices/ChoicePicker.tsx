@@ -181,7 +181,11 @@ export function ChoicePicker({ choice, ctx, onSave, instant, showRetrain }: Choi
       ),
       o.about && (
         <span key="about" className={styles.about}>
-          <strong>{o.about.name}.</strong> <InlineText text={o.about.text} />
+          <strong>{o.about.title}</strong>
+          {o.about.when && (
+            <span className={styles.when}> ({o.about.when.toLowerCase()})</span>
+          )}. <InlineText text={o.about.text} />
+          {o.about.note && <> {o.about.note}</>}
         </span>
       ),
       o.taken && (
