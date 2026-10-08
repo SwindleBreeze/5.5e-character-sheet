@@ -127,7 +127,7 @@ export type RollKind =
   | { type: 'initiative' }
   | { type: 'concentration' }
   | { type: 'death' }
-  /** `attack:<x>` matches `all`, or the attack's source, range or one of its tags. */
+  /** `attack:<x>` matches `all`, or the attack's source, range, ability or one of its tags. */
   | { type: 'attack'; traits: AttackTraits };
 
 /** Whether a roll-modifier target applies to a roll. Initiative is a Dexterity check. */
@@ -149,7 +149,13 @@ export function targetMatches(target: RollTarget, kind: RollKind): boolean {
       if (!target.startsWith('attack:')) return false;
       const what = target.slice('attack:'.length);
       const t = kind.traits;
-      return what === 'all' || what === t.source || what === t.range || t.tags.includes(what);
+      return (
+        what === 'all' ||
+        what === t.source ||
+        what === t.range ||
+        what === t.ability ||
+        t.tags.includes(what)
+      );
     }
   }
 }
