@@ -215,7 +215,8 @@ export function spendHitDice(
 }
 
 /**
- * Pay one cost: a resource's uses, the spell slot the player picked, or Hit Dice. A slot cost
+ * Pay one cost: a resource's uses, the spell slot the player picked, Hit Dice, or an item's
+ * charges. A slot cost
  * without a picked slot is left unpaid; an action cost (a Bonus Action) is only a reminder.
  */
 export function payCost(
@@ -227,6 +228,13 @@ export function payCost(
   if (cost.resourceKey) return spendResource(c, sheet, cost.resourceKey, cost.amount ?? 1);
   if (cost.slot && choice.slot) return spendSlot(c, sheet, choice.slot);
   if (cost.hitDice) return spendHitDice(c, sheet, cost.amount ?? 1, choice.hitDie);
+  if (cost.charges) {
+    const n = clone(c);
+    const row = n.inventory.find((r) => r.uid === cost.charges!.rowUid);
+    const amount = Math.min(cost.amount ?? 1, cost.charges.left);
+    if (row && amount > 0) row.chargesUsed = (row.chargesUsed ?? 0) + amount;
+    return n;
+  }
   return c;
 }
 

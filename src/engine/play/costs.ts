@@ -50,6 +50,7 @@ export function canPay(sheet: DerivedSheet, cost: DerivedCost): boolean {
     return !r || r.max.value - r.used >= (cost.amount ?? 1);
   }
   if (cost.slot) return slotChoices(sheet, cost.slot.minLevel).length > 0;
+  if (cost.charges) return cost.charges.left >= (cost.amount ?? 1);
   if (cost.hitDice) {
     const left = hitDieChoices(sheet).reduce((sum, h) => sum + h.left, 0);
     return left >= (cost.amount ?? 1);

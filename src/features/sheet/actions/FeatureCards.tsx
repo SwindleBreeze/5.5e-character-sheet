@@ -77,7 +77,8 @@ export function ActionCard({
   const roller = useRoller();
   const openRule = useOpenRule();
   const canPay = canPayAll(sheet, a.costs);
-  const usable = a.costs.some((c) => c.resourceKey || c.slot || c.hitDice) || a.outcomes.length > 0;
+  const usable =
+    a.costs.some((c) => c.resourceKey || c.slot || c.hitDice || c.charges) || a.outcomes.length > 0;
   const attackNames = a.attackIds
     .map((id) => attacks.find((x) => x.id === id)?.name)
     .filter((n): n is string => !!n);

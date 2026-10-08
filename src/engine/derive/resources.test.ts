@@ -6,6 +6,8 @@ import { FIXTURE_FEATURE_EFFECTS } from '../../test/fixtureFeatureEffects.ts';
 import { GRANTED_SLOT } from '../collect/collect.ts';
 import type { ContentIndex } from '../content/contentIndex.ts';
 import type { FeatureEffectsMap } from '../featureEffects/types.ts';
+import { canPay } from '../play/costs.ts';
+import { payCost } from '../play/reducers.ts';
 import { derive } from './derive.ts';
 import type { DerivedSheet } from './types.ts';
 
@@ -187,5 +189,55 @@ describe('actions (P7) and toggles (P8)', () => {
       attuned: true,
     }));
     expect(run(c).issues.map((i) => i.message)).toContain('4 items attuned; the limit is 3.');
+  });
+});
+
+describe("costs paid in an item's charges", () => {
+  it('an action of an item in use spends its charges, and stops when they run out', () => {
+    const registry: FeatureEffectsMap = {
+      ...FIXTURE_FEATURE_EFFECTS,
+      'item:ring of loud shouting|tst': {
+        level: 'A',
+        effects: [
+          {
+            type: 'grantAction',
+            action: {
+              id: 'shout',
+              name: 'Shout',
+              actionType: 'action',
+              costs: [{ charges: 2 }],
+            },
+          },
+        ],
+      },
+    };
+    const c = brute();
+    c.inventory = [
+      {
+        uid: 'ring',
+        itemRef: { kind: 'item', id: 'ring of loud shouting|tst' },
+        name: 'Ring of Loud Shouting',
+        quantity: 1,
+        attuned: false,
+        equipped: 'worn',
+      },
+    ];
+    const cost = () =>
+      run(c, registry)
+        .actions.find((a) => a.name === 'Shout')!
+        .costs.find((x) => x.charges)!;
+    expect(cost()).toMatchObject({
+      label: '2 charges',
+      amount: 2,
+      charges: { rowUid: 'ring', left: 3 },
+    });
+    const paid = payCost(c, run(c, registry), cost());
+    expect(paid.inventory[0]?.chargesUsed).toBe(2);
+    expect(
+      canPay(
+        run(paid, registry),
+        run(paid, registry).actions.find((a) => a.name === 'Shout')!.costs[0]!,
+      ),
+    ).toBe(false);
   });
 });

@@ -87,6 +87,8 @@ export type Cost =
   | { resource: string; amount: Formula }
   | { slot: { minLevel: number } }
   | { hitDice: Formula }
+  /** Charges of the item that has the effect (a Staff of Striking's extra damage). */
+  | { charges: Formula }
   | { action: ActionType };
 
 /** P7/P8: what happens to the character when something is used. */
