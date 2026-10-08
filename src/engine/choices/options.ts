@@ -19,7 +19,7 @@ import {
   type Skill,
   type Spell,
 } from '../../schema/index.ts';
-import { prereqsText } from '../../richtext/entityMeta.ts';
+import { firstSentence, prereqsText, spellRange, spellTime } from '../../richtext/entityMeta.ts';
 import {
   carriedWeapons,
   knownSpells,
@@ -31,6 +31,9 @@ import type { Offer } from '../collect/types.ts';
 import { equipmentOptionText } from '../build/equipment.ts';
 import { SIZE_NAMES } from '../items/items.ts';
 import { checkPrereqs, prereqContext, type PrereqContext } from '../prereq.ts';
+import { distanceOf } from '../derive/attacks.ts';
+import { masteryHasSave, masterySaveNote, masteryWhen } from '../explain/mastery.ts';
+import { isRangedWeapon } from '../static/attackTraits.ts';
 import { baseWeapons, expertiseOptions, weaponMasteryOptions } from './queries.ts';
 
 export interface ChoiceOption {
@@ -46,6 +49,10 @@ export interface ChoiceOption {
   unmet?: string[];
   /** Prerequisites the app can't check: shown, never enforced. */
   unknown?: string[];
+  /** What it does, in a sentence of its own text (a spell's first sentence). */
+  summary?: string;
+  /** A rule that goes with it (a weapon's mastery property): its text, imported, and when it applies. */
+  about?: { title: string; text: string; when?: string; note?: string };
 }
 
 export interface OptionsSettings {
@@ -153,6 +160,8 @@ export function spellDetail(spell: Spell): string {
   return [
     spell.level === 0 ? 'Cantrip' : `Level ${spell.level}`,
     readable(spell.school),
+    readable(spellTime(spell)),
+    spellRange(spell),
     spell.ritual ? 'Ritual' : '',
     spell.duration.some((d) => d.concentration) ? 'Concentration' : '',
   ]
@@ -162,6 +171,16 @@ export function spellDetail(spell: Spell): string {
 
 const spellGroup = (spell: Spell) =>
   spell.level === 0 ? 'Cantrips' : `${ORDINAL[spell.level]}-level spells`;
+
+function masteryAbout(name: string, text: string): NonNullable<ChoiceOption['about']> {
+  const when = masteryWhen(name);
+  return {
+    title: `Mastery: ${name}`,
+    text,
+    ...(when ? { when } : {}),
+    ...(masteryHasSave(text) ? { note: masterySaveNote() } : {}),
+  };
+}
 
 function prereqFacts(
   entity: Feat | OptionalFeature | undefined,
@@ -352,7 +371,13 @@ export function offerOptions(
       label = nameOf('spell');
       describe = (id) => {
         const spell = index.get({ kind: 'spell', id });
-        return spell ? { detail: spellDetail(spell), group: spellGroup(spell) } : {};
+        if (!spell) return {};
+        const summary = firstSentence(spell.entries);
+        return {
+          detail: spellDetail(spell),
+          group: spellGroup(spell),
+          ...(summary ? { summary } : {}),
+        };
       };
       break;
     case 'weaponMastery': {
@@ -363,14 +388,29 @@ export function offerOptions(
       taken = new Set(sheet.masteries.map((m) => m.value));
       label = nameOf('item');
       describe = (id) => {
-        const w = (index.get({ kind: 'item', id }) as Item | undefined)?.weapon;
-        if (!w) return {};
-        const mastery = w.masteryId ? index.get({ kind: 'rule', id: w.masteryId })?.name : '';
+        const item = index.get({ kind: 'item', id }) as Item | undefined;
+        const w = item?.weapon;
+        if (!item || !w) return {};
+        const mastery = w.masteryId ? index.get({ kind: 'rule', id: w.masteryId }) : undefined;
+        const text = mastery?.entries.find((e): e is string => typeof e === 'string');
+        const properties = w.properties
+          .map((p) => index.get({ kind: 'rule', id: p })?.name)
+          .filter(Boolean)
+          .join(', ');
+        const damage = w.damage
+          ? `${w.damage} ${w.damageType}${w.versatile ? ` (${w.versatile} two-handed)` : ''}`
+          : '';
         return {
           group: `${readable(w.category)} weapons`,
-          detail: [`${readable(w.category)} ${w.ranged ? 'ranged' : 'melee'}`, mastery]
+          detail: [
+            `${readable(w.category)} ${w.ranged ? 'ranged' : 'melee'}`,
+            damage,
+            distanceOf(item, isRangedWeapon(item)),
+            properties,
+          ]
             .filter(Boolean)
             .join(' · '),
+          ...(mastery ? { about: masteryAbout(mastery.name, text ?? '') } : {}),
         };
       };
       break;

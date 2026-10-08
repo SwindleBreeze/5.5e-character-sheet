@@ -20,12 +20,24 @@ import {
   SKILLS,
   type EntityKind,
   type OverrideKey,
+  type Skill,
 } from '../../schema/index.ts';
+import { useSkillRule } from '../../content/hooks.ts';
 import { useRoller, d20Expr } from '../../ui/rollerContext.ts';
 import { columnsFor, useContainerWidth } from '../../ui/useContainerWidth.ts';
 import { extraDice, signed, skillName, titleCase } from './components/format.ts';
 import { AbilityCard, RollRow, SectionHeader, StatPill, ValueRow } from './components/stats.tsx';
 import { useExplain } from './components/useExplain.tsx';
+import {
+  ABILITY_ABOUT,
+  checkHow,
+  MODIFIER_ABOUT,
+  OTHER_ABOUT,
+  PASSIVE_ABOUT,
+  SAVE_ABOUT,
+  saveHow,
+} from '../../engine/explain/stats.ts';
+import { InlineText } from '../../richtext/InlineText.tsx';
 import {
   ConditionChips,
   DeathSaves,
@@ -65,6 +77,13 @@ function rollNote(r: DerivedRoll): ReactNode {
   return lines.length ? lines.map((l) => <p key={l}>{l}</p>) : null;
 }
 
+/** A skill's own description, from the imported rules. */
+function SkillText({ skill }: { skill: Skill }) {
+  const rule = useSkillRule(skill);
+  const text = rule?.entries.find((e): e is string => typeof e === 'string');
+  return text ? <InlineText text={text} /> : null;
+}
+
 function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   return (
     <section className={styles.section} aria-labelledby={`main-${id}`}>
@@ -91,10 +110,12 @@ export function MainTab({ character, sheet, index, apply, conditionOptions }: Ma
     key: OverrideKey,
     title: string,
     derived: Derived,
-    opts: { bonus?: boolean; note?: ReactNode } = {},
+    opts: { bonus?: boolean; note?: ReactNode; about?: ReactNode } = {},
   ) => explain({ key, title, derived, ...opts, onOverride: override(key) });
-  const explainRoll = (key: OverrideKey, title: string, r: DerivedRoll) =>
-    explainNumber(key, title, r.bonus, { bonus: true, note: rollNote(r) });
+  const explainRoll = (key: OverrideKey, title: string, r: DerivedRoll, about?: ReactNode) =>
+    explainNumber(key, title, r.bonus, { bonus: true, note: rollNote(r), about });
+  const paragraphs = (...lines: (ReactNode | undefined)[]) =>
+    lines.filter(Boolean).map((l, i) => <p key={i}>{l}</p>);
 
   const names = (kind: EntityKind, list: SourcedValue[]) =>
     list.map((v) => (v.value.includes('|') ? nameOf(index, kind, v.value) : titleCase(v.value)));
@@ -119,6 +140,7 @@ export function MainTab({ character, sheet, index, apply, conditionOptions }: Ma
               onExplain={() =>
                 explainNumber(`score.${a}`, ABILITY_NAMES[a], sheet.abilities[a].score, {
                   note: <p>Modifier {signed(sheet.abilities[a].mod)}</p>,
+                  about: paragraphs(ABILITY_ABOUT[a], MODIFIER_ABOUT),
                 })
               }
             />
@@ -135,7 +157,14 @@ export function MainTab({ character, sheet, index, apply, conditionOptions }: Ma
               label={ABILITY_NAMES[a]}
               rollLabel={`${ABILITY_NAMES[a]} save`}
               roll={sheet.saves[a]}
-              onExplain={() => explainRoll(`save.${a}`, `${ABILITY_NAMES[a]} save`, sheet.saves[a])}
+              onExplain={() =>
+                explainRoll(
+                  `save.${a}`,
+                  `${ABILITY_NAMES[a]} save`,
+                  sheet.saves[a],
+                  paragraphs(SAVE_ABOUT[a], saveHow(a)),
+                )
+              }
             />
           ))}
         </ul>
@@ -150,7 +179,17 @@ export function MainTab({ character, sheet, index, apply, conditionOptions }: Ma
               label={skillName(s)}
               ability={sheet.skills[s].ability}
               roll={sheet.skills[s]}
-              onExplain={() => explainRoll(`skill.${s}`, skillName(s), sheet.skills[s])}
+              onExplain={() =>
+                explainRoll(
+                  `skill.${s}`,
+                  skillName(s),
+                  sheet.skills[s],
+                  paragraphs(
+                    <SkillText skill={s} />,
+                    checkHow(sheet.skills[s].ability, skillName(s)),
+                  ),
+                )
+              }
             />
           ))}
         </ul>
@@ -165,14 +204,24 @@ export function MainTab({ character, sheet, index, apply, conditionOptions }: Ma
             sub={sheet.ac.calculation}
             derived={sheet.ac}
             onExplain={() =>
-              explainNumber('ac', 'Armor Class', sheet.ac, { note: <p>{sheet.ac.calculation}</p> })
+              explainNumber('ac', 'Armor Class', sheet.ac, {
+                note: <p>{sheet.ac.calculation}</p>,
+                about: paragraphs(OTHER_ABOUT.ac),
+              })
             }
           />
           <StatPill
             label="Initiative"
             roll={sheet.initiative}
             derived={sheet.initiative.bonus}
-            onExplain={() => explainRoll('initiative', 'Initiative', sheet.initiative)}
+            onExplain={() =>
+              explainRoll(
+                'initiative',
+                'Initiative',
+                sheet.initiative,
+                paragraphs(OTHER_ABOUT.initiative),
+              )
+            }
           />
           {sheet.speed.walk && (
             <StatPill
@@ -182,14 +231,23 @@ export function MainTab({ character, sheet, index, apply, conditionOptions }: Ma
                 speedModes.length ? speedModes.map(([m, d]) => `${m} ${d.value}`).join(', ') : 'ft.'
               }
               derived={sheet.speed.walk}
-              onExplain={() => explainNumber('speed.walk', 'Speed', sheet.speed.walk!)}
+              onExplain={() =>
+                explainNumber('speed.walk', 'Speed', sheet.speed.walk!, {
+                  about: paragraphs(OTHER_ABOUT.speed),
+                })
+              }
             />
           )}
           <StatPill
             label="Proficiency"
             value={signed(sheet.pb.value)}
             derived={sheet.pb}
-            onExplain={() => explainNumber('pb', 'Proficiency bonus', sheet.pb, { bonus: true })}
+            onExplain={() =>
+              explainNumber('pb', 'Proficiency bonus', sheet.pb, {
+                bonus: true,
+                about: paragraphs(OTHER_ABOUT.pb),
+              })
+            }
           />
           <StatPill
             label="Inspiration"
@@ -219,7 +277,11 @@ export function MainTab({ character, sheet, index, apply, conditionOptions }: Ma
               },
             }}
             actions={hpActions}
-            onExplainMax={() => explainNumber('hpMax', 'Hit point maximum', hp.max)}
+            onExplainMax={() =>
+              explainNumber('hpMax', 'Hit point maximum', hp.max, {
+                about: paragraphs(OTHER_ABOUT.hpMax),
+              })
+            }
           />
           <HitDice
             dice={sheet.hitDice}
@@ -266,7 +328,9 @@ export function MainTab({ character, sheet, index, apply, conditionOptions }: Ma
               label={`Passive ${titleCase(p)}`}
               derived={sheet.passives[p]}
               onExplain={() =>
-                explainNumber(`passive.${p}`, `Passive ${titleCase(p)}`, sheet.passives[p])
+                explainNumber(`passive.${p}`, `Passive ${titleCase(p)}`, sheet.passives[p], {
+                  about: paragraphs(PASSIVE_ABOUT[p]),
+                })
               }
             />
           ))}

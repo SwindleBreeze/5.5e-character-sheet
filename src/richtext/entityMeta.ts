@@ -5,11 +5,13 @@ import {
   ABILITY_NAMES,
   type Ability,
   type ContentEntity,
+  type Entry,
   type FacilityHirelings,
   type Prereq,
   type Prereqs,
   type Spell,
 } from '../schema/index.ts';
+import { stripTags } from './tagRegistry.ts';
 
 export interface EntityMeta {
   subtitle: string;
@@ -36,7 +38,7 @@ export function formatCoins(cp: number): string {
 
 const TIME_UNITS: Record<string, string> = { bonus: 'bonus action' };
 
-function spellTime(spell: Spell): string {
+export function spellTime(spell: Spell): string {
   return spell.time
     .map((t) => {
       const unit = TIME_UNITS[t.unit] ?? t.unit;
@@ -46,7 +48,7 @@ function spellTime(spell: Spell): string {
     .join(' or ');
 }
 
-function spellRange(spell: Spell): string {
+export function spellRange(spell: Spell): string {
   const { type, distance } = spell.range;
   const dist =
     distance?.amount !== undefined
@@ -276,4 +278,19 @@ export function entityMeta(e: ContentEntity): EntityMeta {
         facts,
       };
   }
+}
+
+/** The first sentence of an entry list, without tags (for a trait's summary). */
+export function firstSentence(entries: readonly Entry[] | undefined, max = 180): string {
+  const first = (entries ?? []).find((e): e is string => typeof e === 'string');
+  if (!first) {
+    const block = (entries ?? []).find((e) => typeof e === 'object' && 'entries' in e);
+    return block && typeof block === 'object' && 'entries' in block
+      ? firstSentence(block.entries as Entry[], max)
+      : '';
+  }
+  const text = stripTags(first).trim();
+  const end = text.search(/[.!?](\s|$)/);
+  const sentence = end >= 0 ? text.slice(0, end + 1) : text;
+  return sentence.length > max ? `${sentence.slice(0, max - 1).trimEnd()}…` : sentence;
 }

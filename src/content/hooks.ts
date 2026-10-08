@@ -9,11 +9,14 @@ import { createContentIndex, refsKey, type ContentIndex } from '../engine/conten
 import { characterRefs } from '../engine/content/refs.ts';
 import {
   ENTITY_KINDS,
+  ruleId,
   type Character,
   type ContentEntity,
   type EntityByKind,
   type EntityKind,
   type Ref,
+  type Rule,
+  type Skill,
   type SourceCode,
   type SourceInfo,
 } from '../schema/index.ts';
@@ -96,4 +99,18 @@ export function useConditionOptions(): { id: string; name: string }[] | undefine
       .map((r) => ({ id: r.id, name: r.name }))
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [enabled.join()]);
+}
+
+/** A skill's rule entry: the 2024 one first, else the 2014 one, else any source's. */
+export function useSkillRule(skill: Skill): Rule | null | undefined {
+  return useLiveQuery(async () => {
+    const content = repos().content;
+    for (const source of ['XPHB', 'PHB']) {
+      const rule = await content.get('rule', ruleId('skill', skill, source));
+      if (rule) return rule as Rule;
+    }
+    const prefix = ruleId('skill', skill, '');
+    const rules = await content.listByKind('rule');
+    return rules.find((r) => r.id.startsWith(prefix)) ?? null;
+  }, [skill]);
 }

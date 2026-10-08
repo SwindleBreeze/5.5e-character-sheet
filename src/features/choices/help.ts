@@ -3,6 +3,7 @@
 
 import type { DerivedFeatureChoice } from '../../engine/derive/types.ts';
 import { CREATION_LANGUAGES_SLOT } from '../../engine/collect/collect.ts';
+import { MASTERY_ABOUT } from '../../engine/explain/mastery.ts';
 
 export function choiceHelp(c: DerivedFeatureChoice): string | undefined {
   const { offer } = c;
@@ -30,7 +31,7 @@ export function choiceHelp(c: DerivedFeatureChoice): string | undefined {
     case 'expertise':
       return 'Expertise doubles your proficiency bonus with a skill you are already proficient in.';
     case 'weaponMastery':
-      return 'You can use the mastery property of these kinds of weapons: an extra effect when you hit (or miss) with them. Pick the weapons you carry.';
+      return `${MASTERY_ABOUT} You can use the mastery of the kinds of weapons you pick here: pick the ones you carry.`;
     case 'feat':
       return c.progression
         ? 'A feat from this list: a fighting style or other special talent.'

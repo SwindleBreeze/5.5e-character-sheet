@@ -151,6 +151,29 @@ describe('sheet header and Main tab', () => {
     ).toBeInTheDocument();
   });
 
+  it('a tapped skill, save, ability or passive says what it is for, under how it adds up', async () => {
+    const user = userEvent.setup();
+    renderApp(`/c/${character.id}/main`);
+    const about = async (button: RegExp | string, title: string) => {
+      await user.click(await screen.findByRole('button', { name: button }));
+      const dialog = await screen.findByRole('dialog', { name: title });
+      const text = within(dialog).getByRole('region', { name: 'What it’s for' }).textContent;
+      await user.keyboard('{Escape}');
+      return text;
+    };
+    // A skill: its own imported description, then what a check with it means.
+    const performance = await about('Performance, show how it adds up', 'Performance');
+    expect(performance).toContain('Entertain.');
+    expect(performance).toContain('When the DM asks for a Charisma (Performance) check');
+    // A save: when it comes up, and what the DC is.
+    const dex = await about('Dexterity, show how it adds up', 'Dexterity save');
+    expect(dex).toContain('Getting out of the way');
+    expect(dex).toContain('DC (Difficulty Class');
+    const str = await about(/^Strength score \d+, show/, 'Strength');
+    expect(str).toContain('Physical power.');
+    expect(await about('Passive Perception', 'Passive Perception')).toContain('no one rolls');
+  });
+
   it('adds and removes a condition, and toggles Heroic Inspiration', async () => {
     const user = userEvent.setup();
     renderApp(`/c/${character.id}/main`);

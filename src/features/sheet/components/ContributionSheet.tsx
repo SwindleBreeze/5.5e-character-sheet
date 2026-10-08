@@ -13,11 +13,19 @@ export interface ContributionSheetProps {
   bonus?: boolean;
   /** More about the number: advantage reasons, dice added, the AC calculation. */
   note?: ReactNode;
+  /** What the number is for, under how it adds up (plan §9.1). */
+  about?: ReactNode;
   /** When given, the player can set their own value; `undefined` removes it. */
   onOverride?: (value: number | undefined) => void;
 }
 
-export function ContributionSheet({ derived, bonus, note, onOverride }: ContributionSheetProps) {
+export function ContributionSheet({
+  derived,
+  bonus,
+  note,
+  about,
+  onOverride,
+}: ContributionSheetProps) {
   const inputId = useId();
   const overridden = isOverridden(derived);
   const [draft, setDraft] = useState(overridden ? String(derived.value) : '');
@@ -51,6 +59,12 @@ export function ContributionSheet({ derived, bonus, note, onOverride }: Contribu
           )}
         </tbody>
       </table>
+      {about && (
+        <section className={styles.about} aria-label="What it’s for">
+          <h3 className={styles.aboutTitle}>What it’s for</h3>
+          {about}
+        </section>
+      )}
       {onOverride && (
         <form
           className={styles.override}

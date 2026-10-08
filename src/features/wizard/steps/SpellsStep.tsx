@@ -53,6 +53,7 @@ export function SpellsStep(b: WizardBindings) {
           caster={caster}
           sources={character.enabledSources}
           current={character.state.prepared[caster.key] ?? []}
+          instant
           onSave={(ids) => apply((c) => prepare(c, caster.key, ids))}
         />
       )}

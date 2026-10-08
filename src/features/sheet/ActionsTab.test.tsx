@@ -106,6 +106,32 @@ describe('Actions tab', () => {
     expect(screen.getByRole('button', { name: '2 per Attack action' })).toBeInTheDocument();
   });
 
+  it('a weapon whose mastery the character uses says what the mastery does', () => {
+    const c = testCharacter({
+      classes: [{ classId: 'brute|tst', levels: 5 }],
+      scores: { str: 18, dex: 13, con: 14, int: 8, wis: 10, cha: 10 },
+      inventory: [row('net blade|tst', 'mainHand'), row('shiv|tst')],
+      choices: [
+        {
+          owner: { kind: 'classFeature', id: 'weapon mastery|brute|tst|1|tst' },
+          slot: 'mastery',
+          values: ['net blade|tst'],
+          valueKinds: ['item'],
+        },
+      ],
+    });
+    renderTab(c);
+    const blade = card('net blade');
+    expect(blade.querySelector('[data-kind="mastery"]')?.textContent).toBe(
+      'Weapon mastery: SnareThe target is slowed.',
+    );
+    expect(
+      within(blade).getByRole('button', { name: 'Weapon mastery: Snare' }),
+    ).toBeInTheDocument();
+    // The Shiv's mastery isn't one the character has.
+    expect(card('shiv').querySelector('[data-kind="mastery"]')).toBeNull();
+  });
+
   it('rolling for a stowed weapon draws it into the free hand', async () => {
     const user = userEvent.setup();
     renderTab(brute());
