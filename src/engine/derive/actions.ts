@@ -124,6 +124,9 @@ export function deriveActions(
     const entity = ctx.index.get(owner.ref);
     const consumes = entity && 'consumes' in entity ? entity.consumes : undefined;
     if (!consumes) continue;
+    // A mapping that gives the feature its own action (with its roll or DC) replaces this one.
+    if (out.some((a) => a.source?.kind === owner.ref.kind && a.source.id === owner.ref.id))
+      continue;
     const resource = findResourceByName(resources, consumes.name);
     const amount = consumes.amount ?? 1;
     out.push({

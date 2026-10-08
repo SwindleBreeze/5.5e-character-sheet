@@ -121,4 +121,31 @@ describe.skipIf(!root)('class golden checks (local data)', () => {
     expect(resource(twenty, 'Bardic Inspiration')?.die).toBe('1d12');
     expect(resource(twenty, 'Mantle of Majesty')?.max.value).toBe(1);
   });
+
+  it('Cleric: Channel Divinity and its actions, Blessed Strikes and the four domains', () => {
+    const two = build('cleric', 2);
+    expect(resource(two, 'Channel Divinity')).toMatchObject({ recharge: 'shortOne' });
+    expect(resource(two, 'Channel Divinity')?.max.value).toBe(2);
+    const spark = (s: DerivedSheet) => s.actions.find((a) => a.name === 'Divine Spark')!;
+    expect(spark(two).roll).toBe(`1d8 + ${two.abilities.wis.mod}`);
+    expect(spark(two).saveDc).toBe(8 + two.abilities.wis.mod + 2);
+    // One action per feature, not one more for spending Channel Divinity.
+    expect(two.actions.filter((a) => a.name === 'Turn Undead')).toHaveLength(1);
+    // Divine Order: Protector, the first option.
+    expect(values(two.proficiencies.armor)).toContain('heavy');
+
+    const seven = build('cleric', 7, 'light');
+    expect(spark(seven).roll).toBe(`2d8 + ${seven.abilities.wis.mod}`);
+    expect(resource(seven, 'Channel Divinity')?.max.value).toBe(3);
+    expect(resource(seven, 'Warding Flare')?.recharge).toBe('short');
+    const strike = (s: DerivedSheet) =>
+      s.attacks.flatMap((a) => a.riders).find((r) => r.id === 'divine-strike')?.dice;
+    expect(strike(seven)).toBe('1d8');
+
+    const war = build('cleric', 17, 'war');
+    expect(strike(war)).toBe('2d8');
+    expect(values(war.defenses.resistances)).toEqual(['bludgeoning', 'piercing', 'slashing']);
+    expect(resource(war, 'War Priest')?.recharge).toBe('short');
+    expect(resource(build('cleric', 18, 'life'), 'Channel Divinity')?.max.value).toBe(4);
+  });
 });

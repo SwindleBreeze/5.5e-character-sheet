@@ -70,3 +70,6 @@ export function restoredBy(
 ): Effect {
   return { type: 'restoreWith', resourceId, amount: 1, costs: [cost] };
 }
+
+/** The text says "choose" but leaves the character nothing to pick (flavor, an example). */
+export const NO_CHOICE = 'Its text uses the word, but there is nothing for the character to pick.';
