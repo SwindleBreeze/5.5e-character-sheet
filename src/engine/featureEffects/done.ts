@@ -16,6 +16,8 @@ export const DONE_CLASSES: readonly string[] = [
   'sorcerer|xphb',
   'warlock|xphb',
   'wizard|xphb',
+  // Eberron: Forge of the Artificer (step 6.16).
+  'artificer|efa',
 ];
 
 /** The 2024 books with subclasses (and the Artificer) whose content is mapped (step 6.16). */
