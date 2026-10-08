@@ -51,12 +51,14 @@ function Harness({ initial, slot }: { initial: Character; slot: string }) {
 const lorekeeper = () => testCharacter({ classes: [{ classId: 'lorekeeper|tst', levels: 1 }] });
 
 describe('ChoicePicker', () => {
-  it('saves every tap, keeps to the count, and lists spells with their level and school', async () => {
+  it('saves every tap, keeps to the count, and lists spells with their facts and first sentence', async () => {
     const user = userEvent.setup();
     render(<Harness initial={lorekeeper()} slot="spellbook.1" />);
     expect(screen.getByText('0 of 5 chosen')).toBeInTheDocument();
     const ink = screen.getByRole('checkbox', { name: 'Ink Cloud' });
-    expect(ink).toHaveAccessibleDescription('Level 1 · Conjuration');
+    expect(ink).toHaveAccessibleDescription(
+      'Level 1 · Conjuration · 1 Action · 60 feet A cloud of ink deals 2d6 poison damage.',
+    );
     await user.click(ink);
     expect(screen.getByText('1 of 5 chosen')).toBeInTheDocument();
     expect(latest.log[0]?.choices[0]).toMatchObject({

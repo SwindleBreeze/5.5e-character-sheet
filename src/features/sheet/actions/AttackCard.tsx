@@ -16,6 +16,7 @@ import { canPay, type CostChoice } from '../../../engine/play/costs.ts';
 import { ruleId, type Character, type Ref } from '../../../schema/index.ts';
 import type { ContentIndex } from '../../../engine/content/contentIndex.ts';
 import { EntitySheet } from '../../../richtext/EntitySheet.tsx';
+import { InlineText } from '../../../richtext/InlineText.tsx';
 import { Badge } from '../../../ui/Badge.tsx';
 import { useRoller } from '../../../ui/rollerContext.ts';
 import { useSheet } from '../../../ui/sheetContext.ts';
@@ -255,7 +256,7 @@ export function AttackCard({
         {a.critRange < 20 && <> · Critical Hit on {a.critRange}–20</>}
       </p>
 
-      {(a.propertyIds.length > 0 || a.mastery) && (
+      {a.propertyIds.length > 0 && (
         <div className={styles.chips}>
           {a.propertyIds.map((id) => {
             const name = nameOf(index, 'rule', id);
@@ -270,17 +271,16 @@ export function AttackCard({
               </button>
             );
           })}
-          {a.mastery && (
-            <button
-              type="button"
-              className={styles.tag}
-              data-kind="mastery"
-              onClick={() => openRule({ kind: 'rule', id: a.mastery!.id }, a.mastery!.name)}
-            >
-              Mastery: {a.mastery.name}
-            </button>
-          )}
         </div>
+      )}
+
+      {a.mastery && (
+        <MasteryLine
+          mastery={a.mastery}
+          index={index}
+          dc={8 + derived.abilities[a.ability].mod + derived.pb.value}
+          openRule={openRule}
+        />
       )}
 
       {a.toHit && (
@@ -313,6 +313,45 @@ export function AttackCard({
 
       <AttackRules attack={a} stowed={stowed} thrown={thrown} openRule={openRule} />
     </li>
+  );
+}
+
+/**
+ * The weapon's mastery property, in its own words: it applies on its own when the attack
+ * hits (Graze when it misses), alongside the damage. Topple's save DC is worked out.
+ */
+function MasteryLine({
+  mastery,
+  index,
+  dc,
+  openRule,
+}: {
+  mastery: { id: string; name: string };
+  index: ContentIndex;
+  dc: number;
+  openRule: (ref: Ref, title: string) => void;
+}) {
+  const rule = index.get({ kind: 'rule', id: mastery.id });
+  const text = rule?.entries.find((e): e is string => typeof e === 'string');
+  return (
+    <p className={styles.rule} data-kind="mastery">
+      <button
+        type="button"
+        className={styles.inlineLink}
+        onClick={() => openRule({ kind: 'rule', id: mastery.id }, mastery.name)}
+      >
+        Mastery: {mastery.name}
+      </button>
+      {text && (
+        <>
+          {' '}
+          <InlineText text={text} />
+        </>
+      )}
+      {/\bsaving throw\b/.test(text ?? '') && /\{@dc 8\}/.test(text ?? '') && (
+        <strong> Your DC: {dc}.</strong>
+      )}
+    </p>
   );
 }
 

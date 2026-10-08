@@ -186,6 +186,27 @@ describe('choice options', () => {
     });
   });
 
+  it('a weapon for its mastery reads with its damage, range, properties and the mastery’s text', () => {
+    const c = brute();
+    const sheet = derive(c, index, { registry: FIXTURE_FEATURE_EFFECTS });
+    const ctx = { character: c, sheet, catalog, index };
+    const mastery = sheet.features
+      .flatMap((f) => f.choices)
+      .find((x) => x.offer.kind === 'weaponMastery')!;
+    const options = offerOptions(mastery.offer, ctx).options;
+    expect(options.find((o) => o.value === 'arc bow|tst')).toEqual({
+      value: 'arc bow|tst',
+      label: 'Arc Bow',
+      group: 'Martial weapons',
+      detail: 'Martial ranged · 1d6 piercing · 60/240 ft. · Ammunition, Two-Handed',
+      about: { name: 'Quickcut', text: 'A second quick strike.' },
+    });
+    // Versatile: the two-handed die too.
+    expect(options.find((o) => o.value === 'walking staff|tst')?.detail).toBe(
+      'Simple melee · 1d6 bludgeoning (1d8 two-handed) · 5 ft. · Versatile',
+    );
+  });
+
   it('marks feats whose prerequisites aren’t met; Ignore rules lists every feat', () => {
     const c = brute();
     c.baseScores = { ...c.baseScores, str: 10, cha: 10 };

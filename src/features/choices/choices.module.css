@@ -121,6 +121,10 @@
   accent-color: var(--color-accent);
 }
 
+.check[data-blocked='true'] {
+  color: var(--color-text-muted);
+}
+
 .check input[aria-disabled='true'] {
   opacity: 0.5;
 }
@@ -153,6 +157,10 @@
   font-size: var(--font-size-xs);
   font-weight: 700;
   white-space: nowrap;
+}
+
+.about {
+  font-size: var(--font-size-sm);
 }
 
 .why {

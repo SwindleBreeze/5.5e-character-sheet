@@ -18,6 +18,7 @@ import type { AutoContext } from '../../engine/build/autoChoose.ts';
 import type { DerivedFeatureChoice } from '../../engine/derive/types.ts';
 import type { Spell } from '../../schema/index.ts';
 import { EntitySheet } from '../../richtext/EntitySheet.tsx';
+import { InlineText } from '../../richtext/InlineText.tsx';
 import { Button } from '../../ui/Button.tsx';
 import inventory from '../sheet/inventory/inventory.module.css';
 import styles from './choices.module.css';
@@ -173,6 +174,16 @@ export function ChoicePicker({ choice, ctx, onSave, instant, showRetrain }: Choi
           {o.detail}
         </span>
       ),
+      o.summary && (
+        <span key="summary" className={styles.about}>
+          {o.summary}
+        </span>
+      ),
+      o.about && (
+        <span key="about" className={styles.about}>
+          <strong>{o.about.name}.</strong> <InlineText text={o.about.text} />
+        </span>
+      ),
       o.taken && (
         <span key="taken" className={styles.detail}>
           You have it already.
@@ -222,7 +233,8 @@ export function ChoicePicker({ choice, ctx, onSave, instant, showRetrain }: Choi
         )}
         {notes.length > 0 && (
           <span id={descId} className={styles.text}>
-            {notes}
+            {/* Spaced, so a screen reader doesn't run the lines together. */}
+            {notes.flatMap((n, i) => (i ? [' ', n] : [n]))}
           </span>
         )}
         {valueKind && reading === o.value && (

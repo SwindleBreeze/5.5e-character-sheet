@@ -16,7 +16,7 @@ import {
   type Species,
   type SpellGrant,
 } from '../../schema/index.ts';
-import { prereqsText } from '../../richtext/entityMeta.ts';
+import { firstSentence, prereqsText } from '../../richtext/entityMeta.ts';
 import { stripTags } from '../../richtext/tagRegistry.ts';
 import { equipmentOptionText } from '../build/equipment.ts';
 import { primaryText } from '../build/scores.ts';
@@ -25,6 +25,8 @@ import { creationLanguageEffects } from '../collect/collect.ts';
 import type { ContentIndex } from '../content/contentIndex.ts';
 import { SIZE_NAMES } from '../items/items.ts';
 import { cantripCount, maxSpellLevel, preparedCount } from '../spells/casters.ts';
+
+export { firstSentence };
 
 export interface Benefit {
   /** What it is: `Hit points`, `Darkvision`, `Breath Weapon`. */
@@ -95,21 +97,6 @@ function trainingText(
       return sentence(v);
     }),
   );
-}
-
-/** The first sentence of an entry list, without tags (for a trait's summary). */
-export function firstSentence(entries: readonly Entry[] | undefined, max = 180): string {
-  const first = (entries ?? []).find((e): e is string => typeof e === 'string');
-  if (!first) {
-    const block = (entries ?? []).find((e) => typeof e === 'object' && 'entries' in e);
-    return block && typeof block === 'object' && 'entries' in block
-      ? firstSentence(block.entries as Entry[], max)
-      : '';
-  }
-  const text = stripTags(first).trim();
-  const end = text.search(/[.!?](\s|$)/);
-  const sentence = end >= 0 ? text.slice(0, end + 1) : text;
-  return sentence.length > max ? `${sentence.slice(0, max - 1).trimEnd()}…` : sentence;
 }
 
 /** Named blocks of an entity's text (a species' traits, a feat's benefits). */

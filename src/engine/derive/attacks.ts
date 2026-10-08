@@ -284,7 +284,8 @@ function ammoFor(ctx: DeriveContext, ammoType: Id, noHandToLoad: boolean): Deriv
   };
 }
 
-function distanceOf(item: Item, ranged: boolean): string {
+/** `5 ft.`, `10 ft.` (Reach), `150/600 ft.`, `5 ft. or 20/60 ft.` (Thrown). */
+export function distanceOf(item: Item, ranged: boolean): string {
   const w = item.weapon!;
   const reach = w.properties.some((p) => propertyAbbr(p) === 'R') ? 10 : 5;
   if (ranged || !w.range) return w.range ? `${w.range[0]}/${w.range[1]} ft.` : `${reach} ft.`;

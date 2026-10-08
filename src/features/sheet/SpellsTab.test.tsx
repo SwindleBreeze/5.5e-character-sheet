@@ -13,6 +13,7 @@ import { fixtureContent } from '../../test/fixtureIndex.ts';
 import { seedFixtureContent } from '../../test/seedContent.ts';
 import { SheetProvider } from '../../ui/BottomSheet.tsx';
 import { RollerProvider } from '../../ui/Roller.tsx';
+import { PrepareSheet } from './spells/PrepareSheet.tsx';
 import { SpellsTab } from './SpellsTab.tsx';
 import type { CharacterUpdate } from './useCharacterActions.ts';
 
@@ -309,5 +310,47 @@ describe('Spells tab', () => {
     expect(screen.getByRole('list', { name: 'Spell warnings' })).toHaveTextContent(
       "Lorekeeper: Hex Mark isn't in your spellbook.",
     );
+  });
+
+  it('each spell to prepare shows its facts and first sentence, and reads in full in place', async () => {
+    const user = userEvent.setup();
+    const c = duo();
+    const caster = derive(c, index, {
+      registry: FIXTURE_FEATURE_EFFECTS,
+    }).spellcasting.casters.find((x) => x.classId === 'lorekeeper|tst')!;
+    const saved: string[][] = [];
+    function Instant() {
+      const [ids, setIds] = useState<string[]>(c.state.prepared[caster.key] ?? []);
+      return (
+        <PrepareSheet
+          caster={caster}
+          current={ids}
+          instant
+          onSave={(next) => {
+            saved.push(next);
+            setIds(next);
+          }}
+        />
+      );
+    }
+    render(
+      <SheetProvider>
+        <Instant />
+      </SheetProvider>,
+    );
+    const ink = await screen.findByRole('checkbox', { name: /Ink Cloud/ });
+    expect(screen.getByText('A cloud of ink deals 2d6 poison damage.')).toBeInTheDocument();
+    // Instant (the wizard): every tap is saved, and there is no Save button.
+    expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
+    await user.click(ink);
+    expect(saved.at(-1)).not.toContain('ink cloud|tst');
+    await user.click(ink);
+    expect(saved.at(-1)).toContain('ink cloud|tst');
+    // Read opens the whole text under it, and closes it again.
+    const read = screen.getByRole('button', { name: 'Read Ink Cloud' });
+    await user.click(read);
+    expect(read).toHaveAttribute('aria-expanded', 'true');
+    await user.click(read);
+    expect(read).toHaveAttribute('aria-expanded', 'false');
   });
 });
