@@ -39,6 +39,13 @@ import { LEGACY_CASTERS } from './legacy/casters.ts';
 import { LEGACY_FEATS } from './legacy/feats.ts';
 import { LEGACY_SPECIES } from './legacy/species.ts';
 import { LEGACY_MONK_PALADIN } from './legacy/monkPaladin.ts';
+import { RULES_2014_BARBARIAN_BARD } from './rules2014/barbarianBard.ts';
+import { RULES_2014_CLERIC } from './rules2014/cleric.ts';
+import { RULES_2014_DRUID_FIGHTER } from './rules2014/druidFighter.ts';
+import { RULES_2014_MONK_ROGUE } from './rules2014/monkRogue.ts';
+import { RULES_2014_PALADIN_RANGER } from './rules2014/paladinRanger.ts';
+import { RULES_2014_SORCERER_WARLOCK } from './rules2014/sorcererWarlock.ts';
+import { RULES_2014_WIZARD_ARTIFICER } from './rules2014/wizardArtificer.ts';
 import { ITEMS_A_TO_C } from './items/itemsAtoC.ts';
 import { ITEMS_D_TO_H } from './items/itemsDtoH.ts';
 import { ITEMS_I_TO_Q } from './items/itemsItoQ.ts';
@@ -85,6 +92,14 @@ registerFeatureEffects(LEGACY_CASTERS);
 registerFeatureEffects(LEGACY_FEATS);
 registerFeatureEffects(LEGACY_SPECIES);
 registerFeatureEffects(LEGACY_MONK_PALADIN);
+// Characters on 2014 rules (step 8.6).
+registerFeatureEffects(RULES_2014_BARBARIAN_BARD);
+registerFeatureEffects(RULES_2014_CLERIC);
+registerFeatureEffects(RULES_2014_DRUID_FIGHTER);
+registerFeatureEffects(RULES_2014_MONK_ROGUE);
+registerFeatureEffects(RULES_2014_PALADIN_RANGER);
+registerFeatureEffects(RULES_2014_SORCERER_WARLOCK);
+registerFeatureEffects(RULES_2014_WIZARD_ARTIFICER);
 // The 2024 Dungeon Master's Guide's magic items (step 7.12).
 registerFeatureEffects(ITEMS_A_TO_C);
 registerFeatureEffects(ITEMS_D_TO_H);
