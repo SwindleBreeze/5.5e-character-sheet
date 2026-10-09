@@ -83,3 +83,41 @@
   margin: 0;
   white-space: pre-wrap;
 }
+
+/* ---- Bastion (plan step 7.7) ---- */
+
+.facilities {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.facility {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* The facility's name (it opens its rules) and its Remove button. */
+.facilityHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.facilityHead > button:first-child {
+  flex: 1;
+  min-width: 0;
+  border-bottom: 0;
+}
+
+.counts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}

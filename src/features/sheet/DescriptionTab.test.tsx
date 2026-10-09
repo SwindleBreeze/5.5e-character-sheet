@@ -125,6 +125,79 @@ describe('Description tab', () => {
     expect(latest.details.deity).toBeUndefined();
   });
 
+  it('no Bastion before level 5', () => {
+    renderTab(DescriptionTab);
+    expect(screen.queryByRole('region', { name: 'Bastion' })).toBeNull();
+  });
+
+  it('a Bastion from level 5: facilities with an order and a note, hirelings and defenders', async () => {
+    const user = userEvent.setup();
+    const level5 = testCharacter({
+      name: 'Ada',
+      classes: [{ classId: 'brute|tst', levels: 5 }],
+      speciesId: 'mossling|tst',
+      backgroundId: 'arena hand|tst',
+      choices: [{ owner: { kind: 'species', id: 'mossling|tst' }, slot: 'size', values: ['M'] }],
+    });
+    renderTab(DescriptionTab, level5);
+    const card = section('Bastion');
+    expect(card.getByText(/A Bastion is a home your character owns/)).toBeTruthy();
+    expect(card.getByText('No facilities yet.')).toBeTruthy();
+
+    // The picker: by type, then by name or order; each one's text opens in place.
+    await user.click(card.getByRole('button', { name: 'Add a facility' }));
+    const dialog = within(await screen.findByRole('dialog', { name: 'Add a facility' }));
+    await user.selectOptions(await dialog.findByRole('combobox', { name: 'Type' }), 'special');
+    expect(dialog.queryByRole('button', { name: 'Add Practice Yard' })).toBeNull();
+    await user.type(dialog.getByRole('searchbox', { name: 'Find a facility' }), 'craft');
+    expect(dialog.queryByRole('button', { name: 'Add Guild Hall' })).toBeNull();
+    await user.click(dialog.getByRole('button', { name: /^Spark Forge/ }));
+    expect(await dialog.findByText(/After a/)).toBeTruthy();
+    await user.click(dialog.getByRole('button', { name: 'Add Spark Forge' }));
+    expect(latest.bastion!.facilities).toEqual([
+      {
+        uid: expect.any(String),
+        ref: { kind: 'facility', id: 'spark forge|tst' },
+        name: 'Spark Forge',
+      },
+    ]);
+
+    // Its order comes from the facility's own list; the note is the player's.
+    const rows = within(card.getByRole('list', { name: 'Facilities' }));
+    expect(await rows.findByText('Special facility, level 5')).toBeTruthy();
+    const order = rows.getByRole('combobox', { name: 'Order' });
+    expect(
+      within(order)
+        .getAllByRole('option')
+        .map((o) => o.textContent),
+    ).toEqual(['No order', 'Craft']);
+    await user.selectOptions(order, 'craft');
+    await user.type(rows.getByRole('textbox', { name: 'Note' }), 'A shield, two turns left.');
+    expect(latest.bastion!.facilities[0]).toMatchObject({
+      order: 'craft',
+      note: 'A shield, two turns left.',
+    });
+
+    // Its rules are the imported text.
+    await user.click(rows.getByRole('button', { name: /^Spark Forge/ }));
+    expect(await screen.findByRole('dialog', { name: 'Spark Forge' })).toBeTruthy();
+    await user.keyboard('{Escape}');
+
+    // A second one of the same facility is its own row.
+    await user.click(card.getByRole('button', { name: 'Add a facility' }));
+    const again = within(await screen.findByRole('dialog', { name: 'Add a facility' }));
+    expect(await again.findByText(/you have 1/)).toBeTruthy();
+    await user.click(again.getByRole('button', { name: 'Add Spark Forge' }));
+    expect(latest.bastion!.facilities).toHaveLength(2);
+    await user.click(rows.getAllByRole('button', { name: 'Remove Spark Forge' })[1]!);
+    expect(latest.bastion!.facilities).toHaveLength(1);
+
+    await user.click(card.getByRole('button', { name: 'Increase Hirelings' }));
+    await user.click(card.getByRole('button', { name: 'Increase Defenders' }));
+    await user.click(card.getByRole('button', { name: 'Increase Defenders' }));
+    expect(latest.bastion).toMatchObject({ hirelings: 1, defenders: 2 });
+  });
+
   it('stores a portrait and removes it', async () => {
     const user = userEvent.setup();
     renderTab(DescriptionTab);
