@@ -82,12 +82,20 @@ function skillChoice(raw: unknown, slot: string): ChoiceSlot<string> | undefined
   return undefined;
 }
 
+/** Proficiencies as names; a 2014 one with a note (`{proficiency, full}`) by its name. */
+function profList(raw: unknown): string[] {
+  return asArray(raw)
+    .map((v) => (isObject(v) && typeof v.proficiency === 'string' ? v.proficiency : v))
+    .filter((v): v is string => typeof v === 'string')
+    .map(profString);
+}
+
 function profGroup(raw: unknown, skillSlot: string) {
   const p = isObject(raw) ? raw : {};
   const out: ClassDef['startingProficiencies'] = {
-    armor: strArray(p.armor).map(profString),
-    weapons: strArray(p.weapons).map(profString),
-    tools: strArray(p.tools).map(profString),
+    armor: profList(p.armor),
+    weapons: profList(p.weapons),
+    tools: profList(p.tools),
   };
   const skills = skillChoice(p.skills, skillSlot);
   if (skills) out.skills = skills;

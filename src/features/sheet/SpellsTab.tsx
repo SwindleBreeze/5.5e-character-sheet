@@ -43,6 +43,7 @@ import { SpellbookSheet } from './spells/SpellbookSheet.tsx';
 import { castingTime, castNotice, levelHeading, whereFrom } from './spells/spellText.ts';
 import mainStyles from './MainTab.module.css';
 import styles from './spells/spells.module.css';
+import { characterSources } from '../../sources/sourceFilter.ts';
 
 const SPELL_ISSUES = new Set([
   'armorUntrained',
@@ -161,7 +162,7 @@ export function SpellsTab({ character, sheet, index, apply }: SheetBindings) {
       render: () => (
         <PrepareSheet
           caster={caster}
-          sources={character.enabledSources}
+          sources={characterSources(character)}
           current={character.state.prepared[caster.key] ?? []}
           onSave={(ids) => {
             ui.close();

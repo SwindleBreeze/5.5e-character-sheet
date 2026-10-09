@@ -50,6 +50,7 @@ import type {
   DerivedSlot,
   DerivedSpellcasting,
 } from './types.ts';
+import { casterSpellcasting, preparedByFormula } from '../rules/legacy.ts';
 
 type Mods = Record<Ability, number>;
 type GrantEffect = Extract<Effect, { type: 'grantSpells' }>;
@@ -89,7 +90,8 @@ function itemSpellBonus(ctx: DeriveContext, bonus: 'spellAttack' | 'spellSaveDc'
 function casterInputs(ctx: DeriveContext): CasterInput[] {
   const out: CasterInput[] = [];
   for (const c of ctx.st.classes) {
-    const sc = c.cls?.spellcasting;
+    const data = c.cls?.spellcasting;
+    const sc = c.cls && data ? casterSpellcasting(data, c.cls) : undefined;
     if (c.cls && sc) {
       out.push({
         key: c.classId,
@@ -104,7 +106,9 @@ function casterInputs(ctx: DeriveContext): CasterInput[] {
         listFilters: [casterList(c.cls)],
       });
     }
-    const subSc = c.subclass?.spellcasting;
+    const subSc = c.subclass?.spellcasting
+      ? casterSpellcasting(c.subclass.spellcasting, c.subclass)
+      : undefined;
     if (c.subclass && subSc) {
       const sub = c.subclass;
       out.push({
@@ -308,7 +312,13 @@ export function deriveSpellcasting(
         ? known
         : [...(ctx.character.state.prepared[c.key] ?? []), ...known];
     const owner = c.owner;
-    const preparedMax = owner ? preparedCount(c.sc, owner, c.level) : known.length;
+    // Without a prepared-spells table (2014 Cleric, Druid, Paladin, Wizard): level + modifier.
+    const preparedMax = owner
+      ? preparedCount(c.sc, owner, c.level) ||
+        (preparedChange === 'restLong' && !c.sc.preparedByLevel?.length
+          ? preparedByFormula(c.sc, c.level, mod)
+          : 0)
+      : known.length;
     const counted = prepared.filter((id) => !always.includes(id));
     if (counted.length > preparedMax) {
       ctx.issues.push({

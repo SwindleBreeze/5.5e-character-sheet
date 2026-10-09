@@ -32,7 +32,7 @@ import { Button } from '../../ui/Button.tsx';
 import { DescriptionTab } from '../sheet/DescriptionTab.tsx';
 import { useCharacterActions, type CharacterUpdate } from '../sheet/useCharacterActions.ts';
 import type { WizardBindings } from './bindings.ts';
-import { STEP_INTROS } from './guide.ts';
+import { stepIntro } from './guide.ts';
 import { picksOnStep, wizardTodos } from './progress.ts';
 import { AbilitiesStep } from './steps/AbilitiesStep.tsx';
 import { BackgroundStep } from './steps/BackgroundStep.tsx';
@@ -44,6 +44,7 @@ import { SpeciesStep } from './steps/SpeciesStep.tsx';
 import { SpellsStep } from './steps/SpellsStep.tsx';
 import { useStepFocus } from './useStepFocus.ts';
 import styles from './wizard.module.css';
+import { characterSources } from '../../sources/sourceFilter.ts';
 
 const TITLE = 'New character';
 
@@ -97,7 +98,7 @@ function Wizard({ id }: { id: string }) {
   const stored = useLiveQuery(async () => (await repos().characters.get(id)) ?? null, [id]);
   const actions = useCharacterActions(stored ?? undefined);
   const character = actions.character;
-  const content = useAllContent(character?.enabledSources);
+  const content = useAllContent(character ? characterSources(character) : undefined);
   const registry = featureEffects();
   const sheet = useMemo(
     () =>
@@ -182,7 +183,7 @@ function Wizard({ id }: { id: string }) {
   const here = todos.filter((t) => t.step === step);
   const earlier = firstOpen >= 0 && firstOpen < at ? steps[firstOpen] : undefined;
   const blocked = here.length > 0 || earlier !== undefined;
-  const intro = STEP_INTROS[step];
+  const intro = stepIntro(step, character.ruleset === '2014');
 
   const body = (() => {
     if (needsClass) {

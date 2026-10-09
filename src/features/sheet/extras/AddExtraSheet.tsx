@@ -8,7 +8,7 @@ import type { DerivedSheet } from '../../../engine/derive/types.ts';
 import { suggestedCreatures } from '../../../engine/extras/extras.ts';
 import { creatureSubtitle } from '../../../richtext/entityMeta.ts';
 import type { Character, Creature } from '../../../schema/index.ts';
-import { availableOf } from '../../../sources/sourceFilter.ts';
+import { availableOf, characterSources } from '../../../sources/sourceFilter.ts';
 import { Button } from '../../../ui/Button.tsx';
 import inventory from '../inventory/inventory.module.css';
 
@@ -49,7 +49,7 @@ export function AddExtraSheet({
   onAdd: (spec: AddExtraSpec) => void;
 }) {
   const all = useEntitiesOfKind('creature');
-  const enabled = useEnabledSources(character.enabledSources);
+  const enabled = useEnabledSources(characterSources(character));
   const [mode, setMode] = useState<'library' | 'custom'>('library');
   const [query, setQuery] = useState('');
   const [picked, setPicked] = useState<Creature | null>(null);

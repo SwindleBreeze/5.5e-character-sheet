@@ -37,6 +37,7 @@ import {
   ReviewStep,
   SubclassStep,
 } from './steps.tsx';
+import { characterSources } from '../../sources/sourceFilter.ts';
 
 export type LevelUpStep = 'class' | 'hp' | 'subclass' | 'features' | 'spells' | 'review';
 
@@ -64,7 +65,7 @@ export function LevelUpPage() {
   const goBack = useGoBack();
   const stored = useLiveQuery(async () => (await repos().characters.get(id)) ?? null, [id]);
   const actions = useCharacterActions(stored ?? undefined);
-  const content = useAllContent(stored?.enabledSources);
+  const content = useAllContent(stored ? characterSources(stored) : undefined);
   const registry = featureEffects();
   // The character as it was when the level-up started: later saves (snapshots) don't reset it.
   const [base, setBase] = useState<Character | null>(null);
@@ -259,7 +260,7 @@ export function LevelUpPage() {
               <PreparedSection
                 plan={plan}
                 before={before}
-                sources={base.enabledSources}
+                sources={characterSources(base)}
                 onPrepared={(key, ids) => b.change((c) => setPrepared(c, key, ids))}
               />
             )}

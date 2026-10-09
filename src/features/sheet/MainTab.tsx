@@ -322,6 +322,7 @@ export function MainTab({ character, sheet, index, apply, conditionOptions }: Ma
             onChange={(faces, used) => apply((c) => setHitDiceUsed(c, sheet, faces, used))}
           />
           <ExhaustionStepper
+            rules2014={character.ruleset === '2014'}
             level={sheet.exhaustion}
             onChange={(n) => apply((c) => setExhaustion(c, n))}
           />

@@ -29,7 +29,9 @@ import { spellChoiceEffects } from '../spells/casters.ts';
 import {
   backgroundAbilityOptions,
   isAbilityIncrease,
+  isRules2014,
   legacyBackgroundEffects,
+  legacyEntityEffects,
 } from '../rules/legacy.ts';
 import type { ClassLevel, Collected, EffectSource, Offer, RecordAt } from './types.ts';
 
@@ -443,6 +445,7 @@ export function collectEffects(
     apply(
       [
         ...(entity ? fieldEffects(entity) : []),
+        ...(entity ? legacyEntityEffects(entity) : []),
         ...(entity ?? snapshot!).effects.filter((e) => !drop(e)),
         ...mapped,
       ],
@@ -518,9 +521,11 @@ export function collectEffects(
 
   // 2. Species and background. A 2014 species' ability increases give way to the
   // background's, unless the player keeps them (then the background gives none; step 8.2).
+  // On 2014 rules a 2014 species keeps them, and a 2014 background adds nothing (step 8.5).
+  const rules2014 = isRules2014(character);
   const { speciesRef, backgroundRef } = character.log[0]?.origin ?? {};
   const oldSpecies = !!speciesRef && index.get(speciesRef)?.edition === '2014';
-  const speciesIncreases = oldSpecies && !!character.legacyAbilities;
+  const speciesIncreases = oldSpecies && (rules2014 || !!character.legacyAbilities);
   if (speciesRef)
     addOwner(
       speciesRef,
@@ -530,12 +535,18 @@ export function collectEffects(
     );
   if (backgroundRef) {
     addOwner(backgroundRef, {}, (e) =>
-      e.kind === 'background' ? [...creationLanguageEffects(e), ...legacyBackgroundEffects(e)] : [],
+      e.kind === 'background'
+        ? [...creationLanguageEffects(e), ...(rules2014 ? [] : legacyBackgroundEffects(e))]
+        : [],
     );
     const background = index.get({ kind: 'background', id: backgroundRef.id });
     const source = out.owners.find((o) => refKey(o.ref) === refKey(backgroundRef));
     if (background && source) {
-      const options = speciesIncreases ? [] : backgroundAbilityOptions(background);
+      const options = speciesIncreases
+        ? []
+        : rules2014
+          ? background.abilityOptions
+          : backgroundAbilityOptions(background);
       const from = [...new Set(options.flatMap((o) => o.from))];
       const count = Math.max(0, ...options.map((o) => o.weights.reduce((a, b) => a + b, 0)));
       if (from.length && count) {

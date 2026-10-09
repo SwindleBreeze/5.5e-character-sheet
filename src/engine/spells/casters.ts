@@ -18,6 +18,7 @@ import {
   slotRow,
 } from '../rules/slots.ts';
 import { levelsUpTo, spellListValue } from './filter.ts';
+import { casterSpellcasting } from '../rules/legacy.ts';
 
 type CasterOwner = ClassDef | Subclass;
 
@@ -92,7 +93,8 @@ export function preparedCount(sc: ClassSpellcasting, owner: CasterOwner, level: 
  * casters that change spells on level-up (they work like known spells), and spellbook
  * entries. Prepared lists of Long Rest casters are play state, not choices (plan §9.1).
  */
-export function spellChoiceEffects(sc: ClassSpellcasting, owner: CasterOwner): Effect[] {
+export function spellChoiceEffects(data: ClassSpellcasting, owner: CasterOwner): Effect[] {
+  const sc = casterSpellcasting(data, owner);
   const list = casterList(owner);
   const spellbook = !!sc.spellbookByLevel?.length;
   const out: Effect[] = [];

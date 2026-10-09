@@ -29,6 +29,7 @@ import {
   type DeriveContext,
 } from './context.ts';
 import type { Contribution, DerivedRoll, DerivedSkill, SourcedValue } from './types.ts';
+import { EXHAUSTION_2014, isRules2014 } from '../rules/legacy.ts';
 
 export interface Proficiencies {
   saves: Set<Ability>;
@@ -275,8 +276,24 @@ export function buildRoll(
     if (targetMatches(effect.target, kind)) floor = Math.max(floor ?? 0, effect.value);
   }
 
+  // Exhaustion: -2 per level to every D20 Test (2024); by the 2014 rules, Disadvantage on
+  // ability checks from level 1 and on attacks and saving throws from level 3 (step 8.5).
   const exhaustion = ctx.character.state.exhaustion;
-  if (exhaustion > 0) parts.push({ label: `Exhaustion ${exhaustion}`, value: -2 * exhaustion });
+  if (exhaustion > 0 && !isRules2014(ctx.character)) {
+    parts.push({ label: `Exhaustion ${exhaustion}`, value: -2 * exhaustion });
+  } else if (exhaustion > 0) {
+    const check = kind.type === 'check' || kind.type === 'initiative';
+    const attackOrSave =
+      kind.type === 'attack' ||
+      kind.type === 'save' ||
+      kind.type === 'concentration' ||
+      kind.type === 'death';
+    if (
+      (check && exhaustion >= EXHAUSTION_2014.checksDisadvantage) ||
+      (attackOrSave && exhaustion >= EXHAUSTION_2014.attacksSavesDisadvantage)
+    )
+      disadvantage.push(`Exhaustion ${exhaustion}`);
+  }
 
   const roll: DerivedRoll = {
     bonus: derived(parts),

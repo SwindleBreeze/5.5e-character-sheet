@@ -29,7 +29,7 @@ import {
   type Creature,
   type Id,
 } from '../../../schema/index.ts';
-import { availableOf } from '../../../sources/sourceFilter.ts';
+import { availableOf, characterSources } from '../../../sources/sourceFilter.ts';
 import { Button } from '../../../ui/Button.tsx';
 import { useRoller } from '../../../ui/rollerContext.ts';
 import { useSheet } from '../../../ui/sheetContext.ts';
@@ -114,7 +114,7 @@ function Keeps({ sheet }: { sheet: DerivedSheet }) {
 function FormsSheet({ opened, rules }: { opened: SheetBindings; rules: WildShapeRules }) {
   const { character, apply } = useLiveBindings(opened);
   const all = useEntitiesOfKind('creature');
-  const enabled = useEnabledSources(character.enabledSources);
+  const enabled = useEnabledSources(characterSources(character));
   const [everyBeast, setEveryBeast] = useState(false);
   const [query, setQuery] = useState('');
   const beasts = useMemo(

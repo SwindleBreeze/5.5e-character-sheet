@@ -7,8 +7,26 @@
 //   abilities; any Origin feat).
 // 2014 subclasses need nothing here: the data re-homes them onto the 2024 classes with their
 // features at the 2024 subclass levels.
+//
+// Characters on 2014 rules (plan step 8.5, `Character.ruleset`): ability increases from the
+// species and none from the background; an Ability Score Improvement at the class's levels
+// (+2 to one score, +1 to two, or a feat); prepared casters prepare their level plus their
+// modifier, and known casters learn spells on level-up; 2014 exhaustion.
 
-import { ABILITIES, type Background, type Effect, type Feat } from '../../schema/index.ts';
+import {
+  ABILITIES,
+  type Background,
+  type Character,
+  type ClassSpellcasting,
+  type ContentEntity,
+  type Effect,
+  type Feat,
+} from '../../schema/index.ts';
+
+/** A character played by the 2014 rules (step 8.5). */
+export function isRules2014(character: Pick<Character, 'ruleset'>): boolean {
+  return character.ruleset === '2014';
+}
 
 /** A feat's category for choosing: a 2014 feat without one is General. */
 export function featCategoryOf(feat: Pick<Feat, 'category' | 'edition'>): string {
@@ -45,3 +63,99 @@ export function isAbilityIncrease(effect: Effect): boolean {
   if (effect.type === 'ifChoice') return effect.slot === 'abilitySet';
   return false;
 }
+
+/** The choice between the 2014 Ability Score Improvement's options. */
+export const LEGACY_ASI_SLOT = 'asiSet';
+
+/**
+ * Effects a 2014 entity needs that its data doesn't carry: a 2014 class's Ability Score
+ * Improvement, which the data leaves as text (+2 to one score, +1 to two, or a feat).
+ */
+export function legacyEntityEffects(entity: ContentEntity): Effect[] {
+  if (
+    entity.kind !== 'classFeature' ||
+    entity.edition !== '2014' ||
+    entity.effects.length ||
+    entity.name.toLowerCase() !== 'ability score improvement'
+  )
+    return [];
+  return [
+    {
+      type: 'optionChoice',
+      choice: { slot: LEGACY_ASI_SLOT, count: 1, from: ['two', 'one', 'feat'] },
+      labels: ['+2 to one score', '+1 to two scores', 'A feat'],
+    },
+    {
+      type: 'ifChoice',
+      slot: LEGACY_ASI_SLOT,
+      value: 'two',
+      effects: [
+        {
+          type: 'abilityChoice',
+          choice: { slot: 'ability', count: 1, from: [...ABILITIES] },
+          value: 2,
+          max: 20,
+        },
+      ],
+    },
+    {
+      type: 'ifChoice',
+      slot: LEGACY_ASI_SLOT,
+      value: 'one',
+      effects: [
+        {
+          type: 'abilityChoice',
+          choice: { slot: 'ability.1', count: 2, from: [...ABILITIES] },
+          value: 1,
+          max: 20,
+        },
+      ],
+    },
+    {
+      type: 'ifChoice',
+      slot: LEGACY_ASI_SLOT,
+      value: 'feat',
+      effects: [{ type: 'featChoice', slot: 'feat', categories: ['general'] }],
+    },
+  ];
+}
+
+/**
+ * A 2014 caster with a spells-known table learns its spells on level-up; the data doesn't say
+ * so (2014 Bard, Ranger, Sorcerer and Warlock).
+ */
+export function casterSpellcasting(
+  sc: ClassSpellcasting,
+  owner: Pick<ContentEntity, 'edition'>,
+): ClassSpellcasting {
+  if (owner.edition !== '2014' || sc.preparedChange || !sc.preparedByLevel?.length) return sc;
+  return { ...sc, preparedChange: 'level' };
+}
+
+/**
+ * How many spells a caster without a prepared-spells table prepares: its level (half for half
+ * casters, rounded up for the Artificer, a third for third casters) plus its spellcasting
+ * modifier, at least 1. The 2014 Cleric, Druid, Paladin and Wizard (and a homebrew class
+ * without a table).
+ */
+export function preparedByFormula(sc: ClassSpellcasting, level: number, mod: number): number {
+  if (level < 1) return 0;
+  const share =
+    sc.progression === 'half'
+      ? Math.floor(level / 2)
+      : sc.progression === 'artificer'
+        ? Math.ceil(level / 2)
+        : sc.progression === 'third'
+          ? Math.floor(level / 3)
+          : level;
+  return Math.max(1, share + mod);
+}
+
+/** 2014 exhaustion, by level: what each level adds (they add up). */
+export const EXHAUSTION_2014 = {
+  checksDisadvantage: 1,
+  speedHalved: 2,
+  attacksSavesDisadvantage: 3,
+  hpMaxHalved: 4,
+  speedZero: 5,
+} as const;

@@ -14,7 +14,7 @@ import {
 } from '../../../engine/play/spellbook.ts';
 import { matchesSpellFilter } from '../../../engine/spells/filter.ts';
 import type { Ref } from '../../../schema/index.ts';
-import { availableOf } from '../../../sources/sourceFilter.ts';
+import { availableOf, characterSources } from '../../../sources/sourceFilter.ts';
 import { Button } from '../../../ui/Button.tsx';
 import { useLiveBindings } from '../liveBindings.ts';
 import { nameOf, type SheetBindings } from '../sheetBindings.ts';
@@ -30,7 +30,7 @@ export function SpellbookSheet({
 }) {
   const { character, sheet, index, apply } = useLiveBindings(opened);
   const all = useEntitiesOfKind('spell');
-  const enabled = useEnabledSources(character.enabledSources);
+  const enabled = useEnabledSources(characterSources(character));
   const [query, setQuery] = useState('');
   const live = sheet.spellcasting.casters.find((c) => c.key === caster.key) ?? caster;
   const owner: Ref = { kind: 'class', id: live.classId ?? live.key };

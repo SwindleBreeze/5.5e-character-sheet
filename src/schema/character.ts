@@ -273,6 +273,8 @@ export interface Character {
    * none (step 8.2; by default the background's replace them). Optional, no migration.
    */
   legacyAbilities?: boolean;
+  /** Played by the 2014 rules (step 8.5); absent: the 2024 rules. Optional, no migration. */
+  ruleset?: '2014';
   state: PlayState;
   overrides: Partial<Record<OverrideKey, number | string | boolean>>;
   details: Details;
