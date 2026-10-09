@@ -31,6 +31,7 @@ import { SUP_WARLOCK } from './supplements/warlock.ts';
 import { SUP_WIZARD } from './supplements/wizard.ts';
 import { SUP_FEATS } from './supplements/feats.ts';
 import { SUP_SPECIES } from './supplements/species.ts';
+import { LEGACY_FEATS } from './legacy/feats.ts';
 import { ITEMS_A_TO_C } from './items/itemsAtoC.ts';
 import { ITEMS_D_TO_H } from './items/itemsDtoH.ts';
 import { ITEMS_I_TO_Q } from './items/itemsItoQ.ts';
@@ -68,6 +69,8 @@ registerFeatureEffects(SUP_WARLOCK);
 registerFeatureEffects(SUP_WIZARD);
 registerFeatureEffects(SUP_FEATS);
 registerFeatureEffects(SUP_SPECIES);
+// 2014 options on 2024 characters (step 8.3).
+registerFeatureEffects(LEGACY_FEATS);
 // The 2024 Dungeon Master's Guide's magic items (step 7.12).
 registerFeatureEffects(ITEMS_A_TO_C);
 registerFeatureEffects(ITEMS_D_TO_H);

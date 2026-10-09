@@ -31,5 +31,5 @@ export const SUPPLEMENT_SOURCES: readonly string[] = ['EFA', 'FRHoF', 'RHW', 'AU
 export const LEGACY_DONE: { classes: readonly string[]; species: boolean; feats: boolean } = {
   classes: [],
   species: false,
-  feats: false,
+  feats: true,
 };
