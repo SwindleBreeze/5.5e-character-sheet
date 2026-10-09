@@ -2,8 +2,8 @@
 // Ancestral Guardian, Storm Herald, Beast, Wild Magic and Giant; Swords, Whispers, Creation and
 // Eloquence. Their features keep the 2014 keys (`barbarian|phb`, `bard|phb`) but run on the 2024
 // class, so they hang off the core Rage switch (`rage`) and spend the core Bardic Inspiration
-// counter (`bardic-inspiration`); the 2014 Bard table has no die column, so the die is read from
-// the 2024 Bard's (`table.bard.bardic-die`). Spells and options the subclasses' data already
+// counter (`bardic-inspiration`); the 2014 Bard table has no die column, so the die goes by Bard
+// level (the same on both: d6, then d8 at 5, d10 at 10, d12 at 15). Spells and options the subclasses' data already
 // offer (Consult the Spirits, Giant Power's cantrip, Storm Aura's environments, the Swords
 // fighting style) are left to that data.
 
@@ -43,7 +43,7 @@ const ELOQUENCE = (id: string, level: number) => BARD('eloquence', 'tce', id, le
 const raging = { toggle: 'rage' };
 const spikedArmor = { itemInUse: ['spiked armor|scag'] };
 const inspiration = { resource: 'bardic-inspiration', amount: 1 };
-const bardicDie = 'table.bard.bardic-die';
+const bardicDie = 'steps(level.bard, 1, 1d6, 5, 1d8, 10, 1d10, 15, 1d12)';
 const auraDc = dc('con');
 /** The Desert and Tundra aura amount, by Barbarian level. */
 const auraAmount = 'steps(level.barbarian, 3, 2, 5, 3, 10, 4, 15, 5, 20, 6)';

@@ -32,6 +32,8 @@ export interface QuickBuildSpec {
   classes: { classId: Id; levels: number; subclassId?: Id }[];
   speciesId?: Id;
   backgroundId?: Id;
+  /** Played by the 2014 rules (step 8.5). */
+  ruleset?: '2014';
 }
 
 export interface QuickBuildDeps {
@@ -148,6 +150,7 @@ export function quickBuild(spec: QuickBuildSpec, deps: QuickBuildDeps): Characte
   if (!first) throw new Error('A character needs a class');
   const firstClass = deps.index.get({ kind: 'class', id: first.classId });
   let c = startCharacter(spec.name, { kind: 'class', id: first.classId }, deps.now);
+  if (spec.ruleset) c.ruleset = spec.ruleset;
   if (spec.speciesId && spec.backgroundId) {
     c = setOrigin(
       c,
