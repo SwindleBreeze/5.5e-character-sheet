@@ -3,6 +3,7 @@
 // counts only when something can fill it (content that offers nothing for it never blocks), and
 // "Ignore rules" in a picker still lets any value through.
 
+import { topLevelPicks } from '../choices/picks.ts';
 import type { AutoContext } from '../../engine/build/autoChoose.ts';
 import {
   anyItemKey,
@@ -71,13 +72,7 @@ export function picksOnStep(
   only: (c: { offer: Offer }) => boolean;
 } {
   const only = (c: { offer: Offer }) => stepOf(c.offer, sheet) === step;
-  const all = sheet.features;
-  const underPick = (f: DerivedFeature) => {
-    if (!f.pickedIn) return false;
-    const by = all.find((x) => refKey(x.ref) === refKey(f.pickedIn!.ref));
-    return !!by?.choices.some((c) => c.values.includes(f.ref.id));
-  };
-  return { features: all.filter((f) => !underPick(f) && f.choices.some(only)), only };
+  return { features: topLevelPicks(sheet.features, only), only };
 }
 
 /** Whether a pick has anything left to pick from (not had already, prerequisites met). */

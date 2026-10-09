@@ -376,12 +376,20 @@ export function offerOptions(
       label = (v) => optionLabel(offer, v);
       describe = (v) => optionWhat(offer, v, index);
       break;
-    case 'featureOptions':
-      valueKind =
+    case 'featureOptions': {
+      const kind =
         offer.effect?.type === 'featureOptions' ? offer.effect.optionKind : 'classFeature';
+      valueKind = kind;
       values = from ?? [];
-      label = nameOf(valueKind);
+      label = nameOf(kind);
+      // What each one gives, at a glance (Primal Order: Magician or Warden), as for spells.
+      describe = (id) => {
+        const option = index.get({ kind, id });
+        const { text: summary, more } = summaryOf(option?.entries);
+        return { ...(summary ? { summary } : {}), ...(more ? { more } : {}) };
+      };
       break;
+    }
     case 'feat': {
       const categories = offer.effect?.type === 'featChoice' ? offer.effect.categories : [];
       const feats = catalog

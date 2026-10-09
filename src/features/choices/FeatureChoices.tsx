@@ -6,7 +6,7 @@ import type { AutoContext } from '../../engine/build/autoChoose.ts';
 import type { DerivedFeature, DerivedFeatureChoice } from '../../engine/derive/types.ts';
 import { refKey } from '../../schema/index.ts';
 import { ChoicePicker } from './ChoicePicker.tsx';
-import { pickedFeatures, type PickSave } from './picks.ts';
+import { nestedPicks, type PickSave } from './picks.ts';
 import styles from './choices.module.css';
 import { choiceTitle } from './labels.ts';
 
@@ -40,11 +40,11 @@ export function FeatureChoices({
         const own = choiceTitle(c);
         // "Weapon Mastery: Weapon Mastery" says it once.
         const title = named && own !== f.name ? `${f.name}: ${own}` : own;
-        const nested = pickedFeatures(c, f, ctx.sheet.features).filter(
-          (n) => !seen.has(refKey(n.ref)) && n.choices.length,
-        );
+        // Only a picked option with picks here (Magician's cantrip is a spell pick, made with
+        // the spells): an empty box under it said nothing.
+        const nested = nestedPicks(c, f, ctx.sheet.features, only, seen);
         const below = new Set([...seen, refKey(f.ref), ...nested.map((n) => refKey(n.ref))]);
-        const nestedPicks = (n: DerivedFeature) => (
+        const renderNested = (n: DerivedFeature) => (
           <div key={refKey(n.ref)} className={styles.nested}>
             <h4 className={styles.nestedTitle}>{n.name}</h4>
             <FeatureChoices
@@ -66,9 +66,9 @@ export function FeatureChoices({
               ctx={ctx}
               instant
               onSave={(pick) => onPick(c, f, pick)}
-              under={(value) => nested.filter((n) => n.ref.id === value).map(nestedPicks)}
+              under={(value) => nested.filter((n) => n.ref.id === value).map(renderNested)}
             />
-            {nested.filter((n) => !values.has(n.ref.id)).map(nestedPicks)}
+            {nested.filter((n) => !values.has(n.ref.id)).map(renderNested)}
           </section>
         );
       })}

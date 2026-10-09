@@ -45,6 +45,13 @@ export function choiceTitle(c: DerivedFeatureChoice): string {
       const slot = c.offer.key.slot;
       if (slot.startsWith('cantrips.')) return 'Cantrips';
       if (slot.startsWith('spellbook.')) return 'Spellbook';
+      // A pick limited to cantrips (Magician's extra one) says so.
+      const grant =
+        c.offer.effect?.type === 'grantSpells'
+          ? c.offer.effect.spells.find((g) => 'slot' in g.spell && g.spell.slot === slot)
+          : undefined;
+      const choose = grant && 'choose' in grant.spell ? (grant.spell.choose ?? '') : '';
+      if (/(^|\|)level=0(\||$)/.test(choose)) return c.count === 1 ? 'Cantrip' : 'Cantrips';
       return c.count === 1 ? 'Spell' : 'Spells';
     }
     case 'weaponMastery':

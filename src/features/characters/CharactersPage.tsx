@@ -78,9 +78,8 @@ export function CharactersPage() {
     <>
       <TopBar title="Characters" />
       <div className={page.content}>
-        <InstallCard dismissible />
-        {characters && characters.length > 0 && <BackupReminder characters={characters} />}
-        <StaleContentNotice />
+        {/* Without content, importing it comes first; then the characters, with the button
+            to start one, and the notices after them. */}
         {sources !== undefined && sources.length === 0 && (
           <section className={page.card} aria-labelledby="first-run-title">
             <h2 id="first-run-title" className={page.cardTitle}>
@@ -95,6 +94,9 @@ export function CharactersPage() {
             </p>
           </section>
         )}
+        <Link to="/new/draft/class" className={styles.newCharacter}>
+          + New character
+        </Link>
         {characters === undefined ? null : characters.length === 0 ? (
           <div className={page.empty}>
             <p>No characters yet.</p>
@@ -128,10 +130,10 @@ export function CharactersPage() {
             ))}
           </ul>
         )}
+        {characters && characters.length > 0 && <BackupReminder characters={characters} />}
+        <StaleContentNotice />
+        <InstallCard dismissible />
       </div>
-      <Link to="/new/draft/class" className={styles.fab}>
-        + New character
-      </Link>
     </>
   );
 }
