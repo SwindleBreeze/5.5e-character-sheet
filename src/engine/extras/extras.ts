@@ -167,3 +167,39 @@ export function extraHp(extra: Extra, creature: Creature | undefined, ctx: Scale
     extra.hpMax !== undefined ? 'player' : fromBlock !== undefined ? 'statBlock' : 'unknown';
   return { current: Math.max(0, max - extra.damage), max, temp: extra.tempHp, maxFrom };
 }
+
+const byName = (a: Creature, b: Creature) =>
+  a.name.localeCompare(b.name) || a.source.localeCompare(b.source);
+
+/** The spells a character has: known, prepared, always prepared, in a spellbook or granted. */
+function spellsOf(character: Character, sheet: DerivedSheet): Set<string> {
+  return new Set([
+    ...Object.values(character.state.prepared).flat(),
+    ...sheet.spellcasting.granted.map((g) => g.spellId),
+    ...sheet.spellcasting.casters.flatMap((c) => [
+      ...c.cantrips,
+      ...c.prepared,
+      ...c.alwaysPrepared,
+      ...(c.spellbook ?? []),
+    ]),
+  ]);
+}
+
+/** Creatures this character's spells or classes summon, and familiars for a familiar spell. */
+export function suggestedCreatures(
+  creatures: readonly Creature[],
+  character: Character,
+  sheet: DerivedSheet,
+): Creature[] {
+  const spells = spellsOf(character, sheet);
+  const classes = new Set(sheet.classes.map((c) => c.name.toLowerCase()));
+  const familiarSpell = [...spells].some((id) => id.startsWith('find familiar|'));
+  return creatures
+    .filter(
+      (c) =>
+        (c.summon?.spellId !== undefined && spells.has(c.summon.spellId)) ||
+        (c.summon?.classId !== undefined && classes.has(className(c.summon.classId))) ||
+        (familiarSpell && c.familiar),
+    )
+    .sort(byName);
+}

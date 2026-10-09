@@ -13,7 +13,8 @@ export interface Settings {
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-  enabledSources: ['XPHB', 'XDMG'],
+  // The Monster Manual holds the Beasts and familiars of the Extras tab (step 7.6).
+  enabledSources: ['XPHB', 'XDMG', 'XMM'],
   lastBackupAt: null,
   autoBackupHandle: null,
   lastImport: null,

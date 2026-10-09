@@ -1,0 +1,166 @@
+/* Companions, summons and Wild Shape forms (step 7.6). Cards and fields come from the Actions
+   and Inventory styles; these are the stat block's own pieces. */
+
+.statBlock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.lines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+}
+
+.line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-2);
+}
+
+.line dt {
+  flex: none;
+  font-weight: 700;
+}
+
+.line dd {
+  margin: 0;
+  min-width: 0;
+}
+
+.written {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+/* Six ability scores: 3 × 2 on a phone, one row when there's room. */
+.abilities {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  container-type: inline-size;
+}
+
+@media (min-width: 560px) {
+  .abilities {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+.ability {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+}
+
+.abilityName {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.abilityValue {
+  font-family: var(--font-stat);
+  font-size: var(--font-size-md);
+}
+
+/* A row of short numbers on a card: AC, HP, speed. */
+.numbers {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  margin: 0;
+}
+
+.number {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-1);
+}
+
+.number dt {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.number dd {
+  margin: 0;
+  font-family: var(--font-stat);
+}
+
+.hp {
+  min-height: 36px;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  font-family: var(--font-stat);
+  font-size: var(--font-size-md);
+}
+
+.hp[data-down='true'] {
+  border-color: var(--color-danger, var(--color-border-strong));
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.keeps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-left: 3px solid var(--color-accent-soft);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+}
+
+.check {
+  flex: none;
+  width: 1.5rem;
+  color: var(--color-accent);
+  font-weight: 700;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.issue {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+
+.formText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
