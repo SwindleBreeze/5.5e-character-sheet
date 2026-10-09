@@ -148,6 +148,26 @@ export interface SessionNote {
   text: string;
 }
 
+/** One facility of a Bastion (plan step 7.7). Tracked only: the sheet applies no rules. */
+export interface BastionFacility {
+  /** Stable id of this row: a facility can be built more than once. */
+  uid: string;
+  /** The facility in the library; its rules text is read from there. */
+  ref: Ref;
+  /** Display name when it was added, used when the content is missing. */
+  name: string;
+  /** The order it is working on, as the data names it (`craft`, `trade`…). */
+  order?: string;
+  note?: string;
+}
+
+/** A Bastion from level 5 (plan step 7.7): what it has and who works there, nothing more. */
+export interface Bastion {
+  facilities: BastionFacility[];
+  hirelings: number;
+  defenders: number;
+}
+
 export interface Snapshot {
   ref: Ref;
   name: string;
@@ -249,6 +269,8 @@ export interface Character {
   notes: string;
   sessionLog: SessionNote[];
   portraitId?: string;
+  /** Optional: only characters that have a Bastion carry one (plan step 7.7). */
+  bastion?: Bastion;
   snapshots: Record<RefKey, Snapshot>;
   /** Effects the player added to features (plan step 7.5). */
   customEffects?: CustomEffect[];
