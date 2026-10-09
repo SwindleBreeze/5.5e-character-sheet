@@ -42,3 +42,10 @@ export const LEGACY_DONE: { classes: readonly string[]; species: boolean; feats:
   species: false,
   feats: false,
 };
+
+/**
+ * Characters on 2014 rules (plan step 8.6): the 2014 classes whose own features and every
+ * subclass's (2024 reprints' originals too) are mapped. Each passes the gate in
+ * `tests/smoke/rules2014.test.ts`.
+ */
+export const RULES_2014_DONE: readonly string[] = [];
