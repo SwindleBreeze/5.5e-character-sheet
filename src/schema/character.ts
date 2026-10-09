@@ -155,6 +155,8 @@ export interface Snapshot {
   effects: Effect[];
   /** The entity's reprints when captured, so a missing owner can be aliased (plan §4.4). */
   supersededBy?: Id[];
+  /** A class's Hit Die, so its hit points stay right while its content isn't loaded. */
+  hitDie?: number;
   capturedAt: number;
 }
 

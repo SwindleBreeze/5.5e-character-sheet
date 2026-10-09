@@ -186,5 +186,13 @@ describe('homebrew import', () => {
     const ref = { kind: 'class', id: 'hearthwarden|hearthguide' } as const;
     expect(resolveRef(afterIndex, after.snapshots, ref).status).toBe('snapshot');
     expect(refName(afterIndex, after.snapshots, ref)).toBe('Hearthwarden');
+    // The sheet still names the class and keeps its hit points.
+    const before = derive(saved, index);
+    const sheet = derive(after, afterIndex);
+    expect(sheet.classes[0]).toMatchObject({
+      name: 'Hearthwarden',
+      hitDie: before.classes[0]!.hitDie,
+    });
+    expect(sheet.hp.max.value).toBe(before.hp.max.value);
   });
 });

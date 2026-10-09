@@ -2,6 +2,7 @@
 
 import {
   MOVE_MODES,
+  refKey,
   type Ability,
   type InventoryItem,
   type Item,
@@ -138,16 +139,21 @@ export function deriveAc(ctx: DeriveContext, mods: Mods): Derived & { calculatio
 }
 
 export function deriveClasses(ctx: DeriveContext): DerivedClass[] {
+  // Content that isn't loaded (a removed homebrew source): the character's snapshot names it.
+  const snapshot = (kind: 'class' | 'subclass', id: string) =>
+    ctx.character.snapshots[refKey({ kind, id })];
   return ctx.st.classes.map((c) => {
+    const saved = c.cls ? undefined : snapshot('class', c.classId);
     const out: DerivedClass = {
       classId: c.classId,
-      name: c.cls?.name ?? c.classId,
+      name: c.cls?.name ?? saved?.name ?? c.classId,
       level: c.level,
-      hitDie: c.cls?.hitDie ?? 8,
+      hitDie: c.cls?.hitDie ?? saved?.hitDie ?? 8,
     };
     if (c.subclassId) {
       out.subclassId = c.subclassId;
-      out.subclassName = c.subclass?.name ?? c.subclassId;
+      out.subclassName =
+        c.subclass?.name ?? snapshot('subclass', c.subclassId)?.name ?? c.subclassId;
     }
     return out;
   });
