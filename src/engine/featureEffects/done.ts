@@ -40,7 +40,7 @@ export const LEGACY_DONE: { classes: readonly string[]; species: boolean; feats:
   ],
   classes: ['sorcerer|xphb', 'warlock|xphb', 'wizard|xphb'],
   species: false,
-  feats: false,
+  feats: true,
 };
 
 /**
