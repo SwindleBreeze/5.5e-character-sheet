@@ -10,7 +10,7 @@ import { useSources } from '../../content/hooks.ts';
 import { repos } from '../../db/repos.ts';
 import { detectEnv, shouldShowInstallGuide } from '../../db/storage.ts';
 import { Button } from '../../ui/Button.tsx';
-import { fileAccept } from '../../ui/fileAccept.ts';
+import { FileButton } from '../../ui/FileButton.tsx';
 import { InstallGuide } from '../settings/InstallGuide.tsx';
 import { ImportReportView } from './ImportReportView.tsx';
 import styles from './ImportPage.module.css';
@@ -85,16 +85,12 @@ export function ImportPage() {
     void start({ kind: 'fivetools', input, ...(codes ? { onlySources: codes } : {}) });
   }
 
-  function onPack(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = '';
+  function onPack([file]: File[]) {
     if (file) void start({ kind: 'pack', file });
   }
 
-  function onHomebrewFiles(e: ChangeEvent<HTMLInputElement>) {
-    const files = [...(e.target.files ?? [])];
-    e.target.value = '';
-    if (files.length) void start({ kind: 'homebrew', files });
+  function onHomebrewFiles(files: File[]) {
+    void start({ kind: 'homebrew', files });
   }
 
   function onHomebrewUrl(e: FormEvent) {
@@ -112,9 +108,7 @@ export function ImportPage() {
     if (files.length) fivetools({ type: 'files', files });
   }
 
-  function onZip(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = '';
+  function onZip([file]: File[]) {
     if (file) fivetools({ type: 'zip', file });
   }
 
@@ -158,15 +152,14 @@ export function ImportPage() {
             Open the pack file your group shared (it ends in .pack.json.gz). This is the quickest
             way to get content onto a phone.
           </p>
-          <label className={styles.fileButton} data-disabled={busy || undefined}>
-            <input
-              type="file"
-              accept={fileAccept('.gz,.json,application/gzip,application/json')}
-              disabled={busy}
-              onChange={onPack}
-            />
+          <FileButton
+            className={styles.fileButton}
+            accept=".gz,.json,application/gzip,application/json"
+            disabled={busy}
+            onFiles={onPack}
+          >
             Open pack file
-          </label>
+          </FileButton>
         </section>
 
         <section className={page.card} aria-labelledby="fivetools-title">
@@ -194,15 +187,14 @@ export function ImportPage() {
                 Choose folder
               </label>
             )}
-            <label className={styles.fileButton} data-disabled={busy || undefined}>
-              <input
-                type="file"
-                accept={fileAccept('.zip,application/zip')}
-                disabled={busy}
-                onChange={onZip}
-              />
+            <FileButton
+              className={styles.fileButton}
+              accept=".zip,application/zip"
+              disabled={busy}
+              onFiles={onZip}
+            >
               Choose zip
-            </label>
+            </FileButton>
           </div>
           <details className={styles.advanced}>
             <summary>Advanced</summary>
@@ -226,16 +218,15 @@ export function ImportPage() {
             Open homebrew files in the 5etools format (.json), or paste a link to one, such as a
             file from the 5etools homebrew repository. Import the books it builds on first.
           </p>
-          <label className={styles.fileButton} data-disabled={busy || undefined}>
-            <input
-              type="file"
-              multiple
-              accept={fileAccept('.json,application/json')}
-              disabled={busy}
-              onChange={onHomebrewFiles}
-            />
+          <FileButton
+            className={styles.fileButton}
+            accept=".json,application/json"
+            multiple
+            disabled={busy}
+            onFiles={onHomebrewFiles}
+          >
             Open homebrew files
-          </label>
+          </FileButton>
           <form className={styles.urlForm} onSubmit={onHomebrewUrl}>
             <label className={styles.field}>
               <span>Link to a homebrew file</span>

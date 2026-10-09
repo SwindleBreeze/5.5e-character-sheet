@@ -7,7 +7,7 @@ const IPHONE =
   'Mozilla/5.0 (iPhone; CPU iPhone OS 17_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Mobile/15E148 Safari/604.1';
 
 describe('fileAccept', () => {
-  it('gives Android a single non-media type, so Chrome opens Files without the camera', () => {
+  it('gives Android a single non-media type, so the Files app shows every pack however it is labelled', () => {
     expect(fileAccept('.gz,.json,application/gzip,application/json', ANDROID)).toBe(
       'application/*',
     );

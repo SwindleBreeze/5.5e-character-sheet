@@ -1,7 +1,7 @@
 // Restoring characters from a backup file (plan §6.9, step 7.1): pick the file, see what it
 // adds and updates, confirm. Used in Settings → Backup and on the "data was cleared" screen.
 
-import { useState, type ChangeEvent } from 'react';
+import { useState } from 'react';
 import {
   applyRestore,
   parseBackup,
@@ -10,7 +10,7 @@ import {
   type RestorePlan,
 } from '../../db/backup.ts';
 import { Button } from '../../ui/Button.tsx';
-import { fileAccept } from '../../ui/fileAccept.ts';
+import { FileButton } from '../../ui/FileButton.tsx';
 import { useSheet } from '../../ui/sheetContext.ts';
 import styles from './SettingsPage.module.css';
 
@@ -80,9 +80,7 @@ export function RestoreFromFile({
 }) {
   const sheet = useSheet();
 
-  async function onFile(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = '';
+  async function onFile([file]: File[]) {
     if (!file) return;
     onMessage(null);
     try {
@@ -108,13 +106,12 @@ export function RestoreFromFile({
   }
 
   return (
-    <label className={styles.fileButton}>
-      <input
-        type="file"
-        accept={fileAccept('.json,application/json')}
-        onChange={(e) => void onFile(e)}
-      />
+    <FileButton
+      className={styles.fileButton}
+      accept=".json,application/json"
+      onFiles={(files) => void onFile(files)}
+    >
       {label}
-    </label>
+    </FileButton>
   );
 }
