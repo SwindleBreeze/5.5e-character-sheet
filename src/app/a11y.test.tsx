@@ -2,21 +2,38 @@
 // name, ids are unique, headings don't skip levels, and the rest of src/test/a11y.ts. The
 // screens are rendered as the app shows them, with fixture content and a quick-built character.
 
-import { cleanup, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
-import { newCharacter } from '../db/characterRepo.ts';
+import { useRef, useState, type ComponentType } from 'react';
+import { MemoryRouter } from 'react-router';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { buildBackup } from '../db/backup.ts';
+import { createCharacterRepo, newCharacter } from '../db/characterRepo.ts';
 import { resetDb } from '../db/db.ts';
 import { repos } from '../db/repos.ts';
+import { writeCharacterMarker } from '../db/storage.ts';
 import { createCatalog } from '../engine/build/catalog.ts';
 import { quickBuild } from '../engine/build/quickBuild.ts';
+import type { ContentIndex } from '../engine/content/contentIndex.ts';
+import { derive } from '../engine/derive/derive.ts';
+import { DescriptionTab } from '../features/sheet/DescriptionTab.tsx';
+import { ExtrasTab } from '../features/sheet/ExtrasTab.tsx';
+import { FeaturesTab } from '../features/sheet/FeaturesTab.tsx';
+import { SHEET_TABS } from '../features/sheet/sheetTabs.ts';
+import type { CharacterUpdate } from '../features/sheet/useCharacterActions.ts';
 import type { Character, ContentEntity } from '../schema/index.ts';
 import { a11yIssues, expectAccessible } from '../test/a11y.ts';
-import { fixtureContent } from '../test/fixtureIndex.ts';
+import { testCharacter } from '../test/characters.ts';
+import { FIXTURE_FEATURE_EFFECTS } from '../test/fixtureFeatureEffects.ts';
+import { fixtureContent, fixtureIndex } from '../test/fixtureIndex.ts';
+import { seedHomebrew } from '../test/homebrewFixture.ts';
 import { renderApp } from '../test/renderApp.tsx';
 import { face, fixedRng } from '../test/rng.ts';
 import { seedFixtureContent } from '../test/seedContent.ts';
-import { SHEET_TABS } from '../features/sheet/sheetTabs.ts';
+import { SheetProvider } from '../ui/BottomSheet.tsx';
+import { RollerProvider } from '../ui/Roller.tsx';
+import { Durability } from './Durability.tsx';
+import { listenForInstall, resetInstallState } from './install.ts';
 
 /** A level `levels` character, built the way the quick builder does. */
 async function built(classId: string, levels: number, extra: Partial<Character> = {}) {
@@ -218,5 +235,163 @@ describe('focus order', () => {
     await user.click(await screen.findByRole('radio', { name: 'Brute 3' }));
     await user.click(screen.getByRole('button', { name: /Hit points ›/ }));
     expect(screen.getByRole('heading', { level: 2, name: 'Hit points' })).toHaveFocus();
+  });
+});
+
+type TabProps = {
+  character: Character;
+  sheet: ReturnType<typeof derive>;
+  index: ContentIndex;
+  apply: (update: CharacterUpdate) => void;
+};
+
+/** One sheet tab on its own, with the fixture's feature mappings (as the tab tests do). */
+async function renderTab(Tab: ComponentType<TabProps>, initial: Character) {
+  const index = await fixtureIndex();
+  function Harness() {
+    const ref = useRef(initial);
+    const [character, setCharacter] = useState(initial);
+    const sheet = derive(character, index, { registry: FIXTURE_FEATURE_EFFECTS });
+    const apply = (update: CharacterUpdate) => {
+      ref.current = update(ref.current);
+      setCharacter(ref.current);
+    };
+    return <Tab character={character} sheet={sheet} index={index} apply={apply} />;
+  }
+  return render(
+    <MemoryRouter>
+      <RollerProvider>
+        <SheetProvider>
+          <Harness />
+        </SheetProvider>
+      </RollerProvider>
+    </MemoryRouter>,
+  );
+}
+
+const dialog = () => within(screen.getByRole('dialog'));
+
+describe('phase 7 screens pass the accessibility check', () => {
+  beforeAll(() => listenForInstall(window));
+
+  it('Extras: adding a summon, its card, and Wild Shape forms', async () => {
+    const user = userEvent.setup();
+    const ada = testCharacter({
+      name: 'Ada',
+      classes: [{ classId: 'lorekeeper|tst', levels: 5 }],
+      scores: { int: 16 },
+    });
+    ada.state.prepared['lorekeeper|tst'] = ['rolling boom|tst'];
+    await renderTab(ExtrasTab, ada);
+    expectAccessible();
+    await user.click(screen.getByRole('button', { name: 'Add' }));
+    const suggested = await dialog().findByRole('list', { name: 'Suggested creatures' });
+    expectAccessible();
+    await user.click(within(suggested).getByRole('button', { name: /Boom Spirit \(Air\)/ }));
+    expectAccessible();
+    await user.click(dialog().getByRole('button', { name: 'Add' }));
+    await screen.findByRole('listitem', { name: 'Boom Spirit (Air)' });
+    expectAccessible();
+    cleanup();
+
+    const bree = testCharacter({
+      name: 'Bree',
+      classes: [{ classId: 'wanderer|tst', levels: 4 }],
+      scores: { wis: 14 },
+    });
+    await renderTab(ExtrasTab, bree);
+    const forms = within(screen.getByRole('region', { name: 'Beast Form' }));
+    await user.click(forms.getByRole('button', { name: 'Choose forms' }));
+    const beasts = await dialog().findByRole('list', { name: 'Beasts' });
+    expectAccessible();
+    await user.click(within(beasts).getByRole('button', { name: /Moss Boar CR 1\/4/ }));
+    await user.keyboard('{Escape}');
+    await user.click(forms.getByRole('button', { name: 'Take the form of Moss Boar' }));
+    await screen.findByRole('region', { name: 'In Wild Shape' });
+    expectAccessible();
+  });
+
+  it('Features: adding an effect of your own', async () => {
+    const user = userEvent.setup();
+    const c = testCharacter({
+      name: 'Ada',
+      classes: [{ classId: 'gladiator|tst', levels: 4 }],
+      speciesId: 'mossling|tst',
+      backgroundId: 'arena hand|tst',
+    });
+    await renderTab(FeaturesTab, c);
+    // A feature's row opens to show it, with the button to add an effect.
+    const row = within(screen.getByRole('listitem', { name: 'Showmanship' }));
+    await user.click(row.getByRole('button', { name: 'Showmanship' }));
+    expectAccessible();
+    await user.click(row.getByRole('button', { name: 'Add your own effect…' }));
+    await screen.findByRole('dialog');
+    expectAccessible();
+    await user.click(dialog().getByRole('radio', { name: 'Bonus' }));
+    expectAccessible();
+  });
+
+  it('Description: the Bastion card and its facility picker', async () => {
+    const user = userEvent.setup();
+    const c = testCharacter({
+      name: 'Ada',
+      classes: [{ classId: 'brute|tst', levels: 5 }],
+      speciesId: 'mossling|tst',
+      backgroundId: 'arena hand|tst',
+    });
+    await renderTab(DescriptionTab, c);
+    const card = within(screen.getByRole('region', { name: 'Bastion' }));
+    expectAccessible();
+    await user.click(card.getByRole('button', { name: 'Add a facility' }));
+    await screen.findByRole('dialog', { name: 'Add a facility' });
+    expectAccessible();
+    await user.click(await dialog().findByRole('button', { name: /^Spark Forge/ }));
+    await user.click(dialog().getByRole('button', { name: 'Add Spark Forge' }));
+    await card.findByRole('list', { name: 'Facilities' });
+    expectAccessible();
+  });
+
+  it('Import and Settings with homebrew, and the install card', async () => {
+    await seedHomebrew(['TST', 'HearthGuide', 'BrutePaths']);
+    renderApp('/settings');
+    await screen.findByRole('group', { name: 'Homebrew' });
+    await settled();
+    expectAccessible();
+    cleanup();
+
+    renderApp('/library/import');
+    await screen.findByLabelText('Open pack file');
+    expectAccessible();
+    cleanup();
+
+    resetInstallState();
+    renderApp('/');
+    await screen.findByRole('heading', { name: 'Characters' });
+    const offer = Object.assign(new Event('beforeinstallprompt', { cancelable: true }), {
+      prompt: vi.fn(async () => {}),
+      userChoice: Promise.resolve({ outcome: 'dismissed' }),
+    });
+    act(() => {
+      window.dispatchEvent(offer);
+    });
+    await screen.findByRole('heading', { name: 'Install the app' });
+    expectAccessible();
+  });
+
+  it('the screen shown when the browser cleared the app’s data', async () => {
+    await createCharacterRepo().save(newCharacter('Brin'));
+    await buildBackup();
+    await resetDb('test-a11y-cleared');
+    writeCharacterMarker(1);
+    render(
+      <MemoryRouter>
+        <SheetProvider>
+          <Durability />
+        </SheetProvider>
+      </MemoryRouter>,
+    );
+    await screen.findByRole('dialog', { name: 'Your browser cleared this app’s data' });
+    expectAccessible();
+    writeCharacterMarker(0);
   });
 });
