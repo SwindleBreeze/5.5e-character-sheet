@@ -82,6 +82,31 @@ function mergeSubrace(race: RawEntity, subrace: RawEntity): RawEntity {
 }
 
 /**
+ * A homebrew subrace of an official race, as a `_copy` of that race: its text is added after
+ * the race's, its other fields replace the race's (ability bonuses are not combined, unlike a
+ * subrace merged with its race).
+ */
+function subraceAsCopy(sr: RawEntity): RawEntity {
+  const out = clone(sr);
+  const raceName = String(sr.raceName);
+  const raceSource = String(sr.raceSource);
+  delete out.raceName;
+  delete out.raceSource;
+  delete out.overwrite;
+  out.name = subraceName(raceName, String(sr.name));
+  if (typeof out.source !== 'string') out.source = raceSource;
+  const entries = out.entries;
+  delete out.entries;
+  out._copy = {
+    name: raceName,
+    source: raceSource,
+    ...(Array.isArray(entries) ? { _mod: { entries: { mode: 'appendArr', items: entries } } } : {}),
+  };
+  out[VERSION_OF] = { name: raceName, source: raceSource } satisfies RawObject;
+  return out;
+}
+
+/**
  * Turn `subrace` records into species records. Named subraces are added as variants of their
  * race; nameless ones replace the base race record.
  */
@@ -89,6 +114,8 @@ export function mergeSubraces(
   races: RawEntity[],
   subraces: RawEntity[],
   report: ReportBuilder,
+  /** Homebrew: a subrace of a race not in these records becomes a copy of it instead. */
+  orphansAsCopies = false,
 ): RawEntity[] {
   const out = [...races];
   for (const sr of subraces) {
@@ -96,6 +123,10 @@ export function mergeSubraces(
       (r) => r.name === sr.raceName && r.source === sr.raceSource && r[VERSION_OF] === undefined,
     );
     const race = out[ix];
+    if (!race && orphansAsCopies && typeof sr.name === 'string' && sr.name) {
+      out.push(subraceAsCopy(sr));
+      continue;
+    }
     if (!race) {
       report.warn(
         'subraceOrphan',

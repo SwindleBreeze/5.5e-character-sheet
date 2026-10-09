@@ -32,6 +32,8 @@ export function assignKeys(labels: string[], onCollision?: (key: string, label: 
 /** One table cell as stored: numbers stay numbers, dashes become 0, dice become `NdM`. */
 export function cellValue(raw: unknown): string | number {
   if (typeof raw === 'number') return raw;
+  // A row shorter than its labels (homebrew): the missing cell reads as a dash.
+  if (raw === undefined || raw === null) return 0;
   if (typeof raw === 'string') {
     const text = raw.trim();
     if (text === '' || /^[—–-]$/.test(text)) return 0;

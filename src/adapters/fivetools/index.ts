@@ -70,10 +70,10 @@ export interface ImportResult {
 
 export class ImportError extends Error {}
 
-type Converter = (raw: RawEntity, ctx: ConvertContext) => ContentEntity;
+export type Converter = (raw: RawEntity, ctx: ConvertContext) => ContentEntity;
 
 /** 5etools record type → our kind and converter. Order matters: classes before features. */
-const CONVERTERS: [string, EntityKind, Converter][] = [
+export const CONVERTERS: [string, EntityKind, Converter][] = [
   ['class', 'class', convertClass],
   ['subclass', 'subclass', convertSubclass],
   ['classFeature', 'classFeature', convertClassFeature],
@@ -97,6 +97,52 @@ const CONVERTERS: [string, EntityKind, Converter][] = [
     (raw, ctx) => convertRule(raw, ruleKind, ctx),
   ]),
 ];
+
+/**
+ * Convert every record, kind by kind. A record that fails is reported and skipped; so is a
+ * second record with an id already taken. `convertOne` lets the homebrew importer step in for
+ * records it converts differently (copies of official content).
+ */
+export function convertRecords(
+  records: Record<string, RawEntity[]>,
+  ctx: ConvertContext,
+  convertOne: (prop: string, raw: RawEntity, convert: Converter) => ContentEntity | null = (
+    _prop,
+    raw,
+    convert,
+  ) => convert(raw, ctx),
+): EntitiesByKind {
+  const { report } = ctx;
+  const entities: EntitiesByKind = {};
+  const seen = new Map<EntityKind, Set<string>>();
+  for (const [prop, kind, convert] of CONVERTERS) {
+    const list = (entities[kind] ??= []) as ContentEntity[];
+    const ids = seen.get(kind) ?? new Set<string>();
+    seen.set(kind, ids);
+    for (const raw of records[prop] ?? []) {
+      let entity: ContentEntity | null;
+      try {
+        entity = convertOne(prop, raw, convert);
+      } catch (err) {
+        report.warn(
+          'convertFailed',
+          `${prop}: ${err instanceof Error ? err.message : String(err)}`,
+          raw,
+        );
+        continue;
+      }
+      if (!entity) continue;
+      if (ids.has(entity.id)) {
+        report.warn('duplicateId', `Duplicate ${kind} id "${entity.id}"; kept the first`, raw);
+        continue;
+      }
+      ids.add(entity.id);
+      list.push(entity);
+      if (kind === 'class' || kind === 'subclass') ctx.parentEdition.set(entity.id, entity.edition);
+    }
+  }
+  return entities;
+}
 
 function sourceInfos(
   entities: EntitiesByKind,
@@ -178,33 +224,7 @@ export async function importFivetools(
   };
 
   progress('convert');
-  const entities: EntitiesByKind = {};
-  const seen = new Map<EntityKind, Set<string>>();
-  for (const [prop, kind, convert] of CONVERTERS) {
-    const list = (entities[kind] ??= []) as ContentEntity[];
-    const ids = seen.get(kind) ?? new Set<string>();
-    seen.set(kind, ids);
-    for (const raw of records[prop] ?? []) {
-      let entity: ContentEntity;
-      try {
-        entity = convert(raw, ctx);
-      } catch (err) {
-        report.warn(
-          'convertFailed',
-          `${prop}: ${err instanceof Error ? err.message : String(err)}`,
-          raw,
-        );
-        continue;
-      }
-      if (ids.has(entity.id)) {
-        report.warn('duplicateId', `Duplicate ${kind} id "${entity.id}"; kept the first`, raw);
-        continue;
-      }
-      ids.add(entity.id);
-      list.push(entity);
-      if (kind === 'class' || kind === 'subclass') ctx.parentEdition.set(entity.id, entity.edition);
-    }
-  }
+  const entities = convertRecords(records, ctx);
 
   progress('finish');
   applySpellLists(entities.spell ?? [], manifest.spellLookup);

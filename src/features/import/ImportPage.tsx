@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useMemo, useState, type ChangeEvent } from 'react';
+import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
 import { runImport } from '../../adapters/importClient.ts';
 import type { ImportJob, ImportSummary, JobStage } from '../../adapters/importJob.ts';
 import { exportPack } from '../../adapters/pack/exportPack.ts';
@@ -43,6 +43,21 @@ function parseCodes(text: string): string[] | undefined {
   return codes.length ? codes : undefined;
 }
 
+/** Whether the browser thinks it is online; links need a connection. */
+function useOnline(): boolean {
+  const [online, setOnline] = useState(() => navigator.onLine);
+  useEffect(() => {
+    const update = () => setOnline(navigator.onLine);
+    window.addEventListener('online', update);
+    window.addEventListener('offline', update);
+    return () => {
+      window.removeEventListener('online', update);
+      window.removeEventListener('offline', update);
+    };
+  }, []);
+  return online;
+}
+
 export function ImportPage() {
   const [status, setStatus] = useState<Status>({ state: 'idle' });
   const [onlySources, setOnlySources] = useState('');
@@ -52,6 +67,8 @@ export function ImportPage() {
   const showInstallGuide = useMemo(() => shouldShowInstallGuide(detectEnv()), []);
   const picker = (window as DirectoryPickerWindow).showDirectoryPicker;
   const busy = status.state === 'running';
+  const online = useOnline();
+  const [brewUrl, setBrewUrl] = useState('');
 
   async function start(job: ImportJob) {
     setStatus({ state: 'running', stage: null });
@@ -72,6 +89,21 @@ export function ImportPage() {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (file) void start({ kind: 'pack', file });
+  }
+
+  function onHomebrewFiles(e: ChangeEvent<HTMLInputElement>) {
+    const files = [...(e.target.files ?? [])];
+    e.target.value = '';
+    if (files.length) void start({ kind: 'homebrew', files });
+  }
+
+  function onHomebrewUrl(e: FormEvent) {
+    e.preventDefault();
+    const urls = brewUrl
+      .split(/\s+/)
+      .map((u) => u.trim())
+      .filter(Boolean);
+    if (urls.length) void start({ kind: 'homebrew', urls });
   }
 
   function onFolderFiles(e: ChangeEvent<HTMLInputElement>) {
@@ -184,6 +216,42 @@ export function ImportPage() {
               />
             </label>
           </details>
+        </section>
+
+        <section className={page.card} aria-labelledby="homebrew-title">
+          <h2 id="homebrew-title" className={page.cardTitle}>
+            Homebrew
+          </h2>
+          <p className={page.muted}>
+            Open homebrew files in the 5etools format (.json), or paste a link to one, such as a
+            file from the 5etools homebrew repository. Import the books it builds on first.
+          </p>
+          <label className={styles.fileButton} data-disabled={busy || undefined}>
+            <input
+              type="file"
+              multiple
+              accept={fileAccept('.json,application/json')}
+              disabled={busy}
+              onChange={onHomebrewFiles}
+            />
+            Open homebrew files
+          </label>
+          <form className={styles.urlForm} onSubmit={onHomebrewUrl}>
+            <label className={styles.field}>
+              <span>Link to a homebrew file</span>
+              <input
+                type="url"
+                inputMode="url"
+                value={brewUrl}
+                placeholder="https://…/homebrew.json"
+                onChange={(e) => setBrewUrl(e.target.value)}
+              />
+            </label>
+            <Button type="submit" disabled={busy || !online || !brewUrl.trim()}>
+              Download
+            </Button>
+            {!online && <p className={page.muted}>Links need an internet connection.</p>}
+          </form>
         </section>
 
         <div aria-live="polite">

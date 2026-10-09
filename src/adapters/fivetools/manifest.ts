@@ -154,7 +154,8 @@ async function indexedFiles(
     .map((file) => `${folder}/${file}`);
 }
 
-function collect(json: RawObject, records: RecordsByProp, report: ReportBuilder): void {
+/** Add the record arrays of one file to `records`; other arrays are counted as ignored. */
+export function collect(json: RawObject, records: RecordsByProp, report: ReportBuilder): void {
   for (const [prop, value] of Object.entries(json)) {
     if (prop.startsWith('_') || !Array.isArray(value)) continue;
     if (IMPORTED.has(prop)) {

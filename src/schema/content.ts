@@ -137,6 +137,11 @@ export interface ClassSpellcasting {
   preparedChange?: 'level' | 'restLong';
   /** Spells gained at fixed levels outside the table, by class level then spell level (Mystic Arcanum). */
   fixedByLevel?: Record<number, Record<number, number>>;
+  /**
+   * More spells on this caster's list (homebrew `classSpells`): every spell of these classes'
+   * lists (by class name), and single spells by id.
+   */
+  listAlso?: { classes?: string[]; spellIds?: Id[] };
 }
 
 export interface ClassDef extends BaseEntity {
