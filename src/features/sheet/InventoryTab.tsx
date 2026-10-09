@@ -151,10 +151,18 @@ export function InventoryTab(bindings: SheetBindings) {
           data-over={over}
         />
         <p className={styles.help}>
-          You can drag, lift or push up to {lb(inv.dragLiftPush)} lb.; while that is more than you
-          can carry, your Speed is no more than 5 feet. The DM decides whether weight counts in your
-          game.
+          You can drag, lift or push up to {lb(inv.dragLiftPush)} lb. While you have more than you
+          can carry, your Speed is at most 5 feet; more than you can drag, and it is 0.
         </p>
+        <label className={styles.check}>
+          <input
+            type="checkbox"
+            checked={!character.ignoreWeight}
+            onChange={(e) => apply((c) => ({ ...c, ignoreWeight: !e.target.checked }))}
+          />
+          Weight slows {character.name || 'this character'} down (turn off if your DM doesn’t count
+          weight)
+        </label>
         <p className={styles.muted}>
           Attuned to{' '}
           <span className="numeric">

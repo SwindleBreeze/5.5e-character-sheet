@@ -184,17 +184,19 @@ export function deriveInventory(
     },
   ]);
   const dragLiftPush = carry.value * 2;
-  if (weight.value > dragLiftPush) {
+  if (character.ignoreWeight) {
+    // The group doesn't count weight.
+  } else if (weight.value > dragLiftPush) {
     ctx.issues.push({
       severity: 'warn',
       code: 'overDragLimit',
-      message: `You have ${weight.value} lb.; you can drag, lift or push at most ${dragLiftPush} lb.`,
+      message: `You have ${weight.value} lb.; you can drag, lift or push at most ${dragLiftPush} lb., so your Speed is 0 while you carry it all. Drop or stow something to move.`,
     });
   } else if (weight.value > carry.value) {
     ctx.issues.push({
       severity: 'info',
       code: 'overCapacity',
-      message: `You have ${weight.value} lb.; you can carry ${carry.value} lb. Past that you can only drag, lift or push it, with a Speed of no more than 5 feet.`,
+      message: `You have ${weight.value} lb.; you can carry ${carry.value} lb. Past that you can only drag, lift or push it, so your Speed is at most 5 feet while you carry it all.`,
     });
   }
 

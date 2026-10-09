@@ -166,7 +166,17 @@ export function derive(
     ac: deriveAc(ctx, mods),
     hp: deriveHp(ctx, mods, classes),
     hitDice: deriveHitDice(ctx, classes),
-    speed: deriveSpeed(ctx, scores.str),
+    speed: deriveSpeed(
+      ctx,
+      scores.str,
+      character.ignoreWeight
+        ? undefined
+        : {
+            weight: inventory.weight.value,
+            carry: inventory.carry.value,
+            dragLiftPush: inventory.dragLiftPush,
+          },
+    ),
     senses: deriveSenses(ctx),
     defenses: deriveDefenses(ctx),
     proficiencies: {
