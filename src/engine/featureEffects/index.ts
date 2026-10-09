@@ -37,6 +37,7 @@ import { LEGACY_RANGER_ROGUE } from './legacy/rangerRogue.ts';
 import { LEGACY_DRUID_FIGHTER } from './legacy/druidFighter.ts';
 import { LEGACY_CASTERS } from './legacy/casters.ts';
 import { LEGACY_FEATS } from './legacy/feats.ts';
+import { LEGACY_SPECIES } from './legacy/species.ts';
 import { ITEMS_A_TO_C } from './items/itemsAtoC.ts';
 import { ITEMS_D_TO_H } from './items/itemsDtoH.ts';
 import { ITEMS_I_TO_Q } from './items/itemsItoQ.ts';
@@ -81,6 +82,7 @@ registerFeatureEffects(LEGACY_RANGER_ROGUE);
 registerFeatureEffects(LEGACY_DRUID_FIGHTER);
 registerFeatureEffects(LEGACY_CASTERS);
 registerFeatureEffects(LEGACY_FEATS);
+registerFeatureEffects(LEGACY_SPECIES);
 // The 2024 Dungeon Master's Guide's magic items (step 7.12).
 registerFeatureEffects(ITEMS_A_TO_C);
 registerFeatureEffects(ITEMS_D_TO_H);
