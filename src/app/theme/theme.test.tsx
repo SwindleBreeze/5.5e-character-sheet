@@ -20,6 +20,20 @@ describe('theme', () => {
     expect(document.documentElement.dataset.scheme).toBe('light');
   });
 
+  it('tells the browser not to darken the page, and colours its bar for the chosen theme', () => {
+    const scheme = document.createElement('meta');
+    scheme.name = 'color-scheme';
+    const bar = document.createElement('meta');
+    bar.name = 'theme-color';
+    document.head.append(scheme, bar);
+    applyThemePref('light');
+    expect([scheme.content, bar.content]).toEqual(['only light', '#f4efe4']);
+    applyThemePref('dark');
+    expect([scheme.content, bar.content]).toEqual(['only dark', '#16120e']);
+    scheme.remove();
+    bar.remove();
+  });
+
   it('switches theme, saves the choice, and clears it for system', () => {
     const { result } = renderHook(() => useTheme());
     expect(result.current[0]).toBe('system');

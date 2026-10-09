@@ -11,12 +11,13 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Char Sheet" />
-    <meta name="theme-color" content="#f4efe4" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#16120e" media="(prefers-color-scheme: dark)" />
+    <!-- Both follow the theme chosen in the app (the script below, then theme.ts). -->
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#f4efe4" />
     <title>5.5e Character Sheet</title>
     <script>
       // Apply the saved theme before first paint to avoid a flash.
-      // Mirrors src/app/theme/theme.ts.
+      // Mirrors src/app/theme/theme.ts (applyThemePref).
       (function () {
         var root = document.documentElement;
         var t = null;
@@ -26,6 +27,10 @@
         if (t === 'light' || t === 'dark') root.dataset.theme = t;
         else t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
         root.dataset.scheme = t;
+        // "only": browsers that darken pages on their own leave this one as it is.
+        document.querySelector('meta[name=color-scheme]').content = 'only ' + t;
+        document.querySelector('meta[name=theme-color]').content =
+          t === 'dark' ? '#16120e' : '#f4efe4';
       })();
     </script>
   </head>
