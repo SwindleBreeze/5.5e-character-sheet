@@ -96,17 +96,29 @@ function offerLevels(effects: readonly Effect[]): Set<number> {
   return levels;
 }
 
+export interface CoverageScope {
+  /** Only these classes (the 2024 ones, when 2014 books are in `sources`). */
+  classIds?: ReadonlySet<string>;
+  /** Only the subclasses this keeps (2014 ones without a 2024 reprint, step 8.3). */
+  subclass?: (s: Subclass) => boolean;
+}
+
 export function coverageReport(
   index: ContentIndex,
   registry: FeatureEffectsMap,
   sources: ReadonlySet<SourceCode>,
+  scope: CoverageScope = {},
 ): CoverageReport {
   const rows: CoverageRow[] = [];
   const seen = new Set<string>();
   const all = index.all();
-  const classes = all.filter((e): e is ClassDef => e.kind === 'class' && sources.has(e.source));
+  const classes = all.filter(
+    (e): e is ClassDef =>
+      e.kind === 'class' && sources.has(e.source) && (!scope.classIds || scope.classIds.has(e.id)),
+  );
   const subclasses = all.filter(
-    (e): e is Subclass => e.kind === 'subclass' && sources.has(e.source),
+    (e): e is Subclass =>
+      e.kind === 'subclass' && sources.has(e.source) && (!scope.subclass || scope.subclass(e)),
   );
 
   const add = (

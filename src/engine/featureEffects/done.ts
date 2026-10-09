@@ -22,3 +22,14 @@ export const DONE_CLASSES: readonly string[] = [
 
 /** The 2024 books with subclasses (and the Artificer) whose content is mapped (step 6.16). */
 export const SUPPLEMENT_SOURCES: readonly string[] = ['EFA', 'FRHoF', 'RHW', 'AU'];
+
+/**
+ * 2014 options on 2024 characters (plan step 8.3): the 2024 classes whose 2014 subclasses (those
+ * without a 2024 reprint, from every book) are all mapped, and whether every 2014 species and
+ * feat is. Each passes the 2014 gate in `tests/smoke/legacyCoverage.test.ts`.
+ */
+export const LEGACY_DONE: { classes: readonly string[]; species: boolean; feats: boolean } = {
+  classes: [],
+  species: false,
+  feats: false,
+};
