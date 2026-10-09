@@ -29,7 +29,7 @@ export const SUPPLEMENT_SOURCES: readonly string[] = ['EFA', 'FRHoF', 'RHW', 'AU
  * feat is. Each passes the 2014 gate in `tests/smoke/legacyCoverage.test.ts`.
  */
 export const LEGACY_DONE: { classes: readonly string[]; species: boolean; feats: boolean } = {
-  classes: ['barbarian|xphb', 'bard|xphb'],
+  classes: ['barbarian|xphb', 'bard|xphb', 'cleric|xphb'],
   species: false,
   feats: false,
 };
