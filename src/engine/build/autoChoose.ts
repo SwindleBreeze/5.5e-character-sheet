@@ -16,6 +16,7 @@ import type { ContentIndex } from '../content/contentIndex.ts';
 import type { DerivedSheet } from '../derive/types.ts';
 import { levelsUpTo, matchesSpellFilter } from '../spells/filter.ts';
 import type { Catalog } from './catalog.ts';
+import { backgroundAbilityOptions, featCategoryOf } from '../rules/legacy.ts';
 
 export interface AutoContext {
   character: Character;
@@ -148,7 +149,7 @@ function featOptions(offer: Offer, ctx: AutoContext): Feat[] {
     .of('feat')
     .filter(
       (f) =>
-        (!categories.length || categories.includes(f.category)) &&
+        (!categories.length || categories.includes(featCategoryOf(f))) &&
         (f.repeatable || !taken.has(f.id)),
     );
   // The plain Ability Score Improvement feat first, when it is one of the options.
@@ -174,7 +175,7 @@ export function autoChoose(offer: Offer, count: number, ctx: AutoContext): AutoP
     }
     case 'backgroundAbility': {
       const bg = index.get({ kind: 'background', id: offer.key.owner.id });
-      const option = bg?.abilityOptions[0];
+      const option = bg ? backgroundAbilityOptions(bg)[0] : undefined;
       if (!option) return { values: [] };
       const ranked = abilityPriority(sheet).filter((a) => option.from.includes(a));
       const weights = [...option.weights].sort((a, b) => b - a);

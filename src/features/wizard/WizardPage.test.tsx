@@ -332,3 +332,50 @@ describe('creation wizard', () => {
     ]);
   });
 });
+
+describe('2014 options (step 8.2)', () => {
+  beforeEach(async () => {
+    await seedFixtureContent(['TST', 'OLD']);
+    await repos().settings.set('show2014', true);
+  });
+
+  it('a 2014 background: free ability increases on a grid, and an Origin feat', async () => {
+    const user = userEvent.setup();
+    renderApp('/new/draft/class');
+    await brute(user);
+    await user.click(next(/Background ›/));
+
+    await user.click(await screen.findByRole('radio', { name: 'Old Sailor' }));
+    const sailor = card('Old Sailor');
+    expect(sailor.getByText(/A 2014 background/)).toBeInTheDocument();
+    // One row per ability with +2 and +1, not every combination.
+    const grid = within(sailor.getByRole('list', { name: 'Ability increases' }));
+    expect(grid.getAllByRole('listitem')).toHaveLength(6);
+    await user.click(grid.getByRole('button', { name: '+2 Wisdom' }));
+    await user.click(grid.getByRole('button', { name: '+1 Charisma' }));
+    expect(grid.getByRole('button', { name: '+2 Wisdom' })).toHaveAttribute('aria-pressed', 'true');
+    await stored((c) =>
+      c.log[0]!.choices.some((r) => r.key.slot === 'ability' && r.values.join() === 'wis,wis,cha'),
+    );
+    // Its Origin feat: Origin feats only.
+    expect(sailor.getAllByRole('radio', { name: /Spark Initiate/ }).length).toBeGreaterThan(0);
+    expect(sailor.queryByRole('radio', { name: /Arena Veteran/ })).toBeNull();
+  });
+
+  it('a 2014 species: the background gives the increases, unless the species keeps its own', async () => {
+    const user = userEvent.setup();
+    renderApp('/new/draft/class');
+    await brute(user);
+    await user.click(next(/Background ›/));
+    await arenaHand(user);
+    await user.click(next(/Species ›/));
+
+    await user.selectOptions(await screen.findByRole('combobox', { name: 'Species' }), 'Cragling');
+    const cragling = region('Cragling choices');
+    expect(cragling.getByText(/A 2014 species/)).toBeInTheDocument();
+    await user.click(cragling.getByRole('checkbox', { name: /own ability increases/ }));
+    await stored((c) => c.legacyAbilities === true);
+    // The background's increases are set aside; the species' choice of sets is asked for.
+    await waitFor(() => expect(footer().getByText(/Cragling/)).toBeInTheDocument());
+  });
+});

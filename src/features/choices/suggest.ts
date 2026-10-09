@@ -16,6 +16,7 @@ import {
   type Skill,
   type Species,
 } from '../../schema/index.ts';
+import { backgroundAbilityOptions } from '../../engine/rules/legacy.ts';
 
 /** The character's first class and its primary abilities. */
 export function classFocus(
@@ -92,7 +93,7 @@ export function originSuggestion(
   if (!focus) return undefined;
   const can = new Set<Ability>(
     entity.kind === 'background'
-      ? entity.abilityOptions.flatMap((o) => o.from)
+      ? backgroundAbilityOptions(entity).flatMap((o) => o.from)
       : entity.effects.flatMap((e) =>
           e.type === 'abilityBonus' && typeof e.ability === 'string' ? [e.ability] : [],
         ),

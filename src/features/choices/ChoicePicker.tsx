@@ -24,6 +24,8 @@ import { Button } from '../../ui/Button.tsx';
 import inventory from '../sheet/inventory/inventory.module.css';
 import styles from './choices.module.css';
 import { choiceHelp } from './help.ts';
+import { isFreeSpread } from './spread.ts';
+import { SpreadGrid } from './SpreadGrid.tsx';
 import { suggestion } from './suggest.ts';
 import { retrainText, type PickSave } from './picks.ts';
 
@@ -103,14 +105,12 @@ export interface ChoicePickerProps {
   under?: (value: string) => ReactNode;
 }
 
-export function ChoicePicker({
-  choice,
-  ctx,
-  onSave,
-  instant,
-  showRetrain,
-  under,
-}: ChoicePickerProps) {
+export function ChoicePicker(props: ChoicePickerProps) {
+  // Ability increases open to every ability: a grid, not fifty combinations (step 8.2).
+  return isFreeSpread(props.choice) ? <SpreadGrid {...props} /> : <ListPicker {...props} />;
+}
+
+function ListPicker({ choice, ctx, onSave, instant, showRetrain, under }: ChoicePickerProps) {
   const [ignore, setIgnore] = useState(false);
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<string[] | null>(null);

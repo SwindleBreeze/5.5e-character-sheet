@@ -129,6 +129,27 @@ export function SpeciesStep(b: WizardBindings) {
             </Button>
           </div>
           <AboutFlavor entity={selected} />
+          {selected.edition === '2014' && (
+            <div className={choices.help}>
+              <p>
+                A 2014 species. By the 2024 rules your background gives your ability increases, not
+                your species; its other traits work as written.
+              </p>
+              <label className={choices.check}>
+                <input
+                  type="checkbox"
+                  checked={!!character.legacyAbilities}
+                  onChange={(e) =>
+                    change((c) => {
+                      const { legacyAbilities: _, ...rest } = c;
+                      return e.target.checked ? { ...rest, legacyAbilities: true } : rest;
+                    })
+                  }
+                />
+                Use this species’ own ability increases instead (the background then gives none)
+              </label>
+            </div>
+          )}
           {needsVariant ? (
             <p className={choices.help}>
               Every {selected.name} has the traits below. Choose {aOrAn(label.toLowerCase())} above:

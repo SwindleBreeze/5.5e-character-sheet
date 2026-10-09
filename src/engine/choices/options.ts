@@ -39,6 +39,7 @@ import { distanceOf } from '../derive/attacks.ts';
 import { masteryHasSave, masterySaveNote, masteryWhen } from '../explain/mastery.ts';
 import { isRangedWeapon } from '../static/attackTraits.ts';
 import { baseWeapons, expertiseOptions, queryOptions, weaponMasteryOptions } from './queries.ts';
+import { backgroundAbilityOptions, featCategoryOf } from '../rules/legacy.ts';
 
 export interface ChoiceOption {
   value: string;
@@ -284,7 +285,7 @@ export function offerOptions(
     }
     case 'backgroundAbility': {
       const bg = index.get({ kind: 'background', id: offer.key.owner.id });
-      const spreads = backgroundSpreads(bg?.abilityOptions ?? []);
+      const spreads = backgroundSpreads(bg ? backgroundAbilityOptions(bg) : []);
       const mine = spreads.find((s) => sameSpread(s, current));
       // Scores before this pick: the sheet's, less the increases picked now.
       const before = (a: Ability) => score(a) - current.filter((v) => v === a).length;
@@ -394,7 +395,7 @@ export function offerOptions(
       const categories = offer.effect?.type === 'featChoice' ? offer.effect.categories : [];
       const feats = catalog
         .of('feat')
-        .filter((f) => ignore || !categories.length || categories.includes(f.category));
+        .filter((f) => ignore || !categories.length || categories.includes(featCategoryOf(f)));
       const pctx = prereqContext(sheet, index);
       valueKind = 'feat';
       values = feats.map((f) => f.id);
@@ -412,7 +413,7 @@ export function offerOptions(
         const feat = index.get({ kind: 'feat', id });
         return {
           ...prereqFacts(feat, pctx),
-          group: FEAT_GROUPS[feat?.category ?? ''] ?? 'Other feats',
+          group: FEAT_GROUPS[feat ? featCategoryOf(feat) : ''] ?? 'Other feats',
         };
       };
       break;

@@ -268,6 +268,11 @@ export interface Character {
    * (optional, no migration).
    */
   ignoreWeight?: boolean;
+  /**
+   * A 2014 species keeps its own ability increases, as in 2014, and the background then gives
+   * none (step 8.2; by default the background's replace them). Optional, no migration.
+   */
+  legacyAbilities?: boolean;
   state: PlayState;
   overrides: Partial<Record<OverrideKey, number | string | boolean>>;
   details: Details;

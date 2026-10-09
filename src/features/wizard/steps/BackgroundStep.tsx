@@ -82,6 +82,12 @@ export function BackgroundStep(b: WizardBindings) {
   const expanded = selected && (
     <>
       <AboutFlavor entity={selected} />
+      {selected.edition === '2014' && !selected.featId && (
+        <p className={choices.help}>
+          A 2014 background. A 2024 character also gets ability increases and an Origin feat from
+          its background; this one lists neither, so choose them below (check with your DM).
+        </p>
+      )}
       {owner && <OriginChoices b={b} owner={owner} />}
       <EquipmentChoice b={b} owner={{ kind: 'background', id: selected.id }} />
       <WhatYouGet entity={selected} index={content.index} folded omit={['Equipment']} />

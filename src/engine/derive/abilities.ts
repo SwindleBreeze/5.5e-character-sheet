@@ -13,6 +13,7 @@ import {
   type DeriveContext,
 } from './context.ts';
 import type { Contribution, Derived } from './types.ts';
+import { backgroundAbilityOptions } from '../rules/legacy.ts';
 
 export const SCORE_CAP = 20;
 
@@ -35,7 +36,7 @@ function checkBackgroundPattern(
   const counts = [...new Set(picks)]
     .map((a) => picks.filter((p) => p === a).length)
     .sort((a, b) => b - a);
-  const fits = bg.abilityOptions.some((o) => {
+  const fits = backgroundAbilityOptions(bg).some((o) => {
     const weights = [...o.weights].sort((a, b) => b - a);
     return (
       picks.every((p) => o.from.includes(p as Ability)) &&
