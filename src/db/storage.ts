@@ -95,3 +95,48 @@ export function formatBytes(bytes: number | null): string {
   }
   return `${value.toFixed(value < 10 ? 1 : 0)} ${units[unit]}`;
 }
+
+// ---- Eviction (plan step 7.1) ----
+// A second store (localStorage) remembers that characters existed. If the database comes back
+// empty while it says there were some, the browser has cleared the app's data: the app says so
+// and offers to restore from a backup file. A browser that clears everything clears this too,
+// so the backup file stays the real safety net.
+
+const MARKER_KEY = '5e-sheet:characters';
+
+interface StorageLike {
+  getItem(key: string): string | null;
+  setItem(key: string, value: string): void;
+  removeItem(key: string): void;
+}
+
+function local(): StorageLike | null {
+  try {
+    return typeof localStorage === 'undefined' ? null : localStorage;
+  } catch {
+    return null;
+  }
+}
+
+/** How many characters the app last saw, from the second store (0 when none or unknown). */
+export function readCharacterMarker(store: StorageLike | null = local()): number {
+  try {
+    return Math.max(0, Number(store?.getItem(MARKER_KEY)) || 0);
+  } catch {
+    return 0;
+  }
+}
+
+export function writeCharacterMarker(count: number, store: StorageLike | null = local()): void {
+  try {
+    if (count > 0) store?.setItem(MARKER_KEY, String(count));
+    else store?.removeItem(MARKER_KEY);
+  } catch {
+    // Private mode or storage blocked: nothing to remember with.
+  }
+}
+
+/** The database is empty at startup but the second store says characters existed. */
+export function looksEvicted(countAtStart: number, marker: number): boolean {
+  return countAtStart === 0 && marker > 0;
+}

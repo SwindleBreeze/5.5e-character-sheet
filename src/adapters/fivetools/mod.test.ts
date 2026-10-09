@@ -183,8 +183,42 @@ describe('applyMods', () => {
   });
 
   it('reports unsupported modes', () => {
-    const { warnings } = mod({}, { _: { mode: 'addSpells' } });
-    expect(warnings).toEqual(['modUnsupported: Unsupported _mod mode "addSpells"']);
+    const { warnings } = mod({}, { _: { mode: 'addSkills' } });
+    expect(warnings).toEqual(['modUnsupported: Unsupported _mod mode "addSkills"']);
+  });
+
+  it('adds, replaces and removes a stat block’s spells', () => {
+    const { target, warnings } = mod(
+      {
+        spellcasting: [
+          {
+            will: ['a'],
+            daily: { '1e': ['b', 'c'] },
+            spells: { '1': { slots: 2, spells: ['d'] } },
+          },
+        ],
+      },
+      {
+        _: [
+          {
+            mode: 'addSpells',
+            will: ['e'],
+            daily: { '2': ['f'] },
+            spells: { '2': { slots: 1, spells: ['g'] } },
+          },
+          { mode: 'replaceSpells', daily: { '1e': [{ replace: 'b', with: ['h'] }] } },
+          { mode: 'removeSpells', spells: { '1': ['d'] } },
+        ],
+      },
+    );
+    expect(warnings).toEqual([]);
+    expect(target.spellcasting).toEqual([
+      {
+        will: ['a', 'e'],
+        daily: { '1e': ['h', 'c'], '2': ['f'] },
+        spells: { '1': { slots: 2, spells: [] }, '2': { slots: 1, spells: ['g'] } },
+      },
+    ]);
   });
 
   it('does not share item objects with the mod', () => {

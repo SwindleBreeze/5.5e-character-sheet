@@ -45,7 +45,7 @@ describe('importFivetools (fixture tree)', () => {
     expect(r.report.counts).toEqual({
       spell: 8,
       class: 5,
-      classFeature: 34,
+      classFeature: 35,
       subclass: 7,
       subclassFeature: 8,
       background: 1,
@@ -58,6 +58,7 @@ describe('importFivetools (fixture tree)', () => {
       reward: 4,
       facility: 3,
       charOption: 1,
+      creature: 12,
     });
     expect(r.report.ignored).toEqual({ itemType: 1, languageScript: 1 });
     expect(r.report.warnings.map((w) => w.code)).toEqual(['tableKeyCollision']);
@@ -531,6 +532,7 @@ describe('importFivetools (fixture tree)', () => {
       deity: 3,
       reward: 1,
       charOption: 1,
+      creature: 1,
     });
   });
 });

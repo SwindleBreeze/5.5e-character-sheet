@@ -38,6 +38,7 @@ function outcomesOf(
     return {
       regainSlot: {
         maxLevel: Math.max(0, Math.floor(evalNumber(ctx, o.regainSlot.maxLevel, source))),
+        ...(o.regainSlot.pact ? { pact: true } : {}),
       },
     };
   });

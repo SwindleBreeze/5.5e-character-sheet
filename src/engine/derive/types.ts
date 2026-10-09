@@ -46,6 +46,10 @@ export interface DerivedRoll {
   disadvantage: string[];
   /** A d20 below this counts as this (Reliable Talent). */
   floor?: number;
+  /** Advantage or Disadvantage in a situation only (against being Charmed), with its source. */
+  situational?: { mode: 'advantage' | 'disadvantage'; against: string; source: string }[];
+  /** Plain lines a feature adds to the roll (a reroll it allows). */
+  notes?: { text: string; source: string }[];
 }
 
 export interface DerivedSkill extends DerivedRoll {
@@ -221,7 +225,9 @@ export interface DerivedGrantedSpell {
   ability?: Ability;
   dc?: number;
   attackBonus?: number;
-  /** The spell attack roll, when the grant names its ability. */
+  /** The DC and attack bonus are the item's own, not worked out from an ability. */
+  fixed?: boolean;
+  /** The spell attack roll, when the grant names its ability or fixes its bonus. */
   attack?: DerivedRoll;
   uses?: SpellGrant['uses'];
   /** For a counted use: how many, and where spent uses are stored. */
@@ -285,7 +291,7 @@ export type DerivedOutcome =
   | { tempHp: string }
   | { toggleOn: string }
   | { restore: { resourceKey?: string; label: string; amount: number } }
-  | { regainSlot: { maxLevel: number } };
+  | { regainSlot: { maxLevel: number; pact?: boolean } };
 
 /** P7: something the character can do, with what it costs and what it does. */
 export interface DerivedAction {
@@ -422,6 +428,8 @@ export interface DerivedSheet {
   initiative: DerivedRoll;
   /** Constitution saves to keep concentration. */
   concentration: DerivedRoll;
+  /** What keeps damage from breaking Concentration (no save is asked for). */
+  concentrationUnbreakable?: string;
   deathSave: DerivedRoll;
   passives: Record<'perception' | 'insight' | 'investigation', Derived>;
   ac: Derived & { calculation: string };
@@ -430,6 +438,10 @@ export interface DerivedSheet {
     current: number;
     temp: number;
     ward?: { name: string; max: Derived; current: number };
+    /** Added to Temporary Hit Points the character gains. */
+    tempBonus?: { value: number; sources: string[] };
+    /** How Hit Point Dice rolled to regain HP count (a floor, the maximum, doubled). */
+    hitDieHealing?: { floor?: number; max?: boolean; double?: boolean; sources: string[] };
   };
   hitDice: { faces: number; total: number; used: number }[];
   speed: Partial<Record<MoveMode, Derived>>;
@@ -438,6 +450,8 @@ export interface DerivedSheet {
     resistances: SourcedValue[];
     immunities: SourcedValue[];
     conditionImmunities: SourcedValue[];
+    /** Advantage or Disadvantage on attack rolls made against the character. */
+    attacked: { mode: 'advantage' | 'disadvantage'; against?: string; source: string }[];
   };
   proficiencies: {
     armor: SourcedValue[];

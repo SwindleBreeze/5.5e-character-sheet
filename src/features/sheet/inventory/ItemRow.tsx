@@ -77,7 +77,7 @@ export function ItemRow({
           type="button"
           className={styles.itemName}
           aria-expanded={open}
-          aria-controls={detailsId}
+          aria-controls={open ? detailsId : undefined}
           onClick={onToggle}
         >
           {row.name}

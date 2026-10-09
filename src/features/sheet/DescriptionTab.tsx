@@ -1,5 +1,6 @@
-// The Description tab (plan §9.2, step 3.21): name, portrait, size, alignment, god, and the
-// character's appearance, personality and history. Nothing here changes a number on the sheet.
+// The Description tab (plan §9.2, step 3.21): name, portrait, size, alignment, god, the
+// character's appearance, personality and history, and from level 5 a Bastion (step 7.7).
+// Nothing here changes a number on the sheet.
 
 import { useRef, useState, type ReactNode } from 'react';
 import { SIZE_NAMES } from '../../engine/items/items.ts';
@@ -10,12 +11,14 @@ import {
   setPortrait,
   type TextDetail,
 } from '../../engine/play/details.ts';
+import { showsBastion } from '../../engine/play/bastion.ts';
 import { repos } from '../../db/repos.ts';
 import { EntitySheet } from '../../richtext/EntitySheet.tsx';
 import { Button } from '../../ui/Button.tsx';
 import { useSheet } from '../../ui/sheetContext.ts';
 import { columnsFor, useContainerWidth } from '../../ui/useContainerWidth.ts';
 import { SectionHeader } from './components/stats.tsx';
+import { BastionCard } from './description/BastionCard.tsx';
 import { DeitySheet } from './description/DeitySheet.tsx';
 import { shrinkImage, usePortraitUrl } from './description/portrait.ts';
 import styles from './description/description.module.css';
@@ -240,6 +243,12 @@ export function DescriptionTab(bindings: SheetBindings) {
     </Section>
   );
 
+  const bastion = showsBastion(character, sheet.charLevel) && (
+    <Section id="bastion" title="Bastion">
+      <BastionCard character={character} apply={apply} />
+    </Section>
+  );
+
   return (
     <div ref={ref} className={mainStyles.main} data-columns={columns}>
       {columns === 1 ? (
@@ -247,12 +256,14 @@ export function DescriptionTab(bindings: SheetBindings) {
           {character_}
           {faith}
           {story}
+          {bastion}
         </div>
       ) : (
         <>
           <div className={mainStyles.column}>
             {character_}
             {faith}
+            {bastion}
           </div>
           <div className={mainStyles.column}>{story}</div>
         </>

@@ -7,15 +7,23 @@
 
 import { refKey, type Ability, type Effect } from '../../../schema/index.ts';
 import type { FeatureEffectsMap, FeatureMapping } from '../types.ts';
-import { action, AT_TABLE, fromData, numbers, TARGETS, text, uses, when } from '../core/helpers.ts';
+import {
+  action,
+  AT_TABLE,
+  fromData,
+  numbers,
+  savesAgainst,
+  TARGETS,
+  text,
+  uses,
+  when,
+} from '../core/helpers.ts';
 
 const I = (name: string) => refKey({ kind: 'item', id: `${name}|xdmg` });
 const own = (name: string) => ({ itemIds: [`${name}|xdmg`] });
 
-const CONDITION_SAVES = 'rollMode on saves against a single condition';
-const vsPoisoned = 'Advantage on saves to avoid or end Poisoned is not shown on the save rows.';
+const vsPoisoned = savesAgainst('being Poisoned');
 /** Variant weapons are rows of their base weapon, so a filter can only name the base. */
-const VARIANT_FILTER = 'an attack filter that matches a variant item (it matches the base weapon)';
 
 /** An Ioun Stone that raises one score by 2, to at most 20. */
 const iounScore = (ability: Ability): FeatureMapping =>
@@ -173,7 +181,7 @@ export const ITEMS_I_TO_Q: FeatureEffectsMap = {
     { type: 'rollMode', target: 'initiative', mode: 'advantage' },
     { type: 'rollMode', target: 'skill:perception', mode: 'advantage' },
   ]),
-  [I('ioun stone, mastery')]: text({ needs: 'a bonus to the Proficiency Bonus' }),
+  [I('ioun stone, mastery')]: numbers([{ type: 'pbBonus', value: 1 }]),
   [I('ioun stone, reserve')]: numbers(
     [uses('ioun-reserve', 'Ioun Stone of Reserve (stored levels)', 4, 'none', { pool: true })],
     { notes: 'Tracks the stored spell levels; which spells are stored is kept by hand.' },
@@ -259,14 +267,13 @@ export const ITEMS_I_TO_Q: FeatureEffectsMap = {
         name: 'Oathbow (sworn enemy)',
         dice: '3d6',
         damageType: 'piercing',
-        filter: { range: 'ranged', itemIds: ['longbow|xphb', 'shortbow|xphb'] },
+        filter: { itemIds: ['oathbow|xdmg'] },
         optIn: true,
       },
     ],
     {
       notes:
         'Advantage against the sworn enemy, and Disadvantage with other weapons while it lives.',
-      needs: VARIANT_FILTER,
       unoffered: AT_TABLE,
     },
   ),
@@ -289,17 +296,12 @@ export const ITEMS_I_TO_Q: FeatureEffectsMap = {
     { type: 'speed', mode: 'swim', value: 'walk' },
     uses('mariners-armor', "Mariner's Armor: Healing", 1, 'dawn'),
   ]),
-  [I('mithral armor')]: text({
-    needs: "a way to waive worn armor's Strength requirement and Stealth Disadvantage",
-  }),
-  [I('mantle of spell resistance')]: text({
-    notes: 'Advantage on saves against spells is not shown on the save rows.',
-    needs: 'rollMode on saves against spells',
-  }),
+  [I('mithral armor')]: numbers([{ type: 'armorEase', strength: true, stealth: true }]),
+  [I('mantle of spell resistance')]: numbers([savesAgainst('spells')]),
   [I("nature's mantle")]: numbers([
     action({ id: 'natures-mantle', name: "Hide (Nature's Mantle)", actionType: 'bonus' }),
   ]),
-  [I('necklace of adaptation')]: text({ notes: vsPoisoned, needs: CONDITION_SAVES }),
+  [I('necklace of adaptation')]: numbers([vsPoisoned]),
   [I('necklace of prayer beads')]: text({ unoffered: 'The DM picks each bead’s type.' }),
   [I('pearl of power')]: numbers([
     uses('pearl-of-power', 'Pearl of Power', 1, 'dawn'),
@@ -311,27 +313,25 @@ export const ITEMS_I_TO_Q: FeatureEffectsMap = {
       outcomes: [{ regainSlot: { maxLevel: 3 } }],
     }),
   ]),
-  [I('periapt of health')]: numbers(
-    [
-      uses('periapt-of-health', 'Periapt of Health', 1, 'dawn'),
-      action({
-        id: 'periapt-of-health',
-        name: 'Periapt of Health',
-        actionType: 'action',
-        costs: [{ resource: 'periapt-of-health', amount: 1 }],
-        roll: '2d4 + 2',
-        outcomes: [{ heal: '2d4 + 2' }],
-      }),
-    ],
-    { notes: vsPoisoned, needs: CONDITION_SAVES },
-  ),
+  [I('periapt of health')]: numbers([
+    uses('periapt-of-health', 'Periapt of Health', 1, 'dawn'),
+    action({
+      id: 'periapt-of-health',
+      name: 'Periapt of Health',
+      actionType: 'action',
+      costs: [{ resource: 'periapt-of-health', amount: 1 }],
+      roll: '2d4 + 2',
+      outcomes: [{ heal: '2d4 + 2' }],
+    }),
+    vsPoisoned,
+  ]),
   [I('periapt of proof against poison')]: numbers([
     { type: 'conditionImmunity', value: 'poisoned' },
   ]),
-  [I('periapt of wound closure')]: numbers(
-    [{ type: 'rollFloor', target: 'save:death', value: 10 }],
-    { needs: 'doubled healing from Hit Point Dice' },
-  ),
+  [I('periapt of wound closure')]: numbers([
+    { type: 'rollFloor', target: 'save:death', value: 10 },
+    { type: 'hitDieHealing', double: true },
+  ]),
 
   // ---- Charged instruments ----
   [I('pipes of haunting')]: numbers(

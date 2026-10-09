@@ -25,6 +25,8 @@ export interface EffectSource {
   n?: number;
   /** The content is missing, so its effects came from the character's snapshot. */
   fromSnapshot?: boolean;
+  /** The player added this effect to the feature (plan step 7.5). */
+  custom?: boolean;
 }
 
 export interface AppliedEffect {

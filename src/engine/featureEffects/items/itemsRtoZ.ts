@@ -4,7 +4,17 @@
 // glue, solvent), group headers and what is decided at the table stay text.
 
 import { refKey, type ActionDef, type Effect } from '../../../schema/index.ts';
-import { action, AT_TABLE, fromData, numbers, text, toggled, uses } from '../core/helpers.ts';
+import {
+  action,
+  AT_TABLE,
+  fromData,
+  numbers,
+  onlyThisWeapon,
+  savesAgainst,
+  text,
+  toggled,
+  uses,
+} from '../core/helpers.ts';
 import type { FeatureEffectsMap, FeatureMapping } from '../types.ts';
 
 const I = (name: string) => refKey({ kind: 'item', id: `${name}|xdmg` });
@@ -59,21 +69,20 @@ function rider(
 
 // ---- Dragon Scale Mail: sensing the nearest dragon of its kind, once a day ----
 function dragonScale(color: string): FeatureMapping {
-  return numbers(daily(`${color}-dragon-scale-mail`, 'Dragon Scale Mail: Sense Dragon', 'action'), {
-    notes: "Advantage on saves against Dragons' breath weapons is situational.",
-  });
+  return numbers([
+    ...daily(`${color}-dragon-scale-mail`, 'Dragon Scale Mail: Sense Dragon', 'action'),
+    savesAgainst('the breath weapons of Dragons'),
+  ]);
 }
 
 // ---- Rings of Elemental Command: the plane's language and movement, and Compulsion ----
 function elementalRing(language: string, extra: Effect[] = []): FeatureMapping {
-  return numbers(
-    [
-      { type: 'proficiency', category: 'language', value: language },
-      ...extra,
-      magic('elemental-compulsion', 'Elemental Compulsion', { saveDc: 18 }),
-    ],
-    { notes: 'Advantage on attacks against Elementals is situational.' },
-  );
+  return numbers([
+    { type: 'proficiency', category: 'language', value: language },
+    ...extra,
+    magic('elemental-compulsion', 'Elemental Compulsion', { saveDc: 18 }),
+    { type: 'rollMode', target: 'attack:all', mode: 'advantage', against: 'Elementals' },
+  ]);
 }
 
 const DAMAGE_TYPES = [
@@ -90,7 +99,6 @@ const DAMAGE_TYPES = [
 ];
 
 /** Weapon variants: the engine can't aim a rider at the weapon a variant is applied to. */
-const VARIANT_RIDER = 'an attack filter for the base weapon a variant item is applied to';
 
 export const ITEMS_R_TO_Z: FeatureEffectsMap = {
   [I('red dragon scale mail')]: dragonScale('red'),
@@ -140,10 +148,10 @@ export const ITEMS_R_TO_Z: FeatureEffectsMap = {
     { notes: 'Shooting Stars takes 1 to 3 charges, one mote each.' },
   ),
   [I('ring of spell storing')]: text(),
-  [I('ring of spell turning')]: numbers(
-    [action({ id: 'spell-turning', name: 'Spell Turning', actionType: 'reaction' })],
-    { notes: 'Advantage on saves against spells is situational.' },
-  ),
+  [I('ring of spell turning')]: numbers([
+    action({ id: 'spell-turning', name: 'Spell Turning', actionType: 'reaction' }),
+    savesAgainst('spells'),
+  ]),
   [I('ring of swimming')]: numbers([{ type: 'speed', mode: 'swim', value: 40 }]),
   [I('ring of telekinesis')]: fromData(),
   [I('ring of the ram')]: numbers(
@@ -171,18 +179,16 @@ export const ITEMS_R_TO_Z: FeatureEffectsMap = {
     charged('scintillating-colors', 'Scintillating Colors', 'action', 1, { saveDc: 15 }),
   ]),
   [I('robe of stars')]: numbers([magic('robe-of-stars-astral', 'Robe of Stars: Astral Plane')]),
-  [I('robe of the archmagi')]: numbers(
-    [
-      {
-        type: 'acFormula',
-        name: 'Robe of the Archmagi',
-        base: 15,
-        addAbilities: ['dex'],
-        shield: true,
-      },
-    ],
-    { notes: 'Advantage on saves against spells and magical effects is situational.' },
-  ),
+  [I('robe of the archmagi')]: numbers([
+    {
+      type: 'acFormula',
+      name: 'Robe of the Archmagi',
+      base: 15,
+      addAbilities: ['dex'],
+      shield: true,
+    },
+    savesAgainst('spells and other magical effects'),
+  ]),
   [I('robe of useful items')]: text(),
 
   // ---- Rods ----
@@ -237,10 +243,10 @@ export const ITEMS_R_TO_Z: FeatureEffectsMap = {
   [I('rope of mending')]: text(),
   [I('ruby of the war mage')]: text(),
   [I('saddle of the cavalier')]: text(),
-  [I('scarab of protection')]: numbers(
-    [charged('scarab-preservation', 'Scarab: Preservation', 'reaction', 1)],
-    { notes: 'Advantage on saves against spells is situational.' },
-  ),
+  [I('scarab of protection')]: numbers([
+    charged('scarab-preservation', 'Scarab: Preservation', 'reaction', 1),
+    savesAgainst('spells'),
+  ]),
   [I('sending stones')]: fromData(),
   [I('slippers of spider climbing')]: numbers([{ type: 'speed', mode: 'climb', value: 'walk' }]),
   [I('sovereign glue')]: text(),
@@ -337,14 +343,24 @@ export const ITEMS_R_TO_Z: FeatureEffectsMap = {
   [I('shield of missile attraction')]: text({
     needs: 'resistance to damage from Ranged weapon attacks only',
   }),
-  [I('shield of the cavalier')]: numbers(
-    daily('protective-field', 'Protective Field', 'reaction'),
+  [I('shield of the cavalier')]: numbers([
+    ...daily('protective-field', 'Protective Field', 'reaction'),
     {
-      needs:
-        'an attack a feature gives with a flat damage bonus (Forceful Bash adds 2 to 2d6 + Str)',
+      type: 'attack',
+      id: 'forceful-bash',
+      name: 'Forceful Bash',
+      damage: '2d6',
+      damageBonus: 2,
+      damageType: 'force',
+      range: 'melee',
+      distance: '5 ft.',
+      abilities: ['str'],
     },
-  ),
-  [I('spellguard shield')]: text(),
+  ]),
+  [I('spellguard shield')]: numbers([
+    savesAgainst('spells and other magical effects'),
+    { type: 'attackedMode', mode: 'disadvantage', against: 'spell attacks' },
+  ]),
 
   // ---- Staffs ----
   [I('staff of adornment')]: text(),
@@ -375,20 +391,42 @@ export const ITEMS_R_TO_Z: FeatureEffectsMap = {
     ),
   ),
   [I('staff of swarming insects')]: numbers([charged('insect-cloud', 'Insect Cloud', 'action', 1)]),
-  [I('staff of the adder')]: numbers(
-    [action({ id: 'adder-head', name: 'Staff of the Adder: Snake Head', actionType: 'bonus' })],
+  // The head is animated as a Bonus Action; its attack is one of the Attack action's.
+  [I('staff of the adder')]: toggled([
     {
-      needs:
-        'an attack a feature gives with Wisdom to hit and no modifier to damage (the snake head: 1d6 piercing and 3d6 poison)',
+      type: 'toggle',
+      toggleId: 'adder-head',
+      name: 'Staff of the Adder: Snake Head',
+      cost: [{ action: 'bonus' }],
+      effects: [
+        {
+          type: 'attack',
+          id: 'adder-head',
+          name: 'Snake Head',
+          damage: '1d6',
+          damageType: 'piercing',
+          damageAbility: 'none',
+          range: 'melee',
+          distance: '5 ft.',
+          abilities: ['wis'],
+        },
+        {
+          type: 'damageRider',
+          id: 'adder-poison',
+          name: 'Venom',
+          dice: '3d6',
+          damageType: 'poison',
+          filter: { tags: ['feature:adder-head'] },
+          optIn: false,
+        },
+      ],
     },
-  ),
-  [I('staff of the magi')]: numbers(
-    [
-      action({ id: 'magi-absorption', name: 'Spell Absorption', actionType: 'reaction' }),
-      magic('staff-of-the-magi-retributive', 'Retributive Strike'),
-    ],
-    { notes: 'Advantage on saves against spells is situational.' },
-  ),
+  ]),
+  [I('staff of the magi')]: numbers([
+    action({ id: 'magi-absorption', name: 'Spell Absorption', actionType: 'reaction' }),
+    magic('staff-of-the-magi-retributive', 'Retributive Strike'),
+    savesAgainst('spells'),
+  ]),
   [I('staff of the python')]: numbers([magic('staff-of-the-python', 'Staff of the Python')]),
   [I('staff of the woodlands')]: numbers([charged('tree-form', 'Tree Form', 'action', 1)]),
   [I('staff of thunder and lightning')]: numbers([
@@ -449,11 +487,11 @@ export const ITEMS_R_TO_Z: FeatureEffectsMap = {
   ),
   [I('sword of life stealing')]: text(),
   [I('sword of sharpness')]: text(),
-  [I('sword of vengeance')]: text({
-    needs: 'Disadvantage on attacks with weapons other than the one this variant is applied to',
-  }),
-  [I('sword of wounding')]: text({ needs: VARIANT_RIDER }),
-  [I('vicious weapon')]: text({ needs: VARIANT_RIDER }),
+  [I('sword of vengeance')]: numbers(
+    onlyThisWeapon('sword of vengeance|xdmg', 'Sword of Vengeance'),
+  ),
+  [I('sword of wounding')]: text(),
+  [I('vicious weapon')]: text(),
   [I('vorpal sword')]: text(),
   [I('silvered weapon')]: text(),
   [I('smoldering armor')]: text(),

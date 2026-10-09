@@ -7,7 +7,17 @@
 
 import { refKey, SKILLS, type Effect } from '../../../schema/index.ts';
 import type { FeatureEffectsMap } from '../types.ts';
-import { action, dc, fromData, numbers, restoredBy, TARGETS, text, uses } from './helpers.ts';
+import {
+  action,
+  attacksAgainst,
+  dc,
+  fromData,
+  numbers,
+  restoredBy,
+  TARGETS,
+  text,
+  uses,
+} from './helpers.ts';
 
 // Built with `refKey`: Cunning Strike's option ids hold a colon (`poison (cost: 1d6)`).
 const C = (id: string, level: number) =>
@@ -107,6 +117,7 @@ export const ROGUE: FeatureEffectsMap = {
   [S('assassin', 'assassin', 3)]: text(),
   [S('assassin', 'assassinate', 3)]: numbers([
     { type: 'rollMode', target: 'initiative', mode: 'advantage' },
+    attacksAgainst('creatures that haven’t taken a turn yet (first round of combat)'),
     {
       type: 'damageRider',
       id: 'surprising-strikes',

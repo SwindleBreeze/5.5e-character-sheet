@@ -1,16 +1,15 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useMemo } from 'react';
 import { Link } from 'react-router';
 import { TopBar } from '../../app/TopBar.tsx';
 import page from '../../app/Page.module.css';
 import { useSources } from '../../content/hooks.ts';
 import { repos } from '../../db/repos.ts';
-import { detectEnv, shouldShowInstallGuide } from '../../db/storage.ts';
 import type { Character } from '../../schema/index.ts';
 import { Button } from '../../ui/Button.tsx';
 import { useSheet } from '../../ui/sheetContext.ts';
-import { InstallGuide } from '../settings/InstallGuide.tsx';
+import { InstallCard } from '../settings/InstallCard.tsx';
 import { BackupReminder } from './BackupReminder.tsx';
+import { StaleContentNotice } from './StaleContentNotice.tsx';
 import styles from './CharactersPage.module.css';
 
 function summary(character: Character): string {
@@ -29,7 +28,6 @@ function linkTo(character: Character): string {
 export function CharactersPage() {
   const characters = useLiveQuery(() => repos().characters.list(), []);
   const sources = useSources();
-  const showInstallGuide = useMemo(() => shouldShowInstallGuide(detectEnv()), []);
   const sheet = useSheet();
 
   function openMenu(character: Character) {
@@ -80,8 +78,9 @@ export function CharactersPage() {
     <>
       <TopBar title="Characters" />
       <div className={page.content}>
-        {showInstallGuide && <InstallGuide compact />}
+        <InstallCard dismissible />
         {characters && characters.length > 0 && <BackupReminder characters={characters} />}
+        <StaleContentNotice />
         {sources !== undefined && sources.length === 0 && (
           <section className={page.card} aria-labelledby="first-run-title">
             <h2 id="first-run-title" className={page.cardTitle}>

@@ -11,6 +11,7 @@ import {
   fromData,
   numbers,
   restoredBy,
+  savesAgainst,
   TARGETS,
   text,
   toggled,
@@ -64,7 +65,9 @@ export const WIZARD: FeatureEffectsMap = {
     action({ id: 'projected-ward', name: 'Projected Ward', actionType: 'reaction' }),
   ]),
   [S('abjurer', 'spell breaker', 10)]: text(),
-  [S('abjurer', 'spell resistance', 14)]: text(),
+  [S('abjurer', 'spell resistance', 14)]: numbers([savesAgainst('spells')], {
+    notes: 'Resistance to the damage of spells is applied when the damage is.',
+  }),
 
   // ---- Diviner ----
   [S('diviner', 'diviner', 3)]: text(),

@@ -7,7 +7,7 @@
 
 import { refKey, type Effect } from '../../../schema/index.ts';
 import type { FeatureEffectsMap, FeatureMapping } from '../types.ts';
-import { action, numbers, text, toggled, uses, when } from './helpers.ts';
+import { action, numbers, savesAgainst, text, toggled, uses, when } from './helpers.ts';
 
 const SP = (id: string) => refKey({ kind: 'species', id: `${id}|xphb` });
 const atLevel = (level: number) => ({ level });
@@ -95,8 +95,10 @@ const DRAGONS: Record<string, string> = {
   white: 'Cold',
 };
 
-// ---- Dwarf, Gnome, Orc ----
+// ---- Dwarf, Elf, Gnome, Orc ----
+const ELF = numbers([savesAgainst('being Charmed')]);
 const DWARF = numbers([
+  savesAgainst('being Poisoned'),
   { type: 'hpBonus', perLevel: 1 },
   uses('stonecunning', 'Stonecunning', 'pb', 'long'),
   action({
@@ -216,10 +218,10 @@ export const SPECIES: FeatureEffectsMap = {
     Object.entries(DRAGONS).map(([color, type]) => [SP(`dragonborn (${color})`), dragonborn(type)]),
   ),
   [SP('dwarf')]: DWARF,
-  [SP('elf')]: text(),
-  [SP('elf; drow lineage')]: text(),
-  [SP('elf; high elf lineage')]: text(),
-  [SP('elf; wood elf lineage')]: text(),
+  [SP('elf')]: ELF,
+  [SP('elf; drow lineage')]: ELF,
+  [SP('elf; high elf lineage')]: ELF,
+  [SP('elf; wood elf lineage')]: ELF,
   [SP('gnome')]: GNOME,
   [SP('gnome; forest gnome lineage')]: GNOME,
   [SP('gnome; rock gnome lineage')]: GNOME,
@@ -230,7 +232,7 @@ export const SPECIES: FeatureEffectsMap = {
       goliath(benefit),
     ]),
   ),
-  [SP('halfling')]: text(),
+  [SP('halfling')]: numbers([savesAgainst('being Frightened')]),
   [SP('human')]: text(),
   [SP('orc')]: ORC,
   [SP('tiefling')]: text(),

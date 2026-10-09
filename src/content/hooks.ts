@@ -46,9 +46,12 @@ export function useSources(): SourceInfo[] | undefined {
  * app's setting.
  */
 export function useEnabledSources(character?: SourceCode[] | null): SourceCode[] {
-  const global =
-    useLiveQuery(() => repos().settings.get('enabledSources'), []) ??
-    DEFAULT_SETTINGS.enabledSources;
+  return useKnownSources(character) ?? DEFAULT_SETTINGS.enabledSources;
+}
+
+/** The same, but undefined until the app's setting has been read. */
+function useKnownSources(character?: SourceCode[] | null): SourceCode[] | undefined {
+  const global = useLiveQuery(() => repos().settings.get('enabledSources'), []);
   return character ?? global;
 }
 
@@ -79,12 +82,15 @@ export interface AllContent {
  * source change.
  */
 export function useAllContent(sources?: SourceCode[] | null): AllContent | undefined {
-  const enabled = useEnabledSources(sources);
+  // Wait for the setting: loading with the defaults first drew every list twice, and a tap in
+  // between landed on the list being replaced.
+  const enabled = useKnownSources(sources);
   return useLiveQuery(async () => {
+    if (!enabled) return undefined;
     const lists = await Promise.all(ENTITY_KINDS.map((k) => repos().content.listByKind(k)));
     const all = lists.flat() as ContentEntity[];
     return { index: createContentIndex(all), catalog: createCatalog(all, new Set(enabled)) };
-  }, [enabled.join()]);
+  }, [enabled?.join()]);
 }
 
 /** Conditions the enabled sources offer, by name, for the condition picker. */

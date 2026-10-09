@@ -1,17 +1,16 @@
 // Artificer (EFA, 2024) class features (plan §10.2, step 6.16); its subclasses are in
 // `artificerSubclasses.ts`. Spell slots, cantrips, prepared spells and the Epic Boon pick come
 // from the class data; Ability Score Improvements from their own data. Tinker's Magic, Flash of
-// Genius and the Magic Item Tinker options are counters with actions paid from them. The
-// attunement limit and the magic item plans have no primitive yet (see `needs`).
+// Genius and the Magic Item Tinker options are counters with actions paid from them; the
+// attunement limit rises to 4, 5, 6. The magic item plans have no primitive yet (see `needs`).
 
 import type { FeatureEffectsMap } from '../types.ts';
-import { action, AT_TABLE, fromData, numbers, text, uses } from '../core/helpers.ts';
+import { action, AT_TABLE, fromData, numbers, text, uses, when } from '../core/helpers.ts';
 
 const C = (id: string, level: number) => `classFeature:${id}|artificer|efa|${level}|efa` as const;
 
 const intUses = 'max(1, mod.int)';
 const flash = { resource: 'flash-of-genius', amount: 1 };
-const ATTUNEMENT = 'an effect that raises the attunement limit (fixed at 3)';
 
 export const SUP_ARTIFICER: FeatureEffectsMap = {
   [C('spellcasting', 1)]: text(),
@@ -83,7 +82,7 @@ export const SUP_ARTIFICER: FeatureEffectsMap = {
       costs: [flash],
     }),
   ]),
-  [C('magic item adept', 10)]: text({ needs: ATTUNEMENT }),
+  [C('magic item adept', 10)]: numbers([{ type: 'attunementMax', value: 4 }]),
   // A stored spell used twice Int mod times (at least twice); stored again after a Long Rest.
   [C('spell-storing item', 11)]: numbers(
     [
@@ -98,19 +97,17 @@ export const SUP_ARTIFICER: FeatureEffectsMap = {
     { unoffered: 'The stored spell is picked after each Long Rest.' },
   ),
   // Magic Item Savant (five attuned items) and Refreshed Genius (one use back on a Short Rest).
-  [C('advanced artifice', 14)]: numbers(
-    [{ type: 'resourceModify', resourceId: 'flash-of-genius', recharge: 'shortOne' }],
-    { needs: ATTUNEMENT },
-  ),
-  [C('magic item master', 18)]: text({ needs: ATTUNEMENT }),
+  [C('advanced artifice', 14)]: numbers([
+    { type: 'attunementMax', value: 5 },
+    { type: 'resourceModify', resourceId: 'flash-of-genius', recharge: 'shortOne' },
+  ]),
+  [C('magic item master', 18)]: numbers([{ type: 'attunementMax', value: 6 }]),
   [C('epic boon', 19)]: text(),
   // Magical Guidance: all Flash of Genius uses back on a Short Rest, which the text ties to
   // being attuned to a magic item. Cheat Death is text.
-  [C('soul of artifice', 20)]: numbers(
-    [{ type: 'resourceModify', resourceId: 'flash-of-genius', recharge: 'short' }],
-    {
-      notes: 'Flash of Genius returns fully on a Short Rest only while attuned to a magic item.',
-      needs: 'a predicate on being attuned to at least one magic item',
-    },
-  ),
+  [C('soul of artifice', 20)]: numbers([
+    when({ attuned: true }, [
+      { type: 'resourceModify', resourceId: 'flash-of-genius', recharge: 'short' },
+    ]),
+  ]),
 };

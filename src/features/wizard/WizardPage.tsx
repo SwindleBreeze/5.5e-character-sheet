@@ -41,6 +41,7 @@ import { LevelsStep } from './steps/LevelsStep.tsx';
 import { ReviewStep } from './steps/ReviewStep.tsx';
 import { SpeciesStep } from './steps/SpeciesStep.tsx';
 import { SpellsStep } from './steps/SpellsStep.tsx';
+import { useStepFocus } from './useStepFocus.ts';
 import styles from './wizard.module.css';
 
 const TITLE = 'New character';
@@ -124,6 +125,7 @@ function Wizard({ id }: { id: string }) {
   useEffect(() => {
     if (character?.draft && character.draft.step !== step) rawApply((c) => setStep(c, step));
   }, [character?.draft, step, rawApply]);
+  const stepHeading = useStepFocus(step);
 
   if (stored === undefined || (stored && !content)) {
     return (
@@ -249,7 +251,9 @@ function Wizard({ id }: { id: string }) {
       <div className={`${page.content} ${styles.body}`}>
         <header className={styles.stepHead}>
           <p className={styles.eyebrow}>{intro.rule}</p>
-          <h2 className={styles.stepTitle}>{STEP_TITLES[step]}</h2>
+          <h2 ref={stepHeading} tabIndex={-1} className={styles.stepTitle}>
+            {STEP_TITLES[step]}
+          </h2>
           <p className={styles.lead}>{intro.lead}</p>
         </header>
         {body}

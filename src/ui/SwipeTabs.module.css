@@ -6,6 +6,8 @@
 }
 
 .tabBar {
+  /* Holds its absolutely placed parts (visually hidden text), so they don't widen the page. */
+  position: relative;
   display: flex;
   gap: var(--space-1);
   padding: 0 var(--space-4);
@@ -36,6 +38,9 @@
 }
 
 .track {
+  /* The panels sit side by side; visually hidden text inside a far one would otherwise be
+     placed against the page and make it scroll sideways. */
+  position: relative;
   display: flex;
   flex: 1;
   overflow-x: auto;
@@ -49,7 +54,10 @@
   display: none;
 }
 
+/* Positioned, so hidden labels and inputs in a tab off to the side stay inside the track
+   instead of widening the page. */
 .panel {
+  position: relative;
   flex: 0 0 100%;
   width: 100%;
   min-width: 0;

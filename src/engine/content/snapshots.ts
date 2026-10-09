@@ -62,6 +62,7 @@ function snapshotOf(entity: ContentEntity, now: number): Snapshot {
     capturedAt: now,
   };
   if (entity.supersededBy?.length) s.supersededBy = entity.supersededBy;
+  if (entity.kind === 'class') s.hitDie = entity.hitDie;
   return s;
 }
 

@@ -1,4 +1,11 @@
-import { nameSourceId, SPELL_SCHOOLS, type Ability, type Spell } from '../../../schema/index.ts';
+import {
+  classId,
+  nameSourceId,
+  subclassId,
+  SPELL_SCHOOLS,
+  type Ability,
+  type Spell,
+} from '../../../schema/index.ts';
 import { normalizeEntries } from '../entries.ts';
 import { asArray, isObject, num, strArray, type RawEntity } from '../raw.ts';
 import { uidToId } from '../uid.ts';
@@ -72,6 +79,23 @@ export function convertSpell(raw: RawEntity, ctx: ConvertContext): Spell {
     subclassIds: [],
   };
 
+  // Homebrew spells name their classes themselves (official lists come from spellLists.ts).
+  if (isObject(raw.classes)) {
+    spell.classIds = asArray(raw.classes.fromClassList)
+      .filter(isObject)
+      .filter((c) => typeof c.name === 'string')
+      .map((c) => classId(String(c.name), String(c.source ?? 'PHB')));
+    spell.subclassIds = asArray(raw.classes.fromSubclass)
+      .filter(isObject)
+      .flatMap((e) => {
+        const cls = isObject(e.class) ? e.class : null;
+        const sub = isObject(e.subclass) ? e.subclass : null;
+        const shortName = sub?.shortName ?? sub?.name;
+        if (!cls || typeof cls.name !== 'string' || typeof shortName !== 'string') return [];
+        const classSource = String(cls.source ?? 'PHB');
+        return [subclassId(shortName, cls.name, classSource, String(sub?.source ?? classSource))];
+      });
+  }
   if (isObject(raw.range)) {
     spell.range = { type: String(raw.range.type ?? 'special') };
     if (isObject(raw.range.distance)) {

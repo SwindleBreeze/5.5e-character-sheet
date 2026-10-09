@@ -3,6 +3,7 @@
 import type { DerivedRoll } from '../../../engine/derive/types.ts';
 import type { SourceCode } from '../../../schema/index.ts';
 import { Badge } from '../../../ui/Badge.tsx';
+import { situationalLines } from './format.ts';
 import styles from './markers.module.css';
 
 const PROFICIENCY_LABEL: Record<DerivedRoll['proficiency'], string> = {
@@ -25,16 +26,39 @@ export function ProficiencyMarker({ level }: { level: DerivedRoll['proficiency']
   );
 }
 
-/** "Adv" or "Dis" when a roll has it, with the reasons as its title. */
+/**
+ * "Adv" or "Dis" when a roll has it, with the reasons as its title. Advantage that only applies
+ * in a situation (against being Charmed) shows muted, with a star: it is not rolled for you.
+ */
 export function AdvantageHint({ roll }: { roll: DerivedRoll }) {
-  if (roll.mode === 'normal' && !roll.advantage.length && !roll.disadvantage.length) return null;
+  const situational = roll.situational ?? [];
+  if (
+    roll.mode === 'normal' &&
+    !roll.advantage.length &&
+    !roll.disadvantage.length &&
+    !situational.length
+  )
+    return null;
   const reasons = [
     ...roll.advantage.map((r) => `Advantage: ${r}`),
     ...roll.disadvantage.map((r) => `Disadvantage: ${r}`),
+    ...situationalLines(roll),
   ].join('\n');
-  const text = roll.mode === 'advantage' ? 'Adv' : roll.mode === 'disadvantage' ? 'Dis' : 'Adv/Dis';
+  const onlySituational = !roll.advantage.length && !roll.disadvantage.length;
+  const modes = new Set(situational.map((s) => s.mode));
+  const text = onlySituational
+    ? `${modes.size > 1 ? 'Adv/Dis' : modes.has('advantage') ? 'Adv' : 'Dis'}*`
+    : roll.mode === 'advantage'
+      ? 'Adv'
+      : roll.mode === 'disadvantage'
+        ? 'Dis'
+        : 'Adv/Dis';
   return (
-    <span className={styles.hint} data-mode={roll.mode} title={reasons}>
+    <span
+      className={styles.hint}
+      data-mode={onlySituational ? 'situational' : roll.mode}
+      title={reasons}
+    >
       {text}
     </span>
   );

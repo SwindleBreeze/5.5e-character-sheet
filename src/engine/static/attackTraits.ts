@@ -15,8 +15,15 @@ export interface AttackTraits {
   itemId?: Id;
   /** The magic variant applied to it (a Flame Tongue longsword), for filters naming it. */
   variantId?: Id;
+  /** A magic weapon: a magic item itself, or with a magic variant applied. */
+  magic?: boolean;
   /** Derived tags: `monkWeapon`, `offHand`, `twoHanded`. */
   tags: string[];
+}
+
+/** A magic item: it has a rarity (5etools' `unknown` marks mundane gear with no rarity set). */
+export function isMagicItem(item: Item): boolean {
+  return !!item.rarity && item.rarity !== 'unknown';
 }
 
 /** `itemProperty/2h|xphb` → `2H`. */
@@ -46,6 +53,7 @@ export function weaponTraits(item: Item, hand?: Hand): AttackTraits {
   if (hand === 'both') tags.push('twoHanded');
   const traits: AttackTraits = { range, source: 'weapon', properties, itemId: item.id, tags };
   if (w) traits.weaponCategory = w.category;
+  if (isMagicItem(item)) traits.magic = true;
   return traits;
 }
 
@@ -77,6 +85,13 @@ export function matchesFilter(filter: AttackFilter, t: AttackTraits): boolean {
     )
   )
     return false;
+  if (
+    filter.notItemIds?.some(
+      (id) => id === t.itemId || (t.variantId !== undefined && id === t.variantId),
+    )
+  )
+    return false;
+  if (filter.magic !== undefined && filter.magic !== !!t.magic) return false;
   if (filter.tags && !filter.tags.every((tag) => t.tags.includes(tag))) return false;
   if (filter.any && !filter.any.some((f) => matchesFilter(f, t))) return false;
   return true;

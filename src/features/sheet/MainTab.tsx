@@ -25,7 +25,14 @@ import {
 import { useSkillRule } from '../../content/hooks.ts';
 import { useRoller, d20Expr } from '../../ui/rollerContext.ts';
 import { columnsFor, useContainerWidth } from '../../ui/useContainerWidth.ts';
-import { extraDice, signed, skillName, titleCase } from './components/format.ts';
+import {
+  extraDice,
+  rollNoteLines,
+  signed,
+  situationalLines,
+  skillName,
+  titleCase,
+} from './components/format.ts';
 import { AbilityCard, RollRow, SectionHeader, StatPill, ValueRow } from './components/stats.tsx';
 import { useExplain } from './components/useExplain.tsx';
 import {
@@ -68,13 +75,26 @@ const LAYOUTS: Record<1 | 2 | 3, SectionId[][]> = {
 };
 
 function rollNote(r: DerivedRoll): ReactNode {
-  const lines = [
-    ...r.advantage.map((a) => `Advantage: ${a}`),
-    ...r.disadvantage.map((a) => `Disadvantage: ${a}`),
-    ...r.dice.map((d) => `Adds ${d.dice}: ${d.label}`),
-    ...(r.floor ? [`A d20 roll below ${r.floor} counts as ${r.floor}`] : []),
-  ];
+  const lines = rollNoteLines(r);
   return lines.length ? lines.map((l) => <p key={l}>{l}</p>) : null;
+}
+
+/**
+ * Situational lines every save has (Fey Ancestry: against being Charmed): said once under the
+ * saves rather than marked on all six rows.
+ */
+function sharedSituational(rolls: DerivedRoll[]): string[] {
+  const [first, ...rest] = rolls.map((r) => new Set(situationalLines(r)));
+  return first ? [...first].filter((line) => rest.every((set) => set.has(line))) : [];
+}
+
+/** The roll as its row shows it: without the situational lines said under the section. */
+function withoutShared(roll: DerivedRoll, shared: string[]): DerivedRoll {
+  if (!roll.situational || !shared.length) return roll;
+  const situational = roll.situational.filter(
+    (_, i) => !shared.includes(situationalLines(roll)[i]!),
+  );
+  return { ...roll, situational };
 }
 
 /** A skill's own description, from the imported rules. */
@@ -125,6 +145,7 @@ export function MainTab({ character, sheet, index, apply, conditionOptions }: Ma
     conditionOptions.find((o) => o.id === id)?.name ?? nameOf(index, 'rule', id);
   const ds = character.state.deathSaves;
   const speedModes = Object.entries(sheet.speed).filter(([mode]) => mode !== 'walk');
+  const sharedSaves = sharedSituational(ABILITIES.map((a) => sheet.saves[a]));
 
   const sections: Record<SectionId, ReactNode> = {
     abilities: (
@@ -156,7 +177,7 @@ export function MainTab({ character, sheet, index, apply, conditionOptions }: Ma
               key={a}
               label={ABILITY_NAMES[a]}
               rollLabel={`${ABILITY_NAMES[a]} save`}
-              roll={sheet.saves[a]}
+              roll={withoutShared(sheet.saves[a], sharedSaves)}
               onExplain={() =>
                 explainRoll(
                   `save.${a}`,
@@ -168,6 +189,11 @@ export function MainTab({ character, sheet, index, apply, conditionOptions }: Ma
             />
           ))}
         </ul>
+        {sharedSaves.map((line) => (
+          <p key={line} className={styles.sectionNote}>
+            {line}
+          </p>
+        ))}
       </Section>
     ),
     skills: (
@@ -352,9 +378,16 @@ export function MainTab({ character, sheet, index, apply, conditionOptions }: Ma
             values={sheet.defenses.conditionImmunities.map((v) => nameOf(index, 'rule', v.value))}
           />
         </dl>
+        {sheet.defenses.attacked.map((a) => (
+          <p key={`${a.mode}${a.against}${a.source}`} className={styles.sectionNote}>
+            Attack rolls{a.against ? ` (${a.against})` : ''} against you have{' '}
+            {a.mode === 'advantage' ? 'Advantage' : 'Disadvantage'}: {a.source}
+          </p>
+        ))}
         {!sheet.defenses.resistances.length &&
           !sheet.defenses.immunities.length &&
-          !sheet.defenses.conditionImmunities.length && <p className={styles.muted}>None</p>}
+          !sheet.defenses.conditionImmunities.length &&
+          !sheet.defenses.attacked.length && <p className={styles.muted}>None</p>}
       </Section>
     ),
     proficiencies: (

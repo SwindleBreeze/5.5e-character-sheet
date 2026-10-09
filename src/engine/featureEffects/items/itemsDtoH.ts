@@ -6,14 +6,16 @@
 
 import { refKey, type Effect } from '../../../schema/index.ts';
 import {
-  AT_TABLE,
-  TARGETS,
   action,
+  AT_TABLE,
   fromData,
   numbers,
+  savesAgainst,
+  TARGETS,
   text,
   toggled,
   uses,
+  when,
 } from '../core/helpers.ts';
 import type { FeatureEffectsMap, FeatureMapping } from '../types.ts';
 
@@ -25,11 +27,6 @@ const own = (name: string) => ({ itemIds: [`${name}|xdmg`] });
  * A magic variant (Flame Tongue, Holy Avenger…) sits on its base weapon's inventory row, and
  * attack filters see only the base weapon's id, so a filter on the variant's id never matches.
  */
-const VARIANT_ATTACKS =
-  "an attack filter that matches a magic variant's attacks (itemIds only sees the base weapon)";
-/** Charge costs find the item's row by its item id, not by the variant on a base item's row. */
-const VARIANT_CHARGES =
-  "charges of a magic variant (a charge cost looks for the variant's id as the row's item)";
 
 /** Extra damage on hits with this item, added when the player taps it (the target's kind). */
 function rider(name: string, dice: string, damageType?: string, optIn = true): Effect {
@@ -47,52 +44,53 @@ function rider(name: string, dice: string, damageType?: string, optIn = true): E
 const titleOf = (name: string) => name.replace(/(^|\s)\S/g, (m) => m.toUpperCase());
 
 /** A spell bound into the item when it is made, cast for 1 charge (Enspelled …). */
-function enspelled(
-  kind: string,
-  schools: string,
-  variant: boolean,
-): Record<string, FeatureMapping> {
+/** An Enspelled item's save DC and attack bonus, by its spell's level. */
+const ENSPELLED_NUMBERS = [13, 13, 13, 15, 15, 17, 17, 18, 18];
+
+function enspelled(kind: string, schools: string): Record<string, FeatureMapping> {
   const out: Record<string, FeatureMapping> = {};
   for (let level = 0; level <= 8; level++) {
+    const dc = ENSPELLED_NUMBERS[level]!;
     const tier = level === 0 ? 'cantrip' : `level ${level}`;
-    out[I(`enspelled ${kind} (${tier})`)] = numbers(
-      [
-        {
-          type: 'grantSpells',
-          spells: [
-            {
-              mode: 'innate',
-              spell: { choose: `level=${level}|school=${schools}`, count: 1, slot: 'spell' },
-              uses: { charges: 1 },
-            },
-          ],
-        },
-      ],
+    out[I(`enspelled ${kind} (${tier})`)] = numbers([
       {
-        notes: "The spell uses the item's own save DC and attack bonus, not yours.",
-        needs: [
-          'a fixed save DC and spell attack bonus for a spell cast from an item',
-          ...(variant ? [VARIANT_CHARGES] : []),
-        ].join('; '),
+        type: 'grantSpells',
+        spells: [
+          {
+            mode: 'innate',
+            spell: { choose: `level=${level}|school=${schools}`, count: 1, slot: 'spell' },
+            uses: { charges: 1 },
+            fixed: { dc, attackBonus: dc - 8 },
+          },
+        ],
       },
-    );
+    ]);
   }
   return out;
 }
 
+/** The Strength score each item that sets it gives, for the Hammer of Thunderbolts. */
+const GIANT_STRENGTH: Record<string, number> = {
+  'gauntlets of ogre power|xdmg': 19,
+  'belt of hill giant strength|xdmg': 21,
+  'belt of frost giant strength|xdmg': 23,
+  'belt of stone giant strength|xdmg': 23,
+  'belt of fire giant strength|xdmg': 25,
+  'belt of cloud giant strength|xdmg': 27,
+  'belt of storm giant strength|xdmg': 29,
+};
+
 const DRAGON_SCALE = (color: string) =>
-  numbers(
-    [
-      uses(`${color}-dragon-scale-mail`, `${titleOf(color)} Dragon Scale Mail`, 1, 'dawn'),
-      action({
-        id: `${color}-dragon-scale-mail`,
-        name: `${titleOf(color)} Dragon Scale Mail`,
-        actionType: 'action',
-        costs: [{ resource: `${color}-dragon-scale-mail`, amount: 1 }],
-      }),
-    ],
-    { notes: "Advantage on saves against a dragon's breath is applied at the table." },
-  );
+  numbers([
+    uses(`${color}-dragon-scale-mail`, `${titleOf(color)} Dragon Scale Mail`, 1, 'dawn'),
+    action({
+      id: `${color}-dragon-scale-mail`,
+      name: `${titleOf(color)} Dragon Scale Mail`,
+      actionType: 'action',
+      costs: [{ resource: `${color}-dragon-scale-mail`, amount: 1 }],
+    }),
+    savesAgainst('the breath weapons of Dragons'),
+  ]);
 
 const VECNA_TOUCH: Effect = {
   type: 'damageRider',
@@ -146,49 +144,48 @@ export const ITEMS_D_TO_H: FeatureEffectsMap = {
   [I('deck of illusions')]: text(),
   [I('deck of many things')]: text({ unoffered: AT_TABLE }),
   // The share moved to AC is picked each turn; the attack side waits on variant filters.
-  [I('defender')]: toggled(
-    [
-      {
-        type: 'toggle',
-        toggleId: 'defender',
-        name: 'Defender',
-        effects: [],
-        options: [1, 2, 3].map((n) => ({
-          id: `ac-${n}`,
-          name: `+${n} AC`,
-          effects: [
-            { type: 'acBonus', value: n },
-            {
-              type: 'attackMod',
-              filter: own('defender'),
-              label: 'Defender',
-              toHit: -n,
-              damage: -n,
-            },
-          ],
-        })),
-      },
-    ],
-    { needs: VARIANT_ATTACKS },
-  ),
-  [I('demon armor')]: numbers(
-    [
-      { type: 'proficiency', category: 'language', value: 'abyssal' },
-      {
-        type: 'attackMod',
-        filter: { source: ['unarmed'] },
-        label: 'Demon Armor',
-        toHit: 1,
-        damage: 1,
-        damageDie: '1d8',
-      },
-    ],
+  [I('defender')]: toggled([
     {
-      notes:
-        'Unarmed Strikes deal Slashing damage; the curse’s Disadvantage against demons is applied at the table.',
-      needs: "changing an attack's damage type",
+      type: 'toggle',
+      toggleId: 'defender',
+      name: 'Defender',
+      effects: [],
+      options: [1, 2, 3].map((n) => ({
+        id: `ac-${n}`,
+        name: `+${n} AC`,
+        effects: [
+          { type: 'acBonus', value: n },
+          {
+            type: 'attackMod',
+            filter: own('defender'),
+            label: 'Defender',
+            toHit: -n,
+            damage: -n,
+          },
+        ],
+      })),
     },
-  ),
+  ]),
+  [I('demon armor')]: numbers([
+    { type: 'proficiency', category: 'language', value: 'abyssal' },
+    {
+      type: 'attackMod',
+      filter: { source: ['unarmed'] },
+      label: 'Demon Armor',
+      toHit: 1,
+      damage: 1,
+      damageDie: '1d8',
+      damageType: 'slashing',
+    },
+    // The curse.
+    { type: 'rollMode', target: 'attack:all', mode: 'disadvantage', against: 'demons' },
+    {
+      type: 'rollMode',
+      target: 'save:all',
+      mode: 'disadvantage',
+      against: 'demons’ spells and special abilities',
+    },
+  ]),
   [I('demonomicon of iggwilv')]: numbers([
     uses('demonomicon-containment', 'Containment', 1, 'dawn'),
     action({
@@ -201,7 +198,7 @@ export const ITEMS_D_TO_H: FeatureEffectsMap = {
   ]),
   [I('dimensional shackles')]: text(),
   [I('dragon scale mail')]: text(),
-  [I('dragon slayer')]: numbers([rider('dragon slayer', '3d6')], { needs: VARIANT_ATTACKS }),
+  [I('dragon slayer')]: numbers([rider('dragon slayer', '3d6')]),
   [I('dread helm')]: text(),
   [I('driftglobe')]: fromData(),
   [I('dust of disappearance')]: text(),
@@ -233,18 +230,24 @@ export const ITEMS_D_TO_H: FeatureEffectsMap = {
     { notes: 'The training covers this armor only.' },
   ),
   [I('enduring spellbook')]: text(),
-  [I('energy bow')]: text({ needs: "changing an attack's damage type" }),
+  [I('energy bow')]: numbers([
+    {
+      type: 'attackMod',
+      label: 'Energy Bow',
+      filter: { itemIds: ['energy bow|xdmg'] },
+      damageType: 'force',
+    },
+  ]),
   [I('enspelled armor')]: text(),
-  ...enspelled('armor', 'A;I', true),
+  ...enspelled('armor', 'A;I'),
   [I('enspelled staff')]: text(),
-  ...enspelled('staff', 'A;C;D;E;V;I;N;T', false),
+  ...enspelled('staff', 'A;C;D;E;V;I;N;T'),
   [I('enspelled weapon')]: text(),
-  ...enspelled('weapon', 'C;D;V;N;T', true),
+  ...enspelled('weapon', 'C;D;V;N;T'),
   [I('ersatz eye')]: text(),
   [I('eversmoking bottle')]: text(),
   [I("executioner's axe")]: numbers([rider("executioner's axe", '2d6', 'slashing')], {
     notes: 'Temporary Hit Points equal to the extra damage are added at the table.',
-    needs: VARIANT_ATTACKS,
   }),
   [I('eye and hand of vecna')]: numbers(
     [
@@ -270,23 +273,20 @@ export const ITEMS_D_TO_H: FeatureEffectsMap = {
 
   [I('figurine of wondrous power')]: text(),
   ...Object.fromEntries(FIGURINES.map((f) => [I(`figurine of wondrous power, ${f}`), text()])),
-  [I('flame tongue')]: toggled(
-    [
-      {
-        type: 'toggle',
-        toggleId: 'flame-tongue',
-        name: 'Flame Tongue',
-        cost: [{ action: 'bonus' }],
-        effects: [rider('flame tongue', '2d6', 'fire', false)],
-      },
-    ],
-    { needs: VARIANT_ATTACKS },
-  ),
+  [I('flame tongue')]: toggled([
+    {
+      type: 'toggle',
+      toggleId: 'flame-tongue',
+      name: 'Flame Tongue',
+      cost: [{ action: 'bonus' }],
+      effects: [rider('flame tongue', '2d6', 'fire', false)],
+    },
+  ]),
   [I('folding boat')]: text(),
-  [I('frost brand')]: numbers(
-    [{ type: 'resistance', value: 'fire' }, rider('frost brand', '1d6', 'cold', false)],
-    { needs: VARIANT_ATTACKS },
-  ),
+  [I('frost brand')]: numbers([
+    { type: 'resistance', value: 'fire' },
+    rider('frost brand', '1d6', 'cold', false),
+  ]),
 
   [I('gauntlets of ogre power')]: fromData(),
   [I('gem of brightness')]: numbers([
@@ -314,7 +314,7 @@ export const ITEMS_D_TO_H: FeatureEffectsMap = {
       effects: [{ type: 'sense', sense: 'truesight', range: 120 }],
     },
   ]),
-  [I('giant slayer')]: numbers([rider('giant slayer', '2d6')], { needs: VARIANT_ATTACKS }),
+  [I('giant slayer')]: numbers([rider('giant slayer', '2d6')]),
   [I('glamoured studded leather')]: fromData(),
   [I('gloves of missile snaring')]: numbers([
     {
@@ -340,10 +340,9 @@ export const ITEMS_D_TO_H: FeatureEffectsMap = {
   [I('gloves of thievery')]: numbers([
     { type: 'rollBonus', target: 'skill:sleight of hand', value: 5 },
   ]),
-  [I('goggles of night')]: numbers([{ type: 'sense', sense: 'darkvision', range: 60 }], {
-    notes: 'With Darkvision already, its range grows by 60 feet instead.',
-    needs: 'a bonus to the range of a sense the character already has',
-  }),
+  [I('goggles of night')]: numbers([
+    { type: 'sense', sense: 'darkvision', range: 60, stack: true },
+  ]),
   [I('gold dragon scale mail')]: DRAGON_SCALE('gold'),
   [I('green dragon scale mail')]: DRAGON_SCALE('green'),
 
@@ -357,10 +356,15 @@ export const ITEMS_D_TO_H: FeatureEffectsMap = {
         costs: [{ charges: 1 }],
         saveDc: 17,
       }),
+      // Might of Giants: the Strength the belt or gauntlets set rises by 4 (30 at most).
+      ...Object.entries(GIANT_STRENGTH).map(([id, score]) =>
+        when({ itemInUse: [id] }, [
+          { type: 'abilitySet', ability: 'str', value: Math.min(30, score + 4) },
+        ]),
+      ),
     ],
     {
       notes: "Giant's Bane needs a Belt of Giant Strength or Gauntlets of Ogre Power in use too.",
-      needs: `a predicate on another item being in use (Might of Giants); ${VARIANT_CHARGES}`,
     },
   ),
   [I('hand of vecna')]: numbers([VECNA_TOUCH]),
@@ -410,10 +414,10 @@ export const ITEMS_D_TO_H: FeatureEffectsMap = {
   [I('helm of teleportation')]: fromData(),
   [I("heward's handy haversack")]: text(),
   [I("heward's handy spice pouch")]: text(),
-  [I('holy avenger')]: numbers([rider('holy avenger', '2d10', 'radiant')], {
-    notes: 'Its aura’s Advantage on saves against magic is applied at the table.',
-    needs: VARIANT_ATTACKS,
-  }),
+  [I('holy avenger')]: numbers([
+    rider('holy avenger', '2d10', 'radiant'),
+    savesAgainst('spells and other magical effects (the aura, while the sword is drawn)'),
+  ]),
   [I('horn of blasting')]: numbers([
     action({
       id: 'horn-of-blasting',

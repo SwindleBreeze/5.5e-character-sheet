@@ -17,7 +17,14 @@ export type WarningCode =
   | 'duplicateId'
   | 'tableKeyCollision'
   | 'kindUnknown'
-  | 'unknownShape';
+  | 'unknownShape'
+  // Homebrew (plan §10.3, steps 7.3 and 7.4).
+  | 'sourceConflict'
+  | 'sourceUndeclared'
+  | 'fieldMissing'
+  | 'refMissing'
+  | 'spellCounts'
+  | 'dependency';
 
 export interface ImportWarning {
   code: WarningCode;

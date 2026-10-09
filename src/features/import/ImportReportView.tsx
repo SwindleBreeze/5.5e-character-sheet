@@ -1,4 +1,5 @@
 import type { ImportSummary } from '../../adapters/importJob.ts';
+import type { WarningCode } from '../../adapters/fivetools/report.ts';
 import page from '../../app/Page.module.css';
 import type { EntityKind } from '../../schema/index.ts';
 import styles from './ImportPage.module.css';
@@ -19,9 +20,34 @@ const KIND_LABELS: Record<EntityKind, string> = {
   reward: 'Supernatural gifts',
   facility: 'Bastion facilities',
   charOption: 'Character options',
+  creature: 'Creatures',
 };
 
 const MAX_LISTED = 50;
+
+/** What each kind of warning means, in a few words; the code itself for the rest. */
+const WARNING_TITLES: Partial<Record<WarningCode, string>> = {
+  fileMissing: 'Files not read',
+  fileInvalid: 'Files not understood',
+  copyMissing: 'Skipped: copies something not on this device',
+  convertFailed: 'Skipped: could not be read',
+  duplicateId: 'Skipped: same name twice',
+  sourceConflict: 'Skipped: source already imported',
+  sourceUndeclared: 'Sources the file doesn’t describe',
+  fieldMissing: 'Missing fields',
+  refMissing: 'Names something that isn’t there',
+  spellCounts: 'No prepared-spell counts',
+  dependency: 'Needs other homebrew',
+  unknownShape: 'Text shown plainly',
+  modUnsupported: 'Changes not applied',
+  modFailed: 'Changes that failed',
+};
+
+const ORIGIN_LABELS: Record<ImportSummary['origin'], string> = {
+  pack: 'Pack imported',
+  '5etools': '5etools data imported',
+  homebrew: 'Homebrew imported',
+};
 
 export function ImportReportView({ summary }: { summary: ImportSummary }) {
   const { report, sources } = summary;
@@ -36,7 +62,7 @@ export function ImportReportView({ summary }: { summary: ImportSummary }) {
   return (
     <div className={styles.report}>
       <p>
-        {summary.origin === 'pack' ? 'Pack imported' : '5etools data imported'}
+        {ORIGIN_LABELS[summary.origin]}
         {report.dataVersion ? ` (version ${report.dataVersion})` : ''} on{' '}
         {new Date(summary.finishedAt).toLocaleString()}: {sources.length}{' '}
         {sources.length === 1 ? 'source' : 'sources'}.
@@ -59,7 +85,7 @@ export function ImportReportView({ summary }: { summary: ImportSummary }) {
           {[...byCode].map(([code, messages]) => (
             <section key={code} className={styles.warningGroup}>
               <h3 className={styles.warningTitle}>
-                {code} ({messages.length})
+                {WARNING_TITLES[code as WarningCode] ?? code} ({messages.length})
               </h3>
               <ul>
                 {messages.slice(0, MAX_LISTED).map((m, i) => (

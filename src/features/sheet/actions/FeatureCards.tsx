@@ -50,6 +50,7 @@ function outcomeText(o: DerivedOutcome, sheet: DerivedSheet): string {
     return `Turns on ${name}`;
   }
   if ('restore' in o) return `Regain ${o.restore.amount} ${o.restore.label}`;
+  if (o.regainSlot.maxLevel >= 9) return 'Regain one expended spell slot';
   return `Regain one expended spell slot of level ${o.regainSlot.maxLevel} or lower`;
 }
 

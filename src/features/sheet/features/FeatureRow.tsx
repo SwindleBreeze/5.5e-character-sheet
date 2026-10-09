@@ -6,6 +6,9 @@
 import { useId, useState } from 'react';
 import type { DerivedFeature, DerivedFeatureChoice } from '../../../engine/derive/types.ts';
 import { restoreResource, spendResource } from '../../../engine/play/reducers.ts';
+import { addCustomEffect, removeCustomEffect } from '../../../engine/play/features.ts';
+import { newUid } from '../../../engine/play/inventory.ts';
+import { useSheet } from '../../../ui/sheetContext.ts';
 import { refKey } from '../../../schema/index.ts';
 import { Entries } from '../../../richtext/Entries.tsx';
 import { Badge } from '../../../ui/Badge.tsx';
@@ -19,6 +22,8 @@ import { optionWhat } from '../../../engine/choices/options.ts';
 import { choiceTitle, choiceValues } from '../../choices/labels.ts';
 import { Glance } from './Glance.tsx';
 import { glanceResources } from './glanceResources.ts';
+import { CustomEffectSheet } from './CustomEffectSheet.tsx';
+import { describeCustomEffect } from './customEffects.ts';
 
 export function FeatureRow({
   feature,
@@ -40,7 +45,30 @@ export function FeatureRow({
   onRemove?: () => void;
 }) {
   const { character, sheet, index, apply } = bindings;
+  const ui = useSheet();
   const detailsId = useId();
+  // Effects the player added to it; not to a second copy of a repeatable feat.
+  const own =
+    feature.n === undefined
+      ? (character.customEffects ?? []).filter((e) => refKey(e.owner) === refKey(feature.ref))
+      : [];
+  const openAddEffect = () => {
+    const uid = newUid();
+    ui.open({
+      key: `custom-effect:${refKey(feature.ref)}`,
+      title: `Add an effect: ${feature.name}`,
+      render: () => (
+        <CustomEffectSheet
+          featureName={feature.name}
+          uid={uid}
+          onAdd={(effect) => {
+            ui.close();
+            apply((c) => addCustomEffect(c, feature.ref, effect, uid));
+          }}
+        />
+      ),
+    });
+  };
   const [confirmRemove, setConfirmRemove] = useState(false);
   const all = [feature, ...nested];
   // A caster's own cantrips and spells are picked and read on the Spells tab.
@@ -75,7 +103,7 @@ export function FeatureRow({
           type="button"
           className={inventory.itemName}
           aria-expanded={open}
-          aria-controls={detailsId}
+          aria-controls={open ? detailsId : undefined}
           onClick={onToggle}
         >
           {feature.name}
@@ -84,6 +112,7 @@ export function FeatureRow({
           {toChoose > 0 && <Badge variant="warning">{toChoose} to choose</Badge>}
           {usedUp && <Badge variant="warning">Used up</Badge>}
           {feature.fromSnapshot && <Badge>Content not loaded</Badge>}
+          {own.length > 0 && <Badge>Your effects</Badge>}
         </span>
         {meta.length > 0 && <span className={inventory.muted}>{meta.join(' · ')}</span>}
       </div>
@@ -172,6 +201,33 @@ export function FeatureRow({
           )}
           {usedUp && (
             <p className={inventory.muted}>All its uses are spent. Remove it once it fades.</p>
+          )}
+          {own.length > 0 && (
+            <ul className={styles.own} aria-label={`Your effects on ${feature.name}`}>
+              {own.map((e) => (
+                <li key={e.uid} className={styles.ownItem}>
+                  <span>
+                    {describeCustomEffect(e.effect)}{' '}
+                    <span className={inventory.muted}>(added by you)</span>
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    aria-label={`Remove ${describeCustomEffect(e.effect)}`}
+                    onClick={() => apply((c) => removeCustomEffect(c, e.uid))}
+                  >
+                    Remove
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
+          {feature.n === undefined && (
+            <div className={inventory.actions}>
+              <Button size="sm" variant="ghost" onClick={openAddEffect}>
+                Add your own effect…
+              </Button>
+            </div>
           )}
           {onRemove &&
             (confirmRemove ? (

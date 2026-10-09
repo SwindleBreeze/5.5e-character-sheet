@@ -3,7 +3,8 @@
   top: 0;
   z-index: 10;
   display: grid;
-  grid-template-columns: minmax(var(--tap-min), auto) 1fr minmax(var(--tap-min), auto);
+  /* The title keeps some room; with large text the actions wrap instead of squeezing it. */
+  grid-template-columns: minmax(var(--tap-min), auto) minmax(5rem, 1fr) minmax(var(--tap-min), auto);
   align-items: center;
   gap: var(--space-2);
   min-height: calc(var(--topbar-height) + var(--safe-top));
@@ -26,8 +27,9 @@
 }
 
 .actions {
+  flex-wrap: wrap;
   justify-content: flex-end;
-  gap: var(--space-1);
+  gap: 0 var(--space-1);
 }
 
 .back {

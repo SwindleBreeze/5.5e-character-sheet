@@ -163,7 +163,7 @@ describe('Features tab', () => {
       }),
     );
     const dialog = within(await screen.findByRole('dialog'));
-    expect(dialog.getByText(/rules don’t let you change this later/)).toBeTruthy();
+    expect(await dialog.findByText(/rules don’t let you change this later/)).toBeTruthy();
     await user.click(await dialog.findByRole('radio', { name: 'Charisma' }));
     expect(dialog.getByText('1 of 1 chosen')).toBeTruthy();
     await user.click(dialog.getByRole('button', { name: 'Save' }));
@@ -211,7 +211,7 @@ describe('Features tab', () => {
     expect(picks.getByText('Net Blade, Shiv')).toBeTruthy();
     await user.click(picks.getByRole('button', { name: 'Change Weapon Mastery (Weapon Mastery)' }));
     const dialog = within(await screen.findByRole('dialog'));
-    expect(dialog.getByText(/whenever you finish a Long Rest/)).toBeTruthy();
+    expect(await dialog.findByText(/whenever you finish a Long Rest/)).toBeTruthy();
     await user.click(await dialog.findByRole('checkbox', { name: 'Shiv' }));
     await user.click(dialog.getByRole('checkbox', { name: 'Walking Staff' }));
     await user.click(dialog.getByRole('button', { name: 'Save' }));
@@ -279,5 +279,39 @@ describe('Features tab', () => {
     await user.click(charm.getByRole('button', { name: 'Remove Charm of Embers' }));
     expect(screen.queryByRole('listitem', { name: 'Charm of Embers' })).toBeNull();
     expect(latest.state.resourcesUsed).toEqual({});
+  });
+
+  it('adds effects of your own to a feature, which count as "added by you", and removes them', async () => {
+    const user = userEvent.setup();
+    renderTab(character());
+    const before = derive(character(), index, { registry: FIXTURE_FEATURE_EFFECTS });
+    const feature = within(row('Showmanship'));
+    await user.click(feature.getByRole('button', { name: 'Showmanship' }));
+
+    // A bonus to Armor Class.
+    await user.click(feature.getByRole('button', { name: 'Add your own effect…' }));
+    let dialog = within(await screen.findByRole('dialog'));
+    await user.click(dialog.getByRole('radio', { name: 'Bonus' }));
+    await user.click(dialog.getByRole('button', { name: 'Add to Showmanship' }));
+    let after = derive(latest, index, { registry: FIXTURE_FEATURE_EFFECTS });
+    expect(after.ac.value).toBe(before.ac.value + 1);
+    expect(after.ac.parts.map((p) => p.label)).toContain('Showmanship (added by you)');
+    expect(feature.getByText('+1 to Armor Class')).toBeInTheDocument();
+
+    // A counter, shown with the feature's counters.
+    await user.click(feature.getByRole('button', { name: 'Add your own effect…' }));
+    dialog = within(await screen.findByRole('dialog'));
+    const uses = dialog.getByRole('spinbutton', { name: 'Uses' });
+    await user.clear(uses);
+    await user.type(uses, '3');
+    await user.click(dialog.getByRole('button', { name: 'Add to Showmanship' }));
+    after = derive(latest, index, { registry: FIXTURE_FEATURE_EFFECTS });
+    expect(after.resources.find((r) => r.name === 'Showmanship')?.max.value).toBe(3);
+    expect(feature.getByRole('group', { name: 'Showmanship left' })).toBeInTheDocument();
+
+    await user.click(feature.getByRole('button', { name: 'Remove +1 to Armor Class' }));
+    after = derive(latest, index, { registry: FIXTURE_FEATURE_EFFECTS });
+    expect(after.ac.value).toBe(before.ac.value);
+    expect(latest.customEffects).toHaveLength(1);
   });
 });

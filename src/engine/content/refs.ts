@@ -33,6 +33,9 @@ export function characterRefs(character: Character): Ref[] {
   for (const ids of Object.values(character.state.prepared)) {
     for (const id of ids) out.push({ kind: 'spell', id });
   }
+  // Companions, summons and Wild Shape forms, for their stat blocks (step 7.6).
+  for (const extra of character.extras ?? []) if (extra.creatureRef) out.push(extra.creatureRef);
+  for (const id of character.wildShapeForms ?? []) out.push({ kind: 'creature', id });
   // Reprints of snapshotted content, to alias a missing owner (plan §4.4).
   for (const snapshot of Object.values(character.snapshots)) {
     for (const id of snapshot.supersededBy ?? []) out.push({ kind: snapshot.ref.kind, id });

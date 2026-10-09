@@ -5,6 +5,7 @@ export const SHEET_TABS = [
   { id: 'spells', label: 'Spells' },
   { id: 'inventory', label: 'Inventory' },
   { id: 'features', label: 'Features' },
+  { id: 'extras', label: 'Extras' },
   { id: 'description', label: 'Description' },
   { id: 'notes', label: 'Notes' },
 ] as const;

@@ -1,16 +1,38 @@
+import { lazy, Suspense, type ComponentType, type LazyExoticComponent } from 'react';
 import { Route, Routes } from 'react-router';
 import { CharactersPage } from '../features/characters/CharactersPage.tsx';
-import { CoverageScreen } from '../features/dev/CoverageScreen.tsx';
-import { DesignGallery } from '../features/dev/DesignGallery.tsx';
-import { QuickBuilder } from '../features/dev/QuickBuilder.tsx';
-import { ImportPage } from '../features/import/ImportPage.tsx';
-import { LevelUpPage } from '../features/levelup/LevelUpPage.tsx';
-import { LibraryPage } from '../features/library/LibraryPage.tsx';
 import { Placeholder } from '../features/Placeholder.tsx';
-import { SettingsPage } from '../features/settings/SettingsPage.tsx';
-import { SheetPage } from '../features/sheet/SheetPage.tsx';
-import { WizardPage } from '../features/wizard/WizardPage.tsx';
 import { AppShell } from './AppShell.tsx';
+import page from './Page.module.css';
+
+// The characters list comes with the first load; the rest of the app, the sheet and its rules
+// engine included, is loaded when first opened (plan step 7.9), so a phone starts faster.
+const named = <K extends string>(load: () => Promise<Record<K, ComponentType>>, name: K) =>
+  lazy(() => load().then((m) => ({ default: m[name] })));
+
+const SheetPage = named(() => import('../features/sheet/SheetPage.tsx'), 'SheetPage');
+const WizardPage = named(() => import('../features/wizard/WizardPage.tsx'), 'WizardPage');
+const LevelUpPage = named(() => import('../features/levelup/LevelUpPage.tsx'), 'LevelUpPage');
+const LibraryPage = named(() => import('../features/library/LibraryPage.tsx'), 'LibraryPage');
+const ImportPage = named(() => import('../features/import/ImportPage.tsx'), 'ImportPage');
+const SettingsPage = named(() => import('../features/settings/SettingsPage.tsx'), 'SettingsPage');
+const DesignGallery = named(() => import('../features/dev/DesignGallery.tsx'), 'DesignGallery');
+const QuickBuilder = named(() => import('../features/dev/QuickBuilder.tsx'), 'QuickBuilder');
+const CoverageScreen = named(() => import('../features/dev/CoverageScreen.tsx'), 'CoverageScreen');
+
+// The sheet is what's opened next nearly every time: fetched once the list is up.
+if (typeof window !== 'undefined') {
+  const idle = window.requestIdleCallback ?? ((f: () => void) => window.setTimeout(f, 1000));
+  idle(() => void import('../features/sheet/SheetPage.tsx'));
+}
+
+function Later({ page: Page }: { page: LazyExoticComponent<ComponentType> }) {
+  return (
+    <Suspense fallback={<div className={page.empty}>Loading…</div>}>
+      <Page />
+    </Suspense>
+  );
+}
 
 /** All app routes (plan §7). Rendered inside a HashRouter in the app, a MemoryRouter in tests. */
 export function AppRoutes() {
@@ -18,15 +40,15 @@ export function AppRoutes() {
     <Routes>
       <Route element={<AppShell />}>
         <Route index element={<CharactersPage />} />
-        <Route path="c/:id/level-up" element={<LevelUpPage />} />
-        <Route path="c/:id/:tab?" element={<SheetPage />} />
-        <Route path="new/:draftId/:step?" element={<WizardPage />} />
-        <Route path="library" element={<LibraryPage />} />
-        <Route path="library/import" element={<ImportPage />} />
-        <Route path="settings" element={<SettingsPage />} />
-        <Route path="dev/design" element={<DesignGallery />} />
-        <Route path="dev/build" element={<QuickBuilder />} />
-        <Route path="dev/coverage" element={<CoverageScreen />} />
+        <Route path="c/:id/level-up" element={<Later page={LevelUpPage} />} />
+        <Route path="c/:id/:tab?" element={<Later page={SheetPage} />} />
+        <Route path="new/:draftId/:step?" element={<Later page={WizardPage} />} />
+        <Route path="library" element={<Later page={LibraryPage} />} />
+        <Route path="library/import" element={<Later page={ImportPage} />} />
+        <Route path="settings" element={<Later page={SettingsPage} />} />
+        <Route path="dev/design" element={<Later page={DesignGallery} />} />
+        <Route path="dev/build" element={<Later page={QuickBuilder} />} />
+        <Route path="dev/coverage" element={<Later page={CoverageScreen} />} />
         <Route
           path="*"
           element={

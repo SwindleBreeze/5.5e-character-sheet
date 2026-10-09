@@ -5,7 +5,19 @@
 
 import type { Effect } from '../../../schema/index.ts';
 import type { FeatureEffectsMap } from '../types.ts';
-import { action, dc, fromData, notHeavy, numbers, TARGETS, text, uses, when } from './helpers.ts';
+import {
+  action,
+  attacksAgainst,
+  dc,
+  fromData,
+  notHeavy,
+  numbers,
+  savesAgainst,
+  TARGETS,
+  text,
+  uses,
+  when,
+} from './helpers.ts';
 
 const C = (id: string, level: number) => `classFeature:${id}|ranger|xphb|${level}|xphb` as const;
 const S = (sub: string, id: string, level: number) =>
@@ -67,7 +79,7 @@ export const RANGER: FeatureEffectsMap = {
       costs: [{ resource: 'natures-veil', amount: 1 }],
     }),
   ]),
-  [C('precise hunter', 17)]: text(),
+  [C('precise hunter', 17)]: numbers([attacksAgainst('the creature marked by your Hunter’s Mark')]),
   [C('feral senses', 18)]: numbers([{ type: 'sense', sense: 'blindsight', range: 30 }]),
   [C('epic boon', 19)]: text(),
   [C('foe slayer', 20)]: text(),
@@ -113,6 +125,7 @@ export const RANGER: FeatureEffectsMap = {
       actionType: 'reaction',
       saveDc: dc('wis'),
     }),
+    savesAgainst('being Charmed or Frightened'),
   ]),
   [S('fey wanderer', 'fey reinforcements', 11)]: numbers([freeCasts('summon fey|xphb', 1)]),
   [S('fey wanderer', 'misty wanderer', 15)]: numbers([freeCasts('misty step|xphb', wisUses)], {

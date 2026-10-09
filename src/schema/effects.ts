@@ -37,6 +37,10 @@ export type Predicate =
   | { toggle: string; option?: string }
   /** A condition rule id, e.g. `condition/raging|tst` or `condition/prone|xphb`. */
   | { condition: Id }
+  /** Attuned to at least one magic item. */
+  | { attuned: true }
+  /** One of these items is in use: equipped or worn, and attuned when it needs it. */
+  | { itemInUse: Id[] }
   /** Class level when `classId` is set, else character level. */
   | { level: number; classId?: Id }
   | { all: Predicate[] }
@@ -61,9 +65,13 @@ export interface AttackFilter {
   /** The attack uses one of these abilities. */
   ability?: Ability[];
   itemIds?: Id[];
+  /** Every weapon but these (a Berserker Axe's curse: attacks with other weapons). */
+  notItemIds?: Id[];
+  /** A magic weapon (`true`: a magic item, or a mundane one with a magic variant) or not. */
+  magic?: boolean;
   /**
    * Derived tags, e.g. `monkWeapon`, `pactWeapon`, `offHand`, `onlyWeapon` (a weapon used in
-   * one hand with no other weapon held).
+   * one hand with no other weapon held), `feature:<id>` (an attack an `attack` effect gives).
    */
   tags?: string[];
   /** At least one of these filters matches too (Sneak Attack: a Finesse or a Ranged weapon). */
@@ -97,7 +105,8 @@ export type SelfOutcome =
   | { tempHp: Formula }
   | { toggleOn: string }
   | { restore: { resource: string; amount: Formula } }
-  | { regainSlot: { maxLevel: Formula } };
+  /** `pact`: a Pact Magic slot can be the one regained (first, when one is spent). */
+  | { regainSlot: { maxLevel: Formula; pact?: boolean } };
 
 export interface ActionDef {
   id: string;
@@ -162,6 +171,11 @@ export interface SpellGrant {
     | { charges: number };
   /** The spell is cast at this level (5etools `#3` suffix). */
   castAtLevel?: number;
+  /**
+   * The item's own save DC and spell attack bonus (an Enspelled weapon: DC 15, +7), used in
+   * place of the character's.
+   */
+  fixed?: { dc: number; attackBonus: number };
   /** Spellcasting ability: fixed, a choice, or the ability this entity increased. */
   ability?: Ability | { slot: string; from: Ability[] } | 'inherit';
 }
@@ -192,7 +206,26 @@ export type Effect =
   | { type: 'acBonus'; value: Formula }
   | { type: 'speed'; mode: MoveMode; value: Formula | 'walk' }
   | { type: 'speedBonus'; value: Formula; mode?: MoveMode }
-  | { type: 'sense'; sense: string; range: number }
+  /**
+   * `stack`: with the sense already, its range grows by `range` instead (Goggles of Night: 60 ft
+   * of Darkvision, or 60 ft more).
+   */
+  | { type: 'sense'; sense: string; range: number; stack?: boolean }
+  /** A speed the character would have is lost (a Faerie's flight in Medium or Heavy armor). */
+  | { type: 'speedOff'; mode: MoveMode }
+  /** A plain line shown with a roll (Survivor: a low Initiative d20 may be rerolled). */
+  | { type: 'rollNote'; target: RollTarget; text: string }
+  /** The Speed (every mode that equals it too) is multiplied (Boots of Speed: doubled). */
+  | { type: 'speedMultiplier'; value: number }
+  /** A bonus to the Proficiency Bonus (an Ioun Stone of Mastery). */
+  | { type: 'pbBonus'; value: number }
+  /**
+   * Attack rolls against the character have Advantage or Disadvantage, always or `against` a
+   * kind of attack (`spell attacks`): listed with the defenses.
+   */
+  | { type: 'attackedMode'; mode: 'advantage' | 'disadvantage'; against?: string }
+  /** Worn armor's Strength requirement (its Speed loss) or Stealth Disadvantage don't apply. */
+  | { type: 'armorEase'; strength?: boolean; stealth?: boolean }
   | { type: 'resistance' | 'immunity' | 'conditionImmunity'; value: Bound<string> }
   | { type: 'resistanceChoice'; choice: ChoiceSlot<string> }
   | {
@@ -271,6 +304,8 @@ export type Effect =
       extraAttacks?: number;
       /** The Light extra attack adds the ability modifier to its damage (Two-Weapon Fighting). */
       offHandAbility?: boolean;
+      /** The damage type the attack deals instead (an Energy Bow: Force). */
+      damageType?: string;
     }
   /** P4: extra damage listed under matching attacks. */
   | {
@@ -286,9 +321,24 @@ export type Effect =
       optIn: boolean;
     }
   /** P9: advantage or disadvantage on a roll. */
-  | { type: 'rollMode'; target: RollTarget; mode: 'advantage' | 'disadvantage'; note?: string }
+  | {
+      type: 'rollMode';
+      target: RollTarget;
+      mode: 'advantage' | 'disadvantage';
+      note?: string;
+      /**
+       * Only in a situation (`being Charmed`, `spells`): listed with the roll, not applied to it
+       * (Fey Ancestry: Advantage on saves against being Charmed).
+       */
+      against?: string;
+      /** For attack targets: only attacks that match (Berserker Axe: every weapon but itself). */
+      filter?: AttackFilter;
+    }
   /** P9: a bonus to a roll. */
-  | { type: 'rollBonus'; target: RollTarget; value: Formula; note?: string }
+  /** `id`: a later feature can change the bonus (a Greater Mark's d6 for the mark's d4). */
+  | { type: 'rollBonus'; target: RollTarget; value: Formula; note?: string; id?: string }
+  /** Changes every roll bonus with this `id`, wherever it comes from. */
+  | { type: 'rollBonusModify'; id: string; value: Formula }
   /** P9: half proficiency on these rolls when not proficient (Jack of All Trades). */
   | { type: 'halfProficiency'; targets: RollTarget[] }
   /**
@@ -346,7 +396,25 @@ export type Effect =
       distance: string;
       abilities: Ability[];
       properties?: string[];
+      /**
+       * The ability whose modifier adds to damage, when not the attack roll's: `none` for no
+       * modifier (a Staff of the Adder's snake head).
+       */
+      damageAbility?: Ability | 'none';
+      /** A flat bonus to damage (a Shield of the Cavalier's bash: 2d6 + 2). */
+      damageBonus?: Formula;
     }
+  /** Taking damage can't break the character's Concentration (Boon of the Iron Mind). */
+  | { type: 'concentrationUnbreakable' }
+  /** Temporary Hit Points the character gains are this many more (Boon of Bountiful Health). */
+  | { type: 'tempHpBonus'; value: number }
+  /**
+   * A Hit Point Die rolled to regain Hit Points: a roll below `floor` counts as it, `max` uses
+   * the highest number, `double` doubles what it restores.
+   */
+  | { type: 'hitDieHealing'; floor?: number; max?: boolean; double?: boolean }
+  /** How many magic items the character can be attuned to at once (Artificer: 4, 5, 6). */
+  | { type: 'attunementMax'; value: number }
   /** Count as `steps` sizes larger when determining carrying capacity (Powerful Build). */
   | { type: 'carrySize'; steps: number };
 

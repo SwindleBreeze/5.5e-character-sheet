@@ -1,0 +1,35 @@
+{
+  "_fixture": true,
+  "_meta": {
+    "sources": [
+      { "json": "BrutePaths", "full": "More Brute Paths", "authors": ["Kim Placeholder"] }
+    ],
+    "dependencies": { "subclass": ["KettleCompendium"] }
+  },
+  "subclass": [
+    {
+      "name": "Path of the Kettle",
+      "shortName": "Kettle",
+      "source": "BrutePaths",
+      "className": "Brute",
+      "classSource": "TST",
+      "subclassFeatures": [
+        "Path of the Kettle|Brute|TST|Kettle|BrutePaths|3",
+        "Boiling Point|Brute|TST|Kettle|BrutePaths|6"
+      ]
+    }
+  ],
+  "subclassFeature": [
+    {
+      "name": "Path of the Kettle",
+      "source": "BrutePaths",
+      "className": "Brute",
+      "classSource": "TST",
+      "subclassShortName": "Kettle",
+      "subclassSource": "BrutePaths",
+      "level": 3,
+      "entries": ["Your fury whistles like a kettle."]
+    }
+  ],
+  "feat": [{ "name": "Arena Veteran", "source": "TST", "entries": ["Not yours to change."] }]
+}

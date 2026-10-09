@@ -256,6 +256,28 @@ export const FIXTURE_FEATURE_EFFECTS: FeatureEffectsMap = {
       },
     ],
   },
+  // Wild Shape's stand-in (step 7.6): known forms come from the feature's table.
+  'classFeature:beast form|wanderer|tst|2|tst': {
+    level: 'B',
+    effects: [
+      {
+        type: 'resource',
+        resourceId: 'wild-shape',
+        name: 'Beast Form',
+        max: 2,
+        recharge: 'long',
+      },
+      {
+        type: 'toggle',
+        toggleId: 'wild-shape',
+        name: 'Beast Form',
+        cost: [{ resource: 'wild-shape', amount: 1 }, { action: 'bonus' }],
+        onActivate: [{ tempHp: 'level.wanderer' }],
+        endsOn: ['longRest'],
+        effects: [],
+      },
+    ],
+  },
   'classFeature:extra attack|wanderer|tst|5|tst': {
     level: 'A',
     effects: [{ type: 'extraAttack', count: 2 }],

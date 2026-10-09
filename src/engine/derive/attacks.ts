@@ -19,6 +19,7 @@ import {
   contribution,
   derived,
   effectsOfType,
+  evalNumber,
   evalValue,
   valuesOf,
   type DeriveContext,
@@ -128,6 +129,10 @@ interface AttackInput {
   damageType: string;
   distance: string;
   ready: boolean;
+  /** The ability whose modifier adds to damage when not the attack's; `none` for no modifier. */
+  damageAbility?: Ability | 'none';
+  /** A flat bonus to damage the attack has itself. */
+  damageBonus?: number;
   item?: Item;
   variant?: Item;
   row?: InventoryItem;
@@ -154,9 +159,14 @@ function buildAttack(
   // feature says so (Two-Weapon Fighting).
   const offHand =
     traits.tags.includes('offHand') && !applied.some(({ effect }) => effect.offHandAbility);
-  if (!offHand || mods[ability] < 0) {
-    damageParts.push({ label: `${ability.toUpperCase()} modifier`, value: mods[ability] });
+  const damageAbility = input.damageAbility ?? ability;
+  if (damageAbility !== 'none' && (!offHand || mods[damageAbility] < 0)) {
+    damageParts.push({
+      label: `${damageAbility.toUpperCase()} modifier`,
+      value: mods[damageAbility],
+    });
   }
+  if (input.damageBonus) damageParts.push({ label: input.name, value: input.damageBonus });
   // Magic that needs Attunement works only when attuned; the weapon itself always does.
   const magic = !input.row || magicWorks(input.row, input.item, input.variant);
   const itemBonus = (b: 'weapon' | 'weaponAttack' | 'weaponDamage') =>
@@ -169,6 +179,7 @@ function buildAttack(
 
   let die = input.baseDie;
   let critRange = 20;
+  let damageType = input.damageType;
   const dieSources: string[] = [];
   for (const { effect, source } of applied) {
     if (effect.toHit !== undefined) {
@@ -185,6 +196,7 @@ function buildAttack(
       die = next;
     }
     if (effect.critRange !== undefined) critRange = Math.min(critRange, effect.critRange);
+    if (effect.damageType) damageType = effect.damageType;
   }
 
   const roll = buildRoll(
@@ -217,7 +229,7 @@ function buildAttack(
         : [{ label: input.name, value: die, kind: 'base' as const }]),
       ...damageParts,
     ]),
-    damageType: input.damageType,
+    damageType,
     critRange,
     propertyIds: input.item?.weapon?.properties ?? [],
     riders: riderList(ctx, traits, resources),
@@ -327,7 +339,7 @@ export function deriveAttacks(
     const alone = hand !== 'both' && wield.wielded.every((w) => w.row.uid === row.uid);
     const traits = {
       ...wieldTraits,
-      ...(variant ? { variantId: variant.id } : {}),
+      ...(variant ? { variantId: variant.id, magic: true } : {}),
       tags: [...wieldTraits.tags.filter((t) => t !== 'offHand'), ...(alone ? ['onlyWeapon'] : [])],
     };
     const finesse = traits.properties.includes('F');
@@ -418,7 +430,7 @@ export function deriveAttacks(
             range: effect.range,
             source: 'weapon',
             properties: (effect.properties ?? []).map((p) => p.toUpperCase()),
-            tags: [],
+            tags: [`feature:${effect.id}`],
           },
           ownAbilities: effect.abilities,
           proficient: true,
@@ -426,6 +438,10 @@ export function deriveAttacks(
           damageType: effect.damageType,
           distance: effect.distance,
           ready: true,
+          ...(effect.damageAbility ? { damageAbility: effect.damageAbility } : {}),
+          ...(effect.damageBonus !== undefined
+            ? { damageBonus: evalNumber(ctx, effect.damageBonus, source) }
+            : {}),
         },
         scores,
         mods,

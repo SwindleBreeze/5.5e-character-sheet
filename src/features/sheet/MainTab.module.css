@@ -53,7 +53,7 @@
 
 .pills {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(6rem, 1fr));
   gap: var(--space-2);
 }
 
@@ -110,6 +110,14 @@
 }
 
 .muted {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+/* Advantage that applies only in a situation, under the rows it concerns. */
+.sectionNote {
+  margin: var(--space-2) 0 0;
+  padding: 0 var(--space-1);
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
 }

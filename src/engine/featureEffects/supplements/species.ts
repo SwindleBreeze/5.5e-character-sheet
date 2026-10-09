@@ -4,41 +4,44 @@
 // Fury of the Small, Shifting and its four forms, Howl, Vampiric Bite, Eerie Token, Knowledge
 // from a Past Life, Kalashtar's Dual Mind and telepathy, Warforged plating. A species chosen by
 // its lineage (`shifter; beasthide`, `faerie; lorwyn`) is its own entity, so each one gets the
-// shared traits too. Advantage on saves against one condition has no roll target yet, so those
-// traits are a note.
+// shared traits too. Advantage on saves against one condition is listed with the saves.
 
 import { refKey, type Effect } from '../../../schema/index.ts';
-import { action, AT_TABLE, numbers, TARGETS, text, toggled, uses, when } from '../core/helpers.ts';
+import {
+  action,
+  AT_TABLE,
+  numbers,
+  savesAgainst,
+  TARGETS,
+  text,
+  toggled,
+  uses,
+  when,
+} from '../core/helpers.ts';
 import type { FeatureEffectsMap, FeatureMapping } from '../types.ts';
 
 const SP = (id: string, source: string) => refKey({ kind: 'species', id: `${id}|${source}` });
 
-/** Advantage on saves against one condition: a note until a roll target can name it. */
-const vsCondition = (condition: string) =>
-  `Advantage on saves to avoid or end ${condition} is not shown on the save rows.`;
-const FEY_ANCESTRY = vsCondition('Charmed');
-const CONDITION_SAVES = 'rollMode on saves against a single condition';
+const FEY_ANCESTRY = savesAgainst('being Charmed');
 /** The base species of a family picked by its lineage: the lineage is its own species. */
 const BY_LINEAGE = 'Picked by choosing the lineage as the species.';
 
 // ---- Boggart ----
-const BOGGART = numbers(
-  [
-    uses('fury-of-the-small', 'Fury of the Small', 'pb', 'long'),
-    {
-      type: 'damageRider',
-      id: 'fury-of-the-small',
-      name: 'Fury of the Small',
-      dice: 'pb',
-      filter: {},
-      oncePerTurn: true,
-      cost: { resource: 'fury-of-the-small', amount: 1 },
-      optIn: true,
-    },
-    action({ id: 'nimble-escape', name: 'Nimble Escape', actionType: 'bonus' }),
-  ],
-  { notes: FEY_ANCESTRY, needs: CONDITION_SAVES },
-);
+const BOGGART = numbers([
+  uses('fury-of-the-small', 'Fury of the Small', 'pb', 'long'),
+  {
+    type: 'damageRider',
+    id: 'fury-of-the-small',
+    name: 'Fury of the Small',
+    dice: 'pb',
+    filter: {},
+    oncePerTurn: true,
+    cost: { resource: 'fury-of-the-small', amount: 1 },
+    optIn: true,
+  },
+  action({ id: 'nimble-escape', name: 'Nimble Escape', actionType: 'bonus' }),
+  FEY_ANCESTRY,
+]);
 
 // ---- Changeling (Eberron) ----
 const CHANGELING = toggled([
@@ -54,13 +57,18 @@ const CHANGELING = toggled([
 // ---- Dhampir ----
 const DHAMPIR = numbers(
   [
-    action({
+    // An Unarmed Strike that bites: Strength to hit, Constitution to damage.
+    {
+      type: 'attack',
       id: 'vampiric-bite',
       name: 'Vampiric Bite',
-      actionType: 'other',
-      roll: '1d4 + mod.con',
-      description: 'Piercing, in place of an Unarmed Strike’s damage.',
-    }),
+      damage: '1d4',
+      damageType: 'piercing',
+      damageAbility: 'con',
+      range: 'melee',
+      distance: '5 ft.',
+      abilities: ['str'],
+    },
     uses('vampiric-bite', 'Vampiric Bite', 'pb', 'long'),
     action({
       id: 'vampiric-empowerment',
@@ -69,19 +77,16 @@ const DHAMPIR = numbers(
       costs: [{ resource: 'vampiric-bite', amount: 1 }],
     }),
   ],
-  {
-    unoffered: AT_TABLE,
-    needs: 'an Unarmed Strike form whose damage uses another ability than its attack roll',
-  },
+  { unoffered: AT_TABLE },
 );
 
 // ---- Elf (Lorwyn), Faerie, Kithkin, and the spell-trait species ----
-const FEY_TEXT = text({ notes: FEY_ANCESTRY, needs: CONDITION_SAVES });
-const FAERIE = text({
-  notes: 'The fly speed does not apply in Medium or Heavy armor.',
-  needs: 'a speed from the data that depends on the armor worn',
-});
-const KITHKIN = text({ notes: vsCondition('Frightened'), needs: CONDITION_SAVES });
+const FEY = numbers([FEY_ANCESTRY]);
+// No flying in Medium or Heavy armor.
+const FAERIE = numbers([
+  when({ any: [{ armor: 'medium' }, { armor: 'heavy' }] }, [{ type: 'speedOff', mode: 'fly' }]),
+]);
+const KITHKIN = numbers([savesAgainst('being Frightened')]);
 
 // ---- Hexblood ----
 const HEXBLOOD = numbers([
@@ -125,10 +130,11 @@ const KHORAVAR = numbers(
       actionType: 'other',
       costs: [{ resource: 'lethargy-resilience', amount: 1 }],
     }),
+    FEY_ANCESTRY,
   ],
   {
-    notes: `${FEY_ANCESTRY} Lethargy Resilience comes back after 1d4 Long Rests, not one.`,
-    needs: `${CONDITION_SAVES}; a recharge over several rests`,
+    notes: 'Lethargy Resilience comes back after 1d4 Long Rests, not one.',
+    needs: 'a recharge over several rests',
   },
 );
 
@@ -143,12 +149,14 @@ const LUPIN = numbers(
       costs: [{ resource: 'howl', amount: 1 }],
       saveDc: '8 + mod.con + pb',
     }),
+    {
+      type: 'attackMod',
+      label: 'Feral Pounce',
+      filter: { source: ['unarmed'] },
+      damageType: 'slashing',
+    },
   ],
-  {
-    notes: 'Unarmed Strikes deal Slashing damage.',
-    needs: 'changing the damage type of the Unarmed Strike',
-    unoffered: TARGETS,
-  },
+  { unoffered: TARGETS },
 );
 
 // ---- Reborn ----
@@ -209,18 +217,15 @@ const SHIFTER_FORMS: Record<string, { tempHp?: string; effects: Effect[] }> = {
 };
 
 // ---- Warforged ----
-const WARFORGED = numbers([{ type: 'acBonus', value: 1 }], {
-  notes: vsCondition('Poisoned'),
-  needs: CONDITION_SAVES,
-});
+const WARFORGED = numbers([{ type: 'acBonus', value: 1 }, savesAgainst('being Poisoned')]);
 
 export const SUP_SPECIES: FeatureEffectsMap = {
   [SP('boggart', 'lfl')]: BOGGART,
   [SP('changeling', 'efa')]: CHANGELING,
   [SP('dhampir', 'rhw')]: DHAMPIR,
-  [SP('elf', 'lfl')]: FEY_TEXT,
-  [SP('elf; lorwyn lineage', 'lfl')]: FEY_TEXT,
-  [SP('elf; shadowmoor lineage', 'lfl')]: FEY_TEXT,
+  [SP('elf', 'lfl')]: FEY,
+  [SP('elf; lorwyn lineage', 'lfl')]: FEY,
+  [SP('elf; shadowmoor lineage', 'lfl')]: FEY,
   [SP('faerie', 'lfl')]: { ...FAERIE, unoffered: BY_LINEAGE },
   [SP('faerie; lorwyn', 'lfl')]: FAERIE,
   [SP('faerie; shadowmoor', 'lfl')]: FAERIE,

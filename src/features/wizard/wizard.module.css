@@ -94,6 +94,11 @@
   line-height: 1.2;
 }
 
+/* Focused when a step opens (for screen readers); not a control, so no ring. */
+.stepTitle:focus {
+  outline: none;
+}
+
 .lead {
   max-width: 60ch;
   margin: 0;
