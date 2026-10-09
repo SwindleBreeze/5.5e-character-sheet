@@ -108,7 +108,9 @@ describe('importHomebrew (plan step 7.3)', () => {
     expect(messages(r, 'unknownShape')).toEqual([
       "Text blocks the app can't show as intended (shown plainly): emberChart",
     ]);
-    expect(r.report.ignored).toEqual({ monster: 1 });
+    expect(r.report.ignored).toEqual({});
+    // Homebrew creatures are kept, even sparse ones, for companions written in a homebrew book.
+    expect(r.entities.creature?.map((c) => c.id)).toEqual(['hearth sprite|hearthguide']);
   });
 
   it('refuses files that are not homebrew, and keeps going', async () => {

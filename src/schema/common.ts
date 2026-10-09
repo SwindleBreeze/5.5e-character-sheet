@@ -25,6 +25,7 @@ export const ENTITY_KINDS = [
   'reward',
   'facility',
   'charOption',
+  'creature',
 ] as const;
 
 export type EntityKind = (typeof ENTITY_KINDS)[number];

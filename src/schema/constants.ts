@@ -64,3 +64,16 @@ export function proficiencyBonus(level: number): number {
 export function abilityModifier(score: number): number {
   return Math.floor((score - 10) / 2);
 }
+
+/** A challenge rating as written (`1/4`, `2`) as a number. */
+export function crValue(cr: string | undefined): number | undefined {
+  if (cr === undefined || cr.trim() === '') return undefined;
+  const [a, b] = cr.split('/');
+  const n = b !== undefined ? Number(a) / Number(b) : Number(a);
+  return Number.isFinite(n) ? n : undefined;
+}
+
+/** A creature's Proficiency Bonus by challenge rating: +2 up to CR 4, then +1 every 4. */
+export function crProficiency(cr: number): number {
+  return 2 + Math.floor((Math.max(1, Math.ceil(cr)) - 1) / 4);
+}

@@ -162,8 +162,8 @@ describe('coverageReport', () => {
   it('sorts features into mapped, data-only and unmapped, and finds unoffered choices', () => {
     const report = coverageReport(index, FIXTURE_FEATURE_EFFECTS, new Set(['TST']));
     const row = (name: string) => report.rows.find((r) => r.feature.name === name)!;
-    expect(report.counts).toEqual({ mapped: 19, data: 7, none: 15 });
-    expect(report.byAutomation).toEqual({ A: 16, B: 2, C: 1 });
+    expect(report.counts).toEqual({ mapped: 20, data: 7, none: 15 });
+    expect(report.byAutomation).toEqual({ A: 16, B: 3, C: 1 });
     expect(row('Fury')).toMatchObject({ owner: 'Brute', level: 1, status: 'mapped' });
     expect(row('Static Charge')).toMatchObject({ owner: 'Brute: Spark', status: 'mapped' });
     expect(row('Showmanship').status).toBe('data');

@@ -2,7 +2,8 @@
 // registry and a report. Writing to the database is the caller's job (plan §6.2).
 //
 // Pipeline: locate → read manifest → resolve `_copy` → expand `_versions` → merge subraces →
-// shared item text → deity reprints → work out editions → convert → spell lists → filter sources → build the registry.
+// shared item text → deity reprints → work out editions → convert → creatures → spell lists →
+// filter sources → build the registry.
 
 import {
   ENTITY_KINDS,
@@ -20,6 +21,7 @@ import {
   convertSubclassFeature,
 } from './convert/class.ts';
 import type { ConvertContext } from './convert/common.ts';
+import { convertCreature, namedCreatureIds, selectCreatures } from './convert/creature.ts';
 import {
   convertCharOption,
   convertDeity,
@@ -197,6 +199,9 @@ export async function importFivetools(
   const records = manifest.records as Record<string, RawEntity[]>;
 
   progress('resolve');
+  // Creatures are picked and resolved after the player content is converted (below).
+  const monsters = records.monster ?? [];
+  records.monster = [];
   resolveCopies(records, report);
   // Subraces merge into their race first; the merged record may itself carry `_versions`
   // (2014 Dragonborn colours), which only make sense on the merged text.
@@ -211,7 +216,10 @@ export async function importFivetools(
   resolveItemEntries(records, report);
   linkDeityReprints(records.deity ?? [], manifest.sources);
 
-  const editions = sourceEditions(Object.values(records).flat(), manifest.sources);
+  const editions = sourceEditions(
+    [...Object.values(records).flat(), ...monsters],
+    manifest.sources,
+  );
   const ctx: ConvertContext = {
     origin: {
       adapter: '5etools',
@@ -225,6 +233,36 @@ export async function importFivetools(
 
   progress('convert');
   const entities = convertRecords(records, ctx);
+
+  // Creatures last: which ones are kept depends on what the player content above names. Only
+  // those are resolved, so the rest of the bestiary costs nothing but reading it.
+  const picked = selectCreatures(monsters, namedCreatureIds(Object.values(entities).flat()));
+  const creatureRecords = { monster: picked.records };
+  resolveCopies(creatureRecords, report);
+  creatureRecords.monster = creatureRecords.monster.filter(picked.isKept);
+  expandAllVersions(creatureRecords, ['monster'], report);
+  const creatures: ContentEntity[] = [];
+  const creatureIds = new Set<string>();
+  for (const raw of creatureRecords.monster) {
+    let creature: ContentEntity;
+    try {
+      creature = convertCreature(raw, ctx);
+    } catch (err) {
+      report.warn(
+        'convertFailed',
+        `monster: ${err instanceof Error ? err.message : String(err)}`,
+        raw,
+      );
+      continue;
+    }
+    if (creatureIds.has(creature.id)) {
+      report.warn('duplicateId', `Duplicate creature id "${creature.id}"; kept the first`, raw);
+      continue;
+    }
+    creatureIds.add(creature.id);
+    creatures.push(creature);
+  }
+  (entities as Record<string, ContentEntity[]>).creature = creatures;
 
   progress('finish');
   applySpellLists(entities.spell ?? [], manifest.spellLookup);

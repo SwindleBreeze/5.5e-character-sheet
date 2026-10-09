@@ -16,13 +16,13 @@ describe('CoverageScreen', () => {
     renderApp('/dev/coverage');
 
     // The app's mappings are for XPHB features, which the fixture content doesn't have.
-    expect(await screen.findByText(/41 features: 0 mapped/)).toBeInTheDocument();
+    expect(await screen.findByText(/42 features: 0 mapped/)).toBeInTheDocument();
     expect(screen.getByText('Every mapping is valid.')).toBeInTheDocument();
     expect(screen.getByText(/mappings are for content that isn’t imported/)).toBeInTheDocument();
 
     await user.selectOptions(screen.getByRole('combobox', { name: 'Show' }), 'all');
     const list = screen.getByRole('list', { name: 'Features' });
-    expect(within(list).getAllByRole('listitem')).toHaveLength(41);
+    expect(within(list).getAllByRole('listitem')).toHaveLength(42);
     expect(within(list).getByText('Static Charge')).toBeInTheDocument();
   });
 });

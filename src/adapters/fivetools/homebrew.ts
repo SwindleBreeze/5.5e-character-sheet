@@ -28,6 +28,7 @@ import { resolveCopies } from './copy.ts';
 import { sourceEditions } from './editions.ts';
 import { attachFluff } from './fluff.ts';
 import { convertRecords, CONVERTERS, type Converter, type ImportResult } from './index.ts';
+import { convertCreature } from './convert/creature.ts';
 import { resolveItemEntries } from './itemEntries.ts';
 import { collect, emptyRecords, IMPORTED_PROPS } from './manifest.ts';
 import { blankRecord, copyTarget, mergeOfficialCopy, ownRecord } from './officialCopy.ts';
@@ -309,6 +310,20 @@ export async function importHomebrew(
     );
   };
   const entities = convertRecords(records, ctx, convertOne);
+  // Homebrew creatures are all kept: the player imported them for a reason (a companion).
+  const creatures: ContentEntity[] = [];
+  for (const raw of records.monster ?? []) {
+    try {
+      creatures.push(convertCreature(raw, ctx));
+    } catch (err) {
+      report.warn(
+        'convertFailed',
+        `monster: ${err instanceof Error ? err.message : String(err)}`,
+        raw,
+      );
+    }
+  }
+  if (creatures.length) (entities as Record<string, ContentEntity[]>).creature = creatures;
   attachFluff(entities, records);
   for (const kind of ENTITY_KINDS) {
     const n = entities[kind]?.length ?? 0;

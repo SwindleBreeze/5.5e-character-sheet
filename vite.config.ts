@@ -47,7 +47,8 @@ export default defineConfig({
     include: ['src/**/*.test.{ts,tsx}', 'scripts/**/*.test.mjs'],
     css: { modules: { classNameStrategy: 'non-scoped' } },
     restoreMocks: true,
-    // UI tests that import content take a few seconds when every file runs in parallel.
-    testTimeout: 15_000,
+    // UI tests that import content take a few seconds, and up to ~15 s on a loaded machine when
+    // every file runs in parallel (plan 7.9 looks at making them faster).
+    testTimeout: 30_000,
   },
 });
