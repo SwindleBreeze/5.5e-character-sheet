@@ -61,9 +61,15 @@ const LOOKUP_PROPS: Record<string, string[]> = {
 
 /**
  * Resolve every `_copy` in `records`, in place. Records whose parent is missing, or that copy
- * in a cycle, are dropped and reported.
+ * in a cycle, are dropped and reported. With `keepMissing` (homebrew), a record whose parent
+ * is not among `records` is kept with its `_copy`, to be resolved against content already on
+ * the device; a record copying such a record keeps that `_copy` too.
  */
-export function resolveCopies(records: Record<string, RawEntity[]>, report: ReportBuilder): void {
+export function resolveCopies(
+  records: Record<string, RawEntity[]>,
+  report: ReportBuilder,
+  opts: { keepMissing?: boolean } = {},
+): void {
   for (const [prop, list] of Object.entries(records)) {
     if (!list.some((e) => e._copy !== undefined)) continue;
 
@@ -86,7 +92,9 @@ export function resolveCopies(records: Record<string, RawEntity[]>, report: Repo
       }
       const parentRaw = lookup.get(identityKey(prop, e._copy as RawEntity));
       let result: RawEntity | null = null;
-      if (!parentRaw) {
+      if (!parentRaw && opts.keepMissing) {
+        result = e;
+      } else if (!parentRaw) {
         const target = e._copy as RawEntity;
         report.warn(
           'copyMissing',
@@ -97,7 +105,11 @@ export function resolveCopies(records: Record<string, RawEntity[]>, report: Repo
         stack.add(e);
         const parent = resolve(parentRaw, stack);
         stack.delete(e);
-        if (parent) result = mergeCopy(parent, e, report);
+        if (parent) {
+          result = mergeCopy(parent, e, report);
+          // The parent still waits for its own parent: so does this record.
+          if (isObject(parent._copy)) result._copy = parent._copy;
+        }
       }
       resolved.set(e, result);
       return result;

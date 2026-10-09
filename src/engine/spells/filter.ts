@@ -8,6 +8,8 @@
 //   source=EGW                  source
 //   components & miscellaneous=ritual;concentration
 //   spell attack=m;r            makes a melee or ranged spell attack
+//   list=class:Foo;spell:fire bolt@xphb   on any of these: a class's list, or one spell
+//                               (`@` stands for the `|` in its id); for homebrew lists
 //
 // An unknown key matches nothing, so a filter the app doesn't understand offers no spells
 // rather than every spell.
@@ -24,12 +26,29 @@ function subclassName(id: string): string {
   return `${cls}: ${shortName}`.toLowerCase();
 }
 
+/** A `list=` value: `class:<name>` or `spell:<name>@<source>`. */
+function onList(spell: Spell, value: string): boolean {
+  const colon = value.indexOf(':');
+  const what = value.slice(0, colon);
+  const rest = value.slice(colon + 1);
+  if (what === 'class') return spell.classIds.some((id) => className(id) === rest);
+  if (what === 'spell') return spell.id === rest.replace('@', '|');
+  return false;
+}
+
+/** The `list=` filter value for one spell id. */
+export function spellListValue(id: string): string {
+  return `spell:${id.replace('|', '@')}`;
+}
+
 function partMatches(spell: Spell, key: string, values: string[]): boolean {
   switch (key) {
     case 'level':
       return values.some((v) => Number(v) === spell.level);
     case 'class':
       return values.some((v) => spell.classIds.some((id) => className(id) === v));
+    case 'list':
+      return values.some((v) => onList(spell, v));
     case 'subclass':
       return values.some((v) => spell.subclassIds.some((id) => subclassName(id) === v));
     case 'school':

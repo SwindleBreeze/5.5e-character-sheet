@@ -86,7 +86,7 @@ export async function decodePack(bytes: Uint8Array): Promise<Pack> {
   return (await readPack(bytes)).pack;
 }
 
-export function packFileName(now: number): string {
+export function packFileName(now: number, prefix = 'content'): string {
   const date = new Date(now).toISOString().slice(0, 10);
-  return `content-${date}.pack.json.gz`;
+  return `${prefix}-${date}.pack.json.gz`;
 }

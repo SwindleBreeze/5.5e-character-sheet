@@ -23,7 +23,19 @@ export interface SourceInfo {
   counts: Partial<Record<EntityKind, number>>;
   importedAt: number;
   adapterVersion: number;
+  /** Homebrew stays `homebrew` when it travels in a pack, so it keeps its own group. */
   origin: '5etools' | 'pack' | 'homebrew';
+  /** What the homebrew file says about itself (`_meta.sources`). */
+  homebrew?: HomebrewInfo;
+}
+
+export interface HomebrewInfo {
+  /** Short name shown next to the source (5etools `abbreviation`). */
+  abbreviation?: string;
+  authors?: string[];
+  version?: string;
+  /** Where the file came from, when it was fetched from a URL or names its home page. */
+  url?: string;
 }
 
 export interface Pack {

@@ -50,7 +50,7 @@ export function SettingsPage() {
             Choose which imported books the library and character builder offer. 2014 books are
             listed but can’t be switched on yet.
           </p>
-          <SourceToggles />
+          <SourceToggles manage />
           <p>
             <Link to="/library/import">Import or share content</Link>
           </p>

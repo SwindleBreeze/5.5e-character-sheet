@@ -16,6 +16,7 @@ import {
   type EntityKind,
   type EquipmentItemGrant,
   type EquipmentOption,
+  type SpellGrant,
   type Subclass,
   type SubclassFeature,
 } from '../../../schema/index.ts';
@@ -139,11 +140,32 @@ const PROGRESSION: Record<string, ClassSpellcasting['progression']> = {
   artificer: 'artificer',
 };
 
-function spellcasting(raw: RawEntity): ClassSpellcasting | undefined {
-  const progression = PROGRESSION[String(raw.casterProgression)];
-  const ability = raw.spellcastingAbility;
-  if (!progression || typeof ability !== 'string' || !ABILITY_SET.has(ability)) return undefined;
+/**
+ * Homebrew `classSpells` / `subclassSpells`: spell UIDs (`name|source`, PHB by default) and
+ * `{ className, classSource }` for another class's whole list. Spell groups are not read.
+ */
+function extraSpellList(value: unknown): NonNullable<ClassSpellcasting['listAlso']> {
+  const classes: string[] = [];
+  const spellIds: string[] = [];
+  for (const item of asArray(value)) {
+    if (typeof item === 'string') spellIds.push(uidToId.nameSource(item, 'PHB'));
+    else if (isObject(item) && typeof item.className === 'string') classes.push(item.className);
+  }
+  const out: NonNullable<ClassSpellcasting['listAlso']> = {};
+  if (classes.length) out.classes = classes;
+  if (spellIds.length) out.spellIds = spellIds;
+  return out;
+}
+
+function spellcasting(raw: RawEntity, listProp: string): ClassSpellcasting | undefined {
+  const progression = PROGRESSION[String(raw.casterProgression).toLowerCase()];
+  // Homebrew writes the ability in any case ("WIS").
+  const ability =
+    typeof raw.spellcastingAbility === 'string' ? raw.spellcastingAbility.toLowerCase() : '';
+  if (!progression || !ABILITY_SET.has(ability)) return undefined;
   const out: ClassSpellcasting = { ability: ability as Ability, progression };
+  const listAlso = extraSpellList(raw[listProp]);
+  if (listAlso.classes || listAlso.spellIds) out.listAlso = listAlso;
   const prepared = asArray(raw.preparedSpellsProgression ?? raw.spellsKnownProgression).map(
     (v) => num(v) ?? 0,
   );
@@ -257,7 +279,7 @@ export function convertClass(raw: RawEntity, ctx: ConvertContext): ClassDef {
     optionalFeatureProgression: optProg,
   };
   if (table.slotTable) cls.slotTable = table.slotTable;
-  const sc = spellcasting(raw);
+  const sc = spellcasting(raw, 'classSpells');
   if (sc) cls.spellcasting = sc;
   cls.effects = [...progressionEffects(featProg, optProg), ...spellEffects(raw)];
   return cls;
@@ -310,6 +332,18 @@ function subclassTable(raw: RawEntity): unknown[] {
   });
 }
 
+/** A subclass adding spells to its class's list (homebrew `subclassSpells`). */
+function expandedListEffects(list: NonNullable<ClassSpellcasting['listAlso']>): Effect[] {
+  const grants: SpellGrant[] = [
+    ...(list.classes ?? []).map((c): SpellGrant => ({
+      mode: 'expanded',
+      spell: { all: `class=${c}` },
+    })),
+    ...(list.spellIds ?? []).map((id): SpellGrant => ({ mode: 'expanded', spell: { id } })),
+  ];
+  return grants.length ? [{ type: 'grantSpells', spells: grants }] : [];
+}
+
 export function convertSubclass(raw: RawEntity, ctx: ConvertContext): Subclass {
   const shortName = String(raw.shortName ?? raw.name);
   const className = String(raw.className);
@@ -360,13 +394,17 @@ export function convertSubclass(raw: RawEntity, ctx: ConvertContext): Subclass {
     if (table.columns.length) sub.table = table.columns;
     if (table.slotTable) sub.slotTable = table.slotTable;
   }
-  const sc = spellcasting(raw);
+  const sc = spellcasting(raw, 'subclassSpells');
   if (sc) sub.spellcasting = sc;
   const featProg = featProgressions(raw);
   const optProg = optionalFeatureProgressions(raw);
   if (featProg.length) sub.featProgression = featProg;
   if (optProg.length) sub.optionalFeatureProgression = optProg;
-  sub.effects = [...progressionEffects(featProg, optProg), ...spellEffects(raw)];
+  sub.effects = [
+    ...progressionEffects(featProg, optProg),
+    ...spellEffects(raw),
+    ...(sc ? [] : expandedListEffects(extraSpellList(raw.subclassSpells))),
+  ];
   return sub;
 }
 

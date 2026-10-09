@@ -17,7 +17,7 @@ import {
   pactSlots,
   slotRow,
 } from '../rules/slots.ts';
-import { levelsUpTo } from './filter.ts';
+import { levelsUpTo, spellListValue } from './filter.ts';
 
 type CasterOwner = ClassDef | Subclass;
 
@@ -26,8 +26,20 @@ type CasterOwner = ClassDef | Subclass;
  * (`subclass=Fighter: Eldritch Knight`).
  */
 export function casterList(owner: CasterOwner): string {
-  if (owner.kind === 'class') return `class=${owner.name}`;
-  return `subclass=${owner.classId.split('|')[0] ?? ''}: ${owner.shortName}`;
+  const own =
+    owner.kind === 'class'
+      ? `class=${owner.name}`
+      : `subclass=${owner.classId.split('|')[0] ?? ''}: ${owner.shortName}`;
+  // Homebrew can borrow other classes' lists and add single spells: one `list=` part says
+  // "any of these", with the caster's own list as one of them.
+  const also = owner.spellcasting?.listAlso;
+  if (!also || (!also.classes?.length && !also.spellIds?.length)) return own;
+  const values = [
+    owner.kind === 'class' ? `class:${owner.name}` : null,
+    ...(also.classes ?? []).map((c) => `class:${c}`),
+    ...(also.spellIds ?? []).map(spellListValue),
+  ].filter((v): v is string => v !== null);
+  return `list=${values.join(';')}`;
 }
 
 /**
@@ -48,24 +60,31 @@ export function maxSpellLevel(sc: ClassSpellcasting, owner: CasterOwner, level: 
   return highestSlot(slotRow(MULTICLASS_SLOTS, casterLevelShare(sc.progression, level)));
 }
 
-/** A count by class level from the spellcasting data, else from a table column. */
+/**
+ * A count by class level from the spellcasting data, else from a table column. The first key
+ * is the 2024 column; the others are older names homebrew still uses ("Spells Known").
+ */
 function countAt(
   byLevel: number[] | undefined,
   owner: CasterOwner,
-  key: string,
+  keys: string[],
   level: number,
 ): number {
   if (byLevel?.length) return byLevel[level - 1] ?? 0;
-  const v = cellToValue(owner.table?.find((c) => c.key === key)?.values[level - 1]);
+  const column = keys.map((k) => owner.table?.find((c) => c.key === k)).find((c) => c);
+  const v = cellToValue(column?.values[level - 1]);
   return isDice(v) ? 0 : v;
 }
 
+const CANTRIP_KEYS = ['cantrips', 'cantrips-known'];
+const PREPARED_KEYS = ['prepared-spells', 'spells-known'];
+
 export function cantripCount(sc: ClassSpellcasting, owner: CasterOwner, level: number): number {
-  return level < 1 ? 0 : countAt(sc.cantripsByLevel, owner, 'cantrips', level);
+  return level < 1 ? 0 : countAt(sc.cantripsByLevel, owner, CANTRIP_KEYS, level);
 }
 
 export function preparedCount(sc: ClassSpellcasting, owner: CasterOwner, level: number): number {
-  return level < 1 ? 0 : countAt(sc.preparedByLevel, owner, 'prepared-spells', level);
+  return level < 1 ? 0 : countAt(sc.preparedByLevel, owner, PREPARED_KEYS, level);
 }
 
 /**
