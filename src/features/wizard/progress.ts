@@ -72,10 +72,12 @@ export function picksOnStep(
 } {
   const only = (c: { offer: Offer }) => stepOf(c.offer, sheet) === step;
   const all = sheet.features;
+  // Shown under its pick only when that pick is on this step too: Magician, picked for Primal
+  // Order on the class features step, has its cantrip on the spells step, by itself.
   const underPick = (f: DerivedFeature) => {
     if (!f.pickedIn) return false;
     const by = all.find((x) => refKey(x.ref) === refKey(f.pickedIn!.ref));
-    return !!by?.choices.some((c) => c.values.includes(f.ref.id));
+    return !!by?.choices.some((c) => c.values.includes(f.ref.id) && only(c));
   };
   return { features: all.filter((f) => !underPick(f) && f.choices.some(only)), only };
 }

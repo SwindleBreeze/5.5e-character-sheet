@@ -12,7 +12,8 @@ import { derive } from '../../engine/derive/derive.ts';
 import type { Character, ContentEntity, Species } from '../../schema/index.ts';
 import { fixtureContent } from '../../test/fixtureIndex.ts';
 import { FIXTURE_FEATURE_EFFECTS } from '../../test/fixtureFeatureEffects.ts';
-import { stepOf, variantLabel, variantsOf, wizardTodos } from './progress.ts';
+import type { DerivedFeature, DerivedSheet } from '../../engine/derive/types.ts';
+import { picksOnStep, stepOf, variantLabel, variantsOf, wizardTodos } from './progress.ts';
 
 let index: ContentIndex;
 let catalog: Catalog;
@@ -58,7 +59,7 @@ describe('what each wizard step still needs (plan §9.3b, step 4B.5)', () => {
     expect(background.map((t) => t.text)).toEqual(
       expect.arrayContaining([
         'Arena Hand: Ability Scores',
-        'Spark Initiate; Gladiator: Spells (2 more)',
+        'Spark Initiate; Gladiator: Cantrips (2 more)',
         'Arena Hand: starting equipment',
       ]),
     );
@@ -95,5 +96,51 @@ describe('what each wizard step still needs (plan §9.3b, step 4B.5)', () => {
     expect(todos(over)).toContainEqual({ step: 'abilities', text: 'Point buy: 2 points over' });
     const unrolled: Character = { ...c, scoreMethod: 'rolled' };
     expect(todos(unrolled)).toContainEqual({ step: 'abilities', text: 'Roll your scores' });
+  });
+});
+
+describe('a picked option with a pick of its own on another step', () => {
+  // Primal Order picks Magician (class features step); Magician's cantrip is a spell pick.
+  const order = { kind: 'classFeature', id: 'primal order|tst' } as const;
+  const magician = { kind: 'classFeature', id: 'magician|tst' } as const;
+  const feature = (ref: typeof order | typeof magician, extra: Partial<DerivedFeature>) =>
+    ({
+      ref,
+      name: ref.id,
+      group: 'class',
+      choices: [],
+      resourceKeys: [],
+      entryIndex: 0,
+      ...extra,
+    }) as DerivedFeature;
+  const choice = (owner: typeof order, kind: 'featureOptions' | 'spell', values: string[]) => ({
+    key: `${owner.id}#${kind}`,
+    offer: {
+      key: { owner, slot: kind },
+      kind,
+      count: 1,
+      from: 'any',
+      source: { ref: owner, name: owner.id },
+    },
+    count: 1,
+    values,
+    labels: values,
+    entryIndex: 0,
+  });
+  const sheet = {
+    features: [
+      feature(order, { choices: [choice(order, 'featureOptions', ['magician|tst'])] as never }),
+      feature(magician, {
+        pickedIn: { ref: order, name: 'Primal Order' },
+        choices: [choice(magician as never, 'spell', [])] as never,
+      }),
+    ],
+  } as unknown as DerivedSheet;
+
+  it('is on the spells step by itself, and not under its pick on the class features step', () => {
+    expect(picksOnStep(sheet, 'spells').features.map((f) => f.ref.id)).toEqual(['magician|tst']);
+    expect(picksOnStep(sheet, 'choices').features.map((f) => f.ref.id)).toEqual([
+      'primal order|tst',
+    ]);
   });
 });

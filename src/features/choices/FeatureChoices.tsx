@@ -40,8 +40,10 @@ export function FeatureChoices({
         const own = choiceTitle(c);
         // "Weapon Mastery: Weapon Mastery" says it once.
         const title = named && own !== f.name ? `${f.name}: ${own}` : own;
+        // Only a picked option with picks here (Magician's cantrip is a spell pick, made with
+        // the spells): an empty box under it said nothing.
         const nested = pickedFeatures(c, f, ctx.sheet.features).filter(
-          (n) => !seen.has(refKey(n.ref)) && n.choices.length,
+          (n) => !seen.has(refKey(n.ref)) && n.choices.some((x) => !only || only(x, n)),
         );
         const below = new Set([...seen, refKey(f.ref), ...nested.map((n) => refKey(n.ref))]);
         const nestedPicks = (n: DerivedFeature) => (
