@@ -2,7 +2,7 @@
 // "Needs attention" chip, above every tab. Step 3.22 adds Concentration and the "More" menu
 // (rests, dice roller, sources, overrides, level up).
 
-import { Link } from 'react-router';
+import { BackLink } from '../../app/BackLink.tsx';
 import { attentionCount, attentionItems } from '../../engine/play/attention.ts';
 import { setOverride } from '../../engine/play/reducers.ts';
 import { useSheet } from '../../ui/sheetContext.ts';
@@ -39,9 +39,9 @@ export function SheetHeader({
   return (
     <header className={styles.header}>
       <div className={styles.top}>
-        <Link to="/" className={styles.back} aria-label="Back">
+        <BackLink to="/" className={styles.back}>
           <span aria-hidden="true">‹</span>
-        </Link>
+        </BackLink>
         <div className={styles.identity}>
           <h1 className={styles.name}>{character.name}</h1>
           <p className={styles.summary}>

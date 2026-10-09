@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { HashRouter } from 'react-router';
 import { AutoBackup } from './app/AutoBackup.tsx';
 import { Durability } from './app/Durability.tsx';
+import { HistoryTracker } from './app/history.ts';
 import { AppRoutes } from './app/routes.tsx';
 import { UpdatePrompt } from './app/UpdatePrompt.tsx';
 import { detectEnv, requestPersistenceIfUseful } from './db/storage.ts';
@@ -17,6 +18,7 @@ export function App() {
 
   return (
     <HashRouter>
+      <HistoryTracker />
       <RollerProvider>
         <SheetProvider>
           <AppRoutes />

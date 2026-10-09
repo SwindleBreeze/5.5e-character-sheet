@@ -10,6 +10,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router';
 import page from '../../app/Page.module.css';
+import { useGoBack } from '../../app/history.ts';
 import { TopBar } from '../../app/TopBar.tsx';
 import { useAllContent } from '../../content/hooks.ts';
 import { repos } from '../../db/repos.ts';
@@ -74,7 +75,7 @@ function StartDraft() {
   }, [navigate]);
   return (
     <>
-      <TopBar title={TITLE} backTo="/" />
+      <TopBar title={TITLE} backTo="/" backFlow="/new/" />
       <div className={page.empty}>
         {failed ? `The new character couldn’t be saved on this device (${failed}).` : 'Starting…'}
       </div>
@@ -91,6 +92,7 @@ export function WizardPage() {
 function Wizard({ id }: { id: string }) {
   const { step: param = 'class' } = useParams();
   const navigate = useNavigate();
+  const goBack = useGoBack();
   // null = not found; undefined = still loading.
   const stored = useLiveQuery(async () => (await repos().characters.get(id)) ?? null, [id]);
   const actions = useCharacterActions(stored ?? undefined);
@@ -130,7 +132,7 @@ function Wizard({ id }: { id: string }) {
   if (stored === undefined || (stored && !content)) {
     return (
       <>
-        <TopBar title={TITLE} backTo="/" />
+        <TopBar title={TITLE} backTo="/" backFlow={`/new/${id}/`} />
         <div className={page.empty}>Loading…</div>
       </>
     );
@@ -138,7 +140,7 @@ function Wizard({ id }: { id: string }) {
   if (stored === null || !character || !content) {
     return (
       <>
-        <TopBar title="Not found" backTo="/" />
+        <TopBar title="Not found" backTo="/" backFlow={`/new/${id}/`} />
         <div className={page.empty}>This draft doesn’t exist on this device.</div>
       </>
     );
@@ -160,7 +162,8 @@ function Wizard({ id }: { id: string }) {
     setCreating(true);
     rawApply((c: Character) => finishDraft(c, content.index, registry));
     await actions.flush();
-    navigate(`/c/${id}/main`, { replace: true });
+    // The wizard's steps leave the history with it: back from the sheet is the list.
+    goBack(`/c/${id}/main`, `/new/${id}/`);
   };
 
   const ctx = sheet
@@ -218,7 +221,7 @@ function Wizard({ id }: { id: string }) {
 
   return (
     <div className={styles.page}>
-      <TopBar title={TITLE} backTo="/" />
+      <TopBar title={TITLE} backTo="/" backFlow={`/new/${id}/`} />
       <ol className={styles.steps} aria-label="Steps">
         {steps.map((s, i) => (
           <li key={s}>

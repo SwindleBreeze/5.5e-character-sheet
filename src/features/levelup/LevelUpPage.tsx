@@ -6,8 +6,9 @@
 
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useMemo, useState } from 'react';
-import { Navigate, useNavigate, useParams } from 'react-router';
+import { Navigate, useParams } from 'react-router';
 import page from '../../app/Page.module.css';
+import { useGoBack } from '../../app/history.ts';
 import { TopBar } from '../../app/TopBar.tsx';
 import { useAllContent } from '../../content/hooks.ts';
 import { repos } from '../../db/repos.ts';
@@ -60,7 +61,7 @@ const LEADS: Record<LevelUpStep, string> = {
 
 export function LevelUpPage() {
   const { id = '' } = useParams();
-  const navigate = useNavigate();
+  const goBack = useGoBack();
   const stored = useLiveQuery(async () => (await repos().characters.get(id)) ?? null, [id]);
   const actions = useCharacterActions(stored ?? undefined);
   const content = useAllContent(stored?.enabledSources);
@@ -88,7 +89,7 @@ export function LevelUpPage() {
   if (stored === undefined || (stored && (!content || !base || !before))) {
     return (
       <>
-        <TopBar title="Level up" backTo={`/c/${id}/main`} />
+        <TopBar title="Level up" backTo={`/c/${id}/main`} backFlow={`/c/${id}/level-up`} />
         <div className={page.empty}>Loading…</div>
       </>
     );
@@ -168,7 +169,7 @@ export function LevelUpPage() {
     setApplying(true);
     actions.apply(() => plan.character);
     await actions.flush();
-    navigate(`/c/${id}/main`, { replace: true });
+    goBack(`/c/${id}/main`, `/c/${id}/level-up`);
   };
 
   const retrain = (spells: boolean) =>
@@ -272,7 +273,7 @@ export function LevelUpPage() {
   const name = base.name || 'Character';
   return (
     <div className={wizard.page}>
-      <TopBar title={`Level up ${name}`} backTo={`/c/${id}/main`} />
+      <TopBar title={`Level up ${name}`} backTo={`/c/${id}/main`} backFlow={`/c/${id}/level-up`} />
       <ol className={wizard.steps} aria-label="Steps">
         {steps.map((s, i) => (
           <li key={s}>

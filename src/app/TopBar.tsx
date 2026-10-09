@@ -1,22 +1,24 @@
 import type { ReactNode } from 'react';
-import { Link } from 'react-router';
+import { BackLink } from './BackLink.tsx';
 import styles from './TopBar.module.css';
 
 export interface TopBarProps {
   title: string;
   /** Route for the back button; omitted on top-level screens. */
   backTo?: string;
+  /** Paths that belong to this screen and are left with it (a wizard's steps). */
+  backFlow?: string;
   actions?: ReactNode;
 }
 
-export function TopBar({ title, backTo, actions }: TopBarProps) {
+export function TopBar({ title, backTo, backFlow, actions }: TopBarProps) {
   return (
     <header className={styles.bar}>
       <div className={styles.side}>
         {backTo && (
-          <Link to={backTo} className={styles.back} aria-label="Back">
+          <BackLink to={backTo} flow={backFlow} className={styles.back}>
             <span aria-hidden="true">‹</span>
-          </Link>
+          </BackLink>
         )}
       </div>
       <h1 className={styles.title}>{title}</h1>
