@@ -69,16 +69,37 @@ describe('weight and carrying capacity (2024)', () => {
     expect(messages(run(full))).toContain('Backpack holds 30 lb.; it has 50 lb. in it.');
 
     const heavy = brute([row('mail', 'arena mail|tst', { quantity: 4 })], { str: 8, dex: 10 });
+    const walk = run(heavy).speed.walk!;
     expect(run(heavy).issues).toContainEqual({
       severity: 'info',
       code: 'overCapacity',
       message:
-        'You have 200 lb.; you can carry 120 lb. Past that you can only drag, lift or push it, with a Speed of no more than 5 feet.',
+        'You have 200 lb.; you can carry 120 lb. Past that you can only drag, lift or push it, so your Speed is at most 5 feet while you carry it all.',
     });
+    // The Speed on the sheet follows: at most 5 feet, and why.
+    expect(walk.value).toBe(5);
+    expect(walk.parts.at(-1)).toEqual({
+      label: 'Carrying 200 lb., more than you can carry (120 lb.): at most 5 ft.',
+      value: 5 - walk.parts.slice(0, -1).reduce((sum, p) => sum + p.value, 0),
+    });
+
     heavy.inventory[0]!.quantity = 5;
     expect(messages(run(heavy))).toContain(
-      'You have 250 lb.; you can drag, lift or push at most 240 lb.',
+      'You have 250 lb.; you can drag, lift or push at most 240 lb., so your Speed is 0 while you carry it all. Drop or stow something to move.',
     );
+    expect(run(heavy).speed.walk!.value).toBe(0);
+
+    // A group that doesn't count weight: no slowing, no warning.
+    heavy.ignoreWeight = true;
+    expect(run(heavy).speed.walk!.value).toBe(
+      run(brute([], { str: 8, dex: 10 })).speed.walk!.value,
+    );
+    expect(run(heavy).issues.map((i) => i.code)).not.toContain('overDragLimit');
+
+    // The player's own Speed wins.
+    heavy.ignoreWeight = false;
+    heavy.overrides = { 'speed.walk': 25 };
+    expect(run(heavy).speed.walk!.value).toBe(25);
   });
 
   it('a container that holds items by count: a Quiver holds Arrows and nothing else', () => {

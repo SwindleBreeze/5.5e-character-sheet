@@ -231,7 +231,18 @@ export function deriveHitDice(
     }));
 }
 
-export function deriveSpeed(ctx: DeriveContext, strScore: number): DerivedSheet['speed'] {
+/** What the character carries, against what they can carry and drag (`deriveInventory`). */
+export interface Load {
+  weight: number;
+  carry: number;
+  dragLiftPush: number;
+}
+
+export function deriveSpeed(
+  ctx: DeriveContext,
+  strScore: number,
+  load?: Load,
+): DerivedSheet['speed'] {
   const base = new Map<
     MoveMode,
     { value: number | 'walk'; label: string; source?: Contribution['source'] }
@@ -292,7 +303,29 @@ export function deriveSpeed(ctx: DeriveContext, strScore: number): DerivedSheet[
     }
     return out;
   };
-  out.walk = withOverride(derived(multiplied(walkParts)), ctx.character, 'speed.walk');
+  // More than they can carry: they can only drag, lift or push it, at a Speed of no more than
+  // 5 feet; more than they can drag: they can't move with it all.
+  const limit =
+    load && load.weight > load.dragLiftPush
+      ? {
+          value: 0,
+          label: `Carrying ${load.weight} lb., more than you can drag (${load.dragLiftPush} lb.)`,
+        }
+      : load && load.weight > load.carry
+        ? {
+            value: 5,
+            label: `Carrying ${load.weight} lb., more than you can carry (${load.carry} lb.): at most 5 ft.`,
+          }
+        : undefined;
+  const loaded = (d: Derived): Derived =>
+    limit && d.value > limit.value
+      ? {
+          value: limit.value,
+          parts: [...d.parts, { label: limit.label, value: limit.value - d.value }],
+        }
+      : d;
+
+  out.walk = withOverride(loaded(derived(multiplied(walkParts))), ctx.character, 'speed.walk');
   for (const mode of MOVE_MODES) {
     if (mode === 'walk') continue;
     const entry = base.get(mode);
@@ -317,7 +350,7 @@ export function deriveSpeed(ctx: DeriveContext, strScore: number): DerivedSheet[
             ...(bonuses.get(mode) ?? []),
             ...penalties,
           ];
-    out[mode] = withOverride(derived(parts), ctx.character, `speed.${mode}`);
+    out[mode] = withOverride(loaded(derived(parts)), ctx.character, `speed.${mode}`);
   }
   for (const d of Object.values(out)) if (d.value < 0) d.value = 0;
   return out;

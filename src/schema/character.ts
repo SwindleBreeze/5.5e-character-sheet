@@ -263,6 +263,11 @@ export interface Character {
    */
   wildShapeForms?: Id[];
   currency: Currency;
+  /**
+   * The group doesn't count weight: carrying more than capacity doesn't slow the character
+   * (optional, no migration).
+   */
+  ignoreWeight?: boolean;
   state: PlayState;
   overrides: Partial<Record<OverrideKey, number | string | boolean>>;
   details: Details;

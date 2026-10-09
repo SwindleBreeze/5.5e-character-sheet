@@ -145,6 +145,10 @@ export function MainTab({ character, sheet, index, apply, conditionOptions }: Ma
     conditionOptions.find((o) => o.id === id)?.name ?? nameOf(index, 'rule', id);
   const ds = character.state.deathSaves;
   const speedModes = Object.entries(sheet.speed).filter(([mode]) => mode !== 'walk');
+  // Weight slows the character: said under the Speed, with the reason in its explanation.
+  const overloaded = sheet.issues.some(
+    (i) => i.code === 'overCapacity' || i.code === 'overDragLimit',
+  );
   const sharedSaves = sharedSituational(ABILITIES.map((a) => sheet.saves[a]));
 
   const sections: Record<SectionId, ReactNode> = {
@@ -254,7 +258,11 @@ export function MainTab({ character, sheet, index, apply, conditionOptions }: Ma
               label="Speed"
               value={sheet.speed.walk.value}
               sub={
-                speedModes.length ? speedModes.map(([m, d]) => `${m} ${d.value}`).join(', ') : 'ft.'
+                overloaded
+                  ? 'carrying too much'
+                  : speedModes.length
+                    ? speedModes.map(([m, d]) => `${m} ${d.value}`).join(', ')
+                    : 'ft.'
               }
               derived={sheet.speed.walk}
               onExplain={() =>
