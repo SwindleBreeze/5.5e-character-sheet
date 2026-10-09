@@ -6,9 +6,33 @@
       "source": "TST",
       "page": 4,
       "category": "G",
-      "prerequisite": [{ "level": 4, "ability": [{ "str": 13 }, { "cha": 13 }] }],
-      "ability": [{ "choose": { "from": ["str", "cha"] } }],
-      "skillProficiencies": [{ "choose": { "from": ["athletics", "performance"] } }],
+      "prerequisite": [
+        {
+          "level": 4,
+          "ability": [
+            {
+              "str": 13
+            },
+            {
+              "cha": 13
+            }
+          ]
+        }
+      ],
+      "ability": [
+        {
+          "choose": {
+            "from": ["str", "cha"]
+          }
+        }
+      ],
+      "skillProficiencies": [
+        {
+          "choose": {
+            "from": ["athletics", "performance"]
+          }
+        }
+      ],
       "entries": ["You have fought many times."]
     },
     {
@@ -20,18 +44,36 @@
       "additionalSpells": [
         {
           "name": "Gladiator Spells",
-          "ability": { "choose": ["int", "wis", "cha"] },
-          "known": { "_": [{ "choose": "level=0|class=Gladiator", "count": 2 }] }
+          "ability": {
+            "choose": ["int", "wis", "cha"]
+          },
+          "known": {
+            "_": [
+              {
+                "choose": "level=0|class=Gladiator",
+                "count": 2
+              }
+            ]
+          }
         }
       ],
       "entries": [
-        { "type": "entries", "name": "Two Cantrips", "entries": ["Learn two cantrips."] }
+        {
+          "type": "entries",
+          "name": "Two Cantrips",
+          "entries": ["Learn two cantrips."]
+        }
       ],
       "_versions": [
         {
           "name": "Spark Initiate; Gladiator",
           "source": "TST",
-          "_mod": { "entries": { "mode": "appendArr", "items": "Gladiator version." } }
+          "_mod": {
+            "entries": {
+              "mode": "appendArr",
+              "items": "Gladiator version."
+            }
+          }
         }
       ]
     },
@@ -40,8 +82,23 @@
       "source": "TST",
       "page": 6,
       "category": "FS",
-      "prerequisite": [{ "feature": ["Arena Style"] }],
+      "prerequisite": [
+        {
+          "feature": ["Arena Style"]
+        }
+      ],
       "entries": ["You wield a net well."]
+    },
+    {
+      "name": "Old Grit",
+      "source": "OLD",
+      "page": 13,
+      "ability": [
+        {
+          "con": 1
+        }
+      ],
+      "entries": ["You are hard to wear down."]
     }
   ]
 }

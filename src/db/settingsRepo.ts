@@ -12,6 +12,8 @@ export interface Settings {
   lastImport: ImportSummary | null;
   /** The install card was put away on the Characters screen (it stays in Settings). */
   installCardDismissed: boolean;
+  /** 2014 books can be switched on, and their content is offered (step 8.1). */
+  show2014: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -21,6 +23,7 @@ export const DEFAULT_SETTINGS: Settings = {
   autoBackupHandle: null,
   lastImport: null,
   installCardDismissed: false,
+  show2014: false,
 };
 
 export function createSettingsRepo(db: AppDb = getDb()) {

@@ -7,20 +7,88 @@
       "page": 7,
       "edition": "one",
       "ability": [
-        { "choose": { "weighted": { "from": ["str", "con", "cha"], "weights": [2, 1] } } },
-        { "choose": { "weighted": { "from": ["str", "con", "cha"], "weights": [1, 1, 1] } } }
+        {
+          "choose": {
+            "weighted": {
+              "from": ["str", "con", "cha"],
+              "weights": [2, 1]
+            }
+          }
+        },
+        {
+          "choose": {
+            "weighted": {
+              "from": ["str", "con", "cha"],
+              "weights": [1, 1, 1]
+            }
+          }
+        }
       ],
-      "feats": [{ "spark initiate; gladiator|tst": true }],
-      "skillProficiencies": [{ "athletics": true, "performance": true }],
-      "toolProficiencies": [{ "anyArtisansTool": 1 }],
-      "languageProficiencies": [{ "anyStandard": 1 }],
+      "feats": [
+        {
+          "spark initiate; gladiator|tst": true
+        }
+      ],
+      "skillProficiencies": [
+        {
+          "athletics": true,
+          "performance": true
+        }
+      ],
+      "toolProficiencies": [
+        {
+          "anyArtisansTool": 1
+        }
+      ],
+      "languageProficiencies": [
+        {
+          "anyStandard": 1
+        }
+      ],
       "startingEquipment": [
         {
-          "A": [{ "item": "torch|tst", "quantity": 2 }, { "value": 1000 }],
-          "B": [{ "value": 5000 }]
+          "A": [
+            {
+              "item": "torch|tst",
+              "quantity": 2
+            },
+            {
+              "value": 1000
+            }
+          ],
+          "B": [
+            {
+              "value": 5000
+            }
+          ]
         }
       ],
       "entries": ["You worked in the arena."]
+    },
+    {
+      "name": "Old Sailor",
+      "source": "OLD",
+      "page": 12,
+      "skillProficiencies": [
+        {
+          "athletics": true,
+          "perception": true
+        }
+      ],
+      "startingEquipment": [
+        {
+          "_": [
+            {
+              "item": "torch|tst",
+              "quantity": 1
+            },
+            {
+              "value": 1000
+            }
+          ]
+        }
+      ],
+      "entries": ["You sailed the old seas."]
     }
   ]
 }

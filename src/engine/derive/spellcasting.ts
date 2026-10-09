@@ -272,6 +272,11 @@ export function deriveSpellcasting(
         // The class's own cantrip picks (`cantrips.<level>`) count toward its number; cantrips a
         // feature adds (Thaumaturge, Primal Lore, Tinker's Magic's Mending) come on top.
         const own = 'slot' in grant.spell && grant.spell.slot.startsWith('cantrips.');
+        // Likewise its level-up spell picks (`spells.<level>`) count toward its number; a spell
+        // a feature makes known comes on top, always prepared, as 2024 subclasses grant theirs
+        // (2014 ones say "it doesn't count against the spells you know": Divine Soul, Lunar
+        // Sorcery; step 8.2).
+        const ownSpells = 'slot' in grant.spell && /^spells\.\d+$/.test(grant.spell.slot);
         for (const id of grantIds(ctx, grant, source)) {
           const cantrip = spell(id)?.level === 0;
           if (grant.mode === 'spellbook') book.push(id);
@@ -283,7 +288,7 @@ export function deriveSpellcasting(
             if (cantrip) {
               cantrips.push(id);
               if (!own) extraCantrips.add(id);
-            } else (grant.mode === 'known' ? known : always).push(id);
+            } else (grant.mode === 'known' && ownSpells ? known : always).push(id);
           }
         }
       }

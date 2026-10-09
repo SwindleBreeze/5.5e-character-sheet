@@ -11,7 +11,9 @@ export function choiceHelp(c: DerivedFeatureChoice): string | undefined {
   const slot = offer.key.slot;
   switch (offer.kind) {
     case 'backgroundAbility':
-      return 'Raise one score by 2 and another by 1, or all three by 1. Best in your class’s primary ability. No score can go above 20.';
+      return `Raise one score by 2 and another by 1, or ${
+        Array.isArray(offer.from) && offer.from.length > 3 ? 'three scores' : 'all three'
+      } by 1. Best in your class’s primary ability. No score can go above 20.`;
     case 'ability':
       return 'Each pick raises that ability score. Every 2 points of a score is +1 to its modifier.';
     case 'spellAbility':

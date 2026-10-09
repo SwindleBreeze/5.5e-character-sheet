@@ -12,6 +12,7 @@ import {
   type ClassDef,
   type Species,
 } from '../../schema/index.ts';
+import { backgroundAbilityOptions } from '../../engine/rules/legacy.ts';
 
 const abbr = (a: Ability) => ABILITY_NAMES[a].slice(0, 3).toUpperCase();
 
@@ -48,7 +49,7 @@ export function backgroundChips(
   index: ContentIndex,
   picked?: readonly string[],
 ): string[] {
-  const from = [...new Set(bg.abilityOptions.flatMap((o) => o.from))];
+  const from = [...new Set(backgroundAbilityOptions(bg).flatMap((o) => o.from))];
   const feat = bg.featId ? index.get({ kind: 'feat', id: bg.featId })?.name : undefined;
   const skills = backgroundSkills(bg);
   return [

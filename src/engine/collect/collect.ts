@@ -26,6 +26,11 @@ import { nestedFeatureRefs } from '../content/refs.ts';
 import { childEffects } from '../effects/walk.ts';
 import type { FeatureEffectsMap } from '../featureEffects/types.ts';
 import { spellChoiceEffects } from '../spells/casters.ts';
+import {
+  backgroundAbilityOptions,
+  isAbilityIncrease,
+  legacyBackgroundEffects,
+} from '../rules/legacy.ts';
 import type { ClassLevel, Collected, EffectSource, Offer, RecordAt } from './types.ts';
 
 /**
@@ -414,6 +419,8 @@ export function collectEffects(
     ref: Ref,
     ctx: OwnerCtx,
     fieldEffects: (e: ContentEntity) => Effect[] = () => [],
+    /** Effects of the entity the rules leave out (a 2014 species' ability increases). */
+    drop: (e: Effect) => boolean = () => false,
   ) {
     const ownerKey = `${refKey(ref)}@${ctx.n ?? ''}`;
     if (seenOwners.has(ownerKey)) return;
@@ -434,7 +441,11 @@ export function collectEffects(
 
     const mapped = opts.registry?.[refKey(ref)]?.effects ?? [];
     apply(
-      [...(entity ? fieldEffects(entity) : []), ...(entity ?? snapshot!).effects, ...mapped],
+      [
+        ...(entity ? fieldEffects(entity) : []),
+        ...(entity ?? snapshot!).effects.filter((e) => !drop(e)),
+        ...mapped,
+      ],
       source,
     );
     // What the player added to it, under its name, marked as theirs.
@@ -505,19 +516,28 @@ export function collectEffects(
     }
   }
 
-  // 2. Species and background.
+  // 2. Species and background. A 2014 species' ability increases give way to the
+  // background's, unless the player keeps them (then the background gives none; step 8.2).
   const { speciesRef, backgroundRef } = character.log[0]?.origin ?? {};
-  if (speciesRef) addOwner(speciesRef, {});
+  const oldSpecies = !!speciesRef && index.get(speciesRef)?.edition === '2014';
+  const speciesIncreases = oldSpecies && !!character.legacyAbilities;
+  if (speciesRef)
+    addOwner(
+      speciesRef,
+      {},
+      undefined,
+      (e) => oldSpecies && !speciesIncreases && isAbilityIncrease(e),
+    );
   if (backgroundRef) {
-    addOwner(backgroundRef, {}, (e) => (e.kind === 'background' ? creationLanguageEffects(e) : []));
+    addOwner(backgroundRef, {}, (e) =>
+      e.kind === 'background' ? [...creationLanguageEffects(e), ...legacyBackgroundEffects(e)] : [],
+    );
     const background = index.get({ kind: 'background', id: backgroundRef.id });
     const source = out.owners.find((o) => refKey(o.ref) === refKey(backgroundRef));
     if (background && source) {
-      const from = [...new Set(background.abilityOptions.flatMap((o) => o.from))];
-      const count = Math.max(
-        0,
-        ...background.abilityOptions.map((o) => o.weights.reduce((a, b) => a + b, 0)),
-      );
+      const options = speciesIncreases ? [] : backgroundAbilityOptions(background);
+      const from = [...new Set(options.flatMap((o) => o.from))];
+      const count = Math.max(0, ...options.map((o) => o.weights.reduce((a, b) => a + b, 0)));
       if (from.length && count) {
         offer({
           key: choiceKey(backgroundRef, 'ability'),
@@ -600,8 +620,12 @@ export function entityOfferSlots(entity: ContentEntity): Set<string> {
     for (const slot of equipmentGroups(entity.startingEquipment).keys()) slots.add(slot);
   }
   if (entity.kind === 'background') {
-    if (entity.abilityOptions.length) slots.add('ability');
-    for (const slot of effectSlots(creationLanguageEffects(entity))) slots.add(slot);
+    if (backgroundAbilityOptions(entity).length) slots.add('ability');
+    for (const slot of effectSlots([
+      ...creationLanguageEffects(entity),
+      ...legacyBackgroundEffects(entity),
+    ]))
+      slots.add(slot);
     for (const slot of equipmentGroups(entity.equipment).keys()) slots.add(slot);
   }
   return slots;

@@ -7,11 +7,18 @@
       "page": 3,
       "edition": "one",
       "size": ["S", "M"],
-      "speed": { "walk": 30, "climb": true },
+      "speed": {
+        "walk": 30,
+        "climb": true
+      },
       "darkvision": 60,
       "resist": ["poison"],
       "entries": [
-        { "type": "entries", "name": "Moss Lineage", "entries": ["Choose a lineage."] },
+        {
+          "type": "entries",
+          "name": "Moss Lineage",
+          "entries": ["Choose a lineage."]
+        },
         {
           "type": "entries",
           "name": "Spores",
@@ -21,13 +28,23 @@
       "additionalSpells": [
         {
           "name": "Green",
-          "ability": { "choose": ["int", "wis"] },
-          "known": { "1": ["glitter burst|tst#c"] }
+          "ability": {
+            "choose": ["int", "wis"]
+          },
+          "known": {
+            "1": ["glitter burst|tst#c"]
+          }
         },
         {
           "name": "Grey",
           "ability": "wis",
-          "innate": { "3": { "daily": { "1": ["dim lantern|tst"] } } }
+          "innate": {
+            "3": {
+              "daily": {
+                "1": ["dim lantern|tst"]
+              }
+            }
+          }
         }
       ],
       "_versions": [
@@ -53,12 +70,26 @@
             "name": "Mossling ({{hue}})",
             "source": "TST",
             "_mod": {
-              "entries": { "mode": "replaceTxt", "replace": "spores", "with": "{{hue}} spores" }
+              "entries": {
+                "mode": "replaceTxt",
+                "replace": "spores",
+                "with": "{{hue}} spores"
+              }
             }
           },
           "_implementations": [
-            { "_variables": { "hue": "red" }, "resist": ["fire"] },
-            { "_variables": { "hue": "blue" }, "resist": ["cold"] }
+            {
+              "_variables": {
+                "hue": "red"
+              },
+              "resist": ["fire"]
+            },
+            {
+              "_variables": {
+                "hue": "blue"
+              },
+              "resist": ["cold"]
+            }
           ]
         }
       ]
@@ -69,10 +100,46 @@
       "page": 10,
       "size": ["M"],
       "speed": 25,
-      "ability": [{ "con": 2 }],
+      "ability": [
+        {
+          "con": 2
+        }
+      ],
       "traitTags": ["Powerful Build"],
-      "entries": [{ "type": "entries", "name": "Stone Skin", "entries": ["Tough."] }],
+      "entries": [
+        {
+          "type": "entries",
+          "name": "Stone Skin",
+          "entries": ["Tough."]
+        }
+      ],
       "reprintedAs": ["Mossling|TST"]
+    },
+    {
+      "name": "Cragling",
+      "source": "OLD",
+      "page": 11,
+      "size": ["M"],
+      "speed": 30,
+      "ability": [
+        {
+          "str": 2,
+          "con": 1
+        },
+        {
+          "choose": {
+            "from": ["str", "con", "wis"],
+            "count": 3
+          }
+        }
+      ],
+      "entries": [
+        {
+          "type": "entries",
+          "name": "Crag Climber",
+          "entries": ["Sure-footed."]
+        }
+      ]
     }
   ],
   "subrace": [
@@ -81,8 +148,18 @@
       "source": "OLD",
       "raceName": "Stoneborn",
       "raceSource": "OLD",
-      "ability": [{ "str": 1 }],
-      "entries": [{ "type": "entries", "name": "Quarry Strength", "entries": ["Strong."] }]
+      "ability": [
+        {
+          "str": 1
+        }
+      ],
+      "entries": [
+        {
+          "type": "entries",
+          "name": "Quarry Strength",
+          "entries": ["Strong."]
+        }
+      ]
     }
   ]
 }

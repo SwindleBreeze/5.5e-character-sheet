@@ -1,8 +1,9 @@
 # 5.5e Character Sheet: Plan
 
 > **Status (2026-10-09):** phases 1–7 are done and live. The group's first campaign starts on
-> what is there; play-test fixes go into the **7.10 buffer**. Phase 8 (2014 content) waits until
-> a player asks for it. Phase 9 (public release) waits until publishing is decided.
+> what is there; play-test fixes go into the **7.10 buffer**. Phase 8 (2014 content) has
+> started: 2014 options can be picked for 2024 characters (8.1–8.2); their features' effects
+> (8.3) come in the order players pick them. Phase 9 (public release) waits until publishing is decided.
 >
 > The full plan for phases 1–7 (design, schema, engine, every step's notes) is archived word for
 > word in [history/PLAN-phases-1-7.md](history/PLAN-phases-1-7.md). Code comments that cite
@@ -31,17 +32,17 @@ Rules that every step follows:
 
 ## 2. Where we are
 
-| Phase | What                                                                                   | State                           |
-| ----- | -------------------------------------------------------------------------------------- | ------------------------------- |
-| 1     | Scaffold, schema, database, app shell, PWA, CI with the content guard                  | Done                            |
-| 2, 2b | Importer, sources, packs, library, rich text; deities, gifts, Bastions, 2014 options   | Done                            |
-| 3     | Engine, Parchment design, every sheet tab, play tools                                  | Done                            |
-| 4, 4B | Creation wizard, creation guide and explanations                                       | Done                            |
-| 5     | Level-up, undo, higher-level creation, multiclassing, preparation, retraining          | Done                            |
-| 6     | Every 2024 class, subclass, feat and species feature mapped; golden checks; play tests | Done                            |
-| 7     | Homebrew, companions, durability, accessibility, performance, magic items              | Done; 7.10 buffer open          |
-| 8     | 2014 content, from every book                                                          | When a player asks (§4)         |
-| 9     | Public release: SRD bundle, import your own content, legal pages                       | When publishing is decided (§5) |
+| Phase | What                                                                                   | State                            |
+| ----- | -------------------------------------------------------------------------------------- | -------------------------------- |
+| 1     | Scaffold, schema, database, app shell, PWA, CI with the content guard                  | Done                             |
+| 2, 2b | Importer, sources, packs, library, rich text; deities, gifts, Bastions, 2014 options   | Done                             |
+| 3     | Engine, Parchment design, every sheet tab, play tools                                  | Done                             |
+| 4, 4B | Creation wizard, creation guide and explanations                                       | Done                             |
+| 5     | Level-up, undo, higher-level creation, multiclassing, preparation, retraining          | Done                             |
+| 6     | Every 2024 class, subclass, feat and species feature mapped; golden checks; play tests | Done                             |
+| 7     | Homebrew, companions, durability, accessibility, performance, magic items              | Done; 7.10 buffer open           |
+| 8     | 2014 content, from every book                                                          | 8.1–8.2 done; 8.3 in order asked |
+| 9     | Public release: SRD bundle, import your own content, legal pages                       | When publishing is decided (§5)  |
 
 Numbers on `main`: 864 unit tests in 101 files; 233 real-data checks in 21 files
 (`FIVETOOLS_DATA=… npm run test:smoke`).
@@ -77,12 +78,12 @@ subraces. The 5etools data re-homes 2014 subclasses onto the 2024 classes, which
 
 ### 8A. 2014 options on 2024 characters (what the 2024 Player's Handbook allows)
 
-| Step | Work                                                                                                                                                                                                                                                                                                                                                                          | Est. |
-| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
-| 8.1  | **"Show 2014".** A global switch and one per character. Settings → Sources lets 2014 books be switched on (now greyed out). A 2014 entity reprinted in 2024 stays hidden unless "show reprinted" is also on.                                                                                                                                                                  | 1    |
-| 8.2  | **2014 options in the wizard and level-up.** A 2014 subclass on its 2024 class (subclass level from the 2024 class); a 2014 species (its ability increases replaced by the background's, on by default, with a switch); 2014 feats (no category: offered as General feats); a 2014 background (a notice, and a pick of increases or an Origin feat). Mismatches are warnings. | 3    |
-| 8.3  | **Their features on the sheet.** Every 2014 subclass, feat and species from every book gets a mapping with phase 6's tooling (`featureEffects/legacy/`), at levels A and B; what the engine can't do shows the imported text with a note. The coverage gate reports 2014 apart. Done in the order players pick them, then the rest book by book.                              | 8    |
-| 8.4  | **Tests.** Every 2014 subclass built 3 → 20 on a 2024 class with nothing fillable left (the pick-places sweep extended to 2014 options); species and feats through the wizard; golden checks at 3, 5, 11 and 20 for each subclass.                                                                                                                                            | 2    |
+| Step | Work                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Est. |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---- |
+| 8.1  | **"Show 2014 content".** **Done 2026-10-09.** A setting in Settings → Sources lets 2014 books be switched on (globally, and in a character's own book list), with an "Every book" preset; a 2024 reprint still hides its 2014 original. Off again, 2014 content is hidden and the books stay switched on for later. In code: `offeredSources` and the `SHOW_2014` mark (`src/sources/sourceFilter.ts`); the toggles edit the stored list.                                                                                                                                                                                                                                                                                                                                            | 1    |
+| 8.2  | **2014 options in the wizard and level-up.** **Done 2026-10-09.** 2014 subclasses need nothing: the data re-homes them onto the 2024 classes with their features at the 2024 levels (61 offered, every one builds 1 → 20 clean). A 2014 species' ability increases give way to the background's, with a switch on the Species step to keep them (then the background gives none: `Character.legacyAbilities`). A 2014 feat (no category) is a General feat. A 2014 background gets free +2/+1 or +1/+1/+1 (a grid of +2/+1 per ability, not fifty combinations) and an Origin feat pick, with a notice. Spells a 2014 feature makes known are always prepared, not counted against the 2024 limit (Divine Soul, Lunar Sorcery). In code: `src/engine/rules/legacy.ts`, `SpreadGrid`. | 3    |
+| 8.3  | **Their features on the sheet.** Every 2014 subclass, feat and species from every book gets a mapping with phase 6's tooling (`featureEffects/legacy/`), at levels A and B; what the engine can't do shows the imported text with a note. The coverage gate reports 2014 apart. Done in the order players pick them, then the rest book by book.                                                                                                                                                                                                                                                                                                                                                                                                                                     | 8    |
+| 8.4  | **Tests.** **Started 2026-10-09:** `tests/smoke/legacy.test.ts` builds every 2014 subclass 1 → 20 on its 2024 class (and through level-up at 3) with no warnings and every pick on screen, every 2014 species and background through the wizard, and checks every 2014 feat is offered at level 4; fixture unit and wizard tests for each rule. Left: golden checks at 3, 5, 11 and 20 for each subclass once 8.3 maps them.                                                                                                                                                                                                                                                                                                                                                         | 2    |
 
 **8A total: about 14 days; 8.1–8.2 alone (about 4) make 2014 options pickable, with their text.**
 

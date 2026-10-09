@@ -1,4 +1,5 @@
-import { useEnabledSources, useSources } from '../../content/hooks.ts';
+import { useShow2014, useSources, useStoredSources } from '../../content/hooks.ts';
+import { DEFAULT_SETTINGS } from '../../db/settingsRepo.ts';
 import { repos } from '../../db/repos.ts';
 import type { SourceCode } from '../../schema/index.ts';
 import {
@@ -33,7 +34,9 @@ export function SourceToggles({
   manage?: boolean;
 } = {}) {
   const sources = useSources();
-  const global = useEnabledSources();
+  // As stored: 2014 books that are on stay on while "Show 2014 content" is off.
+  const global = useStoredSources() ?? DEFAULT_SETTINGS.enabledSources;
+  const show2014 = useShow2014() ?? false;
   const enabled = value ?? global;
 
   if (sources === undefined) return null;
@@ -69,12 +72,17 @@ export function SourceToggles({
         <Button size="sm" onClick={() => preset('all2024')}>
           All 2024
         </Button>
+        {show2014 && (
+          <Button size="sm" onClick={() => preset('all')}>
+            Every book
+          </Button>
+        )}
       </div>
       {groupSources(sources).map((group) => (
         <fieldset key={group.group} className={styles.group}>
           <legend className={styles.legend}>{group.title}</legend>
           {group.sources.map((s) => {
-            const selectable = isSelectable(s);
+            const selectable = isSelectable(s, show2014);
             const row = (
               <label key={s.code} className={styles.row} data-disabled={!selectable || undefined}>
                 <input
@@ -85,9 +93,7 @@ export function SourceToggles({
                 />
                 <span className={styles.name}>{s.name}</span>
                 <Badge>{s.homebrew?.abbreviation ?? s.code}</Badge>
-                <span className={styles.count}>
-                  {selectable ? total(s.counts) : '2014 · later'}
-                </span>
+                <span className={styles.count}>{selectable ? total(s.counts) : '2014'}</span>
               </label>
             );
             if (!isHomebrew(s)) return row;

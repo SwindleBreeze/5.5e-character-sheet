@@ -25,6 +25,7 @@ import { creationLanguageEffects } from '../collect/collect.ts';
 import type { ContentIndex } from '../content/contentIndex.ts';
 import { SIZE_NAMES } from '../items/items.ts';
 import { cantripCount, maxSpellLevel, preparedCount } from '../spells/casters.ts';
+import { backgroundAbilityOptions } from '../rules/legacy.ts';
 
 export { firstSentence };
 
@@ -426,7 +427,7 @@ export function classBenefits(cls: ClassDef, index: ContentIndex): Benefit[] {
 
 export function backgroundBenefits(bg: Background, index: ContentIndex): Benefit[] {
   const out: Benefit[] = [];
-  const from = [...new Set(bg.abilityOptions.flatMap((o) => o.from))];
+  const from = [...new Set(backgroundAbilityOptions(bg).flatMap((o) => o.from))];
   if (from.length)
     out.push({
       label: 'Ability scores',

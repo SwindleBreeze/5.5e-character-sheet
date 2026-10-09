@@ -3,6 +3,8 @@ import { TopBar } from '../../app/TopBar.tsx';
 import page from '../../app/Page.module.css';
 import { useTheme } from '../../app/theme/useTheme.ts';
 import type { ThemePref } from '../../app/theme/theme.ts';
+import { useShow2014 } from '../../content/hooks.ts';
+import { repos } from '../../db/repos.ts';
 import { SourceToggles } from '../sources/SourceToggles.tsx';
 import { BackupCard } from './BackupCard.tsx';
 import { InstallCard } from './InstallCard.tsx';
@@ -17,6 +19,7 @@ const THEMES: { value: ThemePref; label: string }[] = [
 
 export function SettingsPage() {
   const [theme, setTheme] = useTheme();
+  const show2014 = useShow2014() ?? false;
 
   return (
     <>
@@ -47,9 +50,24 @@ export function SettingsPage() {
             Sources
           </h2>
           <p className={page.muted}>
-            Choose which imported books the library and character builder offer. 2014 books are
-            listed but can’t be switched on yet.
+            Choose which imported books the library and character builder offer.
           </p>
+          <label className={styles.check}>
+            <input
+              type="checkbox"
+              checked={show2014}
+              onChange={(e) => void repos().settings.set('show2014', e.target.checked)}
+            />
+            <span>
+              Show 2014 content
+              <span className={page.muted}>
+                {' '}
+                Lets 2014 books be switched on. A 2024 character can take their subclasses, species,
+                feats and backgrounds, as the 2024 rules allow; where a 2024 book reprints
+                something, the 2024 version is offered instead.
+              </span>
+            </span>
+          </label>
           <SourceToggles manage />
           <p>
             <Link to="/library/import">Import or share content</Link>
