@@ -43,6 +43,32 @@ export function when(p: Predicate, effects: Effect[]): Effect {
   return { type: 'when', when: p, effects };
 }
 
+/**
+ * Advantage on saves in one situation (`being Charmed`, `spells`): listed with the saves, not
+ * rolled, since the sheet can't know what a save is against.
+ */
+export function savesAgainst(against: string): Effect {
+  return { type: 'rollMode', target: 'save:all', mode: 'advantage', against };
+}
+
+/** A cursed weapon's hold (a Berserker Axe): Disadvantage on attacks with any other weapon. */
+export function onlyThisWeapon(itemId: string, name: string): Effect[] {
+  return [
+    {
+      type: 'rollMode',
+      target: 'attack:all',
+      mode: 'disadvantage',
+      note: `${name}'s curse: another weapon`,
+      filter: { source: ['weapon'], notItemIds: [itemId] },
+    },
+  ];
+}
+
+/** Advantage on attack rolls against some creatures (Grappler: a creature you Grapple). */
+export function attacksAgainst(against: string): Effect {
+  return { type: 'rollMode', target: 'attack:all', mode: 'advantage', against };
+}
+
 export const notHeavy: Predicate = { armor: 'notHeavy' };
 export const noArmor: Predicate = { armor: 'none' };
 export const notIncapacitated: Predicate = { not: { condition: 'condition/incapacitated|xphb' } };

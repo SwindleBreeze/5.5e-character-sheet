@@ -13,6 +13,7 @@ import { useRoller } from '../../ui/rollerContext.ts';
 import { SwipeTabs, type TabDef } from '../../ui/SwipeTabs.tsx';
 import { ActionsTab } from './ActionsTab.tsx';
 import { DescriptionTab } from './DescriptionTab.tsx';
+import { ExtrasTab } from './ExtrasTab.tsx';
 import { FeaturesTab } from './FeaturesTab.tsx';
 import { InventoryTab } from './InventoryTab.tsx';
 import { MainTab } from './MainTab.tsx';
@@ -93,6 +94,8 @@ export function SheetPage() {
         return <InventoryTab {...b} />;
       case 'features':
         return <FeaturesTab {...b} />;
+      case 'extras':
+        return <ExtrasTab {...b} />;
       case 'description':
         return <DescriptionTab {...b} />;
       case 'notes':

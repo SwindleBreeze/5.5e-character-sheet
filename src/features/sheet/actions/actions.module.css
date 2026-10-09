@@ -92,6 +92,9 @@ button.name {
 
 /* Tapping it shows where the number comes from. */
 .rollLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
   min-height: 32px;
   padding: 0;
   border: 0;

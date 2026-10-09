@@ -1,4 +1,5 @@
-// Make a pack from what is in the database: all sources by default, or the chosen ones.
+// Make a pack from what is in the database: all sources by default, or the chosen ones (the
+// homebrew group shares its sources this way). `fileName` is the start of the file's name.
 
 import type { ContentRepo } from '../../db/contentRepo.ts';
 import { ENTITY_KINDS, type EntitiesByKind, type SourceCode } from '../../schema/index.ts';
@@ -7,7 +8,7 @@ import { buildPack, encodePack, packFileName } from './packFile.ts';
 
 export async function exportPack(
   content: ContentRepo,
-  opts: { sources?: SourceCode[]; now?: number } = {},
+  opts: { sources?: SourceCode[]; now?: number; fileName?: string } = {},
 ): Promise<{ bytes: Uint8Array; fileName: string; entityCount: number }> {
   const now = opts.now ?? Date.now();
   const keep = opts.sources ? new Set(opts.sources) : null;
@@ -24,5 +25,5 @@ export async function exportPack(
     }
   }
   const bytes = await encodePack(buildPack(entities, sources, ADAPTER_VERSION, now));
-  return { bytes, fileName: packFileName(now), entityCount };
+  return { bytes, fileName: packFileName(now, opts.fileName), entityCount };
 }

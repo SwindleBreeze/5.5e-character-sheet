@@ -437,6 +437,16 @@ export function collectEffects(
       [...(entity ? fieldEffects(entity) : []), ...(entity ?? snapshot!).effects, ...mapped],
       source,
     );
+    // What the player added to it, under its name, marked as theirs.
+    const custom = (character.customEffects ?? []).filter(
+      (e) => refKey(e.owner) === refKey(ref) && ctx.n === undefined,
+    );
+    if (custom.length) {
+      apply(
+        custom.map((e) => e.effect),
+        { ...source, name: `${source.name} (added by you)`, custom: true },
+      );
+    }
   }
 
   /** A class or subclass feature, and the features written inside it (plan §9.2, 3.11). */

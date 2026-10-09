@@ -76,17 +76,17 @@ export const BARBARIAN: FeatureEffectsMap = {
   [`${C('danger sense')}|2|xphb`]: numbers([
     when(notIncapacitated, [{ type: 'rollMode', target: 'save:dex', mode: 'advantage' }]),
   ]),
-  [`${C('reckless attack')}|2|xphb`]: toggled(
-    [
-      {
-        type: 'toggle',
-        toggleId: 'reckless-attack',
-        name: 'Reckless Attack',
-        effects: [{ type: 'rollMode', target: 'attack:str', mode: 'advantage' }],
-      },
-    ],
-    { notes: 'Until the start of your next turn, attack rolls against you have Advantage too.' },
-  ),
+  [`${C('reckless attack')}|2|xphb`]: toggled([
+    {
+      type: 'toggle',
+      toggleId: 'reckless-attack',
+      name: 'Reckless Attack',
+      effects: [
+        { type: 'rollMode', target: 'attack:str', mode: 'advantage' },
+        { type: 'attackedMode', mode: 'advantage' },
+      ],
+    },
+  ]),
   [`${C('barbarian subclass')}|3|xphb`]: text(),
   [`${C('ability score improvement')}|4|xphb`]: fromData(),
   [`${C('ability score improvement')}|8|xphb`]: fromData(),

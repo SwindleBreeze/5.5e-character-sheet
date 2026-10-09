@@ -1,6 +1,6 @@
 // The 5etools `_mod` engine shared by `_copy` and `_versions` (plan §1). Implements the generic
-// operations; bestiary-only operations are reported as unsupported. Text replacement never
-// touches the inside of `{@tags}`.
+// operations and the bestiary's spell edits (step 7.6); other bestiary-only operations are
+// reported as unsupported. Text replacement never touches the inside of `{@tags}`.
 
 import { splitByTags } from '../../richtext/parseTags.ts';
 import {
@@ -98,6 +98,44 @@ function scalar(target: RawObject, path: string[], info: ModInfo, op: (n: number
   };
   if (info.prop === '*') Object.keys(tgt).forEach(apply);
   else if (typeof info.prop === 'string') apply(info.prop);
+}
+
+/** Spell lists of a stat block's spellcasting, by frequency (step 7.6). */
+const SPELL_FREQUENCIES = ['rest', 'daily', 'weekly', 'monthly', 'yearly'];
+
+/**
+ * Bestiary spell edits on the first spellcasting block, as 5etools does: `addSpells` adds to
+ * its lists, `replaceSpells` swaps spells (`{ replace, with }`), `removeSpells` takes some out.
+ */
+function editSpells(target: RawObject, m: ModInfo): void {
+  const sc = asArray(target.spellcasting)[0];
+  if (!isObject(sc)) throw new ModError('no spellcasting');
+  const edit = (list: unknown[], change: unknown): unknown[] => {
+    const changes = asArray(change);
+    if (m.mode === 'addSpells') return [...list, ...clone(changes)];
+    if (m.mode === 'removeSpells') return list.filter((s) => !changes.includes(s));
+    return list.flatMap((s) => {
+      const hit = changes.find((c) => isObject(c) && c.replace === s);
+      return isObject(hit) ? clone(asArray(hit.with)) : [s];
+    });
+  };
+  if (m.will !== undefined) sc.will = edit(asArray(sc.will), m.will);
+  for (const freq of SPELL_FREQUENCIES) {
+    if (!isObject(m[freq])) continue;
+    const lists = isObject(sc[freq]) ? sc[freq] : (sc[freq] = {});
+    for (const [k, v] of Object.entries(m[freq] as RawObject))
+      lists[k] = edit(asArray(lists[k]), v);
+  }
+  if (isObject(m.spells)) {
+    const levels = isObject(sc.spells) ? sc.spells : (sc.spells = {});
+    for (const [level, v] of Object.entries(m.spells)) {
+      const cur = isObject(levels[level]) ? levels[level] : (levels[level] = { spells: [] });
+      // Adding gives a level object (`{ slots, spells }`); the other modes give a list.
+      const { spells, ...rest } = isObject(v) ? v : { spells: v };
+      Object.assign(cur, clone(rest));
+      cur.spells = edit(asArray(cur.spells), spells);
+    }
+  }
 }
 
 function applyOne(target: RawObject, propPath: string[] | null, info: unknown, warn: ModWarn) {
@@ -232,6 +270,11 @@ function applyOne(target: RawObject, propPath: string[] | null, info: unknown, w
     }
     case 'scalarAddProp':
       scalar(target, path, m, (n) => n + Number(m.scalar));
+      return;
+    case 'addSpells':
+    case 'replaceSpells':
+    case 'removeSpells':
+      editSpells(target, m);
       return;
     case 'scalarMultProp':
       scalar(target, path, m, (n) => {

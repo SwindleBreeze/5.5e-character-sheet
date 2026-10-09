@@ -7,6 +7,7 @@ import type { FeatureEffectsMap } from '../types.ts';
 import {
   action,
   AT_TABLE,
+  attacksAgainst,
   dc,
   fromData,
   NO_CHOICE,
@@ -196,6 +197,7 @@ export const CLERIC: FeatureEffectsMap = {
       actionType: 'bonus',
       costs: [divinity],
     }),
+    attacksAgainst('a creature within 5 feet of your illusion that can see it'),
   ]),
   [S('trickery', "trickster's transposition", 6)]: text(),
   [S('trickery', 'improved duplicity', 17)]: text({ unoffered: TARGETS }),

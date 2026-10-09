@@ -1,0 +1,366 @@
+{
+  "_fixture": true,
+  "_meta": {
+    "sources": [
+      {
+        "json": "HearthGuide",
+        "abbreviation": "HG",
+        "full": "The Hearthkeeper's Guide",
+        "authors": ["Tess Example", "Rowan Sample"],
+        "version": "1.2.0",
+        "url": "https://example.com/hearth-guide"
+      }
+    ],
+    "edition": "one",
+    "dateLastModified": 1700000000
+  },
+  "class": [
+    {
+      "name": "Hearthwarden",
+      "source": "HearthGuide",
+      "primaryAbility": [
+        {
+          "wis": true
+        }
+      ],
+      "hd": {
+        "number": 1,
+        "faces": 8
+      },
+      "proficiency": ["wis", "con"],
+      "spellcastingAbility": "WIS",
+      "casterProgression": "full",
+      "cantripProgression": [2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4],
+      "classSpells": [
+        {
+          "className": "Lorekeeper",
+          "classSource": "TST"
+        },
+        "Spark Bolt|TST"
+      ],
+      "startingProficiencies": {
+        "armor": ["light"],
+        "weapons": ["simple"],
+        "skills": [
+          {
+            "choose": {
+              "from": ["medicine", "insight", "survival"],
+              "count": 2
+            }
+          }
+        ]
+      },
+      "startingEquipment": {
+        "defaultData": [
+          {
+            "A": [
+              {
+                "item": "ember lantern|hearthguide"
+              },
+              {
+                "value": 1000
+              }
+            ],
+            "B": [
+              {
+                "value": 5000
+              }
+            ]
+          }
+        ]
+      },
+      "classTableGroups": [
+        {
+          "colLabels": ["Spells Known", "Embers"],
+          "rows": [
+            [3, 1],
+            [4, "—"],
+            [5],
+            [6, 2],
+            [7, 3],
+            [8, 3],
+            [9, 3],
+            [10, 4],
+            [11, 4],
+            [12, 4],
+            [13, 5],
+            [13, 5],
+            [14, 5],
+            [14, 5],
+            [15, 6],
+            [15, 6],
+            [16, 6],
+            [16, 6],
+            [17, 7],
+            [17, 7]
+          ]
+        },
+        {
+          "title": "Spell Slots per Spell Level",
+          "colLabels": ["1st", "2nd", "3rd"],
+          "rowsSpellProgression": [
+            [2, 0, 0],
+            [3, 0, 0],
+            [4, 2, 0],
+            [4, 3, 0],
+            [4, 3, 2],
+            [4, 3, 3],
+            [4, 3, 3],
+            [4, 3, 3],
+            [4, 3, 3],
+            [4, 3, 3],
+            [4, 3, 3],
+            [4, 3, 3],
+            [4, 3, 3],
+            [4, 3, 3],
+            [4, 3, 3],
+            [4, 3, 3],
+            [4, 3, 3],
+            [4, 3, 3],
+            [4, 3, 3],
+            [4, 3, 3]
+          ]
+        }
+      ],
+      "classFeatures": [
+        "Spellcasting|Hearthwarden|HearthGuide|1",
+        "Kindle|Hearthwarden|HearthGuide|1",
+        "Banked Coals|Hearthwarden|HearthGuide|2",
+        {
+          "classFeature": "Hearth Oath|Hearthwarden|HearthGuide|3",
+          "gainSubclassFeature": true
+        },
+        "Ability Score Improvement|Hearthwarden|HearthGuide|4"
+      ],
+      "subclassTitle": "Hearth Oath"
+    }
+  ],
+  "subclass": [
+    {
+      "name": "Oath of Embers",
+      "shortName": "Embers",
+      "source": "HearthGuide",
+      "className": "Hearthwarden",
+      "classSource": "HearthGuide",
+      "subclassFeatures": ["Oath of Embers|Hearthwarden|HearthGuide|Embers|HearthGuide|3"],
+      "subclassSpells": ["Warm Hearth|HearthGuide"]
+    }
+  ],
+  "classFeature": [
+    {
+      "name": "Spellcasting",
+      "source": "HearthGuide",
+      "className": "Hearthwarden",
+      "classSource": "HearthGuide",
+      "level": 1,
+      "entries": ["You tend a small flame that answers your prayers, using Wisdom."]
+    },
+    {
+      "name": "Kindle",
+      "source": "HearthGuide",
+      "className": "Hearthwarden",
+      "classSource": "HearthGuide",
+      "level": 1,
+      "entries": [
+        "You light a {@glow small warm glow} near you.",
+        {
+          "type": "emberChart",
+          "rows": [["odd", "table"]]
+        }
+      ]
+    },
+    {
+      "name": "Hearth Oath",
+      "source": "HearthGuide",
+      "className": "Hearthwarden",
+      "classSource": "HearthGuide",
+      "level": 3,
+      "entries": ["You swear an oath to a hearth."]
+    },
+    {
+      "name": "Ability Score Improvement",
+      "source": "HearthGuide",
+      "className": "Hearthwarden",
+      "classSource": "HearthGuide",
+      "level": 4,
+      "entries": ["You gain a feat."]
+    }
+  ],
+  "subclassFeature": [
+    {
+      "name": "Oath of Embers",
+      "source": "HearthGuide",
+      "className": "Hearthwarden",
+      "classSource": "HearthGuide",
+      "subclassShortName": "Embers",
+      "subclassSource": "HearthGuide",
+      "level": 3,
+      "entries": ["Your oath keeps the coals warm through the night."]
+    }
+  ],
+  "spell": [
+    {
+      "name": "Cinder Flick",
+      "level": 0,
+      "school": "V",
+      "range": {
+        "type": "point",
+        "distance": {
+          "type": "feet",
+          "amount": 30
+        }
+      },
+      "components": {
+        "v": true
+      },
+      "entries": ["A spark leaps from your finger."],
+      "classes": {
+        "fromClassList": [
+          {
+            "name": "Hearthwarden",
+            "source": "HearthGuide"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Warm Hearth",
+      "source": "HearthGuide",
+      "level": 1,
+      "school": "Q",
+      "entries": ["The room grows warm and calm."],
+      "classes": {
+        "fromClassList": [
+          {
+            "name": "Hearthwarden",
+            "source": "HearthGuide"
+          }
+        ]
+      }
+    }
+  ],
+  "race": [
+    {
+      "name": "Fernling",
+      "source": "HearthGuide",
+      "size": ["S"],
+      "speed": 30,
+      "entries": [
+        {
+          "type": "entries",
+          "name": "Unfurl",
+          "entries": ["Your fronds open at dawn."]
+        }
+      ]
+    }
+  ],
+  "subrace": [
+    {
+      "name": "Hearth",
+      "source": "HearthGuide",
+      "raceName": "Mossling",
+      "raceSource": "TST",
+      "resist": ["fire"],
+      "entries": [
+        {
+          "type": "entries",
+          "name": "Warm Moss",
+          "entries": ["Your moss smells of smoke."]
+        }
+      ]
+    }
+  ],
+  "background": [
+    {
+      "name": "Lamplighter",
+      "source": "HearthGuide",
+      "ability": [
+        {
+          "choose": {
+            "weighted": {
+              "from": ["wis", "con", "dex"],
+              "weights": [2, 1]
+            }
+          }
+        },
+        {
+          "choose": {
+            "weighted": {
+              "from": ["wis", "con", "dex"],
+              "weights": [1, 1, 1]
+            }
+          }
+        }
+      ],
+      "feats": [
+        {
+          "kettle sage|hearthguide": true
+        }
+      ],
+      "skillProficiencies": [
+        {
+          "perception": true,
+          "stealth": true
+        }
+      ],
+      "languageProficiencies": [
+        {
+          "anyStandard": 1
+        }
+      ],
+      "startingEquipment": [
+        {
+          "A": [
+            {
+              "value": 1000
+            }
+          ],
+          "B": [
+            {
+              "value": 5000
+            }
+          ]
+        }
+      ],
+      "entries": ["You lit the lamps of a sleepy town."]
+    }
+  ],
+  "feat": [
+    {
+      "name": "Kettle Sage",
+      "source": "HearthGuide",
+      "entries": ["You always know when the tea is ready."]
+    }
+  ],
+  "item": [
+    {
+      "name": "Ember Lantern",
+      "source": "HearthGuide",
+      "type": "G",
+      "rarity": "none",
+      "weight": 2,
+      "value": 1000,
+      "entries": ["A lantern that never quite goes out."]
+    },
+    {
+      "name": "Bright Shiv",
+      "source": "HearthGuide",
+      "_copy": {
+        "name": "Shiv",
+        "source": "TST",
+        "_mod": {
+          "entries": {
+            "mode": "appendArr",
+            "items": "It glows faintly."
+          }
+        }
+      }
+    }
+  ],
+  "monster": [
+    {
+      "name": "Hearth Sprite",
+      "source": "HearthGuide"
+    }
+  ]
+}

@@ -2,6 +2,7 @@
 
 import {
   MOVE_MODES,
+  refKey,
   type Ability,
   type InventoryItem,
   type Item,
@@ -138,16 +139,21 @@ export function deriveAc(ctx: DeriveContext, mods: Mods): Derived & { calculatio
 }
 
 export function deriveClasses(ctx: DeriveContext): DerivedClass[] {
+  // Content that isn't loaded (a removed homebrew source): the character's snapshot names it.
+  const snapshot = (kind: 'class' | 'subclass', id: string) =>
+    ctx.character.snapshots[refKey({ kind, id })];
   return ctx.st.classes.map((c) => {
+    const saved = c.cls ? undefined : snapshot('class', c.classId);
     const out: DerivedClass = {
       classId: c.classId,
-      name: c.cls?.name ?? c.classId,
+      name: c.cls?.name ?? saved?.name ?? c.classId,
       level: c.level,
-      hitDie: c.cls?.hitDie ?? 8,
+      hitDie: c.cls?.hitDie ?? saved?.hitDie ?? 8,
     };
     if (c.subclassId) {
       out.subclassId = c.subclassId;
-      out.subclassName = c.subclass?.name ?? c.subclassId;
+      out.subclassName =
+        c.subclass?.name ?? snapshot('subclass', c.subclassId)?.name ?? c.subclassId;
     }
     return out;
   });
@@ -183,6 +189,23 @@ export function deriveHp(
     current: Math.max(0, max.value - damage),
     temp: tempHp,
   };
+  const tempBonuses = effectsOfType(ctx.collected, 'tempHpBonus');
+  if (tempBonuses.length) {
+    hp.tempBonus = {
+      value: tempBonuses.reduce((sum, e) => sum + e.effect.value, 0),
+      sources: tempBonuses.map((e) => e.source.name),
+    };
+  }
+  const hitDie = effectsOfType(ctx.collected, 'hitDieHealing');
+  if (hitDie.length) {
+    const floors = hitDie.map((e) => e.effect.floor ?? 0);
+    hp.hitDieHealing = {
+      ...(Math.max(...floors) > 0 ? { floor: Math.max(...floors) } : {}),
+      ...(hitDie.some((e) => e.effect.max) ? { max: true } : {}),
+      ...(hitDie.some((e) => e.effect.double) ? { double: true } : {}),
+      sources: hitDie.map((e) => e.source.name),
+    };
+  }
   const ward = effectsOfType(ctx.collected, 'ward')[0];
   if (ward) {
     const wardMax = derived([
@@ -221,6 +244,9 @@ export function deriveSpeed(ctx: DeriveContext, strScore: number): DerivedSheet[
       base.set(effect.mode, { value, label: source.name, source: source.ref });
     }
   }
+  for (const { effect } of effectsOfType(ctx.collected, 'speedOff')) {
+    if (effect.mode !== 'walk') base.delete(effect.mode);
+  }
   if (!base.has('walk')) base.set('walk', { value: 30, label: 'Base speed' });
 
   const bonuses = new Map<MoveMode, Contribution[]>();
@@ -232,7 +258,8 @@ export function deriveSpeed(ctx: DeriveContext, strScore: number): DerivedSheet[
     ]);
   }
   const armor = ctx.st.wield.armor;
-  const strReq = armor ? armorDrawbacks(armor.item, armor.variant).strReq : undefined;
+  const eased = effectsOfType(ctx.collected, 'armorEase').some((e) => e.effect.strength);
+  const strReq = armor && !eased ? armorDrawbacks(armor.item, armor.variant).strReq : undefined;
   const penalties: Contribution[] = [];
   if (strReq && strScore < strReq) {
     penalties.push({ label: `${armor?.item?.name ?? 'Armor'} (needs STR ${strReq})`, value: -10 });
@@ -252,7 +279,20 @@ export function deriveSpeed(ctx: DeriveContext, strScore: number): DerivedSheet[
     ...(bonuses.get('walk') ?? []),
     ...penalties,
   ];
-  out.walk = withOverride(derived(walkParts), ctx.character, 'speed.walk');
+  // Doubled (Boots of Speed): the Speed with its bonuses and penalties, times the multiplier.
+  const multiplied = (parts: Contribution[]): Contribution[] => {
+    let total = parts.reduce((sum, p) => sum + p.value, 0);
+    const out = [...parts];
+    for (const { effect, source } of effectsOfType(ctx.collected, 'speedMultiplier')) {
+      if (total <= 0) break;
+      out.push(
+        contribution(`${source.name} (×${effect.value})`, total * (effect.value - 1), source),
+      );
+      total *= effect.value;
+    }
+    return out;
+  };
+  out.walk = withOverride(derived(multiplied(walkParts)), ctx.character, 'speed.walk');
   for (const mode of MOVE_MODES) {
     if (mode === 'walk') continue;
     const entry = base.get(mode);
@@ -295,12 +335,24 @@ function sourcedList<T>(items: { value: T; key: string; source: string }[]): Sou
 
 export function deriveSenses(ctx: DeriveContext): DerivedSheet['senses'] {
   const best = new Map<string, { range: number; sources: string[] }>();
-  for (const { effect, source } of effectsOfType(ctx.collected, 'sense')) {
+  const senses = effectsOfType(ctx.collected, 'sense');
+  for (const { effect, source } of senses) {
+    if (effect.stack) continue;
     const current = best.get(effect.sense);
     if (!current || effect.range > current.range)
       best.set(effect.sense, { range: effect.range, sources: [source.name] });
     else if (effect.range === current.range && !current.sources.includes(source.name))
       current.sources.push(source.name);
+  }
+  // Senses that add to one the character already has (or give it).
+  for (const { effect, source } of senses) {
+    if (!effect.stack) continue;
+    const current = best.get(effect.sense);
+    if (!current) best.set(effect.sense, { range: effect.range, sources: [source.name] });
+    else {
+      current.range += effect.range;
+      current.sources.push(source.name);
+    }
   }
   return [...best].map(([sense, { range, sources }]) => ({ value: { sense, range }, sources }));
 }
@@ -331,6 +383,11 @@ export function deriveDefenses(ctx: DeriveContext): DerivedSheet['defenses'] {
     resistances: sourcedList(lists.resistance),
     immunities: sourcedList(lists.immunity),
     conditionImmunities: sourcedList(lists.conditionImmunity),
+    attacked: effectsOfType(ctx.collected, 'attackedMode').map(({ effect, source }) => ({
+      mode: effect.mode,
+      ...(effect.against ? { against: effect.against } : {}),
+      source: source.name,
+    })),
   };
 }
 

@@ -6,7 +6,18 @@
 // Consumables, vehicles and properties decided at the table stay text.
 
 import { refKey, type Effect } from '../../../schema/index.ts';
-import { action, AT_TABLE, fromData, numbers, text, toggled, uses, when } from '../core/helpers.ts';
+import {
+  action,
+  AT_TABLE,
+  fromData,
+  numbers,
+  onlyThisWeapon,
+  savesAgainst,
+  text,
+  toggled,
+  uses,
+  when,
+} from '../core/helpers.ts';
 import type { FeatureEffectsMap, FeatureMapping } from '../types.ts';
 
 const I = (id: string) => refKey({ kind: 'item', id: `${id}|xdmg` });
@@ -41,22 +52,21 @@ function oncePerDawn(
 
 // ---- +1/+2/+3 items ----
 /** Rod of the Pact Keeper: the bonuses are data; the once-a-rest slot comes back as an action. */
-const pactKeeper = numbers(
-  [
+// Its bonus is to Warlock spells only: the data's bonus to every spell is moved there.
+const pactKeeper = (n: number) =>
+  numbers([
+    { type: 'itemBonusOff', bonus: 'spellAttack' },
+    { type: 'itemBonusOff', bonus: 'spellSaveDc' },
+    { type: 'spellMod', filter: '', casterKey: 'warlock|xphb', dcBonus: n, attackBonus: n },
     uses('rod-of-the-pact-keeper', 'Rod of the Pact Keeper', 1, 'long'),
     action({
       id: 'rod-of-the-pact-keeper',
       name: 'Rod of the Pact Keeper: Regain a Slot',
       actionType: 'action',
       costs: [{ resource: 'rod-of-the-pact-keeper', amount: 1 }],
-      outcomes: [{ regainSlot: { maxLevel: 9 } }],
+      outcomes: [{ regainSlot: { maxLevel: 9, pact: true } }],
     }),
-  ],
-  {
-    needs:
-      'regainSlot that can restore a Pact Magic slot; an item spell save DC bonus limited to one class',
-  },
-);
+  ]);
 
 /** Wraps of Unarmed Power: the data bonus is for the item's own attacks, so it moves here. */
 function wraps(n: number): FeatureMapping {
@@ -75,9 +85,10 @@ function wraps(n: number): FeatureMapping {
 }
 
 // ---- Dragon Scale Mail: AC and resistance are data; the dragon sense is once a dawn ----
-const dragonScale = numbers(oncePerDawn('dragon-scale-mail', 'Dragon Sense'), {
-  notes: 'Advantage on saves against Dragons’ breath weapons is situational.',
-});
+const dragonScale = numbers([
+  ...oncePerDawn('dragon-scale-mail', 'Dragon Sense'),
+  savesAgainst('Dragons’ breath weapons'),
+]);
 
 // ---- Elemental summoners: once a dawn ----
 const summoner = (id: string, name: string) => numbers(oncePerDawn(id, name));
@@ -102,9 +113,9 @@ export const ITEMS_A_TO_C: FeatureEffectsMap = {
   [I('+1 wand of the war mage')]: fromData(),
   [I('+2 wand of the war mage')]: fromData(),
   [I('+3 wand of the war mage')]: fromData(),
-  [I('+1 rod of the pact keeper')]: pactKeeper,
-  [I('+2 rod of the pact keeper')]: pactKeeper,
-  [I('+3 rod of the pact keeper')]: pactKeeper,
+  [I('+1 rod of the pact keeper')]: pactKeeper(1),
+  [I('+2 rod of the pact keeper')]: pactKeeper(2),
+  [I('+3 rod of the pact keeper')]: pactKeeper(3),
   [I('+1 wraps of unarmed power')]: wraps(1),
   [I('+2 wraps of unarmed power')]: wraps(2),
   [I('+3 wraps of unarmed power')]: wraps(3),
@@ -174,7 +185,7 @@ export const ITEMS_A_TO_C: FeatureEffectsMap = {
   ),
   [I('axe of the dwarvish lords')]: numbers(
     [
-      { type: 'sense', sense: 'darkvision', range: 60 },
+      { type: 'sense', sense: 'darkvision', range: 60, stack: true },
       { type: 'abilityBonus', ability: 'con', value: 2, max: 20 },
       ...["brewer's supplies|xphb", "mason's tools|xphb", "smith's tools|xphb"].map(
         (value): Effect => ({ type: 'proficiency', category: 'tool', value }),
@@ -194,7 +205,6 @@ export const ITEMS_A_TO_C: FeatureEffectsMap = {
     {
       notes:
         'The extra damage is larger against Giants, and a 20 on the d20 adds more; Travel the Depths waits three days.',
-      needs: 'a Darkvision that adds to the range the character already has',
     },
   ),
 
@@ -222,16 +232,20 @@ export const ITEMS_A_TO_C: FeatureEffectsMap = {
       { type: 'proficiency', category: 'language', value: 'dwarvish' },
       { type: 'abilityBonus', ability: 'con', value: 2, max: 20 },
       { type: 'sense', sense: 'darkvision', range: 60 },
+      savesAgainst('being Poisoned'),
+      {
+        type: 'rollMode',
+        target: 'skill:persuasion',
+        mode: 'advantage',
+        against: 'dwarves and duergar',
+      },
     ],
-    {
-      notes:
-        'Darkvision and the poison benefits are for wearers who aren’t dwarves or duergar; the advantages are situational.',
-    },
+    { notes: 'Darkvision and the poison benefits are for wearers who aren’t dwarves or duergar.' },
   ),
-  [I('berserker axe')]: numbers([{ type: 'hpBonus', perLevel: 1 }], {
-    notes: 'Cursed: attacks with other weapons have Disadvantage.',
-    needs: 'disadvantage on attacks with every weapon but one item',
-  }),
+  [I('berserker axe')]: numbers([
+    { type: 'hpBonus', perLevel: 1 },
+    ...onlyThisWeapon('berserker axe|xdmg', 'Berserker Axe'),
+  ]),
   [I('black dragon scale mail')]: dragonScale,
   [I('blue dragon scale mail')]: dragonScale,
   [I('brass dragon scale mail')]: dragonScale,
@@ -284,27 +298,23 @@ export const ITEMS_A_TO_C: FeatureEffectsMap = {
   [I('boots of elvenkind')]: numbers([stealthAdvantage]),
   [I('boots of false tracks')]: text(),
   [I('boots of levitation')]: fromData(),
-  [I('boots of speed')]: toggled(
-    [
-      uses('boots-of-speed', 'Boots of Speed (minutes)', 10, 'long', { pool: true }),
-      {
-        type: 'toggle',
-        toggleId: 'boots-of-speed',
-        name: 'Boots of Speed',
-        cost: [{ action: 'bonus' }],
-        effects: [
-          {
-            type: 'note',
-            text: 'Speed doubled; Opportunity Attacks against you have Disadvantage.',
-          },
-        ],
-      },
-    ],
-    { needs: 'a Speed that doubles the current Speed (no formula reads Speed)' },
-  ),
-  [I('boots of striding and springing')]: numbers([{ type: 'speed', mode: 'walk', value: 30 }], {
-    needs: 'ignoring the Speed loss from Heavy Armor and carried weight',
-  }),
+  [I('boots of speed')]: toggled([
+    uses('boots-of-speed', 'Boots of Speed (minutes)', 10, 'long', { pool: true }),
+    {
+      type: 'toggle',
+      toggleId: 'boots-of-speed',
+      name: 'Boots of Speed',
+      cost: [{ action: 'bonus' }],
+      effects: [
+        { type: 'speedMultiplier', value: 2 },
+        { type: 'attackedMode', mode: 'disadvantage', against: 'Opportunity Attacks' },
+      ],
+    },
+  ]),
+  [I('boots of striding and springing')]: numbers([
+    { type: 'speed', mode: 'walk', value: 30 },
+    { type: 'armorEase', strength: true },
+  ]),
   [I('boots of the winterlands')]: fromData(),
   [I('bowl of commanding water elementals')]: summoner(
     'bowl-of-commanding-water-elementals',
@@ -376,8 +386,9 @@ export const ITEMS_A_TO_C: FeatureEffectsMap = {
   [I('circlet of blasting')]: fromData(),
   [I('cloak of arachnida')]: numbers([{ type: 'speed', mode: 'climb', value: 'walk' }]),
   [I('cloak of billowing')]: text(),
-  [I('cloak of displacement')]: text({
-    needs: 'disadvantage on attack rolls made against the character',
+  [I('cloak of displacement')]: numbers([{ type: 'attackedMode', mode: 'disadvantage' }], {
+    notes:
+      'It stops until the start of your next turn when you take damage, and while your Speed is 0.',
   }),
   [I('cloak of elvenkind')]: numbers([stealthAdvantage]),
   [I('cloak of invisibility')]: numbers([

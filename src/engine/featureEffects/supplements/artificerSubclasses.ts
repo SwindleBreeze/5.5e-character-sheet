@@ -57,27 +57,38 @@ function oncePerRestOrSlot(id: string, name: string): Effect[] {
 // ---- Armorer: the armor model is picked when Arcane Armor is switched on ----
 const model = (option: string) => ({ toggle: 'arcane-armor', option });
 const MODEL_ABILITY = "Uses Intelligence instead of Strength or Dexterity when it's better.";
-// The model weapons are feature attacks (no item), so filters pick them out by what no
-// ordinary weapon has: the demolisher is the only Reach weapon that is neither Heavy nor
-// Finesse; the launcher the only ranged weapon without Ammunition or Thrown.
-const DEMOLISHER: AttackFilter = {
-  range: 'melee',
-  source: ['weapon'],
-  properties: ['R'],
-  notProperties: ['H', 'F'],
-};
-const LAUNCHER: AttackFilter = { range: 'ranged', source: ['weapon'], notProperties: ['A', 'T'] };
-// The pulse has no properties; a few plain weapons (Mace, Flail) don't either, but an Armorer
-// never uses Intelligence with those.
-const PULSE: AttackFilter = {
-  range: 'melee',
-  source: ['weapon'],
-  ability: ['int'],
-  notProperties: ['F', 'L', 'H', '2H', 'R', 'T', 'V'],
-};
+// The model weapons are feature attacks; filters name them by their tag.
+const DEMOLISHER: AttackFilter = { tags: ['feature:force-demolisher'] };
+const LAUNCHER: AttackFilter = { tags: ['feature:lightning-launcher'] };
+const PULSE: AttackFilter = { tags: ['feature:thunder-pulse'] };
 
-// ---- Battle Smith: attacks with a magic weapon (no item filter for magic yet) ----
+// ---- Battle Smith: attacks with a magic weapon. The sheet knows magic items and variants; a
+// switch makes the other weapons count (one made magic by a spell). ----
 const magicWeapon = { toggle: 'battle-ready' };
+const battleReady: Extract<Effect, { type: 'attackMod' }> = {
+  type: 'attackMod',
+  label: 'Battle Ready',
+  filter: { source: ['weapon'] },
+  abilities: ['int'],
+};
+const arcaneJolt: Extract<Effect, { type: 'damageRider' }> = {
+  type: 'damageRider',
+  id: 'arcane-jolt',
+  name: 'Arcane Jolt',
+  dice: 'steps(level.artificer, 9, 2d6, 15, 4d6)',
+  damageType: 'force',
+  filter: { source: ['weapon'] },
+  oncePerTurn: true,
+  cost: { resource: 'arcane-jolt', amount: 1 },
+  optIn: true,
+};
+/** On magic weapons always; on the others while the switch is on. */
+const onMagicWeapons = (
+  effect: Extract<Effect, { type: 'attackMod' | 'damageRider' }>,
+): Effect[] => {
+  const on = (magic: boolean): Effect => ({ ...effect, filter: { ...effect.filter, magic } });
+  return [on(true), when(magicWeapon, [on(false)])];
+};
 
 // ---- Cartographer ----
 const mapHolder = { toggle: 'atlas-map' };
@@ -145,9 +156,9 @@ export const SUP_ARTIFICER_SUBCLASSES: FeatureEffectsMap = {
     { unoffered: FALLBACK_TOOL, notes: 'Crafting armor takes half the time.' },
   ),
   [S('armorer', 'armorer spells', 3)]: text(),
-  [S('armorer', 'arcane armor', 3)]: text({
-    needs: "a way to waive worn armor's Strength requirement (the Speed penalty still shows)",
-  }),
+  [S('armorer', 'arcane armor', 3)]: numbers([
+    when({ toggle: 'arcane-armor' }, [{ type: 'armorEase', strength: true }]),
+  ]),
   // Switched on while wearing the Arcane Armor; its model is picked then. Each model feature
   // hangs its weapon and benefits off the picked option.
   [S('armorer', 'armor model', 3)]: toggled(
@@ -269,8 +280,7 @@ export const SUP_ARTIFICER_SUBCLASSES: FeatureEffectsMap = {
       ]),
     ],
     {
-      needs:
-        "an attack filter matching one feature attack by id (Thunder Pulse's bonus needs Intelligence as its ability); one more plan and item for Replicate Magic Item",
+      needs: 'one more plan and item for Replicate Magic Item',
       notes: 'Learn one more Armor plan and make one more Armor item with Replicate Magic Item.',
     },
   ),
@@ -370,27 +380,18 @@ export const SUP_ARTIFICER_SUBCLASSES: FeatureEffectsMap = {
     notes: 'Crafting weapons takes half the time.',
   }),
   [S('battle smith', 'battle smith spells', 3)]: text(),
-  // Intelligence for attacks with a magic weapon: a switch, as the sheet can't tell magic
-  // weapons apart in a filter.
-  [S('battle smith', 'battle ready', 3)]: toggled(
-    [
-      { type: 'proficiency', category: 'weapon', value: 'martial' },
-      {
-        type: 'toggle',
-        toggleId: 'battle-ready',
-        name: 'Magic weapon (Battle Ready)',
-        effects: [
-          {
-            type: 'attackMod',
-            label: 'Battle Ready',
-            filter: { source: ['weapon'] },
-            abilities: ['int'],
-          },
-        ],
-      },
-    ],
-    { needs: 'an attack filter for magic weapons (a switch stands in)' },
-  ),
+  // Intelligence for attacks with a magic weapon; the switch is for a weapon made magic by a
+  // spell, which the sheet can't see.
+  [S('battle smith', 'battle ready', 3)]: toggled([
+    { type: 'proficiency', category: 'weapon', value: 'martial' },
+    {
+      type: 'toggle',
+      toggleId: 'battle-ready',
+      name: 'Other weapons count as magic (Battle Ready)',
+      effects: [],
+    },
+    ...onMagicWeapons(battleReady),
+  ]),
   [S('battle smith', 'steel defender', 3)]: numbers([
     action({ id: 'command-steel-defender', name: 'Command Steel Defender', actionType: 'bonus' }),
     action({
@@ -408,19 +409,7 @@ export const SUP_ARTIFICER_SUBCLASSES: FeatureEffectsMap = {
   [S('battle smith', 'arcane jolt', 9)]: numbers(
     [
       uses('arcane-jolt', 'Arcane Jolt', intUses, 'long'),
-      when(magicWeapon, [
-        {
-          type: 'damageRider',
-          id: 'arcane-jolt',
-          name: 'Arcane Jolt',
-          dice: 'steps(level.artificer, 9, 2d6, 15, 4d6)',
-          damageType: 'force',
-          filter: { source: ['weapon'] },
-          oncePerTurn: true,
-          cost: spend('arcane-jolt'),
-          optIn: true,
-        },
-      ]),
+      ...onMagicWeapons(arcaneJolt),
       action({
         id: 'arcane-jolt-healing',
         name: 'Arcane Jolt: Restorative Energy',

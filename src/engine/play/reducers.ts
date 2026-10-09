@@ -310,10 +310,22 @@ function applyOutcomes(
   for (const o of outcomes) {
     if ('heal' in o) n = heal(n, sheet, Math.max(0, rollAmount(o.heal, `${label}: healing`)));
     else if ('tempHp' in o)
-      n = setTempHp(n, Math.max(0, rollAmount(o.tempHp, `${label}: temporary HP`)));
+      n = setTempHp(
+        n,
+        Math.max(0, rollAmount(o.tempHp, `${label}: temporary HP`)) +
+          (sheet.hp.tempBonus?.value ?? 0),
+      );
     else if ('toggleOn' in o) n = toggle(n, sheet, o.toggleOn, true, { rollAmount, free: true });
     else if ('restore' in o) {
       if (o.restore.resourceKey) n = restoreResource(n, o.restore.resourceKey, o.restore.amount);
+    } else if (
+      o.regainSlot.pact &&
+      slotLevel === undefined &&
+      n.state.pactSlotsUsed > 0 &&
+      (sheet.spellcasting.pact?.level ?? 0) <= o.regainSlot.maxLevel
+    ) {
+      // A spent Pact Magic slot comes back first (a Rod of the Pact Keeper).
+      n = restoreSlot(n, { level: sheet.spellcasting.pact!.level, pact: true });
     } else {
       // Regain one spent slot: the one asked for, or the highest spent one allowed.
       const spent = sheet.spellcasting.slots.filter(
@@ -531,6 +543,18 @@ function endToggles(n: Character, sheet: DerivedSheet, rest: 'shortRest' | 'long
 }
 
 /**
+ * What one Hit Point Die rolled to regain HP restores: the roll (raised to a floor, or the
+ * maximum, when a feature says so) plus the CON modifier, at least 1; doubled by a Periapt of
+ * Wound Closure.
+ */
+export function hitDieHeal(sheet: DerivedSheet, faces: number, roll: number): number {
+  const how = sheet.hp.hitDieHealing;
+  const face = how?.max ? faces : Math.max(roll, how?.floor ?? 0);
+  const restored = Math.max(1, face + sheet.abilities.con.mod);
+  return how?.double ? restored * 2 : restored;
+}
+
+/**
  * Short Rest (2024): spend Hit Dice (each heals its roll plus the CON modifier, at least 1), regain
  * short-rest resources (one use for `shortOne`) and Pact Magic slots.
  */
@@ -547,7 +571,7 @@ export function shortRest(
     const available = pool.total - (n.state.hitDiceUsed[faces] ?? 0);
     const used = rolls.slice(0, Math.max(0, available));
     n.state.hitDiceUsed[faces] = (n.state.hitDiceUsed[faces] ?? 0) + used.length;
-    healing += used.reduce((sum, r) => sum + Math.max(1, r + sheet.abilities.con.mod), 0);
+    healing += used.reduce((sum, r) => sum + hitDieHeal(sheet, faces, r), 0);
   }
   for (const r of sheet.resources) {
     if (r.recharge === 'short') delete n.state.resourcesUsed[r.key];

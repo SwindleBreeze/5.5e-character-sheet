@@ -1,9 +1,16 @@
 import { useEnabledSources, useSources } from '../../content/hooks.ts';
 import { repos } from '../../db/repos.ts';
 import type { SourceCode } from '../../schema/index.ts';
-import { groupSources, isSelectable, presetSources } from '../../sources/sourceFilter.ts';
+import {
+  groupSources,
+  isHomebrew,
+  isSelectable,
+  presetSources,
+  type Preset,
+} from '../../sources/sourceFilter.ts';
 import { Badge } from '../../ui/Badge.tsx';
 import { Button } from '../../ui/Button.tsx';
+import { HomebrewActions, HomebrewMeta } from './HomebrewActions.tsx';
 import styles from './SourceToggles.module.css';
 
 function total(counts: Record<string, number | undefined>): number {
@@ -12,14 +19,18 @@ function total(counts: Record<string, number | undefined>): number {
 
 /**
  * Switch imported sources on and off (plan §6.7): for the whole app, or with `value` and
- * `onChange` for one character.
+ * `onChange` for one character. With `manage` (Settings), homebrew can also be removed and
+ * shared (plan step 7.3).
  */
 export function SourceToggles({
   value,
   onChange,
+  manage = false,
 }: {
   value?: SourceCode[];
   onChange?: (codes: SourceCode[]) => void;
+  /** Settings: homebrew can be removed and shared from here. */
+  manage?: boolean;
 } = {}) {
   const sources = useSources();
   const global = useEnabledSources();
@@ -36,6 +47,12 @@ export function SourceToggles({
     if (onChange) onChange(list);
     else await repos().settings.set('enabledSources', list);
   };
+  // Presets are about the books: homebrew that is on stays on.
+  const preset = (p: Preset) =>
+    void save([
+      ...presetSources(sources, p),
+      ...sources.filter((s) => isHomebrew(s) && on.has(s.code)).map((s) => s.code),
+    ]);
   const toggle = (code: SourceCode, value: boolean) => {
     const next = new Set(on);
     if (value) next.add(code);
@@ -46,10 +63,10 @@ export function SourceToggles({
   return (
     <div className={styles.root}>
       <div className={styles.presets}>
-        <Button size="sm" onClick={() => void save(presetSources(sources, 'core2024'))}>
+        <Button size="sm" onClick={() => preset('core2024')}>
           2024 core
         </Button>
-        <Button size="sm" onClick={() => void save(presetSources(sources, 'all2024'))}>
+        <Button size="sm" onClick={() => preset('all2024')}>
           All 2024
         </Button>
       </div>
@@ -58,7 +75,7 @@ export function SourceToggles({
           <legend className={styles.legend}>{group.title}</legend>
           {group.sources.map((s) => {
             const selectable = isSelectable(s);
-            return (
+            const row = (
               <label key={s.code} className={styles.row} data-disabled={!selectable || undefined}>
                 <input
                   type="checkbox"
@@ -67,13 +84,21 @@ export function SourceToggles({
                   onChange={(e) => toggle(s.code, e.target.checked)}
                 />
                 <span className={styles.name}>{s.name}</span>
-                <Badge>{s.code}</Badge>
+                <Badge>{s.homebrew?.abbreviation ?? s.code}</Badge>
                 <span className={styles.count}>
                   {selectable ? total(s.counts) : '2014 · later'}
                 </span>
               </label>
             );
+            if (!isHomebrew(s)) return row;
+            return (
+              <div key={s.code} className={styles.brew}>
+                {row}
+                <HomebrewMeta source={s} manage={manage} />
+              </div>
+            );
           })}
+          {group.group === 'homebrew' && manage && <HomebrewActions sources={group.sources} />}
         </fieldset>
       ))}
     </div>

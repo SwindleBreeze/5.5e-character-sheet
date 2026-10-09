@@ -91,3 +91,20 @@
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
 }
+
+/* Effects the player added to the feature (plan step 7.5). */
+.own {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ownItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}

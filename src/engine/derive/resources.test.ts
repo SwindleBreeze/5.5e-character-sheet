@@ -137,6 +137,7 @@ describe('actions (P7) and toggles (P8)', () => {
     const d = run(c);
     expect(d.resources.map((r) => [r.name, r.max.value, r.recharge])).toEqual([
       ['Focus Points', 7, 'short'],
+      ['Beast Form', 2, 'long'],
     ]);
     expect(d.actions.find((a) => a.name === 'Flurry of Strikes')).toMatchObject({
       actionType: 'bonus',

@@ -166,7 +166,10 @@ function spellFilterWords(filter: string): string {
       return [k.trim().toLowerCase(), v.split(';')];
     }),
   ) as Record<string, string[]>;
-  const cls = parts.class?.join(' or ') ?? parts.subclass?.join(' or ') ?? '';
+  // A homebrew `list=` names its classes as `class:<name>`.
+  const listed = parts.list?.filter((v) => v.startsWith('class:')).map((v) => v.slice(6));
+  const cls =
+    parts.class?.join(' or ') ?? parts.subclass?.join(' or ') ?? listed?.join(' or ') ?? '';
   const levels = parts.level ?? [];
   if (levels.length === 1 && levels[0] === '0') return `${cls} cantrips`.trim();
   const lvl = levels.length ? `level ${levels.join(' or ')} ` : '';
@@ -491,7 +494,8 @@ export function lineageBenefits(
 
 export function featBenefits(feat: Feat, index: ContentIndex): Benefit[] {
   const out: Benefit[] = [];
-  out.push({ label: 'Category', text: readable(feat.category) });
+  // Homebrew feats may have no category.
+  if (feat.category) out.push({ label: 'Category', text: readable(feat.category) });
   if (feat.prerequisites.length)
     out.push({ label: 'Prerequisite', text: stripTags(prereqsText(feat.prerequisites)) });
   if (feat.repeatable) out.push({ label: 'Repeatable', text: 'You can take it more than once' });

@@ -13,6 +13,7 @@ import {
   dc,
   notIncapacitated,
   numbers,
+  savesAgainst,
   TARGETS,
   text,
   toggled,
@@ -53,7 +54,15 @@ const MENTAL: Ability[] = ['int', 'wis', 'cha'];
 
 /** A d4 (or other die) added to checks with these skills. */
 const checkDie = (die: string, ...skills: string[]): Effect[] =>
-  skills.map((s) => ({ type: 'rollBonus', target: `skill:${s}` as const, value: die }) as Effect);
+  skills.map(
+    (s) =>
+      ({
+        type: 'rollBonus',
+        target: `skill:${s}` as const,
+        value: die,
+        id: 'dragonmark',
+      }) as Effect,
+  );
 
 /** Effects that hold while the character is Bloodied (one toggle every feat shares). */
 const bloodied = (effects: Effect[]): Effect => ({
@@ -87,11 +96,8 @@ const EACH_ONCE: Effect = {
 const EACH_ONCE_NOTE = 'The free casts are one per spell, not two of either.';
 
 /** A Greater Mark's Improved Intuition: the mark's check die becomes a d6. */
-const BIGGER_DIE = 'a later feat changing another feat’s check die (d4 to d6)';
 const greater = (extra: Effect[] = []) =>
-  extra.length
-    ? numbers(extra, { needs: BIGGER_DIE, notes: 'The mark’s check die is a d6.' })
-    : text({ needs: BIGGER_DIE, notes: 'The mark’s check die is a d6.' });
+  numbers([{ type: 'rollBonusModify', id: 'dragonmark', value: '1d6' }, ...extra]);
 
 export const SUP_FEATS: FeatureEffectsMap = {
   // ---- Dragonmarks (EFA) ----
@@ -124,20 +130,20 @@ export const SUP_FEATS: FeatureEffectsMap = {
     { notes: EACH_ONCE_NOTE },
   ),
   [F('mark of healing|efa')]: numbers(checkDie('1d4', 'medicine'), {
-    notes: 'The d4 also adds to Herbalism Kit checks.',
+    notes: 'The mark’s die also adds to Herbalism Kit checks.',
   }),
   [F('mark of hospitality|efa')]: numbers([...checkDie('1d4', 'persuasion'), EACH_ONCE], {
-    notes: `The d4 also adds to Brewer’s Supplies and Cook’s Utensils checks. ${EACH_ONCE_NOTE}`,
+    notes: `The mark’s die also adds to Brewer’s Supplies and Cook’s Utensils checks. ${EACH_ONCE_NOTE}`,
   }),
   [F('mark of making|efa')]: numbers(checkDie('1d4', 'arcana'), {
-    notes: 'The d4 also adds to Artisan’s Tools checks.',
+    notes: 'The mark’s die also adds to Artisan’s Tools checks.',
   }),
   [F('mark of passage|efa')]: numbers([
     { type: 'speedBonus', value: 5 },
     ...checkDie('1d4', 'athletics', 'acrobatics'),
   ]),
   [F('mark of scribing|efa')]: numbers(checkDie('1d4', 'history'), {
-    notes: 'The d4 also adds to Calligrapher’s Supplies checks.',
+    notes: 'The mark’s die also adds to Calligrapher’s Supplies checks.',
   }),
   [F('mark of sentinel|efa')]: numbers([
     ...checkDie('1d4', 'insight', 'perception'),
@@ -145,10 +151,10 @@ export const SUP_FEATS: FeatureEffectsMap = {
   ]),
   [F('mark of shadow|efa')]: numbers(checkDie('1d4', 'stealth', 'performance')),
   [F('mark of storm|efa')]: numbers(checkDie('1d4', 'acrobatics'), {
-    notes: 'The d4 also adds to Navigator’s Tools checks.',
+    notes: 'The mark’s die also adds to Navigator’s Tools checks.',
   }),
   [F('mark of warding|efa')]: numbers([...checkDie('1d4', 'investigation'), EACH_ONCE], {
-    notes: `The d4 also adds to Thieves’ Tools checks. ${EACH_ONCE_NOTE}`,
+    notes: `The mark’s die also adds to Thieves’ Tools checks. ${EACH_ONCE_NOTE}`,
   }),
 
   [F('greater aberrant mark|efa')]: numbers([
@@ -239,15 +245,20 @@ export const SUP_FEATS: FeatureEffectsMap = {
     action({ id: 'magic-absorption', name: 'Magic Absorption', actionType: 'other', roll: '1d4' }),
     ...limited('spellfire-flame', 'Spellfire Flame', 'pb', 'long', 'bonus'),
   ]),
-  [F('survivor|rhw')]: numbers(
-    limited('steel-yourself', 'Steel Yourself', 1, 'long', 'reaction', { roll: 'pb' }),
-    { needs: 'a reroll of a low Initiative d20' },
-  ),
+  [F('survivor|rhw')]: numbers([
+    {
+      type: 'rollNote',
+      target: 'initiative',
+      text: 'Reroll a d20 of 9 or lower; the new roll stands',
+    },
+    ...limited('steel-yourself', 'Steel Yourself', 1, 'long', 'reaction', { roll: 'pb' }),
+  ]),
   [F('tireless reveler|abh')]: numbers([
     uses('tireless-reveler', 'Tireless Reveler', 'pb', 'short'),
   ]),
   [F('transmuted anatomy|au')]: numbers([
     { type: 'speedBonus', value: 5 },
+    savesAgainst('effects that would force you to shape-shift'),
     ...limited('resilient-anatomy', 'Resilient Anatomy', 'pb', 'long', 'reaction', {
       roll: '1d4',
     }),
@@ -264,10 +275,12 @@ export const SUP_FEATS: FeatureEffectsMap = {
   ),
 
   // ---- General feats ----
-  [F('bloodlust|abh')]: numbers(
-    limited('sanguine-feast', 'Sanguine Feast', 'pb', 'long', 'other', { costs: [{ hitDice: 1 }] }),
-    { needs: 'a floor on Hit Point Dice rolls' },
-  ),
+  [F('bloodlust|abh')]: numbers([
+    { type: 'hitDieHealing', floor: 3 },
+    ...limited('sanguine-feast', 'Sanguine Feast', 'pb', 'long', 'other', {
+      costs: [{ hitDice: 1 }],
+    }),
+  ]),
   [F('cloying mists|abh')]: numbers([uses('arise-fog', 'Arise, Fog', 1, 'long')], {
     notes: 'One free cast of Fog Cloud.',
   }),
@@ -460,9 +473,10 @@ export const SUP_FEATS: FeatureEffectsMap = {
       },
     ]),
   ]),
-  [F('boon of bountiful health|frhof')]: text({
-    needs: 'more temporary hit points whenever some are gained; Hit Point Dice healing at maximum',
-  }),
+  [F('boon of bountiful health|frhof')]: numbers([
+    { type: 'tempHpBonus', value: 5 },
+    { type: 'hitDieHealing', max: true },
+  ]),
   [F('boon of communication|frhof')]: numbers([{ type: 'sense', sense: 'telepathy', range: 120 }]),
   [F('boon of desperate resilience|frhof')]: toggled([
     bloodied(ALL_BUT_FORCE.map((value): Effect => ({ type: 'resistance', value }))),
@@ -508,9 +522,7 @@ export const SUP_FEATS: FeatureEffectsMap = {
       { type: 'immunity', value: 'thunder' },
     ]),
   ]),
-  [F('boon of the iron mind|au')]: text({
-    needs: 'Concentration that damage can’t break (no Constitution save to show)',
-  }),
+  [F('boon of the iron mind|au')]: numbers([{ type: 'concentrationUnbreakable' }]),
   [F('boon of the soul drinker|frhof')]: numbers(
     limited('siphon-life', 'Siphon Life', 1, 'short', 'reaction', { outcomes: [{ heal: 50 }] }),
   ),

@@ -148,6 +148,26 @@ export interface SessionNote {
   text: string;
 }
 
+/** One facility of a Bastion (plan step 7.7). Tracked only: the sheet applies no rules. */
+export interface BastionFacility {
+  /** Stable id of this row: a facility can be built more than once. */
+  uid: string;
+  /** The facility in the library; its rules text is read from there. */
+  ref: Ref;
+  /** Display name when it was added, used when the content is missing. */
+  name: string;
+  /** The order it is working on, as the data names it (`craft`, `trade`…). */
+  order?: string;
+  note?: string;
+}
+
+/** A Bastion from level 5 (plan step 7.7): what it has and who works there, nothing more. */
+export interface Bastion {
+  facilities: BastionFacility[];
+  hirelings: number;
+  defenders: number;
+}
+
 export interface Snapshot {
   ref: Ref;
   name: string;
@@ -155,6 +175,8 @@ export interface Snapshot {
   effects: Effect[];
   /** The entity's reprints when captured, so a missing owner can be aliased (plan §4.4). */
   supersededBy?: Id[];
+  /** A class's Hit Die, so its hit points stay right while its content isn't loaded. */
+  hitDie?: number;
   capturedAt: number;
 }
 
@@ -174,6 +196,38 @@ export type OverrideKey =
   | `attack.${string}.damage`;
 
 export type ScoreMethod = 'standard' | 'pointBuy' | 'manual' | 'rolled';
+
+/**
+ * An effect the player added to a feature (plan step 7.5): for what the app doesn't apply by
+ * itself, a homebrew feature most of all. Shown as "added by you" wherever it counts.
+ */
+export interface CustomEffect {
+  uid: string;
+  /** The feature, feat, species or item it belongs to; it applies while that one does. */
+  owner: Ref;
+  effect: Effect;
+}
+
+/**
+ * A familiar, steed, companion or summon kept on the sheet (plan §10.3, step 7.6): its stat
+ * block, the spell level it was summoned at, and its hit points.
+ */
+export interface Extra {
+  /** Stable id of this row. */
+  uid: string;
+  /** The creature (kind `creature`); missing for one written in by hand. */
+  creatureRef?: Ref;
+  /** Its name: the creature's at the time it was added, or the player's own. */
+  name: string;
+  /** Spell level it was summoned at, for stat blocks that scale with it. */
+  spellLevel?: number;
+  /** Damage taken, as on the character, so a changed maximum never corrupts current HP. */
+  damage: number;
+  tempHp: number;
+  /** The player's own HP maximum, when the stat block's can't be worked out. */
+  hpMax?: number;
+  notes?: string;
+}
 
 export interface Character {
   id: string;
@@ -201,6 +255,13 @@ export interface Character {
     setAside?: ChoiceRecord[];
   };
   inventory: InventoryItem[];
+  /** Familiars, steeds, companions and summons (step 7.6; optional, no migration). */
+  extras?: Extra[];
+  /**
+   * Beast forms known for Wild Shape, by creature id (step 7.6; optional, no migration). Like
+   * prepared spells, they may change after a Long Rest, so they are play state, not choices.
+   */
+  wildShapeForms?: Id[];
   currency: Currency;
   state: PlayState;
   overrides: Partial<Record<OverrideKey, number | string | boolean>>;
@@ -208,7 +269,11 @@ export interface Character {
   notes: string;
   sessionLog: SessionNote[];
   portraitId?: string;
+  /** Optional: only characters that have a Bastion carry one (plan step 7.7). */
+  bastion?: Bastion;
   snapshots: Record<RefKey, Snapshot>;
+  /** Effects the player added to features (plan step 7.5). */
+  customEffects?: CustomEffect[];
   ui: {
     tabOrder?: string[];
     hiddenTabs?: string[];

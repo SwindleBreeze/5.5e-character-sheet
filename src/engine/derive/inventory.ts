@@ -26,6 +26,7 @@ import { derived, effectsOfType, type DeriveContext } from './context.ts';
 import type { Proficiencies } from './rolls.ts';
 import type { DerivedContainer, DerivedInventory, DerivedSpellcasting } from './types.ts';
 
+/** Magic items a character can be attuned to at once, unless a feature raises it. */
 export const ATTUNEMENT_MAX = 3;
 export const COINS_PER_POUND = 50;
 
@@ -65,7 +66,8 @@ export function gearState(ctx: DeriveContext, profs: Proficiencies): GearState {
         message: `You lack ${armor.info.category} armor training for your ${name}: Disadvantage on D20 Tests that involve Strength or Dexterity, and you can’t cast spells.`,
       });
     }
-    if (armorDrawbacks(armor.item, armor.variant).stealthDis) out.stealthArmor = name;
+    const eased = effectsOfType(ctx.collected, 'armorEase').some((e) => e.effect.stealth);
+    if (!eased && armorDrawbacks(armor.item, armor.variant).stealthDis) out.stealthArmor = name;
   }
   if (shield) {
     const name = shield.item?.name ?? shield.row.name;
@@ -277,17 +279,21 @@ export function deriveInventory(
     if (item?.containerItems) countItems(r, item.containerItems, entry, kids ?? []);
   }
 
-  // Attunement.
+  // Attunement: three items, more with a feature that raises it (the largest wins).
   // Custom items and items not loaded count when marked; library items only if they need it.
+  const attunementMax = Math.max(
+    ATTUNEMENT_MAX,
+    ...effectsOfType(ctx.collected, 'attunementMax').map((e) => e.effect.value),
+  );
   const attunedRows = rows.filter((r) => {
     const { item, variant } = items.get(r.uid)!;
     return r.attuned && (!item || !!needsAttunement(item, variant));
   });
-  if (attunedRows.length > ATTUNEMENT_MAX) {
+  if (attunedRows.length > attunementMax) {
     ctx.issues.push({
       severity: 'warn',
       code: 'attunement',
-      message: `${attunedRows.length} items attuned; the limit is ${ATTUNEMENT_MAX}.`,
+      message: `${attunedRows.length} items attuned; the limit is ${attunementMax}.`,
     });
   }
   const copies = new Map<string, InventoryItem[]>();
@@ -335,7 +341,7 @@ export function deriveInventory(
     dragLiftPush,
     carrySize: sizeUsed,
     attuned: attunedRows.length,
-    attunementMax: ATTUNEMENT_MAX,
+    attunementMax,
     unqualified,
     containers,
   };
@@ -351,8 +357,9 @@ export function attuneBlock(
   if (sheet.inventory.unqualified.includes(row.uid)) {
     return `You don’t meet its prerequisite.`;
   }
-  if (sheet.inventory.attuned >= ATTUNEMENT_MAX) {
-    return `You’re attuned to ${ATTUNEMENT_MAX} items; end your Attunement to one first.`;
+  const max = sheet.inventory.attunementMax;
+  if (sheet.inventory.attuned >= max) {
+    return `You’re attuned to ${max} items; end your Attunement to one first.`;
   }
   const copy = character.inventory.find(
     (r) =>

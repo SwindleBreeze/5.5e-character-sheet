@@ -87,6 +87,7 @@ granted glitter burst|tst (known, Mossling, wis, DC 13)
 
 ## Resources
 Focus Points [classFeature:focus|wanderer|tst|2|tst#focus-points] max 7, short  [Focus +7]
+Beast Form [classFeature:beast form|wanderer|tst|2|tst#wild-shape] max 2, long  [Beast Form +2]
 
 ## Actions
 bonus: Flurry of Strikes (Focus); costs 1 Focus Points; attacks unarmed
@@ -103,6 +104,7 @@ action: Search (Rules)
 action: Study (Rules)
 action: Utilize (Rules)
 reaction: Opportunity Attack (Rules); attacks item:0-0-0, unarmed
+toggle: Beast Form off (Beast Form); costs 1 Beast Form + a Bonus Action; on temp HP 7; ends on longRest
 
 ## Features
 class: Wanderer; level 1; entry 0; skills 2/2
@@ -110,6 +112,7 @@ class: Unarmored Defense; level 1; entry 0
 class: Martial Arts; level 1; entry 0
 class: Focus; level 2; entry 1; counter classFeature:focus|wanderer|tst|2|tst#focus-points
 class: Unarmored Movement; level 2; entry 1
+class: Beast Form; level 2; entry 1; counter classFeature:beast form|wanderer|tst|2|tst#wild-shape
 class: Wanderer Way; level 3; entry 2
 class: Ability Score Improvement; level 4; entry 3; feat 1/1
 feat: Arena Veteran; from Ability Score Improvement; entry 3; ability 1/1; skills 1/1

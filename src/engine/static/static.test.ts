@@ -81,6 +81,19 @@ describe('equipment and wield state (P2)', () => {
     expect(matchesFilter({ itemIds: ['shiv|tst'] }, shiv)).toBe(true);
     expect(matchesFilter({ ability: ['str'] }, shiv)).toBe(true);
     expect(matchesFilter({ ability: ['str'] }, { ...shiv, ability: 'dex' })).toBe(false);
+    // Every weapon but one (a cursed weapon's hold), by the item or its variant.
+    expect(matchesFilter({ notItemIds: ['shiv|tst'] }, shiv)).toBe(false);
+    expect(matchesFilter({ notItemIds: ['axe|tst'] }, shiv)).toBe(true);
+    expect(matchesFilter({ notItemIds: ['axe|tst'] }, { ...shiv, variantId: 'axe|tst' })).toBe(
+      false,
+    );
+    // Magic weapons: a magic item, or a mundane one with a magic variant.
+    expect(matchesFilter({ magic: true }, shiv)).toBe(false);
+    expect(matchesFilter({ magic: false }, shiv)).toBe(true);
+    expect(matchesFilter({ magic: true }, { ...shiv, magic: true })).toBe(true);
+    expect(weaponTraits({ ...(index.get(item('shiv|tst')) as Item), rarity: 'rare' }).magic).toBe(
+      true,
+    );
   });
 });
 
@@ -107,6 +120,20 @@ describe('predicates (P1)', () => {
     const heavy = stateWith([{ itemRef: item('arena mail|tst'), equipped: 'armor' }]);
     expect(holds({ armor: 'notHeavy' }, heavy)).toBe(false);
     expect(holds({ armor: 'heavy' }, heavy)).toBe(true);
+  });
+
+  it('items in use and attunement', () => {
+    const none = stateWith([]);
+    expect(holds({ attuned: true }, none)).toBe(false);
+    expect(holds({ itemInUse: ['cloak of cheers|tst'] }, none)).toBe(false);
+    const worn = stateWith([
+      { itemRef: item('cloak of cheers|tst'), equipped: 'worn', attuned: true },
+    ]);
+    expect(holds({ attuned: true }, worn)).toBe(true);
+    expect(holds({ itemInUse: ['shiv|tst', 'cloak of cheers|tst'] }, worn)).toBe(true);
+    // Carried but not worn: not in use.
+    const carried = stateWith([{ itemRef: item('cloak of cheers|tst'), attuned: true }]);
+    expect(holds({ itemInUse: ['cloak of cheers|tst'] }, carried)).toBe(false);
   });
 
   it('wielding and free hands (Dueling only with one weapon)', () => {

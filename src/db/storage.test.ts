@@ -3,6 +3,7 @@ import {
   detectEnv,
   formatBytes,
   getStorageStatus,
+  looksEvicted,
   requestPersistenceIfUseful,
   shouldShowInstallGuide,
 } from './storage.ts';
@@ -122,5 +123,13 @@ describe('formatBytes', () => {
     expect(formatBytes(512)).toBe('512 B');
     expect(formatBytes(1536)).toBe('1.5 KB');
     expect(formatBytes(10.5 * 1024 * 1024)).toBe('11 MB');
+  });
+});
+
+describe('eviction (plan step 7.1)', () => {
+  it('is an empty database where the second store remembers characters', () => {
+    expect(looksEvicted(0, 3)).toBe(true);
+    expect(looksEvicted(0, 0)).toBe(false);
+    expect(looksEvicted(2, 3)).toBe(false);
   });
 });

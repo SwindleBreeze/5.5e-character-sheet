@@ -5,6 +5,7 @@ import type {
   Background,
   CharOption,
   Character,
+  Creature,
   ClassDef,
   ClassFeature,
   Deity,
@@ -51,6 +52,7 @@ export class AppDb extends Dexie {
   rewards!: EntityTable<Reward, 'id'>;
   facilities!: EntityTable<Facility, 'id'>;
   charOptions!: EntityTable<CharOption, 'id'>;
+  creatures!: EntityTable<Creature, 'id'>;
   sources!: EntityTable<SourceInfo, 'code'>;
   characters!: EntityTable<Character, 'id'>;
   portraits!: EntityTable<PortraitRow, 'id'>;
@@ -82,6 +84,8 @@ export class AppDb extends Dexie {
       facilities: 'id, source, facilityType, level',
       charOptions: 'id, source',
     });
+    // Phase 7 (plan §10.3, step 7.6): creatures that player options summon or name, and Beasts.
+    this.version(3).stores({ creatures: 'id, source' });
   }
 }
 
@@ -102,6 +106,7 @@ export const TABLE_BY_KIND = {
   reward: 'rewards',
   facility: 'facilities',
   charOption: 'charOptions',
+  creature: 'creatures',
 } as const satisfies Record<EntityKind, keyof AppDb>;
 
 let instance: AppDb | null = null;

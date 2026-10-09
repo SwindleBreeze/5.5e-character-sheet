@@ -5,6 +5,7 @@ import {
   ABILITY_NAMES,
   type Ability,
   type ContentEntity,
+  type Creature,
   type Entry,
   type FacilityHirelings,
   type Prereq,
@@ -167,6 +168,99 @@ export const CHAR_OPTION_TYPES: Record<string, string> = {
   'RF:B': 'Replacement background feature',
 };
 
+const SIZE_WORDS: Record<string, string> = {
+  T: 'Tiny',
+  S: 'Small',
+  M: 'Medium',
+  L: 'Large',
+  H: 'Huge',
+  G: 'Gargantuan',
+};
+
+const signed = (n: number) => (n >= 0 ? `+${n}` : `${n}`);
+
+/** `Medium beast (swarm), unaligned`. */
+export function creatureSubtitle(c: Creature): string {
+  const size = c.size.map((s) => SIZE_WORDS[s] ?? s).join(' or ');
+  const tags = c.typeTags?.length ? ` (${c.typeTags.join(', ')})` : '';
+  const swarm = c.swarm ? ' swarm of' : '';
+  const type = `${size}${swarm} ${c.creatureType}${c.swarm ? 's' : ''}${tags}`.trim();
+  return c.alignment?.length
+    ? `${cap(type)}, ${alignmentText(c.alignment).toLowerCase()}`
+    : cap(type);
+}
+
+export function creatureAcText(c: Creature): string {
+  return c.ac
+    .map((a) =>
+      a.special !== undefined ? a.special : `${a.value ?? ''}${a.note ? ` (${a.note})` : ''}`,
+    )
+    .join(', ');
+}
+
+export function creatureHpText(c: Creature): string {
+  const { average, formula, special } = c.hp;
+  if (special !== undefined) return special;
+  if (average === undefined) return '';
+  return formula ? `${average} (${formula})` : String(average);
+}
+
+export function creatureSpeedText(c: Creature): string {
+  return c.speed
+    .map(
+      (s) =>
+        `${s.mode === 'walk' ? '' : `${cap(s.mode)} `}${s.ft} ft.${s.note ? ` ${s.note}` : ''}`,
+    )
+    .join(', ');
+}
+
+/** `Str 14 (+2), Dex 15 (+2)…`, for the library; the sheet shows a grid. */
+function abilitiesText(c: Creature): string {
+  return (Object.keys(c.abilities) as Ability[])
+    .map((a) => `${cap(a)} ${c.abilities[a]} (${signed(Math.floor((c.abilities[a] - 10) / 2))})`)
+    .join(', ');
+}
+
+/** The lines above a creature's traits, in stat block order. */
+export function creatureFacts(c: Creature): EntityMeta['facts'] {
+  const facts: EntityMeta['facts'] = [];
+  const fact = (label: string, value: string | undefined) => {
+    if (value) facts.push({ label, value });
+  };
+  fact('Armor Class', creatureAcText(c));
+  fact('Hit Points', creatureHpText(c));
+  fact('Speed', creatureSpeedText(c));
+  fact('Initiative', c.initiative !== undefined ? signed(c.initiative) : undefined);
+  fact(
+    'Saving throws',
+    c.saves &&
+      Object.entries(c.saves)
+        .map(([a, v]) => `${cap(a)} ${v}`)
+        .join(', '),
+  );
+  fact(
+    'Skills',
+    c.skills &&
+      Object.entries(c.skills)
+        .map(([s, v]) => `${cap(s)} ${v}`)
+        .join(', '),
+  );
+  fact('Vulnerabilities', c.defenses?.vulnerable);
+  fact('Resistances', c.defenses?.resist);
+  fact('Immunities', c.defenses?.immune);
+  fact('Condition immunities', c.defenses?.conditionImmune);
+  fact(
+    'Senses',
+    [...c.senses, ...(c.passive !== undefined ? [`Passive Perception ${c.passive}`] : [])].join(
+      ', ',
+    ),
+  );
+  fact('Languages', c.languages.join(', '));
+  fact('Challenge rating', c.cr);
+  fact('Proficiency Bonus', c.pbNote ? cap(c.pbNote) : undefined);
+  return facts;
+}
+
 export function entityMeta(e: ContentEntity): EntityMeta {
   const facts: EntityMeta['facts'] = [];
   const fact = (label: string, value: string | undefined) => {
@@ -277,6 +371,15 @@ export function entityMeta(e: ContentEntity): EntityMeta {
         subtitle: e.optionTypes.map((t) => CHAR_OPTION_TYPES[t] ?? t).join(', '),
         facts,
       };
+    case 'creature': {
+      // Abilities after Armor Class, Hit Points, Speed and Initiative, as in a stat block.
+      const lines = creatureFacts(e);
+      const at = lines.findIndex(
+        (f) => !['Armor Class', 'Hit Points', 'Speed', 'Initiative'].includes(f.label),
+      );
+      lines.splice(at < 0 ? lines.length : at, 0, { label: 'Abilities', value: abilitiesText(e) });
+      return { subtitle: creatureSubtitle(e), facts: lines };
+    }
   }
 }
 

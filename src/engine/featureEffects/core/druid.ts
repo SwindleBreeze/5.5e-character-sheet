@@ -1,7 +1,8 @@
 // Druid and its four XPHB circles (plan §10.2, step 6.6), checked against the 2024 Player's
-// Handbook text of each feature. Wild Shape is a counter and a switch; the forms themselves are
-// step 7.6. Circle features that work "while in your Wild Shape form" or "while your Starry
-// Form is active" hang off those switches. Circle spells come from the subclasses' own data.
+// Handbook text of each feature. Wild Shape is a counter and a switch that gives temporary HP;
+// the forms are on the Extras tab (step 7.6). Circle features that work "while in your Wild
+// Shape form" or "while your Starry Form is active" hang off those switches. Circle spells come
+// from the subclasses' own data.
 
 import type { Effect } from '../../../schema/index.ts';
 import type { FeatureEffectsMap } from '../types.ts';
@@ -59,11 +60,15 @@ export const DRUID: FeatureEffectsMap = {
         toggleId: 'wild-shape',
         name: 'Wild Shape',
         cost: [wildShape, { action: 'bonus' }],
+        onActivate: [{ tempHp: 'level.druid' }],
         endsOn: ['longRest'],
         effects: [],
       },
     ],
-    { unoffered: 'Its Beast forms aren’t tracked by the app yet: keep them in your notes.' },
+    {
+      unoffered: 'Known forms are picked on the Extras tab; they can change after a Long Rest.',
+      notes: 'The Extras tab shows the form you take next to what you keep.',
+    },
   ),
   [C('druid subclass', 3)]: text(),
   [C('ability score improvement', 4)]: fromData(),

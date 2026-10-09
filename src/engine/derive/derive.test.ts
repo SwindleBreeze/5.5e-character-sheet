@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import type { Character } from '../../schema/index.ts';
+import { refKey, type Character } from '../../schema/index.ts';
+import { savesAgainst } from '../featureEffects/core/helpers.ts';
 import { testCharacter, type TestChoice } from '../../test/characters.ts';
 import { fixtureIndex } from '../../test/fixtureIndex.ts';
 import { FIXTURE_FEATURE_EFFECTS } from '../../test/fixtureFeatureEffects.ts';
@@ -125,10 +126,207 @@ describe('derive: abilities and rolls', () => {
     expect(d.saves.str).toMatchObject({ mode: 'advantage', advantage: ['Fury'] });
     expect(d.skills.athletics.mode).toBe('advantage');
     expect(d.checks.str.mode).toBe('advantage');
-    expect(d.skills.stealth.mode).toBe('normal');
+    expect(d.skills.stealth.disadvantage).not.toContain('Arena Mail');
     // Passive scores get +5 for advantage.
     expect(d.passives.perception.value).toBe(14);
     expect(d.skills.athletics.passive.value).toBe(22);
+  });
+
+  it('advantage in a situation is listed with the roll, not applied to it', () => {
+    const registry = {
+      ...FIXTURE_FEATURE_EFFECTS,
+      [refKey(species)]: {
+        ...FIXTURE_FEATURE_EFFECTS[refKey(species)],
+        level: 'A' as const,
+        effects: [
+          ...(FIXTURE_FEATURE_EFFECTS[refKey(species)]?.effects ?? []),
+          savesAgainst('being Charmed'),
+          {
+            type: 'rollMode' as const,
+            target: 'attack:all' as const,
+            mode: 'disadvantage' as const,
+            note: 'Not the shiv',
+            filter: { source: ['weapon' as const], notItemIds: ['shiv|tst'] },
+          },
+        ],
+      },
+    };
+    const c = brute();
+    c.inventory.push(
+      {
+        uid: 'shiv',
+        itemRef: item('shiv|tst'),
+        name: 'shiv',
+        quantity: 1,
+        attuned: false,
+        equipped: 'mainHand',
+      },
+      { uid: 'bow', itemRef: item('arc bow|tst'), name: 'arc bow', quantity: 1, attuned: false },
+    );
+    const d = derive(c, index, { registry });
+    expect(d.saves.wis).toMatchObject({
+      mode: 'normal',
+      advantage: [],
+      situational: [{ mode: 'advantage', against: 'being Charmed', source: 'Mossling' }],
+    });
+    expect(d.concentration.situational).toHaveLength(1);
+    expect(d.checks.wis.situational).toBeUndefined();
+    const shiv = d.attacks.find((a) => a.name === 'shiv')!;
+    const bow = d.attacks.find((a) => a.name === 'arc bow')!;
+    expect(shiv.toHit?.mode).toBe('normal');
+    expect(bow.toHit).toMatchObject({ mode: 'disadvantage', disadvantage: ['Not the shiv'] });
+    expect(d.attacks.find((a) => a.id === 'unarmed')!.toHit?.mode).toBe('normal');
+  });
+
+  it('item primitives: PB, stacking senses, doubled Speed, armor eased, attunement, more', () => {
+    const c = brute();
+    c.baseScores.str = 10; // below Arena Mail's 15
+    c.inventory = [
+      {
+        uid: 'a',
+        name: 'Arena Mail',
+        quantity: 1,
+        attuned: false,
+        itemRef: item('arena mail|tst'),
+        equipped: 'armor',
+      },
+      {
+        uid: 'b',
+        name: 'Cloak',
+        quantity: 1,
+        attuned: true,
+        itemRef: item('cloak of cheers|tst'),
+        equipped: 'worn',
+      },
+    ];
+    const before = run(c);
+    expect(before.speed.walk?.value).toBe(20);
+    expect(before.skills.stealth.disadvantage).toContain('Arena Mail');
+    const d = derive(c, index, {
+      registry: {
+        ...FIXTURE_FEATURE_EFFECTS,
+        'item:cloak of cheers|tst': {
+          level: 'A',
+          effects: [
+            { type: 'pbBonus', value: 1 },
+            { type: 'sense', sense: 'darkvision', range: 60, stack: true },
+            { type: 'speedMultiplier', value: 2 },
+            { type: 'attackedMode', mode: 'disadvantage', against: 'spell attacks' },
+            { type: 'armorEase', strength: true, stealth: true },
+            { type: 'attunementMax', value: 4 },
+            { type: 'rollBonus', target: 'skill:athletics', value: '1d4', id: 'mark' },
+            { type: 'rollBonusModify', id: 'mark', value: '1d6' },
+            {
+              type: 'grantSpells',
+              spells: [
+                {
+                  mode: 'innate',
+                  spell: { id: 'dim lantern|tst' },
+                  uses: 'atWill',
+                  fixed: { dc: 15, attackBonus: 7 },
+                },
+              ],
+            },
+          ],
+        },
+      },
+    });
+    expect(d.pb.value).toBe(before.pb.value + 1);
+    expect(d.senses.find((x) => x.value.sense === 'darkvision')?.value.range).toBe(120);
+    // Arena Mail no longer slows; the Speed is then doubled.
+    expect(d.speed.walk?.value).toBe(60);
+    expect(d.skills.stealth.disadvantage).not.toContain('Arena Mail');
+    expect(d.defenses.attacked).toEqual([
+      { mode: 'disadvantage', against: 'spell attacks', source: 'Cloak of Cheers' },
+    ]);
+    expect(d.inventory.attunementMax).toBe(4);
+    expect(d.skills.athletics.dice).toEqual([{ label: 'Cloak of Cheers', dice: '1d6' }]);
+    const lantern = d.spellcasting.granted.find((g) => g.sourceName === 'Cloak of Cheers')!;
+    expect(lantern).toMatchObject({ fixed: true, dc: 15, attackBonus: 7 });
+    expect(lantern.attack?.bonus.value).toBe(7);
+  });
+
+  it('feature attacks: own damage ability and bonus, a rider by tag; damage type changes', () => {
+    const c = brute();
+    c.inventory = [
+      {
+        uid: 'b',
+        name: 'Cloak',
+        quantity: 1,
+        attuned: true,
+        itemRef: item('cloak of cheers|tst'),
+        equipped: 'worn',
+      },
+    ];
+    const d = derive(c, index, {
+      registry: {
+        ...FIXTURE_FEATURE_EFFECTS,
+        'item:cloak of cheers|tst': {
+          level: 'A',
+          effects: [
+            {
+              type: 'attack',
+              id: 'snake',
+              name: 'Snake',
+              damage: '1d6',
+              damageType: 'piercing',
+              damageAbility: 'none',
+              range: 'melee',
+              distance: '5 ft.',
+              abilities: ['wis'],
+            },
+            {
+              type: 'attack',
+              id: 'bash',
+              name: 'Bash',
+              damage: '2d6',
+              damageBonus: 2,
+              damageType: 'force',
+              damageAbility: 'con',
+              range: 'melee',
+              distance: '5 ft.',
+              abilities: ['str'],
+            },
+            {
+              type: 'damageRider',
+              id: 'venom',
+              name: 'Venom',
+              dice: '3d6',
+              damageType: 'poison',
+              filter: { tags: ['feature:snake'] },
+              optIn: false,
+            },
+            {
+              type: 'attackMod',
+              label: 'Claws',
+              filter: { source: ['unarmed'] },
+              damageType: 'slashing',
+            },
+            { type: 'tempHpBonus', value: 5 },
+            { type: 'concentrationUnbreakable' },
+            { type: 'speedOff', mode: 'climb' },
+            { type: 'rollNote', target: 'initiative', text: 'Reroll a low d20' },
+          ],
+        },
+      },
+    });
+    const snake = d.attacks.find((a) => a.name === 'Snake')!;
+    expect(snake).toMatchObject({ ability: 'wis', damageDice: '1d6' });
+    expect(snake.damageBonus.value).toBe(0);
+    expect(snake.riders.map((r) => r.id)).toEqual(['venom']);
+    const bash = d.attacks.find((a) => a.name === 'Bash')!;
+    expect(bash.damageBonus.parts.map((p) => [p.label, p.value])).toEqual([
+      ['CON modifier', d.abilities.con.mod],
+      ['Bash', 2],
+    ]);
+    expect(bash.riders).toEqual([]);
+    expect(d.attacks.find((a) => a.id === 'unarmed')!.damageType).toBe('slashing');
+    expect(d.hp.tempBonus).toEqual({ value: 5, sources: ['Cloak of Cheers'] });
+    expect(d.concentrationUnbreakable).toBe('Cloak of Cheers');
+    // Mossling climbs, but not with the cloak's speedOff.
+    expect(run(c).speed.climb).toBeDefined();
+    expect(d.speed.climb).toBeUndefined();
+    expect(d.initiative.notes).toEqual([{ text: 'Reroll a low d20', source: 'Cloak of Cheers' }]);
   });
 
   it('exhaustion: −2 per level on d20 tests, −5 ft per level of speed', () => {

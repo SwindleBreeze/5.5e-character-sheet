@@ -21,7 +21,8 @@ import { masteryHasSave, masterySaveNote, masteryWhen } from '../../../engine/ex
 import { Badge } from '../../../ui/Badge.tsx';
 import { useRoller } from '../../../ui/rollerContext.ts';
 import { useSheet } from '../../../ui/sheetContext.ts';
-import { ABILITY_ABBR, rollBreakdown } from '../components/format.ts';
+import { ABILITY_ABBR, rollBreakdown, rollNoteLines } from '../components/format.ts';
+import { AdvantageHint } from '../components/markers.tsx';
 import { RollButton } from '../components/RollButton.tsx';
 import { useCostPicker } from '../components/useCostPicker.tsx';
 import { useExplain } from '../components/useExplain.tsx';
@@ -169,10 +170,14 @@ export function AttackCard({
                   title: `${a.name}: to hit`,
                   derived: toHit!.bonus,
                   bonus: true,
+                  note: rollNoteLines(toHit!).length
+                    ? rollNoteLines(toHit!).map((l) => <p key={l}>{l}</p>)
+                    : undefined,
                 })
               }
             >
               To hit
+              <AdvantageHint roll={toHit!} />
             </button>
             <RollButton
               label={`${a.name}: to hit`}

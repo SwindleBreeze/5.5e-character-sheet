@@ -54,6 +54,7 @@ const ENTITY_TAGS: Record<string, EntityTag> = {
   reward: { kind: 'reward', defaultSource: 'DMG' },
   facility: { kind: 'facility', defaultSource: 'XDMG' },
   charoption: { kind: 'charOption', defaultSource: 'MOT' },
+  creature: { kind: 'creature', defaultSource: 'MM' },
 };
 
 /** Default source per 5etools tag, for tags that refer to entities by `name|source`. */

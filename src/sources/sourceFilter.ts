@@ -59,19 +59,31 @@ export function isSelectable(source: SourceInfo): boolean {
   return source.edition !== '2014';
 }
 
-export const GROUP_ORDER: { group: SourceGroup; title: string }[] = [
+/** Settings → Sources groups: the book groups, then homebrew on its own (plan step 7.3). */
+export type SourceGroupKey = SourceGroup | 'homebrew';
+
+export const GROUP_ORDER: { group: SourceGroupKey; title: string }[] = [
   { group: 'core', title: 'Core 2024' },
   { group: 'supplement', title: 'Supplements' },
   { group: 'adventure', title: 'Adventures' },
   { group: 'other', title: 'Other' },
+  { group: 'homebrew', title: 'Homebrew' },
 ];
+
+export function isHomebrew(source: SourceInfo): boolean {
+  return source.origin === 'homebrew';
+}
+
+function groupOf(source: SourceInfo): SourceGroupKey {
+  return isHomebrew(source) ? 'homebrew' : (source.group ?? 'other');
+}
 
 export function groupSources(sources: readonly SourceInfo[]) {
   return GROUP_ORDER.map(({ group, title }) => ({
     group,
     title,
     sources: sources
-      .filter((s) => (s.group ?? 'other') === group)
+      .filter((s) => groupOf(s) === group)
       .sort(
         (a, b) => Number(isSelectable(b)) - Number(isSelectable(a)) || a.name.localeCompare(b.name),
       ),
@@ -80,9 +92,12 @@ export function groupSources(sources: readonly SourceInfo[]) {
 
 export type Preset = 'core2024' | 'all2024';
 
+/** The official sources a preset switches on; homebrew is never part of one. */
 export function presetSources(sources: readonly SourceInfo[], preset: Preset): SourceCode[] {
   return sources
-    .filter((s) => s.edition === '2024' && (preset === 'all2024' || s.group === 'core'))
+    .filter(
+      (s) => !isHomebrew(s) && s.edition === '2024' && (preset === 'all2024' || s.group === 'core'),
+    )
     .map((s) => s.code)
     .sort();
 }

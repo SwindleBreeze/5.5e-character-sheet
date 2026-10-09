@@ -16,6 +16,7 @@ import {
   deathSave,
   endTurn,
   heal,
+  hitDieHeal,
   longRest,
   removeCondition,
   restoreResource,
@@ -203,6 +204,20 @@ describe('resources, slots, actions and toggles', () => {
     expect(useAction(c, s, id, { slotLevel: 1 }).state.slotsUsed).toEqual([0, 0, 1]);
   });
 
+  it('a regain that may take a Pact Magic slot takes a spent one first', () => {
+    const c = castSpell(caster(), sheet(caster()), { level: 1, pact: true });
+    const s = sheet(c);
+    expect(c.state.pactSlotsUsed).toBe(1);
+    const action = s.actions.find((a) => a.name === 'Lore Recovery')!;
+    const rod: DerivedSheet = {
+      ...s,
+      actions: [{ ...action, outcomes: [{ regainSlot: { maxLevel: 9, pact: true } }] }],
+    };
+    expect(useAction(c, rod, action.id).state.pactSlotsUsed).toBe(0);
+    // Without the pact flag the Pact slot stays spent.
+    expect(useAction(c, s, action.id).state.pactSlotsUsed).toBe(1);
+  });
+
   it('toggles pay to switch on, switch off others of their group, and switch off', () => {
     const c = brute();
     const s = sheet(c);
@@ -269,6 +284,21 @@ describe('rests', () => {
     expect(
       shortRest(c, s, [{ faces: 12, rolls: [1, 1, 1, 1, 1, 1, 1] }]).state.hitDiceUsed,
     ).toEqual({ 12: 5 });
+  });
+
+  it('Hit Point Dice healing: a floor, the maximum, doubled', () => {
+    const s = sheet(brute()); // CON +2
+    const withHow = (how: NonNullable<DerivedSheet['hp']['hitDieHealing']>): DerivedSheet => ({
+      ...s,
+      hp: { ...s.hp, hitDieHealing: how },
+    });
+    expect(hitDieHeal(s, 12, 1)).toBe(3);
+    expect(hitDieHeal(withHow({ floor: 3, sources: [] }), 12, 1)).toBe(5);
+    expect(hitDieHeal(withHow({ max: true, sources: [] }), 12, 1)).toBe(14);
+    expect(hitDieHeal(withHow({ double: true, sources: [] }), 12, 5)).toBe(14);
+    let c = applyDamage(brute(), s, 40);
+    c = shortRest(c, withHow({ double: true, sources: [] }), [{ faces: 12, rolls: [5] }]);
+    expect(c.state.damage).toBe(26);
   });
 
   it('Long Rest: everything back, one Exhaustion level less; gifts stay spent', () => {
