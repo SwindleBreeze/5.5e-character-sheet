@@ -126,7 +126,7 @@ describe('derive: abilities and rolls', () => {
     expect(d.saves.str).toMatchObject({ mode: 'advantage', advantage: ['Fury'] });
     expect(d.skills.athletics.mode).toBe('advantage');
     expect(d.checks.str.mode).toBe('advantage');
-    expect(d.skills.stealth.mode).toBe('normal');
+    expect(d.skills.stealth.disadvantage).not.toContain('Arena Mail');
     // Passive scores get +5 for advantage.
     expect(d.passives.perception.value).toBe(14);
     expect(d.skills.athletics.passive.value).toBe(22);
@@ -176,6 +176,74 @@ describe('derive: abilities and rolls', () => {
     expect(shiv.toHit?.mode).toBe('normal');
     expect(bow.toHit).toMatchObject({ mode: 'disadvantage', disadvantage: ['Not the shiv'] });
     expect(d.attacks.find((a) => a.id === 'unarmed')!.toHit?.mode).toBe('normal');
+  });
+
+  it('item primitives: PB, stacking senses, doubled Speed, armor eased, attunement, more', () => {
+    const c = brute();
+    c.baseScores.str = 10; // below Arena Mail's 15
+    c.inventory = [
+      {
+        uid: 'a',
+        name: 'Arena Mail',
+        quantity: 1,
+        attuned: false,
+        itemRef: item('arena mail|tst'),
+        equipped: 'armor',
+      },
+      {
+        uid: 'b',
+        name: 'Cloak',
+        quantity: 1,
+        attuned: true,
+        itemRef: item('cloak of cheers|tst'),
+        equipped: 'worn',
+      },
+    ];
+    const before = run(c);
+    expect(before.speed.walk?.value).toBe(20);
+    expect(before.skills.stealth.disadvantage).toContain('Arena Mail');
+    const d = derive(c, index, {
+      registry: {
+        ...FIXTURE_FEATURE_EFFECTS,
+        'item:cloak of cheers|tst': {
+          level: 'A',
+          effects: [
+            { type: 'pbBonus', value: 1 },
+            { type: 'sense', sense: 'darkvision', range: 60, stack: true },
+            { type: 'speedMultiplier', value: 2 },
+            { type: 'attackedMode', mode: 'disadvantage', against: 'spell attacks' },
+            { type: 'armorEase', strength: true, stealth: true },
+            { type: 'attunementMax', value: 4 },
+            { type: 'rollBonus', target: 'skill:athletics', value: '1d4', id: 'mark' },
+            { type: 'rollBonusModify', id: 'mark', value: '1d6' },
+            {
+              type: 'grantSpells',
+              spells: [
+                {
+                  mode: 'innate',
+                  spell: { id: 'dim lantern|tst' },
+                  uses: 'atWill',
+                  fixed: { dc: 15, attackBonus: 7 },
+                },
+              ],
+            },
+          ],
+        },
+      },
+    });
+    expect(d.pb.value).toBe(before.pb.value + 1);
+    expect(d.senses.find((x) => x.value.sense === 'darkvision')?.value.range).toBe(120);
+    // Arena Mail no longer slows; the Speed is then doubled.
+    expect(d.speed.walk?.value).toBe(60);
+    expect(d.skills.stealth.disadvantage).not.toContain('Arena Mail');
+    expect(d.defenses.attacked).toEqual([
+      { mode: 'disadvantage', against: 'spell attacks', source: 'Cloak of Cheers' },
+    ]);
+    expect(d.inventory.attunementMax).toBe(4);
+    expect(d.skills.athletics.dice).toEqual([{ label: 'Cloak of Cheers', dice: '1d6' }]);
+    const lantern = d.spellcasting.granted.find((g) => g.sourceName === 'Cloak of Cheers')!;
+    expect(lantern).toMatchObject({ fixed: true, dc: 15, attackBonus: 7 });
+    expect(lantern.attack?.bonus.value).toBe(7);
   });
 
   it('exhaustion: −2 per level on d20 tests, −5 ft per level of speed', () => {

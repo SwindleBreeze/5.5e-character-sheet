@@ -54,7 +54,15 @@ const MENTAL: Ability[] = ['int', 'wis', 'cha'];
 
 /** A d4 (or other die) added to checks with these skills. */
 const checkDie = (die: string, ...skills: string[]): Effect[] =>
-  skills.map((s) => ({ type: 'rollBonus', target: `skill:${s}` as const, value: die }) as Effect);
+  skills.map(
+    (s) =>
+      ({
+        type: 'rollBonus',
+        target: `skill:${s}` as const,
+        value: die,
+        id: 'dragonmark',
+      }) as Effect,
+  );
 
 /** Effects that hold while the character is Bloodied (one toggle every feat shares). */
 const bloodied = (effects: Effect[]): Effect => ({
@@ -88,11 +96,8 @@ const EACH_ONCE: Effect = {
 const EACH_ONCE_NOTE = 'The free casts are one per spell, not two of either.';
 
 /** A Greater Mark's Improved Intuition: the mark's check die becomes a d6. */
-const BIGGER_DIE = 'a later feat changing another feat’s check die (d4 to d6)';
 const greater = (extra: Effect[] = []) =>
-  extra.length
-    ? numbers(extra, { needs: BIGGER_DIE, notes: 'The mark’s check die is a d6.' })
-    : text({ needs: BIGGER_DIE, notes: 'The mark’s check die is a d6.' });
+  numbers([{ type: 'rollBonusModify', id: 'dragonmark', value: '1d6' }, ...extra]);
 
 export const SUP_FEATS: FeatureEffectsMap = {
   // ---- Dragonmarks (EFA) ----
@@ -125,20 +130,20 @@ export const SUP_FEATS: FeatureEffectsMap = {
     { notes: EACH_ONCE_NOTE },
   ),
   [F('mark of healing|efa')]: numbers(checkDie('1d4', 'medicine'), {
-    notes: 'The d4 also adds to Herbalism Kit checks.',
+    notes: 'The mark’s die also adds to Herbalism Kit checks.',
   }),
   [F('mark of hospitality|efa')]: numbers([...checkDie('1d4', 'persuasion'), EACH_ONCE], {
-    notes: `The d4 also adds to Brewer’s Supplies and Cook’s Utensils checks. ${EACH_ONCE_NOTE}`,
+    notes: `The mark’s die also adds to Brewer’s Supplies and Cook’s Utensils checks. ${EACH_ONCE_NOTE}`,
   }),
   [F('mark of making|efa')]: numbers(checkDie('1d4', 'arcana'), {
-    notes: 'The d4 also adds to Artisan’s Tools checks.',
+    notes: 'The mark’s die also adds to Artisan’s Tools checks.',
   }),
   [F('mark of passage|efa')]: numbers([
     { type: 'speedBonus', value: 5 },
     ...checkDie('1d4', 'athletics', 'acrobatics'),
   ]),
   [F('mark of scribing|efa')]: numbers(checkDie('1d4', 'history'), {
-    notes: 'The d4 also adds to Calligrapher’s Supplies checks.',
+    notes: 'The mark’s die also adds to Calligrapher’s Supplies checks.',
   }),
   [F('mark of sentinel|efa')]: numbers([
     ...checkDie('1d4', 'insight', 'perception'),
@@ -146,10 +151,10 @@ export const SUP_FEATS: FeatureEffectsMap = {
   ]),
   [F('mark of shadow|efa')]: numbers(checkDie('1d4', 'stealth', 'performance')),
   [F('mark of storm|efa')]: numbers(checkDie('1d4', 'acrobatics'), {
-    notes: 'The d4 also adds to Navigator’s Tools checks.',
+    notes: 'The mark’s die also adds to Navigator’s Tools checks.',
   }),
   [F('mark of warding|efa')]: numbers([...checkDie('1d4', 'investigation'), EACH_ONCE], {
-    notes: `The d4 also adds to Thieves’ Tools checks. ${EACH_ONCE_NOTE}`,
+    notes: `The mark’s die also adds to Thieves’ Tools checks. ${EACH_ONCE_NOTE}`,
   }),
 
   [F('greater aberrant mark|efa')]: numbers([

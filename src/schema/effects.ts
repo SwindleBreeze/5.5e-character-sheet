@@ -166,6 +166,11 @@ export interface SpellGrant {
     | { charges: number };
   /** The spell is cast at this level (5etools `#3` suffix). */
   castAtLevel?: number;
+  /**
+   * The item's own save DC and spell attack bonus (an Enspelled weapon: DC 15, +7), used in
+   * place of the character's.
+   */
+  fixed?: { dc: number; attackBonus: number };
   /** Spellcasting ability: fixed, a choice, or the ability this entity increased. */
   ability?: Ability | { slot: string; from: Ability[] } | 'inherit';
 }
@@ -196,7 +201,22 @@ export type Effect =
   | { type: 'acBonus'; value: Formula }
   | { type: 'speed'; mode: MoveMode; value: Formula | 'walk' }
   | { type: 'speedBonus'; value: Formula; mode?: MoveMode }
-  | { type: 'sense'; sense: string; range: number }
+  /**
+   * `stack`: with the sense already, its range grows by `range` instead (Goggles of Night: 60 ft
+   * of Darkvision, or 60 ft more).
+   */
+  | { type: 'sense'; sense: string; range: number; stack?: boolean }
+  /** The Speed (every mode that equals it too) is multiplied (Boots of Speed: doubled). */
+  | { type: 'speedMultiplier'; value: number }
+  /** A bonus to the Proficiency Bonus (an Ioun Stone of Mastery). */
+  | { type: 'pbBonus'; value: number }
+  /**
+   * Attack rolls against the character have Advantage or Disadvantage, always or `against` a
+   * kind of attack (`spell attacks`): listed with the defenses.
+   */
+  | { type: 'attackedMode'; mode: 'advantage' | 'disadvantage'; against?: string }
+  /** Worn armor's Strength requirement (its Speed loss) or Stealth Disadvantage don't apply. */
+  | { type: 'armorEase'; strength?: boolean; stealth?: boolean }
   | { type: 'resistance' | 'immunity' | 'conditionImmunity'; value: Bound<string> }
   | { type: 'resistanceChoice'; choice: ChoiceSlot<string> }
   | {
@@ -304,7 +324,10 @@ export type Effect =
       filter?: AttackFilter;
     }
   /** P9: a bonus to a roll. */
-  | { type: 'rollBonus'; target: RollTarget; value: Formula; note?: string }
+  /** `id`: a later feature can change the bonus (a Greater Mark's d6 for the mark's d4). */
+  | { type: 'rollBonus'; target: RollTarget; value: Formula; note?: string; id?: string }
+  /** Changes every roll bonus with this `id`, wherever it comes from. */
+  | { type: 'rollBonusModify'; id: string; value: Formula }
   /** P9: half proficiency on these rolls when not proficient (Jack of All Trades). */
   | { type: 'halfProficiency'; targets: RollTarget[] }
   /**
@@ -363,6 +386,8 @@ export type Effect =
       abilities: Ability[];
       properties?: string[];
     }
+  /** How many magic items the character can be attuned to at once (Artificer: 4, 5, 6). */
+  | { type: 'attunementMax'; value: number }
   /** Count as `steps` sizes larger when determining carrying capacity (Powerful Build). */
   | { type: 'carrySize'; steps: number };
 

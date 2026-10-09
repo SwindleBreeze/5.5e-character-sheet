@@ -129,23 +129,20 @@ export const SUP_ROGUE: FeatureEffectsMap = {
   ),
   [P('voice of death', 9)]: fromData(),
   // Once per Long Rest, or again by destroying a soul trinket.
-  [P('ghost walk', 13)]: toggled(
-    [
-      uses('ghost-walk', 'Ghost Walk', 1, 'long'),
-      restoredBy('ghost-walk', trinket),
-      {
-        type: 'toggle',
-        toggleId: 'ghost-walk',
-        name: 'Ghost Walk',
-        cost: [{ resource: 'ghost-walk', amount: 1 }, { action: 'bonus' }],
-        endsOn: ['shortRest', 'longRest'],
-        effects: [{ type: 'speed', mode: 'fly', value: 10 }],
-      },
-    ],
+  [P('ghost walk', 13)]: toggled([
+    uses('ghost-walk', 'Ghost Walk', 1, 'long'),
+    restoredBy('ghost-walk', trinket),
     {
-      notes: 'Attacks against you have Disadvantage while it lasts.',
-      needs: 'disadvantage on attack rolls made against the character',
+      type: 'toggle',
+      toggleId: 'ghost-walk',
+      name: 'Ghost Walk',
+      cost: [{ resource: 'ghost-walk', amount: 1 }, { action: 'bonus' }],
+      endsOn: ['shortRest', 'longRest'],
+      effects: [
+        { type: 'speed', mode: 'fly', value: 10 },
+        { type: 'attackedMode', mode: 'disadvantage' },
+      ],
     },
-  ),
+  ]),
   [P("death's friend", 17)]: text(),
 };

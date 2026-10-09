@@ -181,7 +181,7 @@ export const ITEMS_I_TO_Q: FeatureEffectsMap = {
     { type: 'rollMode', target: 'initiative', mode: 'advantage' },
     { type: 'rollMode', target: 'skill:perception', mode: 'advantage' },
   ]),
-  [I('ioun stone, mastery')]: text({ needs: 'a bonus to the Proficiency Bonus' }),
+  [I('ioun stone, mastery')]: numbers([{ type: 'pbBonus', value: 1 }]),
   [I('ioun stone, reserve')]: numbers(
     [uses('ioun-reserve', 'Ioun Stone of Reserve (stored levels)', 4, 'none', { pool: true })],
     { notes: 'Tracks the stored spell levels; which spells are stored is kept by hand.' },
@@ -296,9 +296,7 @@ export const ITEMS_I_TO_Q: FeatureEffectsMap = {
     { type: 'speed', mode: 'swim', value: 'walk' },
     uses('mariners-armor', "Mariner's Armor: Healing", 1, 'dawn'),
   ]),
-  [I('mithral armor')]: text({
-    needs: "a way to waive worn armor's Strength requirement and Stealth Disadvantage",
-  }),
+  [I('mithral armor')]: numbers([{ type: 'armorEase', strength: true, stealth: true }]),
   [I('mantle of spell resistance')]: numbers([savesAgainst('spells')]),
   [I("nature's mantle")]: numbers([
     action({ id: 'natures-mantle', name: "Hide (Nature's Mantle)", actionType: 'bonus' }),

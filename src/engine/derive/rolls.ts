@@ -222,9 +222,18 @@ export function buildRoll(
   }
 
   const dice: DerivedRoll['dice'] = [];
+  const modified = new Map(
+    effectsOfType(ctx.collected, 'rollBonusModify').map(({ effect, source }) => [
+      effect.id,
+      { value: effect.value, source },
+    ]),
+  );
   for (const { effect, source } of effectsOfType(ctx.collected, 'rollBonus')) {
     if (!targetMatches(effect.target, kind)) continue;
-    const v = evalValue(ctx, effect.value, source);
+    const change = effect.id ? modified.get(effect.id) : undefined;
+    const v = change
+      ? evalValue(ctx, change.value, change.source)
+      : evalValue(ctx, effect.value, source);
     if (isDice(v)) dice.push({ label: source.name, dice: formatValue(v) });
     else parts.push(contribution(source.name, v, source));
   }

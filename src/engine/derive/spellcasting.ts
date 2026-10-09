@@ -398,7 +398,11 @@ export function deriveSpellcasting(
           sourceName: source.name,
           mode: grant.mode,
         };
-        if (ability) {
+        if (grant.fixed) {
+          g.fixed = true;
+          g.dc = grant.fixed.dc;
+          g.attackBonus = grant.fixed.attackBonus;
+        } else if (ability) {
           g.ability = ability;
           g.dc = 8 + pb + mods[ability];
           g.attackBonus = pb + mods[ability];
@@ -514,6 +518,17 @@ export function deriveSpellcasting(
       cantripAttack(id, c.ability, c.key, c.dc.value, c.attack);
   }
   for (const g of granted) {
+    if (g.fixed) {
+      // The item's own bonus: no ability, no Proficiency Bonus of the character's.
+      g.attack = buildRoll(
+        ctx,
+        { type: 'attack', traits: SPELL_TRAITS },
+        [{ label: 'The item’s spell attack bonus', value: g.attackBonus ?? 0 }],
+        'none',
+        pb,
+      );
+      continue;
+    }
     if (!g.ability) continue;
     const attack = buildRoll(
       ctx,

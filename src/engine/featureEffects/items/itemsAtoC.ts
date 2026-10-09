@@ -186,7 +186,7 @@ export const ITEMS_A_TO_C: FeatureEffectsMap = {
   ),
   [I('axe of the dwarvish lords')]: numbers(
     [
-      { type: 'sense', sense: 'darkvision', range: 60 },
+      { type: 'sense', sense: 'darkvision', range: 60, stack: true },
       { type: 'abilityBonus', ability: 'con', value: 2, max: 20 },
       ...["brewer's supplies|xphb", "mason's tools|xphb", "smith's tools|xphb"].map(
         (value): Effect => ({ type: 'proficiency', category: 'tool', value }),
@@ -206,7 +206,6 @@ export const ITEMS_A_TO_C: FeatureEffectsMap = {
     {
       notes:
         'The extra damage is larger against Giants, and a 20 on the d20 adds more; Travel the Depths waits three days.',
-      needs: 'a Darkvision that adds to the range the character already has',
     },
   ),
 
@@ -300,27 +299,23 @@ export const ITEMS_A_TO_C: FeatureEffectsMap = {
   [I('boots of elvenkind')]: numbers([stealthAdvantage]),
   [I('boots of false tracks')]: text(),
   [I('boots of levitation')]: fromData(),
-  [I('boots of speed')]: toggled(
-    [
-      uses('boots-of-speed', 'Boots of Speed (minutes)', 10, 'long', { pool: true }),
-      {
-        type: 'toggle',
-        toggleId: 'boots-of-speed',
-        name: 'Boots of Speed',
-        cost: [{ action: 'bonus' }],
-        effects: [
-          {
-            type: 'note',
-            text: 'Speed doubled; Opportunity Attacks against you have Disadvantage.',
-          },
-        ],
-      },
-    ],
-    { needs: 'a Speed that doubles the current Speed (no formula reads Speed)' },
-  ),
-  [I('boots of striding and springing')]: numbers([{ type: 'speed', mode: 'walk', value: 30 }], {
-    needs: 'ignoring the Speed loss from Heavy Armor and carried weight',
-  }),
+  [I('boots of speed')]: toggled([
+    uses('boots-of-speed', 'Boots of Speed (minutes)', 10, 'long', { pool: true }),
+    {
+      type: 'toggle',
+      toggleId: 'boots-of-speed',
+      name: 'Boots of Speed',
+      cost: [{ action: 'bonus' }],
+      effects: [
+        { type: 'speedMultiplier', value: 2 },
+        { type: 'attackedMode', mode: 'disadvantage', against: 'Opportunity Attacks' },
+      ],
+    },
+  ]),
+  [I('boots of striding and springing')]: numbers([
+    { type: 'speed', mode: 'walk', value: 30 },
+    { type: 'armorEase', strength: true },
+  ]),
   [I('boots of the winterlands')]: fromData(),
   [I('bowl of commanding water elementals')]: summoner(
     'bowl-of-commanding-water-elementals',
@@ -392,8 +387,9 @@ export const ITEMS_A_TO_C: FeatureEffectsMap = {
   [I('circlet of blasting')]: fromData(),
   [I('cloak of arachnida')]: numbers([{ type: 'speed', mode: 'climb', value: 'walk' }]),
   [I('cloak of billowing')]: text(),
-  [I('cloak of displacement')]: text({
-    needs: 'disadvantage on attack rolls made against the character',
+  [I('cloak of displacement')]: numbers([{ type: 'attackedMode', mode: 'disadvantage' }], {
+    notes:
+      'It stops until the start of your next turn when you take damage, and while your Speed is 0.',
   }),
   [I('cloak of elvenkind')]: numbers([stealthAdvantage]),
   [I('cloak of invisibility')]: numbers([

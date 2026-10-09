@@ -43,28 +43,27 @@ function rider(name: string, dice: string, damageType?: string, optIn = true): E
 const titleOf = (name: string) => name.replace(/(^|\s)\S/g, (m) => m.toUpperCase());
 
 /** A spell bound into the item when it is made, cast for 1 charge (Enspelled …). */
+/** An Enspelled item's save DC and attack bonus, by its spell's level. */
+const ENSPELLED_NUMBERS = [13, 13, 13, 15, 15, 17, 17, 18, 18];
+
 function enspelled(kind: string, schools: string): Record<string, FeatureMapping> {
   const out: Record<string, FeatureMapping> = {};
   for (let level = 0; level <= 8; level++) {
+    const dc = ENSPELLED_NUMBERS[level]!;
     const tier = level === 0 ? 'cantrip' : `level ${level}`;
-    out[I(`enspelled ${kind} (${tier})`)] = numbers(
-      [
-        {
-          type: 'grantSpells',
-          spells: [
-            {
-              mode: 'innate',
-              spell: { choose: `level=${level}|school=${schools}`, count: 1, slot: 'spell' },
-              uses: { charges: 1 },
-            },
-          ],
-        },
-      ],
+    out[I(`enspelled ${kind} (${tier})`)] = numbers([
       {
-        notes: "The spell uses the item's own save DC and attack bonus, not yours.",
-        needs: 'a fixed save DC and spell attack bonus for a spell cast from an item',
+        type: 'grantSpells',
+        spells: [
+          {
+            mode: 'innate',
+            spell: { choose: `level=${level}|school=${schools}`, count: 1, slot: 'spell' },
+            uses: { charges: 1 },
+            fixed: { dc, attackBonus: dc - 8 },
+          },
+        ],
       },
-    );
+    ]);
   }
   return out;
 }
@@ -320,10 +319,9 @@ export const ITEMS_D_TO_H: FeatureEffectsMap = {
   [I('gloves of thievery')]: numbers([
     { type: 'rollBonus', target: 'skill:sleight of hand', value: 5 },
   ]),
-  [I('goggles of night')]: numbers([{ type: 'sense', sense: 'darkvision', range: 60 }], {
-    notes: 'With Darkvision already, its range grows by 60 feet instead.',
-    needs: 'a bonus to the range of a sense the character already has',
-  }),
+  [I('goggles of night')]: numbers([
+    { type: 'sense', sense: 'darkvision', range: 60, stack: true },
+  ]),
   [I('gold dragon scale mail')]: DRAGON_SCALE('gold'),
   [I('green dragon scale mail')]: DRAGON_SCALE('green'),
 

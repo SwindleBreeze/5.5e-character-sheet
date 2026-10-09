@@ -350,9 +350,10 @@ export const ITEMS_R_TO_Z: FeatureEffectsMap = {
         'an attack a feature gives with a flat damage bonus (Forceful Bash adds 2 to 2d6 + Str)',
     },
   ),
-  [I('spellguard shield')]: numbers([savesAgainst('spells and other magical effects')], {
-    notes: 'Spell attack rolls against you have Disadvantage.',
-  }),
+  [I('spellguard shield')]: numbers([
+    savesAgainst('spells and other magical effects'),
+    { type: 'attackedMode', mode: 'disadvantage', against: 'spell attacks' },
+  ]),
 
   // ---- Staffs ----
   [I('staff of adornment')]: text(),

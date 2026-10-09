@@ -170,9 +170,9 @@ export const SUP_ARTIFICER_SUBCLASSES: FeatureEffectsMap = {
     { unoffered: FALLBACK_TOOL, notes: 'Crafting armor takes half the time.' },
   ),
   [S('armorer', 'armorer spells', 3)]: text(),
-  [S('armorer', 'arcane armor', 3)]: text({
-    needs: "a way to waive worn armor's Strength requirement (the Speed penalty still shows)",
-  }),
+  [S('armorer', 'arcane armor', 3)]: numbers([
+    when({ toggle: 'arcane-armor' }, [{ type: 'armorEase', strength: true }]),
+  ]),
   // Switched on while wearing the Arcane Armor; its model is picked then. Each model feature
   // hangs its weapon and benefits off the picked option.
   [S('armorer', 'armor model', 3)]: toggled(

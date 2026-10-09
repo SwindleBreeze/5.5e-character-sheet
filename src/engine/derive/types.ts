@@ -223,7 +223,9 @@ export interface DerivedGrantedSpell {
   ability?: Ability;
   dc?: number;
   attackBonus?: number;
-  /** The spell attack roll, when the grant names its ability. */
+  /** The DC and attack bonus are the item's own, not worked out from an ability. */
+  fixed?: boolean;
+  /** The spell attack roll, when the grant names its ability or fixes its bonus. */
   attack?: DerivedRoll;
   uses?: SpellGrant['uses'];
   /** For a counted use: how many, and where spent uses are stored. */
@@ -440,6 +442,8 @@ export interface DerivedSheet {
     resistances: SourcedValue[];
     immunities: SourcedValue[];
     conditionImmunities: SourcedValue[];
+    /** Advantage or Disadvantage on attack rolls made against the character. */
+    attacked: { mode: 'advantage' | 'disadvantage'; against?: string; source: string }[];
   };
   proficiencies: {
     armor: SourcedValue[];

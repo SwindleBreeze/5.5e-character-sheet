@@ -378,9 +378,16 @@ export function MainTab({ character, sheet, index, apply, conditionOptions }: Ma
             values={sheet.defenses.conditionImmunities.map((v) => nameOf(index, 'rule', v.value))}
           />
         </dl>
+        {sheet.defenses.attacked.map((a) => (
+          <p key={`${a.mode}${a.against}${a.source}`} className={styles.sectionNote}>
+            Attack rolls{a.against ? ` (${a.against})` : ''} against you have{' '}
+            {a.mode === 'advantage' ? 'Advantage' : 'Disadvantage'}: {a.source}
+          </p>
+        ))}
         {!sheet.defenses.resistances.length &&
           !sheet.defenses.immunities.length &&
-          !sheet.defenses.conditionImmunities.length && <p className={styles.muted}>None</p>}
+          !sheet.defenses.conditionImmunities.length &&
+          !sheet.defenses.attacked.length && <p className={styles.muted}>None</p>}
       </Section>
     ),
     proficiencies: (

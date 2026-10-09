@@ -19,7 +19,14 @@ import { deriveFeatures } from './features.ts';
 import { deriveInventory, gearState } from './inventory.ts';
 import { deriveResources } from './resources.ts';
 import { deriveSpellcasting } from './spellcasting.ts';
-import { valuesOf, withOverride, type DeriveContext } from './context.ts';
+import {
+  contribution,
+  derived,
+  effectsOfType,
+  valuesOf,
+  withOverride,
+  type DeriveContext,
+} from './context.ts';
 import {
   deriveAc,
   deriveClasses,
@@ -65,7 +72,12 @@ export function derive(
 
   const pbBase = proficiencyBonus(Math.max(1, st.charLevel));
   const pb = withOverride(
-    { value: pbBase, parts: [{ label: `Level ${st.charLevel}`, value: pbBase, kind: 'base' }] },
+    derived([
+      { label: `Level ${st.charLevel}`, value: pbBase, kind: 'base' },
+      ...effectsOfType(collected, 'pbBonus').map(({ effect, source }) =>
+        contribution(source.name, effect.value, source),
+      ),
+    ]),
     character,
     'pb',
   );
