@@ -246,6 +246,83 @@ describe('derive: abilities and rolls', () => {
     expect(lantern.attack?.bonus.value).toBe(7);
   });
 
+  it('feature attacks: own damage ability and bonus, a rider by tag; damage type changes', () => {
+    const c = brute();
+    c.inventory = [
+      {
+        uid: 'b',
+        name: 'Cloak',
+        quantity: 1,
+        attuned: true,
+        itemRef: item('cloak of cheers|tst'),
+        equipped: 'worn',
+      },
+    ];
+    const d = derive(c, index, {
+      registry: {
+        ...FIXTURE_FEATURE_EFFECTS,
+        'item:cloak of cheers|tst': {
+          level: 'A',
+          effects: [
+            {
+              type: 'attack',
+              id: 'snake',
+              name: 'Snake',
+              damage: '1d6',
+              damageType: 'piercing',
+              damageAbility: 'none',
+              range: 'melee',
+              distance: '5 ft.',
+              abilities: ['wis'],
+            },
+            {
+              type: 'attack',
+              id: 'bash',
+              name: 'Bash',
+              damage: '2d6',
+              damageBonus: 2,
+              damageType: 'force',
+              damageAbility: 'con',
+              range: 'melee',
+              distance: '5 ft.',
+              abilities: ['str'],
+            },
+            {
+              type: 'damageRider',
+              id: 'venom',
+              name: 'Venom',
+              dice: '3d6',
+              damageType: 'poison',
+              filter: { tags: ['feature:snake'] },
+              optIn: false,
+            },
+            {
+              type: 'attackMod',
+              label: 'Claws',
+              filter: { source: ['unarmed'] },
+              damageType: 'slashing',
+            },
+            { type: 'tempHpBonus', value: 5 },
+            { type: 'concentrationUnbreakable' },
+          ],
+        },
+      },
+    });
+    const snake = d.attacks.find((a) => a.name === 'Snake')!;
+    expect(snake).toMatchObject({ ability: 'wis', damageDice: '1d6' });
+    expect(snake.damageBonus.value).toBe(0);
+    expect(snake.riders.map((r) => r.id)).toEqual(['venom']);
+    const bash = d.attacks.find((a) => a.name === 'Bash')!;
+    expect(bash.damageBonus.parts.map((p) => [p.label, p.value])).toEqual([
+      ['CON modifier', d.abilities.con.mod],
+      ['Bash', 2],
+    ]);
+    expect(bash.riders).toEqual([]);
+    expect(d.attacks.find((a) => a.id === 'unarmed')!.damageType).toBe('slashing');
+    expect(d.hp.tempBonus).toEqual({ value: 5, sources: ['Cloak of Cheers'] });
+    expect(d.concentrationUnbreakable).toBe('Cloak of Cheers');
+  });
+
   it('exhaustion: −2 per level on d20 tests, −5 ft per level of speed', () => {
     const c = brute();
     c.state.exhaustion = 2;

@@ -183,6 +183,23 @@ export function deriveHp(
     current: Math.max(0, max.value - damage),
     temp: tempHp,
   };
+  const tempBonuses = effectsOfType(ctx.collected, 'tempHpBonus');
+  if (tempBonuses.length) {
+    hp.tempBonus = {
+      value: tempBonuses.reduce((sum, e) => sum + e.effect.value, 0),
+      sources: tempBonuses.map((e) => e.source.name),
+    };
+  }
+  const hitDie = effectsOfType(ctx.collected, 'hitDieHealing');
+  if (hitDie.length) {
+    const floors = hitDie.map((e) => e.effect.floor ?? 0);
+    hp.hitDieHealing = {
+      ...(Math.max(...floors) > 0 ? { floor: Math.max(...floors) } : {}),
+      ...(hitDie.some((e) => e.effect.max) ? { max: true } : {}),
+      ...(hitDie.some((e) => e.effect.double) ? { double: true } : {}),
+      sources: hitDie.map((e) => e.source.name),
+    };
+  }
   const ward = effectsOfType(ctx.collected, 'ward')[0];
   if (ward) {
     const wardMax = derived([

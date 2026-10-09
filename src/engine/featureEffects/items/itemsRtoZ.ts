@@ -343,13 +343,20 @@ export const ITEMS_R_TO_Z: FeatureEffectsMap = {
   [I('shield of missile attraction')]: text({
     needs: 'resistance to damage from Ranged weapon attacks only',
   }),
-  [I('shield of the cavalier')]: numbers(
-    daily('protective-field', 'Protective Field', 'reaction'),
+  [I('shield of the cavalier')]: numbers([
+    ...daily('protective-field', 'Protective Field', 'reaction'),
     {
-      needs:
-        'an attack a feature gives with a flat damage bonus (Forceful Bash adds 2 to 2d6 + Str)',
+      type: 'attack',
+      id: 'forceful-bash',
+      name: 'Forceful Bash',
+      damage: '2d6',
+      damageBonus: 2,
+      damageType: 'force',
+      range: 'melee',
+      distance: '5 ft.',
+      abilities: ['str'],
     },
-  ),
+  ]),
   [I('spellguard shield')]: numbers([
     savesAgainst('spells and other magical effects'),
     { type: 'attackedMode', mode: 'disadvantage', against: 'spell attacks' },
@@ -384,13 +391,37 @@ export const ITEMS_R_TO_Z: FeatureEffectsMap = {
     ),
   ),
   [I('staff of swarming insects')]: numbers([charged('insect-cloud', 'Insect Cloud', 'action', 1)]),
-  [I('staff of the adder')]: numbers(
-    [action({ id: 'adder-head', name: 'Staff of the Adder: Snake Head', actionType: 'bonus' })],
+  // The head is animated as a Bonus Action; its attack is one of the Attack action's.
+  [I('staff of the adder')]: toggled([
     {
-      needs:
-        'an attack a feature gives with Wisdom to hit and no modifier to damage (the snake head: 1d6 piercing and 3d6 poison)',
+      type: 'toggle',
+      toggleId: 'adder-head',
+      name: 'Staff of the Adder: Snake Head',
+      cost: [{ action: 'bonus' }],
+      effects: [
+        {
+          type: 'attack',
+          id: 'adder-head',
+          name: 'Snake Head',
+          damage: '1d6',
+          damageType: 'piercing',
+          damageAbility: 'none',
+          range: 'melee',
+          distance: '5 ft.',
+          abilities: ['wis'],
+        },
+        {
+          type: 'damageRider',
+          id: 'adder-poison',
+          name: 'Venom',
+          dice: '3d6',
+          damageType: 'poison',
+          filter: { tags: ['feature:adder-head'] },
+          optIn: false,
+        },
+      ],
     },
-  ),
+  ]),
   [I('staff of the magi')]: numbers([
     action({ id: 'magi-absorption', name: 'Spell Absorption', actionType: 'reaction' }),
     magic('staff-of-the-magi-retributive', 'Retributive Strike'),

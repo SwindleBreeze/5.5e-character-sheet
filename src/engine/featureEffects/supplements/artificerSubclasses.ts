@@ -57,24 +57,10 @@ function oncePerRestOrSlot(id: string, name: string): Effect[] {
 // ---- Armorer: the armor model is picked when Arcane Armor is switched on ----
 const model = (option: string) => ({ toggle: 'arcane-armor', option });
 const MODEL_ABILITY = "Uses Intelligence instead of Strength or Dexterity when it's better.";
-// The model weapons are feature attacks (no item), so filters pick them out by what no
-// ordinary weapon has: the demolisher is the only Reach weapon that is neither Heavy nor
-// Finesse; the launcher the only ranged weapon without Ammunition or Thrown.
-const DEMOLISHER: AttackFilter = {
-  range: 'melee',
-  source: ['weapon'],
-  properties: ['R'],
-  notProperties: ['H', 'F'],
-};
-const LAUNCHER: AttackFilter = { range: 'ranged', source: ['weapon'], notProperties: ['A', 'T'] };
-// The pulse has no properties; a few plain weapons (Mace, Flail) don't either, but an Armorer
-// never uses Intelligence with those.
-const PULSE: AttackFilter = {
-  range: 'melee',
-  source: ['weapon'],
-  ability: ['int'],
-  notProperties: ['F', 'L', 'H', '2H', 'R', 'T', 'V'],
-};
+// The model weapons are feature attacks; filters name them by their tag.
+const DEMOLISHER: AttackFilter = { tags: ['feature:force-demolisher'] };
+const LAUNCHER: AttackFilter = { tags: ['feature:lightning-launcher'] };
+const PULSE: AttackFilter = { tags: ['feature:thunder-pulse'] };
 
 // ---- Battle Smith: attacks with a magic weapon. The sheet knows magic items and variants; a
 // switch makes the other weapons count (one made magic by a spell). ----
@@ -294,8 +280,7 @@ export const SUP_ARTIFICER_SUBCLASSES: FeatureEffectsMap = {
       ]),
     ],
     {
-      needs:
-        "an attack filter matching one feature attack by id (Thunder Pulse's bonus needs Intelligence as its ability); one more plan and item for Replicate Magic Item",
+      needs: 'one more plan and item for Replicate Magic Item',
       notes: 'Learn one more Armor plan and make one more Armor item with Replicate Magic Item.',
     },
   ),

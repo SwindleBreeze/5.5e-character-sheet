@@ -5,7 +5,7 @@
 
 import { useState } from 'react';
 import { hitDieFixed, canRest, restSummary, type RestSummary } from '../../../engine/play/rests.ts';
-import { longRest, shortRest } from '../../../engine/play/reducers.ts';
+import { hitDieHeal, longRest, shortRest } from '../../../engine/play/reducers.ts';
 import type { Character } from '../../../schema/index.ts';
 import { Button } from '../../../ui/Button.tsx';
 import { useRoller } from '../../../ui/rollerContext.ts';
@@ -112,6 +112,19 @@ export function ShortRestSheet({
         An hour of rest. Spend Hit Dice to heal: each heals its roll {signed(con)} (your
         Constitution modifier), at least 1. Short Rest features and Pact Magic slots come back.
       </p>
+      {sheet.hp.hitDieHealing && (
+        <p className={inventory.help}>
+          {[
+            sheet.hp.hitDieHealing.max && 'Each die counts as its highest number',
+            sheet.hp.hitDieHealing.floor &&
+              `A roll below ${sheet.hp.hitDieHealing.floor} counts as ${sheet.hp.hitDieHealing.floor}`,
+            sheet.hp.hitDieHealing.double && 'what each die restores is doubled',
+          ]
+            .filter(Boolean)
+            .join('; ')}{' '}
+          ({sheet.hp.hitDieHealing.sources.join(', ')}).
+        </p>
+      )}
       <NeedsHp bindings={bindings} />
 
       <fieldset className={styles.methods}>
@@ -186,7 +199,10 @@ export function ShortRestSheet({
           <span>
             Rolls:{' '}
             {spent
-              .map((s) => `d${s.faces} ${s.roll}${signed(con)} = ${Math.max(1, s.roll + con)}`)
+              .map(
+                (s) =>
+                  `d${s.faces} ${s.roll}${signed(con)} → ${hitDieHeal(sheet, s.faces, s.roll)}`,
+              )
               .join(', ')}
           </span>
           <Button size="sm" variant="ghost" onClick={() => setSpent(spent.slice(0, -1))}>

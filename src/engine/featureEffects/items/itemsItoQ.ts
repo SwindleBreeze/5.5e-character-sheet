@@ -328,10 +328,10 @@ export const ITEMS_I_TO_Q: FeatureEffectsMap = {
   [I('periapt of proof against poison')]: numbers([
     { type: 'conditionImmunity', value: 'poisoned' },
   ]),
-  [I('periapt of wound closure')]: numbers(
-    [{ type: 'rollFloor', target: 'save:death', value: 10 }],
-    { needs: 'doubled healing from Hit Point Dice' },
-  ),
+  [I('periapt of wound closure')]: numbers([
+    { type: 'rollFloor', target: 'save:death', value: 10 },
+    { type: 'hitDieHealing', double: true },
+  ]),
 
   // ---- Charged instruments ----
   [I('pipes of haunting')]: numbers(

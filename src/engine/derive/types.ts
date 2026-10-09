@@ -289,7 +289,7 @@ export type DerivedOutcome =
   | { tempHp: string }
   | { toggleOn: string }
   | { restore: { resourceKey?: string; label: string; amount: number } }
-  | { regainSlot: { maxLevel: number } };
+  | { regainSlot: { maxLevel: number; pact?: boolean } };
 
 /** P7: something the character can do, with what it costs and what it does. */
 export interface DerivedAction {
@@ -426,6 +426,8 @@ export interface DerivedSheet {
   initiative: DerivedRoll;
   /** Constitution saves to keep concentration. */
   concentration: DerivedRoll;
+  /** What keeps damage from breaking Concentration (no save is asked for). */
+  concentrationUnbreakable?: string;
   deathSave: DerivedRoll;
   passives: Record<'perception' | 'insight' | 'investigation', Derived>;
   ac: Derived & { calculation: string };
@@ -434,6 +436,10 @@ export interface DerivedSheet {
     current: number;
     temp: number;
     ward?: { name: string; max: Derived; current: number };
+    /** Added to Temporary Hit Points the character gains. */
+    tempBonus?: { value: number; sources: string[] };
+    /** How Hit Point Dice rolled to regain HP count (a floor, the maximum, doubled). */
+    hitDieHealing?: { floor?: number; max?: boolean; double?: boolean; sources: string[] };
   };
   hitDice: { faces: number; total: number; used: number }[];
   speed: Partial<Record<MoveMode, Derived>>;

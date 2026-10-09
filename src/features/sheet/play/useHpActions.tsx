@@ -13,7 +13,8 @@ export function useHpActions({ character, sheet, index, apply }: SheetBindings):
     onDamage: (n) => {
       apply((c) => applyDamage(c, sheet, n));
       const effect = character.state.concentration;
-      if (!effect || sheet.hp.current === 0) return;
+      // Damage doesn't break it (Boon of the Iron Mind): no save to make.
+      if (!effect || sheet.hp.current === 0 || sheet.concentrationUnbreakable) return;
       // What gets past temporary HP and the ward reaches HP.
       const rest = n - sheet.hp.temp - (sheet.hp.ward?.current ?? 0);
       ui.open({
@@ -35,6 +36,7 @@ export function useHpActions({ character, sheet, index, apply }: SheetBindings):
       });
     },
     onHeal: (n) => apply((c) => heal(c, sheet, n)),
-    onTempHp: (n) => apply((c) => setTempHp(c, n)),
+    // A feature that adds to Temporary HP gained (Boon of Bountiful Health) adds here too.
+    onTempHp: (n) => apply((c) => setTempHp(c, n + (sheet.hp.tempBonus?.value ?? 0))),
   };
 }

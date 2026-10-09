@@ -57,13 +57,18 @@ const CHANGELING = toggled([
 // ---- Dhampir ----
 const DHAMPIR = numbers(
   [
-    action({
+    // An Unarmed Strike that bites: Strength to hit, Constitution to damage.
+    {
+      type: 'attack',
       id: 'vampiric-bite',
       name: 'Vampiric Bite',
-      actionType: 'other',
-      roll: '1d4 + mod.con',
-      description: 'Piercing, in place of an Unarmed Strike’s damage.',
-    }),
+      damage: '1d4',
+      damageType: 'piercing',
+      damageAbility: 'con',
+      range: 'melee',
+      distance: '5 ft.',
+      abilities: ['str'],
+    },
     uses('vampiric-bite', 'Vampiric Bite', 'pb', 'long'),
     action({
       id: 'vampiric-empowerment',
@@ -72,10 +77,7 @@ const DHAMPIR = numbers(
       costs: [{ resource: 'vampiric-bite', amount: 1 }],
     }),
   ],
-  {
-    unoffered: AT_TABLE,
-    needs: 'an Unarmed Strike form whose damage uses another ability than its attack roll',
-  },
+  { unoffered: AT_TABLE },
 );
 
 // ---- Elf (Lorwyn), Faerie, Kithkin, and the spell-trait species ----
@@ -147,12 +149,14 @@ const LUPIN = numbers(
       costs: [{ resource: 'howl', amount: 1 }],
       saveDc: '8 + mod.con + pb',
     }),
+    {
+      type: 'attackMod',
+      label: 'Feral Pounce',
+      filter: { source: ['unarmed'] },
+      damageType: 'slashing',
+    },
   ],
-  {
-    notes: 'Unarmed Strikes deal Slashing damage.',
-    needs: 'changing the damage type of the Unarmed Strike',
-    unoffered: TARGETS,
-  },
+  { unoffered: TARGETS },
 );
 
 // ---- Reborn ----

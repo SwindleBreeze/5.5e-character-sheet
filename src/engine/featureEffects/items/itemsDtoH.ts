@@ -154,24 +154,26 @@ export const ITEMS_D_TO_H: FeatureEffectsMap = {
       })),
     },
   ]),
-  [I('demon armor')]: numbers(
-    [
-      { type: 'proficiency', category: 'language', value: 'abyssal' },
-      {
-        type: 'attackMod',
-        filter: { source: ['unarmed'] },
-        label: 'Demon Armor',
-        toHit: 1,
-        damage: 1,
-        damageDie: '1d8',
-      },
-    ],
+  [I('demon armor')]: numbers([
+    { type: 'proficiency', category: 'language', value: 'abyssal' },
     {
-      notes:
-        'Unarmed Strikes deal Slashing damage; the curse’s Disadvantage against demons is applied at the table.',
-      needs: "changing an attack's damage type",
+      type: 'attackMod',
+      filter: { source: ['unarmed'] },
+      label: 'Demon Armor',
+      toHit: 1,
+      damage: 1,
+      damageDie: '1d8',
+      damageType: 'slashing',
     },
-  ),
+    // The curse.
+    { type: 'rollMode', target: 'attack:all', mode: 'disadvantage', against: 'demons' },
+    {
+      type: 'rollMode',
+      target: 'save:all',
+      mode: 'disadvantage',
+      against: 'demons’ spells and special abilities',
+    },
+  ]),
   [I('demonomicon of iggwilv')]: numbers([
     uses('demonomicon-containment', 'Containment', 1, 'dawn'),
     action({
@@ -216,7 +218,14 @@ export const ITEMS_D_TO_H: FeatureEffectsMap = {
     { notes: 'The training covers this armor only.' },
   ),
   [I('enduring spellbook')]: text(),
-  [I('energy bow')]: text({ needs: "changing an attack's damage type" }),
+  [I('energy bow')]: numbers([
+    {
+      type: 'attackMod',
+      label: 'Energy Bow',
+      filter: { itemIds: ['energy bow|xdmg'] },
+      damageType: 'force',
+    },
+  ]),
   [I('enspelled armor')]: text(),
   ...enspelled('armor', 'A;I'),
   [I('enspelled staff')]: text(),

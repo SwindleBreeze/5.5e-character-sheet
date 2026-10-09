@@ -83,7 +83,11 @@ describe.skipIf(!root)('supplement species golden checks (local data)', () => {
   it('Dhampir: Vampiric Bite uses and damage', () => {
     const { s } = build('dhampir|rhw', 11);
     expect(resource(s, 'Vampiric Bite')?.max.value).toBe(4);
-    expect(actionNamed(s, 'Vampiric Bite')).toBeDefined();
+    // The bite is an attack: Strength to hit, Constitution to damage.
+    const bite = s.attacks.find((a) => a.name === 'Vampiric Bite');
+    expect(bite).toMatchObject({ ability: 'str', damageDice: '1d4', damageType: 'piercing' });
+    expect(bite?.damageBonus.parts[0]).toMatchObject({ label: 'CON modifier' });
+    expect(actionNamed(s, 'Vampiric Bite: Empower')).toBeDefined();
   });
 
   it('Hexblood: one Eerie Token per Long Rest', () => {

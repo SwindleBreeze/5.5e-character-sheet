@@ -150,7 +150,9 @@ export function derive(
   const passive = (skill: 'perception' | 'insight' | 'investigation') =>
     withOverride(rolls.skills[skill].passive, character, `passive.${skill}`);
 
+  const unbreakable = effectsOfType(collected, 'concentrationUnbreakable')[0];
   return {
+    ...(unbreakable ? { concentrationUnbreakable: unbreakable.source.name } : {}),
     charLevel: st.charLevel,
     pb,
     classes,

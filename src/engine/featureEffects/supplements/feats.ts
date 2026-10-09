@@ -271,10 +271,12 @@ export const SUP_FEATS: FeatureEffectsMap = {
   ),
 
   // ---- General feats ----
-  [F('bloodlust|abh')]: numbers(
-    limited('sanguine-feast', 'Sanguine Feast', 'pb', 'long', 'other', { costs: [{ hitDice: 1 }] }),
-    { needs: 'a floor on Hit Point Dice rolls' },
-  ),
+  [F('bloodlust|abh')]: numbers([
+    { type: 'hitDieHealing', floor: 3 },
+    ...limited('sanguine-feast', 'Sanguine Feast', 'pb', 'long', 'other', {
+      costs: [{ hitDice: 1 }],
+    }),
+  ]),
   [F('cloying mists|abh')]: numbers([uses('arise-fog', 'Arise, Fog', 1, 'long')], {
     notes: 'One free cast of Fog Cloud.',
   }),
@@ -467,9 +469,10 @@ export const SUP_FEATS: FeatureEffectsMap = {
       },
     ]),
   ]),
-  [F('boon of bountiful health|frhof')]: text({
-    needs: 'more temporary hit points whenever some are gained; Hit Point Dice healing at maximum',
-  }),
+  [F('boon of bountiful health|frhof')]: numbers([
+    { type: 'tempHpBonus', value: 5 },
+    { type: 'hitDieHealing', max: true },
+  ]),
   [F('boon of communication|frhof')]: numbers([{ type: 'sense', sense: 'telepathy', range: 120 }]),
   [F('boon of desperate resilience|frhof')]: toggled([
     bloodied(ALL_BUT_FORCE.map((value): Effect => ({ type: 'resistance', value }))),
@@ -515,9 +518,7 @@ export const SUP_FEATS: FeatureEffectsMap = {
       { type: 'immunity', value: 'thunder' },
     ]),
   ]),
-  [F('boon of the iron mind|au')]: text({
-    needs: 'Concentration that damage can’t break (no Constitution save to show)',
-  }),
+  [F('boon of the iron mind|au')]: numbers([{ type: 'concentrationUnbreakable' }]),
   [F('boon of the soul drinker|frhof')]: numbers(
     limited('siphon-life', 'Siphon Life', 1, 'short', 'reaction', { outcomes: [{ heal: 50 }] }),
   ),

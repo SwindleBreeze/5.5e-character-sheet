@@ -67,7 +67,7 @@ export interface AttackFilter {
   magic?: boolean;
   /**
    * Derived tags, e.g. `monkWeapon`, `pactWeapon`, `offHand`, `onlyWeapon` (a weapon used in
-   * one hand with no other weapon held).
+   * one hand with no other weapon held), `feature:<id>` (an attack an `attack` effect gives).
    */
   tags?: string[];
   /** At least one of these filters matches too (Sneak Attack: a Finesse or a Ranged weapon). */
@@ -101,7 +101,8 @@ export type SelfOutcome =
   | { tempHp: Formula }
   | { toggleOn: string }
   | { restore: { resource: string; amount: Formula } }
-  | { regainSlot: { maxLevel: Formula } };
+  /** `pact`: a Pact Magic slot can be the one regained (first, when one is spent). */
+  | { regainSlot: { maxLevel: Formula; pact?: boolean } };
 
 export interface ActionDef {
   id: string;
@@ -295,6 +296,8 @@ export type Effect =
       extraAttacks?: number;
       /** The Light extra attack adds the ability modifier to its damage (Two-Weapon Fighting). */
       offHandAbility?: boolean;
+      /** The damage type the attack deals instead (an Energy Bow: Force). */
+      damageType?: string;
     }
   /** P4: extra damage listed under matching attacks. */
   | {
@@ -385,7 +388,23 @@ export type Effect =
       distance: string;
       abilities: Ability[];
       properties?: string[];
+      /**
+       * The ability whose modifier adds to damage, when not the attack roll's: `none` for no
+       * modifier (a Staff of the Adder's snake head).
+       */
+      damageAbility?: Ability | 'none';
+      /** A flat bonus to damage (a Shield of the Cavalier's bash: 2d6 + 2). */
+      damageBonus?: Formula;
     }
+  /** Taking damage can't break the character's Concentration (Boon of the Iron Mind). */
+  | { type: 'concentrationUnbreakable' }
+  /** Temporary Hit Points the character gains are this many more (Boon of Bountiful Health). */
+  | { type: 'tempHpBonus'; value: number }
+  /**
+   * A Hit Point Die rolled to regain Hit Points: a roll below `floor` counts as it, `max` uses
+   * the highest number, `double` doubles what it restores.
+   */
+  | { type: 'hitDieHealing'; floor?: number; max?: boolean; double?: boolean }
   /** How many magic items the character can be attuned to at once (Artificer: 4, 5, 6). */
   | { type: 'attunementMax'; value: number }
   /** Count as `steps` sizes larger when determining carrying capacity (Powerful Build). */

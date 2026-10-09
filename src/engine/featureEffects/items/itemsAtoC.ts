@@ -52,22 +52,21 @@ function oncePerDawn(
 
 // ---- +1/+2/+3 items ----
 /** Rod of the Pact Keeper: the bonuses are data; the once-a-rest slot comes back as an action. */
-const pactKeeper = numbers(
-  [
+// Its bonus is to Warlock spells only: the data's bonus to every spell is moved there.
+const pactKeeper = (n: number) =>
+  numbers([
+    { type: 'itemBonusOff', bonus: 'spellAttack' },
+    { type: 'itemBonusOff', bonus: 'spellSaveDc' },
+    { type: 'spellMod', filter: '', casterKey: 'warlock|xphb', dcBonus: n, attackBonus: n },
     uses('rod-of-the-pact-keeper', 'Rod of the Pact Keeper', 1, 'long'),
     action({
       id: 'rod-of-the-pact-keeper',
       name: 'Rod of the Pact Keeper: Regain a Slot',
       actionType: 'action',
       costs: [{ resource: 'rod-of-the-pact-keeper', amount: 1 }],
-      outcomes: [{ regainSlot: { maxLevel: 9 } }],
+      outcomes: [{ regainSlot: { maxLevel: 9, pact: true } }],
     }),
-  ],
-  {
-    needs:
-      'regainSlot that can restore a Pact Magic slot; an item spell save DC bonus limited to one class',
-  },
-);
+  ]);
 
 /** Wraps of Unarmed Power: the data bonus is for the item's own attacks, so it moves here. */
 function wraps(n: number): FeatureMapping {
@@ -114,9 +113,9 @@ export const ITEMS_A_TO_C: FeatureEffectsMap = {
   [I('+1 wand of the war mage')]: fromData(),
   [I('+2 wand of the war mage')]: fromData(),
   [I('+3 wand of the war mage')]: fromData(),
-  [I('+1 rod of the pact keeper')]: pactKeeper,
-  [I('+2 rod of the pact keeper')]: pactKeeper,
-  [I('+3 rod of the pact keeper')]: pactKeeper,
+  [I('+1 rod of the pact keeper')]: pactKeeper(1),
+  [I('+2 rod of the pact keeper')]: pactKeeper(2),
+  [I('+3 rod of the pact keeper')]: pactKeeper(3),
   [I('+1 wraps of unarmed power')]: wraps(1),
   [I('+2 wraps of unarmed power')]: wraps(2),
   [I('+3 wraps of unarmed power')]: wraps(3),
