@@ -134,6 +134,28 @@ describe('LibraryPage', () => {
     expect(within(sheet).getByRole('checkbox', { name: /Old Almanac/ })).toBeDisabled();
     expect(await screen.findByText('All sources are switched off.')).toBeInTheDocument();
   });
+
+  it('shows 2014 content once "Show 2014 content" is on (step 8.1)', async () => {
+    const user = userEvent.setup();
+    await seedFixtureContent(['TST']);
+    renderApp('/settings');
+
+    await user.click(await screen.findByRole('checkbox', { name: /Show 2014 content/ }));
+    const old = await screen.findByRole('checkbox', { name: /Old Almanac/ });
+    await waitFor(() => expect(old).toBeEnabled());
+    await user.click(old);
+    await waitFor(async () =>
+      expect(await repos().settings.get('enabledSources')).toEqual(['OLD', 'TST']),
+    );
+
+    // The Old Almanac's deities are offered now; off again, they are hidden, and the book stays
+    // switched on for when 2014 content comes back.
+    renderApp('/library?kind=deity');
+    await waitFor(async () => expect((await names()).length).toBeGreaterThan(2));
+    await repos().settings.set('show2014', false);
+    await waitFor(async () => expect(await names()).toEqual(['Brask', 'Mirela']));
+    expect(await repos().settings.get('enabledSources')).toEqual(['OLD', 'TST']);
+  });
 });
 
 describe('libraryFilter', () => {

@@ -20,7 +20,7 @@ import {
   type SourceCode,
   type SourceInfo,
 } from '../schema/index.ts';
-import { availableOf } from '../sources/sourceFilter.ts';
+import { availableOf, offeredSources } from '../sources/sourceFilter.ts';
 import { loadContentIndex } from './loadIndex.ts';
 
 /** `undefined` while loading, `null` when the entity is not imported. */
@@ -49,10 +49,32 @@ export function useEnabledSources(character?: SourceCode[] | null): SourceCode[]
   return useKnownSources(character) ?? DEFAULT_SETTINGS.enabledSources;
 }
 
-/** The same, but undefined until the app's setting has been read. */
+/**
+ * The same, but undefined until the app's settings have been read. 2014 books are left out
+ * while "Show 2014 content" is off (step 8.1).
+ */
 function useKnownSources(character?: SourceCode[] | null): SourceCode[] | undefined {
-  const global = useLiveQuery(() => repos().settings.get('enabledSources'), []);
-  return character ?? global;
+  const own = character?.join();
+  return useLiveQuery(async () => {
+    const { settings, content } = repos();
+    const [global, show2014, sources] = await Promise.all([
+      settings.get('enabledSources'),
+      settings.get('show2014'),
+      content.listSources(),
+    ]);
+    return offeredSources(character ?? global, sources, show2014);
+    // The character's list is read through `own`: same codes, same result.
+  }, [own]);
+}
+
+/** The app's source list as stored, 2014 books included whatever the switch (for editing it). */
+export function useStoredSources(): SourceCode[] | undefined {
+  return useLiveQuery(() => repos().settings.get('enabledSources'), []);
+}
+
+/** Whether 2014 books can be switched on and are offered (step 8.1). */
+export function useShow2014(): boolean | undefined {
+  return useLiveQuery(() => repos().settings.get('show2014'), []);
 }
 
 /**

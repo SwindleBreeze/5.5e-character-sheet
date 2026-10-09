@@ -5,7 +5,10 @@ import {
   effectiveSources,
   groupSources,
   isAvailable,
+  isSelectable,
+  offeredSources,
   presetSources,
+  SHOW_2014,
   sourceOffersKind,
 } from './sourceFilter.ts';
 
@@ -38,6 +41,27 @@ describe('sourceFilter', () => {
     expect(isAvailable(spell('a|old', 'OLD', '2014'), always)).toBe(false);
     expect(isAvailable(spell('a|tst', 'TST', '2024'), always)).toBe(true);
     expect(isAvailable(spell('a|sup', 'SUP', 'unknown'), always)).toBe(true);
+    // A 2014 entry in a book that isn't (homebrew can mix them) is hidden too.
+    expect(isAvailable(spell('b|tst', 'TST', '2014'), always)).toBe(false);
+  });
+
+  it('offers 2014 content with "Show 2014 content" on (step 8.1)', () => {
+    const on = { enabled: new Set([...enabled, SHOW_2014]), isAvailableId: () => true };
+    expect(isAvailable(spell('a|old', 'OLD', '2014'), on)).toBe(true);
+    expect(isAvailable(spell('b|tst', 'TST', '2014'), on)).toBe(true);
+    // Still only from enabled books.
+    expect(isAvailable(spell('a|gone', 'GONE', '2014'), on)).toBe(false);
+  });
+
+  it('the enabled list follows the switch, keeping the stored choice', () => {
+    const sources = [info('TST', '2024', 'core'), info('OLD', '2014', 'core')];
+    expect(offeredSources(['OLD', 'TST'], sources, false)).toEqual(['TST']);
+    expect(offeredSources(['OLD', 'TST'], sources, true)).toEqual(['OLD', 'TST', SHOW_2014]);
+    // A mark saved with a list by mistake is not doubled, nor kept with the switch off.
+    expect(offeredSources(['TST', SHOW_2014], sources, true)).toEqual(['TST', SHOW_2014]);
+    expect(offeredSources(['TST', SHOW_2014], sources, false)).toEqual(['TST']);
+    expect(isSelectable(sources[1]!)).toBe(false);
+    expect(isSelectable(sources[1]!, true)).toBe(true);
   });
 
   it('hides content superseded by an available reprint, but not by an unavailable one', () => {
@@ -68,6 +92,7 @@ describe('sourceFilter', () => {
     const withCounts = (s: SourceInfo, counts: SourceInfo['counts']) => ({ ...s, counts });
     const old = withCounts(info('OLD', '2014', 'core'), { charOption: 3, deity: 2 });
     const tst = withCounts(info('TST', '2024', 'core'), { reward: 1 });
+    expect(sourceOffersKind(old, 'charOption', true)).toBe(true);
     expect(sourceOffersKind(old, 'charOption')).toBe(false);
     expect(sourceOffersKind(old, 'deity')).toBe(false);
     expect(sourceOffersKind(tst, 'reward')).toBe(true);
@@ -88,7 +113,7 @@ describe('sourceFilter', () => {
       info('SUP', '2024', 'supplement'),
     ]);
     expect(groups.map((g) => [g.title, g.sources.map((s) => s.code)])).toEqual([
-      ['Core 2024', ['TST', 'OLD']],
+      ['Core', ['TST', 'OLD']],
       ['Supplements', ['SUP']],
       ['Adventures', ['ADV']],
     ]);
@@ -102,5 +127,6 @@ describe('sourceFilter', () => {
     ];
     expect(presetSources(sources, 'core2024')).toEqual(['TST']);
     expect(presetSources(sources, 'all2024')).toEqual(['SUP', 'TST']);
+    expect(presetSources(sources, 'all')).toEqual(['OLD', 'SUP', 'TST']);
   });
 });

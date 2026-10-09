@@ -2,7 +2,12 @@ import { useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { TopBar } from '../../app/TopBar.tsx';
 import page from '../../app/Page.module.css';
-import { useEnabledSources, useEntitiesOfKind, useSources } from '../../content/hooks.ts';
+import {
+  useEnabledSources,
+  useShow2014,
+  useEntitiesOfKind,
+  useSources,
+} from '../../content/hooks.ts';
 import { EntitySheet } from '../../richtext/EntitySheet.tsx';
 import { entityMeta } from '../../richtext/entityMeta.ts';
 import { refKey, type ContentEntity, type EntityKind } from '../../schema/index.ts';
@@ -126,13 +131,14 @@ function Results({
 export function LibraryPage() {
   const sources = useSources();
   const enabled = useEnabledSources();
+  const show2014 = useShow2014() ?? false;
   const [params, setParams] = useSearchParams();
   const sheet = useSheet();
 
-  // Tabs for kinds no imported source can offer (2014-only ones, until phase 8) are hidden.
+  // Tabs for kinds no imported source can offer (2014-only ones while 2014 is off) are hidden.
   const tabs = useMemo(
-    () => LIBRARY_KINDS.filter((k) => sources?.some((s) => sourceOffersKind(s, k.kind))),
-    [sources],
+    () => LIBRARY_KINDS.filter((k) => sources?.some((s) => sourceOffersKind(s, k.kind, show2014))),
+    [sources, show2014],
   );
   const kindParam = params.get('kind');
   const kind: EntityKind =
