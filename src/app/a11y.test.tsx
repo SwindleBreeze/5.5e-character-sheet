@@ -13,6 +13,7 @@ import { resetDb } from '../db/db.ts';
 import { repos } from '../db/repos.ts';
 import { writeCharacterMarker } from '../db/storage.ts';
 import { createCatalog } from '../engine/build/catalog.ts';
+import { WIZARD_STEPS } from '../engine/build/wizard.ts';
 import { quickBuild } from '../engine/build/quickBuild.ts';
 import type { ContentIndex } from '../engine/content/contentIndex.ts';
 import { derive } from '../engine/derive/derive.ts';
@@ -146,12 +147,8 @@ describe('every screen passes the accessibility check', () => {
 
   it('every wizard step', async () => {
     const c = await built('lorekeeper|tst', 1, { draft: { step: 'class' } });
-    renderApp(`/new/${c.id}/class`);
-    const steps = within(await screen.findByRole('list', { name: 'Steps' }))
-      .getAllByRole('link')
-      .map((a) => a.getAttribute('href')!.replace(/^#/, ''));
-    expect(steps.length).toBeGreaterThan(6);
-    cleanup();
+    // Every step by its address: a step not reached yet is shown all the same.
+    const steps = WIZARD_STEPS.map((step) => `/new/${c.id}/${step}`);
     for (const path of steps) {
       renderApp(path);
       await screen.findByRole('list', { name: 'Steps' });
