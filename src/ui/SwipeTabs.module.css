@@ -54,7 +54,10 @@
   display: none;
 }
 
+/* Positioned, so hidden labels and inputs in a tab off to the side stay inside the track
+   instead of widening the page. */
 .panel {
+  position: relative;
   flex: 0 0 100%;
   width: 100%;
   min-width: 0;

@@ -208,8 +208,9 @@ button.name {
   border-style: dashed;
 }
 
+/* Faded, but its text still reads at 4.5:1 on any surface. */
 .chip[data-used] {
-  opacity: 0.6;
+  opacity: 0.7;
 }
 
 .chipNote {

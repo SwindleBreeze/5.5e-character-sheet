@@ -14,6 +14,11 @@ export interface SwipeTabsProps {
   onChange: (id: string) => void;
 }
 
+/** The player asked for less motion: tabs change without sliding. */
+function reducedMotion(): boolean {
+  return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
 /**
  * A tab bar over horizontally swipeable panels (CSS scroll-snap). The active tab is controlled
  * by the parent so it can live in the URL.
@@ -36,7 +41,7 @@ export function SwipeTabs({ label, tabs, activeId, onChange }: SwipeTabsProps) {
     const left = activeIndex * track.clientWidth;
     if (Math.abs(track.scrollLeft - left) < 2) return;
     programmaticIndex.current = activeIndex;
-    track.scrollTo({ left, behavior: 'smooth' });
+    track.scrollTo({ left, behavior: reducedMotion() ? 'instant' : 'smooth' });
   }, [activeIndex]);
 
   // Scrolls only the tab bar: scrollIntoView would also scroll the page vertically.
