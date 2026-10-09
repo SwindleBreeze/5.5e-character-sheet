@@ -175,6 +175,17 @@ export type OverrideKey =
 
 export type ScoreMethod = 'standard' | 'pointBuy' | 'manual' | 'rolled';
 
+/**
+ * An effect the player added to a feature (plan step 7.5): for what the app doesn't apply by
+ * itself, a homebrew feature most of all. Shown as "added by you" wherever it counts.
+ */
+export interface CustomEffect {
+  uid: string;
+  /** The feature, feat, species or item it belongs to; it applies while that one does. */
+  owner: Ref;
+  effect: Effect;
+}
+
 export interface Character {
   id: string;
   schemaVersion: number;
@@ -209,6 +220,8 @@ export interface Character {
   sessionLog: SessionNote[];
   portraitId?: string;
   snapshots: Record<RefKey, Snapshot>;
+  /** Effects the player added to features (plan step 7.5). */
+  customEffects?: CustomEffect[];
   ui: {
     tabOrder?: string[];
     hiddenTabs?: string[];

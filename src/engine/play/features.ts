@@ -9,6 +9,7 @@ import {
   type Character,
   type ChoiceKey,
   type ChoiceRecord,
+  type Effect,
   type EntityKind,
   type Ref,
 } from '../../schema/index.ts';
@@ -135,5 +136,24 @@ export function removeGift(c: Character, gift: Ref): Character {
     );
   }
   dropOrphans(n, [gift]);
+  return n;
+}
+
+/** Add an effect of the player's own to a feature (plan step 7.5). */
+export function addCustomEffect(c: Character, owner: Ref, effect: Effect, uid: string): Character {
+  const n = structuredClone(c);
+  n.customEffects = [...(n.customEffects ?? []), { uid, owner, effect }];
+  return n;
+}
+
+/** Remove one of the player's own effects, and what a counter of it had spent. */
+export function removeCustomEffect(c: Character, uid: string): Character {
+  const n = structuredClone(c);
+  const gone = n.customEffects?.find((e) => e.uid === uid);
+  n.customEffects = (n.customEffects ?? []).filter((e) => e.uid !== uid);
+  if (!n.customEffects.length) delete n.customEffects;
+  if (gone?.effect.type === 'resource') {
+    delete n.state.resourcesUsed[`${refKey(gone.owner)}#${gone.effect.resourceId}`];
+  }
   return n;
 }
