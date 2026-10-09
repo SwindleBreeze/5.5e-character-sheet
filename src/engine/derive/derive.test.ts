@@ -304,6 +304,8 @@ describe('derive: abilities and rolls', () => {
             },
             { type: 'tempHpBonus', value: 5 },
             { type: 'concentrationUnbreakable' },
+            { type: 'speedOff', mode: 'climb' },
+            { type: 'rollNote', target: 'initiative', text: 'Reroll a low d20' },
           ],
         },
       },
@@ -321,6 +323,10 @@ describe('derive: abilities and rolls', () => {
     expect(d.attacks.find((a) => a.id === 'unarmed')!.damageType).toBe('slashing');
     expect(d.hp.tempBonus).toEqual({ value: 5, sources: ['Cloak of Cheers'] });
     expect(d.concentrationUnbreakable).toBe('Cloak of Cheers');
+    // Mossling climbs, but not with the cloak's speedOff.
+    expect(run(c).speed.climb).toBeDefined();
+    expect(d.speed.climb).toBeUndefined();
+    expect(d.initiative.notes).toEqual([{ text: 'Reroll a low d20', source: 'Cloak of Cheers' }]);
   });
 
   it('exhaustion: −2 per level on d20 tests, −5 ft per level of speed', () => {

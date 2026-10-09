@@ -122,6 +122,20 @@ describe('predicates (P1)', () => {
     expect(holds({ armor: 'heavy' }, heavy)).toBe(true);
   });
 
+  it('items in use and attunement', () => {
+    const none = stateWith([]);
+    expect(holds({ attuned: true }, none)).toBe(false);
+    expect(holds({ itemInUse: ['cloak of cheers|tst'] }, none)).toBe(false);
+    const worn = stateWith([
+      { itemRef: item('cloak of cheers|tst'), equipped: 'worn', attuned: true },
+    ]);
+    expect(holds({ attuned: true }, worn)).toBe(true);
+    expect(holds({ itemInUse: ['shiv|tst', 'cloak of cheers|tst'] }, worn)).toBe(true);
+    // Carried but not worn: not in use.
+    const carried = stateWith([{ itemRef: item('cloak of cheers|tst'), attuned: true }]);
+    expect(holds({ itemInUse: ['cloak of cheers|tst'] }, carried)).toBe(false);
+  });
+
   it('wielding and free hands (Dueling only with one weapon)', () => {
     const one = stateWith([{ itemRef: item('net blade|tst'), equipped: 'mainHand' }]);
     expect(holds(dueling, one)).toBe(true);

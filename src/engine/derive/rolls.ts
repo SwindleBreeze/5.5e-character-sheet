@@ -293,6 +293,10 @@ export function buildRoll(
   };
   if (floor !== undefined) roll.floor = floor;
   if (situational.length) roll.situational = situational;
+  const notes = effectsOfType(ctx.collected, 'rollNote')
+    .filter(({ effect }) => targetMatches(effect.target, kind))
+    .map(({ effect, source }) => ({ text: effect.text, source: source.name }));
+  if (notes.length) roll.notes = notes;
   return roll;
 }
 

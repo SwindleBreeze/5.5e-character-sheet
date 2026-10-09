@@ -238,6 +238,9 @@ export function deriveSpeed(ctx: DeriveContext, strScore: number): DerivedSheet[
       base.set(effect.mode, { value, label: source.name, source: source.ref });
     }
   }
+  for (const { effect } of effectsOfType(ctx.collected, 'speedOff')) {
+    if (effect.mode !== 'walk') base.delete(effect.mode);
+  }
   if (!base.has('walk')) base.set('walk', { value: 30, label: 'Base speed' });
 
   const bonuses = new Map<MoveMode, Contribution[]>();

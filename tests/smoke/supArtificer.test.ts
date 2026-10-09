@@ -12,7 +12,7 @@ import { createContentIndex, type ContentIndex } from '../../src/engine/content/
 import { derive } from '../../src/engine/derive/derive.ts';
 import type { DerivedSheet } from '../../src/engine/derive/types.ts';
 import { featureEffects } from '../../src/engine/featureEffects/index.ts';
-import type { ContentEntity } from '../../src/schema/index.ts';
+import type { Character, ContentEntity } from '../../src/schema/index.ts';
 import { nodeFileSource } from './nodeFileSource.ts';
 
 const root = process.env.FIVETOOLS_DATA;
@@ -29,7 +29,7 @@ describe.skipIf(!root)('Artificer class features (local data)', () => {
   });
 
   /** A human soldier Artificer, quick-built. */
-  function build(levels: number): DerivedSheet {
+  function build(levels: number, change?: (c: Character) => void): DerivedSheet {
     const registry = featureEffects();
     const c = quickBuild(
       {
@@ -40,6 +40,7 @@ describe.skipIf(!root)('Artificer class features (local data)', () => {
       },
       { index, catalog, registry, now: 1 },
     );
+    change?.(c);
     const s = derive(c, index, { registry });
     expect(s.choices.pending).toEqual([]);
     return s;
@@ -90,8 +91,20 @@ describe.skipIf(!root)('Artificer class features (local data)', () => {
     const fourteen = build(14);
     expect(resource(fourteen, 'Flash of Genius')).toMatchObject({ recharge: 'shortOne' });
 
+    // At 20, all of them, but only while attuned to a magic item.
     const twenty = build(20);
-    expect(resource(twenty, 'Flash of Genius')).toMatchObject({ recharge: 'short' });
+    expect(resource(twenty, 'Flash of Genius')).toMatchObject({ recharge: 'shortOne' });
+    const attuned = build(20, (c) => {
+      c.inventory.push({
+        uid: 'ring',
+        itemRef: { kind: 'item', id: 'ring of protection|xdmg' },
+        name: 'Ring of Protection',
+        quantity: 1,
+        equipped: 'worn',
+        attuned: true,
+      });
+    });
+    expect(resource(attuned, 'Flash of Genius')).toMatchObject({ recharge: 'short' });
     expect(slots(twenty)).toEqual([4, 3, 3, 3, 2]);
     const caster = twenty.spellcasting.casters.find((c) => c.key === 'artificer|efa')!;
     expect(caster.preparedMax).toBe(15);

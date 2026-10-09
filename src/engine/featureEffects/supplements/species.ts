@@ -82,10 +82,10 @@ const DHAMPIR = numbers(
 
 // ---- Elf (Lorwyn), Faerie, Kithkin, and the spell-trait species ----
 const FEY = numbers([FEY_ANCESTRY]);
-const FAERIE = text({
-  notes: 'The fly speed does not apply in Medium or Heavy armor.',
-  needs: 'a speed from the data that depends on the armor worn',
-});
+// No flying in Medium or Heavy armor.
+const FAERIE = numbers([
+  when({ any: [{ armor: 'medium' }, { armor: 'heavy' }] }, [{ type: 'speedOff', mode: 'fly' }]),
+]);
 const KITHKIN = numbers([savesAgainst('being Frightened')]);
 
 // ---- Hexblood ----

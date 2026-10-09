@@ -5,7 +5,7 @@
 // attunement limit rises to 4, 5, 6. The magic item plans have no primitive yet (see `needs`).
 
 import type { FeatureEffectsMap } from '../types.ts';
-import { action, AT_TABLE, fromData, numbers, text, uses } from '../core/helpers.ts';
+import { action, AT_TABLE, fromData, numbers, text, uses, when } from '../core/helpers.ts';
 
 const C = (id: string, level: number) => `classFeature:${id}|artificer|efa|${level}|efa` as const;
 
@@ -105,11 +105,9 @@ export const SUP_ARTIFICER: FeatureEffectsMap = {
   [C('epic boon', 19)]: text(),
   // Magical Guidance: all Flash of Genius uses back on a Short Rest, which the text ties to
   // being attuned to a magic item. Cheat Death is text.
-  [C('soul of artifice', 20)]: numbers(
-    [{ type: 'resourceModify', resourceId: 'flash-of-genius', recharge: 'short' }],
-    {
-      notes: 'Flash of Genius returns fully on a Short Rest only while attuned to a magic item.',
-      needs: 'a predicate on being attuned to at least one magic item',
-    },
-  ),
+  [C('soul of artifice', 20)]: numbers([
+    when({ attuned: true }, [
+      { type: 'resourceModify', resourceId: 'flash-of-genius', recharge: 'short' },
+    ]),
+  ]),
 };

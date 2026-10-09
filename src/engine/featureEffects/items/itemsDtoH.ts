@@ -15,6 +15,7 @@ import {
   text,
   toggled,
   uses,
+  when,
 } from '../core/helpers.ts';
 import type { FeatureEffectsMap, FeatureMapping } from '../types.ts';
 
@@ -67,6 +68,17 @@ function enspelled(kind: string, schools: string): Record<string, FeatureMapping
   }
   return out;
 }
+
+/** The Strength score each item that sets it gives, for the Hammer of Thunderbolts. */
+const GIANT_STRENGTH: Record<string, number> = {
+  'gauntlets of ogre power|xdmg': 19,
+  'belt of hill giant strength|xdmg': 21,
+  'belt of frost giant strength|xdmg': 23,
+  'belt of stone giant strength|xdmg': 23,
+  'belt of fire giant strength|xdmg': 25,
+  'belt of cloud giant strength|xdmg': 27,
+  'belt of storm giant strength|xdmg': 29,
+};
 
 const DRAGON_SCALE = (color: string) =>
   numbers([
@@ -344,10 +356,15 @@ export const ITEMS_D_TO_H: FeatureEffectsMap = {
         costs: [{ charges: 1 }],
         saveDc: 17,
       }),
+      // Might of Giants: the Strength the belt or gauntlets set rises by 4 (30 at most).
+      ...Object.entries(GIANT_STRENGTH).map(([id, score]) =>
+        when({ itemInUse: [id] }, [
+          { type: 'abilitySet', ability: 'str', value: Math.min(30, score + 4) },
+        ]),
+      ),
     ],
     {
       notes: "Giant's Bane needs a Belt of Giant Strength or Gauntlets of Ogre Power in use too.",
-      needs: 'a predicate on another item being in use (Might of Giants)',
     },
   ),
   [I('hand of vecna')]: numbers([VECNA_TOUCH]),

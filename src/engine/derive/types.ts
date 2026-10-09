@@ -48,6 +48,8 @@ export interface DerivedRoll {
   floor?: number;
   /** Advantage or Disadvantage in a situation only (against being Charmed), with its source. */
   situational?: { mode: 'advantage' | 'disadvantage'; against: string; source: string }[];
+  /** Plain lines a feature adds to the roll (a reroll it allows). */
+  notes?: { text: string; source: string }[];
 }
 
 export interface DerivedSkill extends DerivedRoll {

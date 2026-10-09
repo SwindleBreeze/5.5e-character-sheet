@@ -245,10 +245,14 @@ export const SUP_FEATS: FeatureEffectsMap = {
     action({ id: 'magic-absorption', name: 'Magic Absorption', actionType: 'other', roll: '1d4' }),
     ...limited('spellfire-flame', 'Spellfire Flame', 'pb', 'long', 'bonus'),
   ]),
-  [F('survivor|rhw')]: numbers(
-    limited('steel-yourself', 'Steel Yourself', 1, 'long', 'reaction', { roll: 'pb' }),
-    { needs: 'a reroll of a low Initiative d20' },
-  ),
+  [F('survivor|rhw')]: numbers([
+    {
+      type: 'rollNote',
+      target: 'initiative',
+      text: 'Reroll a d20 of 9 or lower; the new roll stands',
+    },
+    ...limited('steel-yourself', 'Steel Yourself', 1, 'long', 'reaction', { roll: 'pb' }),
+  ]),
   [F('tireless reveler|abh')]: numbers([
     uses('tireless-reveler', 'Tireless Reveler', 'pb', 'short'),
   ]),

@@ -80,6 +80,7 @@ export function rollNoteLines(r: DerivedRoll): string[] {
     ...r.advantage.map((a) => `Advantage: ${a}`),
     ...r.disadvantage.map((a) => `Disadvantage: ${a}`),
     ...situationalLines(r),
+    ...(r.notes ?? []).map((n) => `${n.text} (${n.source})`),
     ...r.dice.map((d) => `Adds ${d.dice}: ${d.label}`),
     ...(r.floor ? [`A d20 roll below ${r.floor} counts as ${r.floor}`] : []),
   ];

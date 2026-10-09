@@ -37,6 +37,10 @@ export type Predicate =
   | { toggle: string; option?: string }
   /** A condition rule id, e.g. `condition/raging|tst` or `condition/prone|xphb`. */
   | { condition: Id }
+  /** Attuned to at least one magic item. */
+  | { attuned: true }
+  /** One of these items is in use: equipped or worn, and attuned when it needs it. */
+  | { itemInUse: Id[] }
   /** Class level when `classId` is set, else character level. */
   | { level: number; classId?: Id }
   | { all: Predicate[] }
@@ -207,6 +211,10 @@ export type Effect =
    * of Darkvision, or 60 ft more).
    */
   | { type: 'sense'; sense: string; range: number; stack?: boolean }
+  /** A speed the character would have is lost (a Faerie's flight in Medium or Heavy armor). */
+  | { type: 'speedOff'; mode: MoveMode }
+  /** A plain line shown with a roll (Survivor: a low Initiative d20 may be rerolled). */
+  | { type: 'rollNote'; target: RollTarget; text: string }
   /** The Speed (every mode that equals it too) is multiplied (Boots of Speed: doubled). */
   | { type: 'speedMultiplier'; value: number }
   /** A bonus to the Proficiency Bonus (an Ioun Stone of Mastery). */
