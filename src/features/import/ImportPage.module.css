@@ -70,7 +70,7 @@
 
 .counts {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
   gap: var(--space-1) var(--space-3);
   margin: 0;
 }

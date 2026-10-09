@@ -45,7 +45,8 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.test.{ts,tsx}', 'scripts/**/*.test.mjs'],
-    css: { modules: { classNameStrategy: 'non-scoped' } },
+    // The theme tokens are read as text by the contrast test; other CSS stays empty in tests.
+    css: { include: [/theme\/tokens\.css/], modules: { classNameStrategy: 'non-scoped' } },
     restoreMocks: true,
     // UI tests that import content take a few seconds when every file runs in parallel.
     testTimeout: 15_000,

@@ -23,6 +23,7 @@ import { FeatureChoices } from '../choices/FeatureChoices.tsx';
 import { choiceTitle } from '../choices/labels.ts';
 import { useCharacterActions } from '../sheet/useCharacterActions.ts';
 import { fillable, isSpellOffer } from '../wizard/progress.ts';
+import { useStepFocus } from '../wizard/useStepFocus.ts';
 import wizard from '../wizard/wizard.module.css';
 import { levelPicks, type LevelUpBindings } from './bindings.ts';
 import { preparingCasters } from './preparing.ts';
@@ -69,6 +70,7 @@ export function LevelUpPage() {
   const [draft, setDraft] = useState<Character | null>(null);
   const [step, setStep] = useState<LevelUpStep>('class');
   const [applying, setApplying] = useState(false);
+  const stepHeading = useStepFocus(step);
 
   if (!base && stored) setBase(stored);
   const before = useMemo(
@@ -302,7 +304,9 @@ export function LevelUpPage() {
               ? `Level ${plan.charLevel} · ${plan.cls?.name ?? 'Class'} ${plan.classLevel}`
               : `Level ${base.log.length + 1}`}
           </p>
-          <h2 className={wizard.stepTitle}>{TITLES[current]}</h2>
+          <h2 ref={stepHeading} tabIndex={-1} className={wizard.stepTitle}>
+            {TITLES[current]}
+          </h2>
           <p className={wizard.lead}>{LEADS[current]}</p>
         </header>
         {plan?.issues.map((i) => (

@@ -75,7 +75,7 @@ export function FeatureRow({
           type="button"
           className={inventory.itemName}
           aria-expanded={open}
-          aria-controls={detailsId}
+          aria-controls={open ? detailsId : undefined}
           onClick={onToggle}
         >
           {feature.name}

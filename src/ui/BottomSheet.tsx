@@ -24,10 +24,20 @@ export function SheetProvider({ children }: { children: ReactNode }) {
   // its text as a texture: soft, and blurred when centring puts it on a half pixel. Once the
   // sheet has slid in, it is let go of that layer until it moves again.
   const [settled, setSettled] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+  // The control that opened the sheet, so focus goes back to it when the sheet closes: the
+  // sheet has no trigger of its own for vaul to return to.
+  const opener = useRef<HTMLElement | null>(null);
 
   const api = useMemo<SheetApi>(
     () => ({
-      open: (page) => setStack([page]),
+      open: (page) => {
+        const active = document.activeElement;
+        if (active instanceof HTMLElement && !contentRef.current?.contains(active)) {
+          opener.current = active;
+        }
+        setStack([page]);
+      },
       push: (page) =>
         setStack((current) => {
           if (current.at(-1)?.key === page.key) return current;
@@ -48,7 +58,6 @@ export function SheetProvider({ children }: { children: ReactNode }) {
   // While the on-screen keyboard is up, vaul gives the sheet a fixed height to keep the field
   // in view, and keeps that height afterwards: a search that listed many results left the
   // sheet tall once they were gone. When no field has focus, the sheet fits its content again.
-  const contentRef = useRef<HTMLDivElement>(null);
   const [inner, setInner] = useState<HTMLDivElement | null>(null);
   useEffect(() => {
     if (!inner || typeof ResizeObserver === 'undefined') return;
@@ -75,6 +84,17 @@ export function SheetProvider({ children }: { children: ReactNode }) {
             className={styles.content}
             aria-describedby={undefined}
             data-settled={settled}
+            // Focus goes to the sheet itself, so a screen reader reads its title and Tab moves
+            // through it, without bringing up the keyboard for a search field at the top.
+            onOpenAutoFocus={(e) => {
+              e.preventDefault();
+              contentRef.current?.focus({ preventScroll: true });
+            }}
+            onCloseAutoFocus={(e) => {
+              e.preventDefault();
+              if (opener.current?.isConnected) opener.current.focus({ preventScroll: true });
+              opener.current = null;
+            }}
             onAnimationEnd={(e) => {
               if (e.target === e.currentTarget && open) setSettled(true);
             }}

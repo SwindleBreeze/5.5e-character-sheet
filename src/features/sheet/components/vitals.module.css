@@ -1,8 +1,9 @@
 /* ---- Tiles: HP, hit dice, exhaustion (the same grid as the Combat tiles) ---- */
 
+/* Sized in rem, so larger text makes fewer, wider tiles instead of labels spilling out. */
 .tiles {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(6rem, 1fr));
   gap: var(--space-2);
 }
 
@@ -14,8 +15,8 @@
   position: relative;
   display: grid;
   place-items: center;
-  width: 72px;
-  height: 72px;
+  width: 4.5rem;
+  height: 4.5rem;
 }
 
 .ring svg {
@@ -97,8 +98,8 @@
 }
 
 .step {
-  width: 40px;
-  height: 36px;
+  width: 2.5rem;
+  height: 2.25rem;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface-2);
