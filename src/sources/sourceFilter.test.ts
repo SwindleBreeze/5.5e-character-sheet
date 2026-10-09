@@ -6,7 +6,9 @@ import {
   groupSources,
   isAvailable,
   isSelectable,
+  characterSources,
   offeredSources,
+  PREFER_2014,
   presetSources,
   SHOW_2014,
   sourceOffersKind,
@@ -51,6 +53,26 @@ describe('sourceFilter', () => {
     expect(isAvailable(spell('b|tst', 'TST', '2014'), on)).toBe(true);
     // Still only from enabled books.
     expect(isAvailable(spell('a|gone', 'GONE', '2014'), on)).toBe(false);
+  });
+
+  it('on 2014 rules, a 2014 original is offered instead of its 2024 reprint (step 8.5)', () => {
+    const list = [
+      spell('blaze|old', 'OLD', '2014', ['blaze|tst']),
+      spell('blaze|tst', 'TST', '2024'),
+      spell('new|tst', 'TST', '2024'),
+    ];
+    const both = new Set(['OLD', 'TST', SHOW_2014]);
+    expect(availableOf(list, both).map((s) => s.id)).toEqual(['blaze|tst', 'new|tst']);
+    expect(availableOf(list, new Set([...both, PREFER_2014])).map((s) => s.id)).toEqual([
+      'blaze|old',
+      'new|tst',
+    ]);
+    // The character's list carries the preference; alone, it means "the app's books".
+    expect(characterSources({ enabledSources: null, ruleset: '2014' })).toEqual([PREFER_2014]);
+    expect(characterSources({ enabledSources: ['TST'] })).toEqual(['TST']);
+    // A 2014 character sees 2014 books whatever the switch.
+    const sources = [info('TST', '2024', 'core'), info('OLD', '2014', 'core')];
+    expect(offeredSources(['OLD', 'TST', PREFER_2014], sources, false)).toContain('OLD');
   });
 
   it('the enabled list follows the switch, keeping the stored choice', () => {

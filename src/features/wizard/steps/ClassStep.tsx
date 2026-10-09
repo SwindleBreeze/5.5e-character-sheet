@@ -4,12 +4,12 @@
 // table.
 
 import { MAX_LEVEL, retakeLevels, setStartLevel } from '../../../engine/build/levelUp.ts';
-import { chooseClass } from '../../../engine/build/wizard.ts';
+import { chooseClass, switchRuleset } from '../../../engine/build/wizard.ts';
 import { featureEffects } from '../../../engine/featureEffects/index.ts';
 import { StepButton } from '../../../ui/Counter.tsx';
 import { setPick } from '../../../engine/play/features.ts';
 import { decodeChoiceKey } from '../../../schema/index.ts';
-import { useSources } from '../../../content/hooks.ts';
+import { useShow2014, useSources } from '../../../content/hooks.ts';
 import { useSheet } from '../../../ui/sheetContext.ts';
 import page from '../../../app/Page.module.css';
 import { FeatureChoices } from '../../choices/FeatureChoices.tsx';
@@ -79,9 +79,39 @@ export function ClassStep(b: WizardBindings) {
   const deps = { index: content.index, catalog: content.catalog, registry: featureEffects() };
   const level = character.log.length || 1;
   const setLevel = (n: number) => apply((c) => setStartLevel(c, n, deps));
+  // The 2014 rules are offered once 2014 content is shown (step 8.5).
+  const show2014 = useShow2014() ?? false;
+  const rules = character.ruleset === '2014' ? '2014' : '2024';
+  const setRules = (next: '2014' | '2024') =>
+    change((c) => retakeLevels(switchRuleset(c, next, content.index), deps));
 
   return (
     <>
+      {(show2014 || rules === '2014') && (
+        <div className={styles.startLevel} role="radiogroup" aria-label="Rules">
+          <span className={styles.startLevelText}>
+            <strong>Rules</strong>
+            <span className={styles.pickDetail}>
+              {rules === '2014'
+                ? 'The 2014 rules: 2014 classes, ability increases from your species, spells known or prepared the 2014 way.'
+                : 'The 2024 rules. Your table plays the 2014 rules? Switch here before you build.'}
+            </span>
+          </span>
+          <span className={styles.rulesChoice}>
+            {(['2024', '2014'] as const).map((r) => (
+              <label key={r} className={styles.rulesOption}>
+                <input
+                  type="radio"
+                  name="ruleset"
+                  checked={rules === r}
+                  onChange={() => setRules(r)}
+                />
+                {r}
+              </label>
+            ))}
+          </span>
+        </div>
+      )}
       <div className={styles.startLevel} role="group" aria-label="Starting level">
         <span className={styles.startLevelText}>
           <strong>Starting level</strong>

@@ -20,7 +20,7 @@ import {
   type SourceCode,
   type SourceInfo,
 } from '../schema/index.ts';
-import { availableOf, offeredSources } from '../sources/sourceFilter.ts';
+import { availableOf, isMark, offeredSources } from '../sources/sourceFilter.ts';
 import { loadContentIndex } from './loadIndex.ts';
 
 /** `undefined` while loading, `null` when the entity is not imported. */
@@ -62,7 +62,11 @@ function useKnownSources(character?: SourceCode[] | null): SourceCode[] | undefi
       settings.get('show2014'),
       content.listSources(),
     ]);
-    return offeredSources(character ?? global, sources, show2014);
+    // Marks alone (a character on 2014 rules following the app's books) add to the app's list.
+    const own = character?.filter((c) => !isMark(c)) ?? [];
+    const marks = character?.filter(isMark) ?? [];
+    const base = character && (own.length || !marks.length) ? own : global;
+    return offeredSources([...base, ...marks], sources, show2014);
     // The character's list is read through `own`: same codes, same result.
   }, [own]);
 }

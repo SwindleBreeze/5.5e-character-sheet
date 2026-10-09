@@ -50,3 +50,20 @@ export const STEP_INTROS: Readonly<Record<WizardStep, StepIntro>> = {
     lead: 'The app works out your hit points, Armor Class, bonuses and attacks. Check them, then create your character.',
   },
 };
+
+/** What changes on the 2014 rules (step 8.5): where ability increases come from. */
+export const STEP_INTROS_2014: Partial<Record<WizardStep, StepIntro>> = {
+  background: {
+    rule: 'Origin: background',
+    lead: 'What your character did before adventuring: skills, tools or languages, a background feature and equipment. On the 2014 rules it doesn’t change ability scores.',
+  },
+  species: {
+    rule: 'Origin: species',
+    lead: 'Your species gives your size, speed, special traits and, on the 2014 rules, your ability score increases.',
+  },
+};
+
+/** A step's introduction for this character's rules. */
+export function stepIntro(step: WizardStep, rules2014: boolean): StepIntro {
+  return (rules2014 ? STEP_INTROS_2014[step] : undefined) ?? STEP_INTROS[step];
+}

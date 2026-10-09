@@ -852,3 +852,31 @@ details.gives > summary {
 .card[data-blocked='true'] .pickName {
   color: var(--color-text-muted);
 }
+
+/* ---- The rules a character is built by (step 8.5) ---- */
+
+.rulesChoice {
+  display: flex;
+  gap: var(--space-1);
+  flex: none;
+}
+
+.rulesOption {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: var(--tap-min);
+  padding: 0 var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+}
+
+.rulesOption:has(input:checked) {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.rulesOption input {
+  accent-color: var(--color-accent);
+}

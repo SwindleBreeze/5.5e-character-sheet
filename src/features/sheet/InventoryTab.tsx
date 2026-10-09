@@ -19,6 +19,7 @@ import { ItemRow } from './inventory/ItemRow.tsx';
 import type { SheetBindings } from './sheetBindings.ts';
 import mainStyles from './MainTab.module.css';
 import styles from './inventory/inventory.module.css';
+import { characterSources } from '../../sources/sourceFilter.ts';
 
 const INVENTORY_ISSUES = new Set([
   'overCapacity',
@@ -111,7 +112,7 @@ export function InventoryTab(bindings: SheetBindings) {
     ui.open({
       key: 'inventory:add',
       title: 'Add an item',
-      render: () => <AddItemSheet sources={character.enabledSources} onAdd={add} />,
+      render: () => <AddItemSheet sources={characterSources(character)} onAdd={add} />,
     });
 
   const over = inv.weight.value > inv.carry.value;

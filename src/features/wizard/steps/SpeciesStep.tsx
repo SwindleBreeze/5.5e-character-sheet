@@ -129,7 +129,7 @@ export function SpeciesStep(b: WizardBindings) {
             </Button>
           </div>
           <AboutFlavor entity={selected} />
-          {selected.edition === '2014' && (
+          {selected.edition === '2014' && character.ruleset !== '2014' && (
             <div className={choices.help}>
               <p>
                 A 2014 species. By the 2024 rules your background gives your ability increases, not

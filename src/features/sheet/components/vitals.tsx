@@ -393,21 +393,44 @@ export function ConditionChips({
   );
 }
 
-/** Exhaustion 0–6 (2024): −2 per level to d20 tests, −5 ft. per level of Speed. */
+/** What 2014 exhaustion does at each level (they add up; step 8.5). */
+const EXHAUSTION_2014_TEXT = [
+  'None',
+  'Disadv. on checks',
+  'Speed halved',
+  'Disadv. attacks, saves',
+  'HP max halved',
+  'Speed 0',
+  'Death',
+];
+
+/**
+ * Exhaustion 0–6. 2024: −2 per level to d20 tests, −5 ft. per level of Speed. 2014 rules: what
+ * each level adds.
+ */
 export function ExhaustionStepper({
   level,
   onChange,
+  rules2014 = false,
 }: {
   level: number;
   onChange: (level: number) => void;
+  rules2014?: boolean;
 }) {
+  const sub = rules2014
+    ? (EXHAUSTION_2014_TEXT[Math.min(level, 6)] ?? '')
+    : level === 0
+      ? 'None'
+      : level >= 6
+        ? 'Death'
+        : `−${2 * level} d20, −${5 * level} ft.`;
   return (
     <StepperTile
       label="Exhaustion"
       name="Exhaustion"
       value={level}
       max={6}
-      sub={level === 0 ? 'None' : level >= 6 ? 'Death' : `−${2 * level} d20, −${5 * level} ft.`}
+      sub={sub}
       onChange={onChange}
     />
   );

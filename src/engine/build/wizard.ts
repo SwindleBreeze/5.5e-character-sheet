@@ -235,3 +235,36 @@ export function finishDraft(
   const sheet = derive(n, index, registry ? { registry } : {});
   return refreshSnapshots(n, index, sheet, now);
 }
+
+/**
+ * Switch a draft between the 2024 and the 2014 rules (step 8.5). A class already chosen is
+ * swapped for its counterpart in the other edition when there is one (the 2014 Fighter for the
+ * 2024 one); the caller re-takes the levels.
+ */
+export function switchRuleset(
+  c: Character,
+  rules: '2014' | '2024',
+  index: ContentIndex,
+): Character {
+  const { ruleset: _, ...rest } = c;
+  const next: Character = rules === '2014' ? { ...rest, ruleset: '2014' } : rest;
+  const classId = c.log[0]?.classRef.id;
+  const current = classId ? index.get({ kind: 'class', id: classId }) : undefined;
+  if (!current) return next;
+  const twin =
+    rules === '2014'
+      ? current.edition === '2014'
+        ? undefined
+        : index
+            .all()
+            .find(
+              (e) =>
+                e.kind === 'class' && e.edition === '2014' && e.supersededBy?.includes(current.id),
+            )
+      : current.edition === '2014'
+        ? (current.supersededBy ?? [])
+            .map((id) => index.get({ kind: 'class', id }))
+            .find((e) => !!e)
+        : undefined;
+  return twin ? chooseClass(next, { kind: 'class', id: twin.id }, index) : next;
+}

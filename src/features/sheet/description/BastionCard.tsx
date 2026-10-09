@@ -22,6 +22,7 @@ import inventory from '../inventory/inventory.module.css';
 import type { CharacterUpdate } from '../useCharacterActions.ts';
 import styles from './description.module.css';
 import { FacilitySheet } from './FacilitySheet.tsx';
+import { characterSources } from '../../../sources/sourceFilter.ts';
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -110,7 +111,7 @@ export function BastionCard({
       render: () => (
         <FacilitySheet
           have={have}
-          sources={character.enabledSources}
+          sources={characterSources(character)}
           onAdd={(f) => {
             ui.close();
             apply((c) =>

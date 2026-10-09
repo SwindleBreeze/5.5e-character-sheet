@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import type { Character, ContentEntity } from '../../schema/index.ts';
+import type { Character, ClassSpellcasting, ContentEntity } from '../../schema/index.ts';
 import { SHOW_2014 } from '../../sources/sourceFilter.ts';
 import { testCharacter } from '../../test/characters.ts';
 import { FIXTURE_FEATURE_EFFECTS } from '../../test/fixtureFeatureEffects.ts';
@@ -9,7 +9,12 @@ import { offerOptions } from '../choices/options.ts';
 import type { ContentIndex } from '../content/contentIndex.ts';
 import { derive } from '../derive/derive.ts';
 import type { DerivedSheet } from '../derive/types.ts';
-import { LEGACY_ORIGIN_FEAT_SLOT } from './legacy.ts';
+import {
+  casterSpellcasting,
+  LEGACY_ORIGIN_FEAT_SLOT,
+  legacyEntityEffects,
+  preparedByFormula,
+} from './legacy.ts';
 
 let index: ContentIndex;
 let catalog: Catalog;
@@ -87,5 +92,70 @@ describe('2014 options on a 2024 character (step 8.2)', () => {
     expect(feats).toContain('old grit|old');
     expect(feats).toContain('arena veteran|tst');
     expect(feats).not.toContain('spark initiate|tst'); // an Origin feat
+  });
+});
+
+describe('characters on 2014 rules (step 8.5)', () => {
+  it('a 2014 Ability Score Improvement: +2 to one score, +1 to two, or a feat', () => {
+    const asi = {
+      kind: 'classFeature',
+      id: 'ability score improvement|old|old|4|old',
+      name: 'Ability Score Improvement',
+      edition: '2014',
+      effects: [],
+    } as unknown as ContentEntity;
+    const effects = legacyEntityEffects(asi);
+    expect(effects[0]).toMatchObject({
+      type: 'optionChoice',
+      choice: { from: ['two', 'one', 'feat'] },
+    });
+    expect(effects.slice(1).map((e) => e.type === 'ifChoice' && e.effects[0]?.type)).toEqual([
+      'abilityChoice',
+      'abilityChoice',
+      'featChoice',
+    ]);
+    // A 2024 one, or one with effects of its own, gets nothing.
+    expect(legacyEntityEffects({ ...asi, edition: '2024' } as ContentEntity)).toEqual([]);
+  });
+
+  it('2014 casters: known casters learn on level-up; prepared ones prepare level + modifier', () => {
+    const bard: ClassSpellcasting = {
+      ability: 'cha',
+      progression: 'full',
+      preparedByLevel: [4, 5],
+    };
+    expect(casterSpellcasting(bard, { edition: '2014' }).preparedChange).toBe('level');
+    expect(casterSpellcasting(bard, { edition: '2024' }).preparedChange).toBeUndefined();
+    const cleric: ClassSpellcasting = { ability: 'wis', progression: 'full' };
+    expect(preparedByFormula(cleric, 5, 3)).toBe(8);
+    expect(preparedByFormula({ ...cleric, progression: 'half' }, 5, 2)).toBe(4);
+    expect(preparedByFormula(cleric, 1, -1)).toBe(1);
+  });
+
+  it('2014 exhaustion: disadvantage, speed halved then 0, HP maximum halved', () => {
+    const base = { ...brute({}), ruleset: '2014' as const };
+    const at = (n: number) => sheetOf({ ...base, state: { ...base.state, exhaustion: n } });
+    const fresh = at(0);
+    expect(at(1).skills.athletics.mode).toBe('disadvantage');
+    expect(at(1).saves.str.mode).toBe('normal');
+    expect(at(1).skills.athletics.bonus.value).toBe(fresh.skills.athletics.bonus.value);
+    expect(at(2).speed.walk!.value).toBe(Math.floor(fresh.speed.walk!.value / 2));
+    expect(at(3).saves.str.mode).toBe('disadvantage');
+    expect(at(4).hp.max.value).toBe(fresh.hp.max.value - Math.ceil(fresh.hp.max.value / 2));
+    expect(at(5).speed.walk!.value).toBe(0);
+    // The 2024 rules: −2 per level, −5 ft. per level.
+    const now = sheetOf({ ...brute({}), state: { ...base.state, exhaustion: 1 } });
+    expect(now.skills.athletics.bonus.value).toBe(fresh.skills.athletics.bonus.value - 2);
+  });
+
+  it('on 2014 rules a 2014 species keeps its increases and a 2014 background adds nothing', () => {
+    const c: Character = {
+      ...brute({ speciesId: 'stoneborn|old', backgroundId: 'old sailor|old' }),
+      ruleset: '2014',
+    };
+    const sheet = sheetOf(c);
+    expect(sheet.abilities.con.score.value).toBe(12);
+    expect(choices(sheet).map((x) => x.offer.kind)).not.toContain('backgroundAbility');
+    expect(choices(sheet).some((x) => x.offer.key.slot === LEGACY_ORIGIN_FEAT_SLOT)).toBe(false);
   });
 });

@@ -14,6 +14,7 @@ import inventory from '../../sheet/inventory/inventory.module.css';
 import { choiceContext, type WizardBindings } from '../bindings.ts';
 import { picksOnStep } from '../progress.ts';
 import choices from '../../choices/choices.module.css';
+import { characterSources } from '../../../sources/sourceFilter.ts';
 
 /** Prepared spells while creating: not a change after a Long Rest, so no swap is counted. */
 function prepare(c: Character, casterKey: string, ids: readonly Id[]): Character {
@@ -51,7 +52,7 @@ export function SpellsStep(b: WizardBindings) {
       ) : (
         <PrepareSheet
           caster={caster}
-          sources={character.enabledSources}
+          sources={characterSources(character)}
           current={character.state.prepared[caster.key] ?? []}
           instant
           onSave={(ids) => apply((c) => prepare(c, caster.key, ids))}

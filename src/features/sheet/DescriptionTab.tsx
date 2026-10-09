@@ -27,6 +27,7 @@ import inventory from './inventory/inventory.module.css';
 import mainStyles from './MainTab.module.css';
 import { usePublishBindings } from './liveBindings.ts';
 import type { SheetBindings } from './sheetBindings.ts';
+import { characterSources } from '../../sources/sourceFilter.ts';
 
 /** The nine alignments (2024 Player's Handbook). */
 const ALIGNMENTS = [
@@ -110,7 +111,7 @@ export function DescriptionTab(bindings: SheetBindings) {
       render: () => (
         <DeitySheet
           current={deity}
-          sources={character.enabledSources}
+          sources={characterSources(character)}
           onPick={(d) => {
             ui.close();
             apply((c) => setDeity(c, d));

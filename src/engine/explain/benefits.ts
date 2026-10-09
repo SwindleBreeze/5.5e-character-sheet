@@ -25,7 +25,7 @@ import { creationLanguageEffects } from '../collect/collect.ts';
 import type { ContentIndex } from '../content/contentIndex.ts';
 import { SIZE_NAMES } from '../items/items.ts';
 import { cantripCount, maxSpellLevel, preparedCount } from '../spells/casters.ts';
-import { backgroundAbilityOptions } from '../rules/legacy.ts';
+import { backgroundAbilityOptions, casterSpellcasting } from '../rules/legacy.ts';
 
 export { firstSentence };
 
@@ -382,7 +382,7 @@ export function classBenefits(cls: ClassDef, index: ContentIndex): Benefit[] {
   });
   if (start.tools.length)
     out.push({ label: 'Tools', text: trainingText(start.tools, 'tool', index), why: WHY.tools });
-  const sc = cls.spellcasting;
+  const sc = cls.spellcasting && casterSpellcasting(cls.spellcasting, cls);
   if (sc) {
     const cantrips = cantripCount(sc, cls, 1);
     const prepared = preparedCount(sc, cls, 1);
@@ -392,7 +392,9 @@ export function classBenefits(cls: ClassDef, index: ContentIndex): Benefit[] {
       cantrips ? `${cantrips} cantrips` : '',
       prepared && top
         ? `${prepared} level 1 spells ${sc.preparedChange === 'level' ? 'known (changed when you gain a level)' : 'prepared (changed after a Long Rest)'}`
-        : '',
+        : top && !sc.preparedByLevel?.length
+          ? `as many spells prepared as its level plus its ${ABILITY_NAMES[sc.ability]} modifier (changed after a Long Rest)`
+          : '',
       sc.spellbookByLevel?.length ? 'a spellbook to prepare from' : '',
     ].filter(Boolean);
     out.push({

@@ -82,7 +82,7 @@ export function BackgroundStep(b: WizardBindings) {
   const expanded = selected && (
     <>
       <AboutFlavor entity={selected} />
-      {selected.edition === '2014' && !selected.featId && (
+      {selected.edition === '2014' && !selected.featId && character.ruleset !== '2014' && (
         <p className={choices.help}>
           A 2014 background. A 2024 character also gets ability increases and an Origin feat from
           its background; this one lists neither, so choose them below (check with your DM).

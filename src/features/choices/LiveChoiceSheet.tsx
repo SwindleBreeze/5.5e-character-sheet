@@ -16,6 +16,7 @@ import { ChoicePicker } from './ChoicePicker.tsx';
 import { FeatureChoices } from './FeatureChoices.tsx';
 import styles from './choices.module.css';
 import { pickedFeatures, type PickSave } from './picks.ts';
+import { characterSources } from '../../sources/sourceFilter.ts';
 
 const sameValues = (a: readonly string[], b: readonly string[]) =>
   a.length === b.length && a.every((v, i) => v === b[i]);
@@ -31,7 +32,7 @@ export function LiveChoiceSheet({
   onClose: () => void;
 }) {
   const { character, sheet, apply } = useLiveBindings(opened);
-  const content = useAllContent(character.enabledSources);
+  const content = useAllContent(characterSources(character));
   // What was saved, until the sheet shows it.
   const [saved, setSaved] = useState<string[] | null>(null);
 

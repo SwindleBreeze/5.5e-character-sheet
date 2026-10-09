@@ -23,6 +23,7 @@ import {
 } from './context.ts';
 import { itemBonusOff } from './itemBonuses.ts';
 import type { Contribution, Derived, DerivedClass, DerivedSheet, SourcedValue } from './types.ts';
+import { EXHAUSTION_2014, isRules2014 } from '../rules/legacy.ts';
 
 type Mods = Record<Ability, number>;
 
@@ -182,6 +183,12 @@ export function deriveHp(
     const flat = effect.flat === undefined ? 0 : evalNumber(ctx, effect.flat, source);
     parts.push(contribution(source.name, perLevel + flat, source));
   }
+  // 2014 exhaustion: Hit Point maximum halved from level 4 (step 8.5).
+  const exhaustion = ctx.character.state.exhaustion;
+  if (isRules2014(ctx.character) && exhaustion >= EXHAUSTION_2014.hpMaxHalved) {
+    const full = parts.reduce((sum, p) => sum + p.value, 0);
+    parts.push({ label: `Exhaustion ${exhaustion}`, value: -Math.ceil(full / 2) });
+  }
   const max = withOverride(derived(parts), ctx.character, 'hpMax');
   const { damage, tempHp, wardHp } = ctx.character.state;
   const hp: DerivedSheet['hp'] = {
@@ -276,7 +283,9 @@ export function deriveSpeed(
     penalties.push({ label: `${armor?.item?.name ?? 'Armor'} (needs STR ${strReq})`, value: -10 });
   }
   const exhaustion = ctx.character.state.exhaustion;
-  if (exhaustion > 0) penalties.push({ label: `Exhaustion ${exhaustion}`, value: -5 * exhaustion });
+  const rules2014 = isRules2014(ctx.character);
+  if (exhaustion > 0 && !rules2014)
+    penalties.push({ label: `Exhaustion ${exhaustion}`, value: -5 * exhaustion });
 
   const out: DerivedSheet['speed'] = {};
   const walkEntry = base.get('walk')!;
@@ -317,13 +326,24 @@ export function deriveSpeed(
             label: `Carrying ${load.weight} lb., more than you can carry (${load.carry} lb.): at most 5 ft.`,
           }
         : undefined;
-  const loaded = (d: Derived): Derived =>
-    limit && d.value > limit.value
-      ? {
-          value: limit.value,
-          parts: [...d.parts, { label: limit.label, value: limit.value - d.value }],
-        }
-      : d;
+  const loaded = (d: Derived): Derived => {
+    let out =
+      limit && d.value > limit.value
+        ? {
+            value: limit.value,
+            parts: [...d.parts, { label: limit.label, value: limit.value - d.value }],
+          }
+        : d;
+    // 2014 exhaustion: Speed halved from level 2, 0 from level 5 (step 8.5).
+    if (rules2014 && exhaustion >= EXHAUSTION_2014.speedHalved && out.value > 0) {
+      const to = exhaustion >= EXHAUSTION_2014.speedZero ? 0 : Math.floor(out.value / 2);
+      out = {
+        value: to,
+        parts: [...out.parts, { label: `Exhaustion ${exhaustion}`, value: to - out.value }],
+      };
+    }
+    return out;
+  };
 
   out.walk = withOverride(loaded(derived(multiplied(walkParts))), ctx.character, 'speed.walk');
   for (const mode of MOVE_MODES) {

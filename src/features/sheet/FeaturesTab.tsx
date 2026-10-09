@@ -18,6 +18,7 @@ import { usePublishBindings } from './liveBindings.ts';
 import type { SheetBindings } from './sheetBindings.ts';
 import mainStyles from './MainTab.module.css';
 import inventory from './inventory/inventory.module.css';
+import { characterSources } from '../../sources/sourceFilter.ts';
 
 interface Group {
   id: string;
@@ -131,7 +132,7 @@ export function FeaturesTab(bindings: SheetBindings) {
       render: () => (
         <AddGiftSheet
           have={new Set(gifts.map((g) => g.ref.id))}
-          sources={character.enabledSources}
+          sources={characterSources(character)}
           onAdd={(gift) => {
             ui.close();
             apply((c) => addGift(c, { kind: 'reward', id: gift.id }, gift.name));

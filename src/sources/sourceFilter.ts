@@ -31,6 +31,29 @@ export function effectiveSources(
 /** In an enabled list: 2014 content is offered. Never a real source code. */
 export const SHOW_2014: SourceCode = '+2014';
 
+/**
+ * In an enabled list: a character on 2014 rules (step 8.5). 2014 content is offered, and a 2014
+ * original is preferred to its 2024 reprint (the 2014 Fighter, not the 2024 one).
+ */
+export const PREFER_2014: SourceCode = '+prefer2014';
+
+/** Marks in an enabled list (`SHOW_2014`, `PREFER_2014`): never real source codes. */
+export function isMark(code: SourceCode): boolean {
+  return code.startsWith('+');
+}
+
+/**
+ * A character's book list for the source hooks: its own list, or only marks for "the app's
+ * books"; `PREFER_2014` added when it plays by the 2014 rules.
+ */
+export function characterSources(character: {
+  enabledSources: SourceCode[] | null;
+  ruleset?: '2014';
+}): SourceCode[] | null {
+  if (character.ruleset !== '2014') return character.enabledSources;
+  return [...(character.enabledSources ?? []).filter((c) => c !== PREFER_2014), PREFER_2014];
+}
+
 /** Basic availability: an enabled source, and 2014 only with `SHOW_2014`. Ignores reprints. */
 export function isOffered(entity: ContentEntity, enabled: ReadonlySet<SourceCode>): boolean {
   return enabled.has(entity.source) && (entity.edition !== '2014' || enabled.has(SHOW_2014));
@@ -55,13 +78,17 @@ export function offeredSources(
   sources: readonly SourceInfo[],
   show2014: boolean,
 ): SourceCode[] {
-  if (show2014) return [...codes.filter((c) => c !== SHOW_2014), SHOW_2014];
+  // A character on 2014 rules sees 2014 books whatever the switch.
+  if (show2014 || codes.includes(PREFER_2014))
+    return [...codes.filter((c) => c !== SHOW_2014), SHOW_2014];
   const old = new Set(sources.filter((s) => s.edition === '2014').map((s) => s.code));
   return codes.filter((c) => !old.has(c) && c !== SHOW_2014);
 }
 
 export function isAvailable(entity: ContentEntity, ctx: FilterContext): boolean {
   if (!isOffered(entity, ctx.enabled)) return false;
+  // On 2014 rules a 2014 original stays, and its reprints give way (`availableOf`).
+  if (entity.edition === '2014' && ctx.enabled.has(PREFER_2014)) return true;
   return !(entity.supersededBy ?? []).some((id) => id !== entity.id && ctx.isAvailableId(id));
 }
 
@@ -70,9 +97,16 @@ export function availableOf<T extends ContentEntity>(
   list: readonly T[],
   enabled: ReadonlySet<SourceCode>,
 ): T[] {
-  const offered = new Set(list.filter((e) => isOffered(e, enabled)).map((e) => e.id));
+  const offeredList = list.filter((e) => isOffered(e, enabled));
+  const offered = new Set(offeredList.map((e) => e.id));
   const ctx: FilterContext = { enabled, isAvailableId: (id) => offered.has(id) };
-  return list.filter((e) => isAvailable(e, ctx));
+  // On 2014 rules: the reprints of offered 2014 originals are left out.
+  const reprints = new Set(
+    enabled.has(PREFER_2014)
+      ? offeredList.filter((e) => e.edition === '2014').flatMap((e) => e.supersededBy ?? [])
+      : [],
+  );
+  return list.filter((e) => !reprints.has(e.id) && isAvailable(e, ctx));
 }
 
 /** Sources that can be switched on: 2014 ones only with "Show 2014 content" (step 8.1). */
