@@ -3,6 +3,7 @@
 // subclass when due, and its picks. Each level is made automatically first; anything can be
 // changed, and "Fill the rest automatically" makes whatever is still open.
 
+import { topLevelPicks } from '../../choices/picks.ts';
 import { setSubclass } from '../../../engine/build/build.ts';
 import {
   changeLevelClass,
@@ -31,11 +32,6 @@ export function LevelsStep(b: WizardBindings) {
   const ctx = choiceContext(b, sheet);
   const classes = content.catalog.of('class');
   const all = sheet.features;
-  const underPick = (f: (typeof all)[number]) => {
-    if (!f.pickedIn) return false;
-    const by = all.find((x) => refKey(x.ref) === refKey(f.pickedIn!.ref));
-    return !!by?.choices.some((c) => c.values.includes(f.ref.id));
-  };
   const open = todos.some((t) => t.step === 'levels');
 
   return (
@@ -68,7 +64,7 @@ export function LevelsStep(b: WizardBindings) {
               f.level === entry.classLevel,
           );
           const only = (c: { entryIndex: number }) => c.entryIndex === i;
-          const withPicks = all.filter((f) => !underPick(f) && f.choices.some(only));
+          const withPicks = topLevelPicks(all, only);
           const left = withPicks.some((f) =>
             f.choices.some((c) => only(c) && c.values.length < c.count),
           );

@@ -3,6 +3,7 @@
 // flavor text and everything it asks for: ability increases first, then languages, a tool, the
 // Origin feat with its own picks, and starting equipment.
 
+import { grantedUnder } from '../../choices/picks.ts';
 import { chooseBackground } from '../../../engine/build/wizard.ts';
 import { setPick } from '../../../engine/play/features.ts';
 import type { DerivedFeature } from '../../../engine/derive/types.ts';
@@ -27,14 +28,8 @@ export function OriginChoices({ b, owner }: { b: WizardBindings; owner: DerivedF
   const { sheet, apply, content } = b;
   if (!sheet) return null;
   const ctx = choiceContext(b, sheet);
-  const key = refKey(owner.ref);
   // Granted outright, not through one of its picks (an Origin feat).
-  const granted = sheet.features.filter(
-    (f) =>
-      f.pickedIn &&
-      refKey(f.pickedIn.ref) === key &&
-      !owner.choices.some((c) => c.values.includes(f.ref.id)),
-  );
+  const granted = grantedUnder(owner, sheet.features);
   const onPick: Parameters<typeof FeatureChoices>[0]['onPick'] = (c, _f, pick) =>
     apply((ch) =>
       setPick(ch, decodeChoiceKey(c.key), { ...pick, entryIndex: c.entryIndex, via: 'creation' }),
