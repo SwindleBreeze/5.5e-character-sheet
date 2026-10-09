@@ -20,7 +20,10 @@ describe('Settings → Sources: homebrew (plan step 7.3)', () => {
     const user = userEvent.setup();
     renderApp('/settings');
     const group = await homebrewGroup();
-    expect(group.getByRole('checkbox', { name: /The Hearthkeeper's Guide/ })).toBeChecked();
+    // Checked once the saved setting has been read.
+    await waitFor(() =>
+      expect(group.getByRole('checkbox', { name: /The Hearthkeeper's Guide/ })).toBeChecked(),
+    );
     expect(group.getByText('HG')).toBeInTheDocument();
     expect(group.getByText('by Tess Example, Rowan Sample · version 1.2.0')).toBeInTheDocument();
 
