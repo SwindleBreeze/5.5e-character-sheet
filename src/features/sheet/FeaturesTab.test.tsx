@@ -163,7 +163,7 @@ describe('Features tab', () => {
       }),
     );
     const dialog = within(await screen.findByRole('dialog'));
-    expect(dialog.getByText(/rules don’t let you change this later/)).toBeTruthy();
+    expect(await dialog.findByText(/rules don’t let you change this later/)).toBeTruthy();
     await user.click(await dialog.findByRole('radio', { name: 'Charisma' }));
     expect(dialog.getByText('1 of 1 chosen')).toBeTruthy();
     await user.click(dialog.getByRole('button', { name: 'Save' }));
@@ -211,7 +211,7 @@ describe('Features tab', () => {
     expect(picks.getByText('Net Blade, Shiv')).toBeTruthy();
     await user.click(picks.getByRole('button', { name: 'Change Weapon Mastery (Weapon Mastery)' }));
     const dialog = within(await screen.findByRole('dialog'));
-    expect(dialog.getByText(/whenever you finish a Long Rest/)).toBeTruthy();
+    expect(await dialog.findByText(/whenever you finish a Long Rest/)).toBeTruthy();
     await user.click(await dialog.findByRole('checkbox', { name: 'Shiv' }));
     await user.click(dialog.getByRole('checkbox', { name: 'Walking Staff' }));
     await user.click(dialog.getByRole('button', { name: 'Save' }));

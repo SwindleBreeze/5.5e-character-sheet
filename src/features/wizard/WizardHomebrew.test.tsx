@@ -25,17 +25,10 @@ const equipmentA = (where: ReturnType<typeof within>) =>
     name: /Option A/,
   });
 
-/**
- * Pick a card and return it, opened. The list can render once more while the content settles
- * (a larger import takes longer), so the pick is retried on the list as it is now.
- */
+/** Pick a card and return it, opened. */
 async function pick(user: User, name: string) {
-  await waitFor(async () => {
-    const item = screen.queryByRole('listitem', { name });
-    if (!item) await user.click(screen.getByRole('radio', { name }));
-    expect(screen.getByRole('listitem', { name })).toBeInTheDocument();
-  });
-  return within(screen.getByRole('listitem', { name }));
+  await user.click(screen.getByRole('radio', { name }));
+  return within(await screen.findByRole('listitem', { name }));
 }
 
 async function stored(check: (c: Character) => boolean): Promise<Character> {

@@ -110,7 +110,13 @@ export function ClassStep(b: WizardBindings) {
       <EntityCards
         label="Classes"
         items={groups.flatMap((g) =>
-          g.items.map((c) => ({ id: c.id, name: c.name, group: g.label, chips: classChips(c) })),
+          g.items.map((c) => ({
+            id: c.id,
+            name: c.name,
+            group: g.label,
+            groupKey: g.code,
+            chips: classChips(c),
+          })),
         )}
         selected={selectedId}
         onSelect={(id) =>

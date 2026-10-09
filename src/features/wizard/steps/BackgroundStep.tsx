@@ -101,6 +101,7 @@ export function BackgroundStep(b: WizardBindings) {
           id: bg.id,
           name: bg.name,
           group: g.label,
+          groupKey: g.code,
           suggested: originSuggestion(bg, focus),
           chips: backgroundChips(bg, content.index, bg.id === selectedId ? spread : undefined),
         })),

@@ -15,6 +15,11 @@ export interface CardItem {
   chips?: string[];
   /** The book it comes from; with more than one, the list is split under their names. */
   group?: string;
+  /**
+   * What identifies the group when its name can change (a source's code: its name arrives
+   * after the first paint); the cards would be drawn anew otherwise, and a tap lost.
+   */
+  groupKey?: string;
   /** Why it suits the character (`Good for a Barbarian: raises Strength`), highlighted. */
   suggested?: string | undefined;
   /** Why the rules don't allow it (`You can't take this yet: …`): shown, and it can't be picked. */
@@ -49,11 +54,12 @@ export function EntityCards({
       </p>
     );
   }
-  const groups: { label: string; items: { item: CardItem; i: number }[] }[] = [];
+  const groups: { key: string; label: string; items: { item: CardItem; i: number }[] }[] = [];
   items.forEach((item, i) => {
-    const g = groups.find((x) => x.label === (item.group ?? ''));
+    const key = item.groupKey ?? item.group ?? '';
+    const g = groups.find((x) => x.key === key);
     if (g) g.items.push({ item, i });
-    else groups.push({ label: item.group ?? '', items: [{ item, i }] });
+    else groups.push({ key, label: item.group ?? '', items: [{ item, i }] });
   });
 
   const card = (item: CardItem, i: number) => {
@@ -129,7 +135,7 @@ export function EntityCards({
   return (
     <div className={styles.cardGroups}>
       {groups.map((g) => (
-        <div key={g.label} className={styles.cardGroup}>
+        <div key={g.key} className={styles.cardGroup}>
           <h3 className={styles.groupTitle}>{g.label || 'Other'}</h3>
           <ul className={styles.cards} aria-label={`${label}: ${g.label || 'Other'}`}>
             {g.items.map(({ item, i }) => card(item, i))}
