@@ -41,13 +41,26 @@ export function resolveScheme(pref: ThemePref): Scheme {
   return pref === 'system' ? systemScheme() : pref;
 }
 
+/** The browser's bar colour for each scheme: the palette's background (tokens.css). */
+export const THEME_COLORS: Record<Scheme, string> = { light: '#f4efe4', dark: '#16120e' };
+
 export function applyThemePref(
   pref: ThemePref,
   root: HTMLElement = document.documentElement,
 ): void {
   if (pref === 'system') delete root.dataset.theme;
   else root.dataset.theme = pref;
-  root.dataset.scheme = resolveScheme(pref);
+  const scheme = resolveScheme(pref);
+  root.dataset.scheme = scheme;
+  // `only`: browsers that darken pages on their own (Chrome's and Samsung Internet's dark
+  // modes) leave the app's palettes alone. The bar above the app follows the chosen theme.
+  const doc = root.ownerDocument;
+  doc
+    .querySelector<HTMLMetaElement>('meta[name=color-scheme]')
+    ?.setAttribute('content', `only ${scheme}`);
+  doc
+    .querySelector<HTMLMetaElement>('meta[name=theme-color]')
+    ?.setAttribute('content', THEME_COLORS[scheme]);
 }
 
 export function saveThemePref(pref: ThemePref): void {

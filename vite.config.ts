@@ -26,8 +26,10 @@ export default defineConfig({
         name: '5.5e Character Sheet',
         short_name: 'Char Sheet',
         description: 'Offline character builder and sheet for D&D 2024 rules.',
-        theme_color: '#1f2430',
-        background_color: '#1f2430',
+        // The dark palette's background (tokens.css): the splash screen and the bar until the
+        // page sets its own.
+        theme_color: '#16120e',
+        background_color: '#16120e',
         display: 'standalone',
         orientation: 'any',
         start_url: BASE,

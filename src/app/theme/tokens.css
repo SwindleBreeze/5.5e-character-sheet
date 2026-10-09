@@ -144,10 +144,11 @@
 
 /* ---- Palettes ---- */
 
-/* Light: warm paper and ink. */
+/* Light: warm paper and ink. `only` keeps browsers that darken pages on their own (Chrome's
+   and Samsung Internet's dark modes) from recolouring the palettes. */
 :root,
 [data-scheme='light'] {
-  color-scheme: light;
+  color-scheme: only light;
   --color-bg: #f4efe4;
   --color-surface: #fffdf8;
   --color-surface-2: #f1ebdf;
@@ -179,7 +180,7 @@
 
 /* Dark: lamplight on dark leather. */
 [data-scheme='dark'] {
-  color-scheme: dark;
+  color-scheme: only dark;
   --color-bg: #16120e;
   --color-surface: #211b15;
   --color-surface-2: #2a231c;
@@ -212,7 +213,7 @@
 /* Before the theme script runs: follow the system. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-scheme]) {
-    color-scheme: dark;
+    color-scheme: only dark;
     --color-bg: #16120e;
     --color-surface: #211b15;
     --color-surface-2: #2a231c;
