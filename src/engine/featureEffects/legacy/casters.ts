@@ -71,17 +71,23 @@ const PHASES = [
 ] as const;
 const phase = (option: string): Predicate => ({ toggle: 'lunar-phase', option });
 
-// ---- Genie: the patron's kind is the subclass's own pick (its spell set) ----
-const genie: Ref = { kind: 'subclass', id: 'genie|warlock|xphb|tce' };
+// ---- Genie: the patron's kind is the subclass's own pick (its spell set), on the 2024 Warlock
+// or, on 2014 rules, the 2014 one ----
+const genies: Ref[] = [
+  { kind: 'subclass', id: 'genie|warlock|xphb|tce' },
+  { kind: 'subclass', id: 'genie|warlock|phb|tce' },
+];
 const GENIE_TYPES = ['bludgeoning', 'thunder', 'fire', 'cold'];
 const byKind = (effects: (damageType: string) => Effect[]): Effect[] =>
-  GENIE_TYPES.map((type, i): Effect => ({
-    type: 'ifChoice',
-    owner: genie,
-    slot: 'spellsSet',
-    value: String(i),
-    effects: effects(type),
-  }));
+  genies.flatMap((owner) =>
+    GENIE_TYPES.map((type, i): Effect => ({
+      type: 'ifChoice',
+      owner,
+      slot: 'spellsSet',
+      value: String(i),
+      effects: effects(type),
+    })),
+  );
 
 const curse = { toggle: 'hexblades-curse' };
 const tentacleDice = 'steps(level.warlock, 1, 1d8, 10, 2d8)';
