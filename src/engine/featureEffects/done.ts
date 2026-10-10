@@ -58,4 +58,6 @@ export const RULES_2014_DONE: readonly string[] = [
   'warlock|phb',
   'wizard|phb',
   'artificer|tce',
+  'monk|phb',
+  'rogue|phb',
 ];
