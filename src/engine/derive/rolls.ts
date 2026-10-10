@@ -44,6 +44,9 @@ export interface Proficiencies {
 
 const SKILL_SET = new Set<string>(SKILLS);
 
+/** `animal handling` → `Animal Handling`. */
+const skillName = (skill: string) => skill.replace(/\b\w/g, (c) => c.toUpperCase());
+
 function add(map: Map<string, string[]>, value: string, source: string) {
   const key = value.toLowerCase();
   const sources = map.get(key) ?? [];
@@ -86,6 +89,8 @@ export function collectProficiencies(ctx: DeriveContext): Proficiencies {
     }
   };
   const expert = (skill: string) => p.skills.set(skill as Skill, 'expertise');
+  // Expertise picked in a skill needs proficiency in it: applied once every proficiency is in.
+  const pickedExpertise: { skill: string; source: EffectSource }[] = [];
 
   for (const { effect, source } of ctx.collected.effects) {
     switch (effect.type) {
@@ -113,7 +118,8 @@ export function collectProficiencies(ctx: DeriveContext): Proficiencies {
         break;
       }
       case 'expertiseChoice':
-        values(source, effect.choice.slot).forEach(expert);
+        for (const skill of values(source, effect.choice.slot))
+          pickedExpertise.push({ skill, source });
         break;
       case 'weaponMasteryChoice':
         for (const id of values(source, effect.choice.slot)) add(p.masteries, id, source.name);
@@ -121,6 +127,15 @@ export function collectProficiencies(ctx: DeriveContext): Proficiencies {
       default:
         break;
     }
+  }
+  for (const { skill, source } of pickedExpertise) {
+    if (p.skills.has(skill as Skill)) expert(skill);
+    else
+      ctx.issues.push({
+        severity: 'warn',
+        code: 'expertiseWithoutProficiency',
+        message: `${source.name}: Expertise in ${skillName(skill)} needs proficiency in it; pick again.`,
+      });
   }
   return p;
 }
