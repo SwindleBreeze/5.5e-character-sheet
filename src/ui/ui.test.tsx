@@ -73,6 +73,39 @@ describe('SwipeTabs', () => {
     expect(screen.getAllByRole('tabpanel', { hidden: true })).toHaveLength(4);
   });
 
+  it('a swipe changes the tab once it comes to rest, without scrolling again', () => {
+    vi.useFakeTimers();
+    try {
+      const onChange = vi.fn();
+      const { container, rerender } = render(
+        <SwipeTabs label="Test tabs" tabs={tabs} activeId="a" onChange={onChange} />,
+      );
+      const track = container.querySelector('[role="tabpanel"]')!.parentElement!;
+      Object.defineProperty(track, 'clientWidth', { value: 100 });
+      const scrollTo = vi.fn();
+      track.scrollTo = scrollTo;
+      // Mid-swipe, past halfway: nothing changes yet.
+      track.scrollLeft = 60;
+      fireEvent.scroll(track);
+      expect(onChange).not.toHaveBeenCalled();
+      track.scrollLeft = 100;
+      fireEvent.scroll(track);
+      // At rest: the browser says so, or (without `scrollend`) no scroll event for a while.
+      if ('onscrollend' in window) fireEvent(track, new Event('scrollend'));
+      else vi.advanceTimersByTime(200);
+      expect(onChange).toHaveBeenCalledTimes(1);
+      expect(onChange).toHaveBeenLastCalledWith('b');
+      // The parent follows; the track is already there, so it isn't scrolled again.
+      rerender(<SwipeTabs label="Test tabs" tabs={tabs} activeId="b" onChange={onChange} />);
+      expect(scrollTo).not.toHaveBeenCalled();
+      // A tab picked by tapping still slides there.
+      rerender(<SwipeTabs label="Test tabs" tabs={tabs} activeId="c" onChange={onChange} />);
+      expect(scrollTo).toHaveBeenCalledWith(expect.objectContaining({ left: 200 }));
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('reports tab clicks and arrow-key navigation', async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();

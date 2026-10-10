@@ -1,4 +1,11 @@
-import { useEffect, useId, useRef, type KeyboardEvent, type ReactNode } from 'react';
+import {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  type KeyboardEvent,
+  type ReactNode,
+} from 'react';
 import styles from './SwipeTabs.module.css';
 
 export interface TabDef {
@@ -19,9 +26,18 @@ function reducedMotion(): boolean {
   return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
+/** The browser says when a scroll has come to rest (`scrollend`); older ones need a timer. */
+const HAS_SCROLLEND = typeof window !== 'undefined' && 'onscrollend' in window;
+/** Without `scrollend`: a scroll is over when no scroll event came for this long. */
+const SETTLE_MS = 150;
+
 /**
  * A tab bar over horizontally swipeable panels (CSS scroll-snap). The active tab is controlled
  * by the parent so it can live in the URL.
+ *
+ * A swipe changes the tab once it has come to rest, never in the middle: changing it mid-swipe
+ * re-rendered the sheet and started a scroll of its own that fought the finger's, so the slide
+ * stopped and started again.
  */
 export function SwipeTabs({ label, tabs, activeId, onChange }: SwipeTabsProps) {
   const baseId = useId();
@@ -32,12 +48,24 @@ export function SwipeTabs({ label, tabs, activeId, onChange }: SwipeTabsProps) {
     0,
     tabs.findIndex((t) => t.id === activeId),
   );
-  // Index we scrolled to programmatically; scroll events for it don't count as a user swipe.
+  // Index we scrolled to programmatically; its end doesn't count as a user swipe.
   const programmaticIndex = useRef<number | null>(null);
+  // Index a swipe landed on: the track is already there, so it isn't scrolled again.
+  const swipedIndex = useRef<number | null>(null);
+  const settleTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  // The latest props, for the scroll handlers.
+  const latest = useRef({ tabs, activeId, onChange });
+  useLayoutEffect(() => {
+    latest.current = { tabs, activeId, onChange };
+  });
 
   useEffect(() => {
     const track = trackRef.current;
     if (!track || track.clientWidth === 0) return;
+    if (swipedIndex.current === activeIndex) {
+      swipedIndex.current = null;
+      return;
+    }
     const left = activeIndex * track.clientWidth;
     if (Math.abs(track.scrollLeft - left) < 2) return;
     programmaticIndex.current = activeIndex;
@@ -56,16 +84,36 @@ export function SwipeTabs({ label, tabs, activeId, onChange }: SwipeTabsProps) {
     else if (t.right > b.right) bar.scrollLeft += t.right - b.right;
   }, [activeTabId]);
 
-  function handleScroll() {
+  // The scroll has come to rest: a swipe that landed on another panel changes the tab.
+  function settle() {
+    clearTimeout(settleTimer.current);
     const track = trackRef.current;
     if (!track || track.clientWidth === 0) return;
     const index = Math.round(track.scrollLeft / track.clientWidth);
-    if (programmaticIndex.current !== null) {
-      if (index === programmaticIndex.current) programmaticIndex.current = null;
-      return;
+    const target = programmaticIndex.current;
+    programmaticIndex.current = null;
+    // The end of our own scroll to the tab already chosen.
+    if (target === index) return;
+    const { tabs: list, activeId: active, onChange: change } = latest.current;
+    const tab = list[index];
+    if (tab && tab.id !== active) {
+      swipedIndex.current = index;
+      change(tab.id);
     }
-    const tab = tabs[index];
-    if (tab && tab.id !== activeId) onChange(tab.id);
+  }
+
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track || !HAS_SCROLLEND) return;
+    track.addEventListener('scrollend', settle);
+    return () => track.removeEventListener('scrollend', settle);
+  }, []);
+  useEffect(() => () => clearTimeout(settleTimer.current), []);
+
+  function handleScroll() {
+    if (HAS_SCROLLEND) return;
+    clearTimeout(settleTimer.current);
+    settleTimer.current = setTimeout(settle, SETTLE_MS);
   }
 
   function handleKeyDown(event: KeyboardEvent) {
