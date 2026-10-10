@@ -3,6 +3,7 @@
 // Nothing here changes a number on the sheet.
 
 import { useRef, useState, type ReactNode } from 'react';
+import { useEntity } from '../../content/hooks.ts';
 import { SIZE_NAMES } from '../../engine/items/items.ts';
 import {
   setDeity,
@@ -14,6 +15,8 @@ import {
 import { showsBastion } from '../../engine/play/bastion.ts';
 import { repos } from '../../db/repos.ts';
 import { EntitySheet } from '../../richtext/EntitySheet.tsx';
+import { Entries } from '../../richtext/Entries.tsx';
+import { ruleId } from '../../schema/index.ts';
 import { Button } from '../../ui/Button.tsx';
 import { useSheet } from '../../ui/sheetContext.ts';
 import { columnsFor, useContainerWidth } from '../../ui/useContainerWidth.ts';
@@ -120,6 +123,12 @@ export function DescriptionTab(bindings: SheetBindings) {
       ),
     });
 
+  // What the chosen alignment means, from the imported 2024 Player's Handbook.
+  const alignmentRule = useEntity<'rule'>({
+    kind: 'rule',
+    id: ruleId('alignment', details.alignment || '-', 'XPHB'),
+  });
+
   const alignments =
     details.alignment && !ALIGNMENTS.includes(details.alignment)
       ? [...ALIGNMENTS, details.alignment]
@@ -192,6 +201,11 @@ export function DescriptionTab(bindings: SheetBindings) {
             ))}
           </select>
         </label>
+        {alignmentRule ? (
+          <div className={inventory.help}>
+            <Entries entries={alignmentRule.entries} />
+          </div>
+        ) : null}
         <p className={inventory.help}>
           Alignment is a guide to how your character acts; it has no rules of its own.
         </p>

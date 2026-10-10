@@ -164,3 +164,8 @@
   flex-direction: column;
   min-width: 0;
 }
+
+/* A companion's actions, bonus actions and reactions on its card, with their rolls. */
+.moves {
+  font-size: var(--font-size-sm);
+}

@@ -47,6 +47,39 @@ export const SPELL_LOOKUP_FILE = 'generated/gendata-spell-source-lookup.json';
 export const SPELL_SOURCES_FALLBACK = 'spells/sources.json';
 export const BOOK_FILES = ['books.json', 'adventures.json'];
 
+/** The 2024 Player's Handbook's text, for the alignments' descriptions. Optional. */
+export const ALIGNMENT_BOOK = 'book/book-xphb.json';
+
+const ALIGNMENT_HEADING =
+  /^((?:Lawful|Neutral|Chaotic) (?:Good|Neutral|Evil)|Neutral) \((LG|NG|CG|LN|N|CN|LE|NE|CE)\)$/;
+
+/**
+ * The alignments as records: the sections of the book headed `Lawful Good (LG)` and so on, each
+ * with its own text.
+ */
+export function alignmentRecords(book: RawObject): RawEntity[] {
+  const out: RawEntity[] = [];
+  const visit = (v: unknown): void => {
+    if (Array.isArray(v)) return v.forEach(visit);
+    if (!isObject(v)) return;
+    const m = typeof v.name === 'string' ? ALIGNMENT_HEADING.exec(v.name) : null;
+    if (m && Array.isArray(v.entries)) {
+      if (!out.some((r) => r.name === m[1]))
+        out.push({
+          name: m[1],
+          source: 'XPHB',
+          ...(typeof v.page === 'number' ? { page: v.page } : {}),
+          abbreviation: m[2],
+          entries: v.entries,
+        } as RawEntity);
+      return;
+    }
+    Object.values(v).forEach(visit);
+  };
+  visit(book.data);
+  return out;
+}
+
 /** 5etools record types the importer converts. */
 export const IMPORTED_PROPS = [
   'class',
@@ -76,6 +109,8 @@ export const IMPORTED_PROPS = [
   'sense',
   'skill',
   'language',
+  // Not a 5etools record type: the alignments, read from the 2024 Player's Handbook text.
+  'alignment',
   'deity',
   'reward',
   'facility',
@@ -218,6 +253,9 @@ export async function readManifest(
     const json = await readJson(fs, root + file, report, false);
     if (json) collect(json, records, report);
   }
+
+  const book = await readJson(fs, root + ALIGNMENT_BOOK, report, false);
+  if (book) records.alignment.push(...alignmentRecords(book));
 
   const gendata = await readJson(fs, root + SPELL_LOOKUP_FILE, report, false);
   const fallback = gendata ? null : await readJson(fs, root + SPELL_SOURCES_FALLBACK, report, true);

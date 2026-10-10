@@ -51,12 +51,14 @@ export const RULE_KIND_BY_PROP: Record<string, RuleKind> = {
   language: 'language',
   itemProperty: 'itemProperty',
   itemMastery: 'mastery',
+  alignment: 'alignment',
 };
 
 const DEFAULT_SOURCE: Partial<Record<RuleKind, string>> = {
   disease: 'DMG',
   variantrule: 'DMG',
   mastery: 'XPHB',
+  alignment: 'XPHB',
 };
 
 /** Item properties have no name of their own; it is the name of their first entry. */

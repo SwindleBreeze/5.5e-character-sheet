@@ -15,10 +15,16 @@ describe('summaryOf', () => {
   });
 
   it('says the text goes on, or nothing when the sentence is all of it', () => {
-    expect(summaryOf(['A bolt of light. It sheds light too.']).more).toBe(
-      'Press Read for the full text.',
-    );
+    const long = 'It goes on. '.repeat(30).trim();
+    expect(summaryOf(['A bolt of light.', long]).more).toBe('Press Read for the full text.');
     expect(summaryOf(['A bolt of {@b light}.'])).toEqual({ text: 'A bolt of light.' });
     expect(summaryOf([])).toEqual({ text: '' });
+  });
+
+  it('shows short text whole, without sending the reader to Read', () => {
+    expect(summaryOf(['You touch a creature. Its {@b Speed} rises.'])).toEqual({
+      text: 'You touch a creature. Its Speed rises.',
+    });
+    expect(summaryOf(['One line.', 'Another line.'])).toEqual({ text: 'One line. Another line.' });
   });
 });

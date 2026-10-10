@@ -95,8 +95,13 @@ describe('Extras tab: companions', () => {
     expect(latest.extras?.[0]?.damage).toBe(12);
     expect(card.getByRole('button', { name: /hit points 28 of 40/ })).toBeInTheDocument();
 
-    // The stat block, with the summoner's attack, damage and DC in.
-    await user.click(card.getByRole('button', { name: 'Boom Spirit (Air)' }));
+    // Its actions are on the card, with the summoner's attack and damage in.
+    expect(card.getByText('Actions')).toBeInTheDocument();
+    expect(card.getByText('+6')).toBeInTheDocument();
+    expect(card.getByText('1d8 + 7')).toBeInTheDocument();
+
+    // The whole stat block, with the summoner's attack, damage and DC in.
+    await user.click(card.getByRole('button', { name: 'Stat block' }));
     const block = dialog();
     expect(block.getByText('+6')).toBeInTheDocument();
     expect(block.getByText('1d8 + 7')).toBeInTheDocument();

@@ -77,7 +77,11 @@ export function proficiencyOptions(
           .of('item')
           .filter(
             (i) =>
-              i.itemKind === 'tool' && !i.rarity && (!kinds || kinds.includes(i.toolType ?? '')),
+              i.itemKind === 'tool' &&
+              !i.rarity &&
+              // A group (Musical Instrument, Artisan's Tools) stands for its items, which are listed.
+              !i.groupItemIds?.length &&
+              (!kinds || kinds.includes(i.toolType ?? '')),
           )
           .map((i) => i.id),
       );

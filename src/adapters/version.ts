@@ -1,5 +1,5 @@
 /** Bump when converted content changes shape or meaning, so packs and imports can be compared. */
-export const ADAPTER_VERSION = 9;
+export const ADAPTER_VERSION = 10;
 
 /**
  * What a re-import gains, by the version that brought it: shown when content on the device was
@@ -12,6 +12,7 @@ export const ADAPTER_CHANGES: Record<number, string> = {
   7: 'creatures: familiars, summons, companions and Beasts for Wild Shape',
   8: 'proficiencies given with a note (the 2014 Druid’s shields)',
   9: 'the 2014 classes’ primary abilities',
+  10: 'what each alignment means',
 };
 
 /** What content imported at `version` misses, newest last. */
