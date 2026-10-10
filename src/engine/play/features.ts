@@ -100,6 +100,7 @@ export function setPick(c: Character, key: ChoiceKey, spec: PickSpec): Character
     for (const entry of n.log)
       entry.choices = entry.choices.filter((r) => encodeChoiceKey(r.key) !== encoded);
     dropOrphans(n, pickedRefs(existing));
+    unprepareDropped(n, existing, spec.values);
     return n;
   }
   const kept = existing.values.every((v) => spec.values.includes(v));
@@ -109,7 +110,27 @@ export function setPick(c: Character, key: ChoiceKey, spec: PickSpec): Character
     n,
     pickedRefs(existing).filter((ref) => !spec.values.includes(ref.id)),
   );
+  unprepareDropped(n, existing, spec.values);
   return n;
+}
+
+/**
+ * A spell taken out of a caster's pick (a Wizard's spellbook) is no longer prepared by that
+ * caster, unless another of its picks still holds it. Mutates `n`, a fresh copy.
+ */
+function unprepareDropped(n: Character, existing: ChoiceRecord, kept: readonly string[]): void {
+  const caster = existing.key.owner.id;
+  const prepared = n.state.prepared[caster];
+  if (!prepared) return;
+  const held = new Set(
+    records(n)
+      .filter((r) => r.key.owner.id === caster)
+      .flatMap((r) => r.values),
+  );
+  const dropped = existing.values.filter(
+    (v, i) => valueKind(existing.valueKinds, i) === 'spell' && !kept.includes(v) && !held.has(v),
+  );
+  if (dropped.length) n.state.prepared[caster] = prepared.filter((id) => !dropped.includes(id));
 }
 
 /** Add a charm, blessing or boon the DM gave (plan §6.12). Once: a second copy is ignored. */

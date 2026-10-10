@@ -218,6 +218,22 @@ describe('creation wizard', () => {
     expect(await screen.findByRole('radio', { name: 'Brute' })).toBeChecked();
   });
 
+  it('a pick taken back can be picked again', async () => {
+    const user = userEvent.setup();
+    renderApp('/new/draft/class');
+    await user.click(await screen.findByRole('radio', { name: 'Brute' }));
+    const brute = card('Brute');
+    const intimidation = () => brute.getByRole('checkbox', { name: 'Intimidation' });
+    await user.click(intimidation());
+    await waitFor(() => expect(intimidation()).toBeChecked());
+    await user.click(intimidation());
+    await waitFor(() => expect(intimidation()).not.toBeChecked());
+    expect(brute.queryByText('You have it already')).toBeNull();
+    expect(intimidation()).toBeEnabled();
+    await user.click(intimidation());
+    await waitFor(() => expect(intimidation()).toBeChecked());
+  });
+
   it('steps after one with picks left stay closed', async () => {
     const user = userEvent.setup();
     renderApp('/new/draft/class');
