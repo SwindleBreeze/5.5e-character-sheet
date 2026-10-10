@@ -3,8 +3,8 @@
 > **Status (2026-10-09):** phases 1–7 are done and live. The group's first campaign starts on
 > what is there; play-test fixes go into the **7.10 buffer**. Phase 8 (2014 content) has
 > started: 2014 options can be picked for 2024 characters, with their features on the sheet
-> (8.1–8.4), and a character can be played on 2014 rules (8.5); the 2014 classes' own features
-> (8.6) are next. Phase 9 (public release) waits until publishing is decided.
+> (8.1–8.4), and a character can be played on 2014 rules with the 2014 classes' own features
+> (8.5–8.7). Phase 9 (public release) waits until publishing is decided.
 >
 > The full plan for phases 1–7 (design, schema, engine, every step's notes) is archived word for
 > word in [history/PLAN-phases-1-7.md](history/PLAN-phases-1-7.md). Code comments that cite
@@ -33,17 +33,17 @@ Rules that every step follows:
 
 ## 2. Where we are
 
-| Phase | What                                                                                   | State                               |
-| ----- | -------------------------------------------------------------------------------------- | ----------------------------------- |
-| 1     | Scaffold, schema, database, app shell, PWA, CI with the content guard                  | Done                                |
-| 2, 2b | Importer, sources, packs, library, rich text; deities, gifts, Bastions, 2014 options   | Done                                |
-| 3     | Engine, Parchment design, every sheet tab, play tools                                  | Done                                |
-| 4, 4B | Creation wizard, creation guide and explanations                                       | Done                                |
-| 5     | Level-up, undo, higher-level creation, multiclassing, preparation, retraining          | Done                                |
-| 6     | Every 2024 class, subclass, feat and species feature mapped; golden checks; play tests | Done                                |
-| 7     | Homebrew, companions, durability, accessibility, performance, magic items              | Done; 7.10 buffer open              |
-| 8     | 2014 content, from every book                                                          | 8.1–8.5 done, 8.7 started; 8.6 next |
-| 9     | Public release: SRD bundle, import your own content, legal pages                       | When publishing is decided (§5)     |
+| Phase | What                                                                                   | State                                 |
+| ----- | -------------------------------------------------------------------------------------- | ------------------------------------- |
+| 1     | Scaffold, schema, database, app shell, PWA, CI with the content guard                  | Done                                  |
+| 2, 2b | Importer, sources, packs, library, rich text; deities, gifts, Bastions, 2014 options   | Done                                  |
+| 3     | Engine, Parchment design, every sheet tab, play tools                                  | Done                                  |
+| 4, 4B | Creation wizard, creation guide and explanations                                       | Done                                  |
+| 5     | Level-up, undo, higher-level creation, multiclassing, preparation, retraining          | Done                                  |
+| 6     | Every 2024 class, subclass, feat and species feature mapped; golden checks; play tests | Done                                  |
+| 7     | Homebrew, companions, durability, accessibility, performance, magic items              | Done; 7.10 buffer open                |
+| 8     | 2014 content, from every book                                                          | Done (snapshots across rulesets left) |
+| 9     | Public release: SRD bundle, import your own content, legal pages                       | When publishing is decided (§5)       |
 
 Numbers on `main`: 864 unit tests in 101 files; 233 real-data checks in 21 files
 (`FIVETOOLS_DATA=… npm run test:smoke`).
@@ -93,8 +93,8 @@ subraces. The 5etools data re-homes 2014 subclasses onto the 2024 classes, which
 | Step | Work                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Est. |
 | ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
 | 8.5  | **A ruleset per character.** **Done 2026-10-09.** `Character.ruleset` (`2014`, or none for 2024), picked on the class step when 2014 content is shown; switching swaps the class for its twin. On 2014 rules a 2014 original wins over its reprint (the `PREFER_2014` mark); the species gives the ability increases and a 2014 background none; the 2014 Ability Score Improvement offers +2, +1/+1 or a feat; known casters (Bard, Ranger, Sorcerer, Warlock) learn on level-up, prepared casters prepare level (half for half casters) + modifier; 2014 exhaustion. Weapon Mastery, multiclassing and starting equipment come from the 2014 classes' data. The guide text follows the ruleset. In code: `src/engine/rules/legacy.ts`, `switchRuleset`. | 5    |
-| 8.6  | **2014 class features.** The 2014 classes' own features, and the subclasses a 2024 reprint replaces (Life, Thief, Champion…), mapped, levels A and B. Where a 2024 mapping fits the 2014 rule, the 2014 key reuses it. Gate: `RULES_2014_DONE` in `tests/smoke/rules2014.test.ts` (`RULES_2014_TODO=<file>` writes what is left: about 900 features on the 12 classes). Not started.                                                                                                                                                                                                                                                                                                                                                                      | 5    |
-| 8.7  | **Tests.** **Started 2026-10-09:** `tests/smoke/rules2014.test.ts` builds every 2014 class with each subclass 1 → 20 on 2014 rules with no warnings, and checks origins, Ability Score Improvements and both kinds of caster. Left: snapshots and backups across rulesets; golden checks with 8.6.                                                                                                                                                                                                                                                                                                                                                                                                                                                        | 2    |
+| 8.6  | **2014 class features.** **Done 2026-10-10.** The twelve 2014 classes and the 2014 Artificer: their own features, and every subclass's (the ones a 2024 book reprints too: Life, Thief, Champion…), mapped in `featureEffects/rules2014/`, about 900 features at levels A–C. Where a 2024 mapping fits the 2014 rule the 2014 key reuses it; the rest (Rage, Ki, Divine Smite, Wild Shape, Channel Divinity, Sorcery Points…) follow the 2014 numbers. Tasha's optional features are a pick against the feature they replace. Gate: `RULES_2014_DONE` in `tests/smoke/rules2014.test.ts`. Engine gaps are listed as `needs` (2014 Wild Shape limits, extra critical dice, nonmagical-only resistance, an options block whose options are all granted, …). | 5    |
+| 8.7  | **Tests.** **Done 2026-10-10:** `tests/smoke/rules2014.test.ts` builds every 2014 class with each subclass 1 → 20 on 2014 rules with no warnings, and checks origins, Ability Score Improvements and both kinds of caster; golden checks per class in `tests/smoke/rules2014<Class>.test.ts`. Left: snapshots and backups across rulesets.                                                                                                                                                                                                                                                                                                                                                                                                                | 2    |
 
 **8B total: about 12 days.** **Checkpoint:** a group member's character with a 2014 subclass,
 species or feat built and levelled; for 8B, a 2014-rules character too.

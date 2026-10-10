@@ -12,6 +12,7 @@ import type {
 } from '../derive/types.ts';
 import type { CastWay } from './casting.ts';
 import type { CostChoice, SlotChoice } from './costs.ts';
+import { conditionName } from '../static/state.ts';
 
 export const MAX_EXHAUSTION = 6;
 
@@ -418,9 +419,6 @@ const INCAPACITATING = new Set([
   'stunned',
   'unconscious',
 ]);
-
-/** `condition/stunned|xphb` → `stunned`. */
-const conditionName = (id: Id) => ((id.split('|')[0] ?? id).split('/').pop() ?? id).toLowerCase();
 
 /** A condition that includes Incapacitated also ends Concentration. */
 export function addCondition(c: Character, id: Id): Character {

@@ -52,4 +52,18 @@ export const LEGACY_DONE: { classes: readonly string[]; species: boolean; feats:
  * subclass's (2024 reprints' originals too) are mapped. Each passes the gate in
  * `tests/smoke/rules2014.test.ts`.
  */
-export const RULES_2014_DONE: readonly string[] = [];
+export const RULES_2014_DONE: readonly string[] = [
+  'cleric|phb',
+  'sorcerer|phb',
+  'warlock|phb',
+  'wizard|phb',
+  'artificer|tce',
+  'monk|phb',
+  'rogue|phb',
+  'paladin|phb',
+  'ranger|phb',
+  'druid|phb',
+  'fighter|phb',
+  'barbarian|phb',
+  'bard|phb',
+];

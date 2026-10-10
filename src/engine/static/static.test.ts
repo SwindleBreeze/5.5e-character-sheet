@@ -161,6 +161,9 @@ describe('predicates (P1)', () => {
     expect(holds({ toggle: 'fury' }, s)).toBe(false);
     expect(holds({ any: [{ level: 9 }, { condition: 'condition/prone|tst' }] }, s)).toBe(true);
     expect(holds({ not: { level: 1 } }, s)).toBe(false);
+    // A condition from another book counts: a 2014 character's Prone is Prone (step 8.6).
+    expect(holds({ condition: 'condition/prone|xphb' }, s)).toBe(true);
+    expect(holds({ condition: 'condition/stunned|tst' }, s)).toBe(false);
   });
 });
 

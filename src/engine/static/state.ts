@@ -17,6 +17,8 @@ export interface StaticState {
   activeToggles: Readonly<Record<string, ActiveToggle>>;
   /** Condition rule ids, including `condition/exhaustion…` only through `exhaustion`. */
   conditions: ReadonlySet<Id>;
+  /** The conditions by name (`prone`), whatever book they come from: a 2014 character's are 2014's. */
+  conditionNames: ReadonlySet<string>;
   exhaustion: number;
   /** Items in use (equipped or worn, attuned when they need it), with their variants. */
   itemsInUse: ReadonlySet<Id>;
@@ -32,6 +34,7 @@ export function buildStaticState(character: Character, index: ContentIndex): Sta
     wield: buildWieldState(character, index),
     activeToggles: character.state.activeToggles,
     conditions: new Set(character.state.conditions),
+    conditionNames: new Set(character.state.conditions.map(conditionName)),
     exhaustion: character.state.exhaustion,
     ...itemsState(character, index),
   };
@@ -77,7 +80,8 @@ export function holds(p: Predicate, s: StaticState): boolean {
     const active = s.activeToggles[p.toggle];
     return !!active && (p.option === undefined || active.option === p.option);
   }
-  if ('condition' in p) return s.conditions.has(p.condition);
+  if ('condition' in p)
+    return s.conditions.has(p.condition) || s.conditionNames.has(conditionName(p.condition));
   if ('attuned' in p) return s.attunedCount > 0;
   if ('itemInUse' in p) return p.itemInUse.some((id) => s.itemsInUse.has(id));
   if ('level' in p) {
@@ -85,4 +89,9 @@ export function holds(p: Predicate, s: StaticState): boolean {
     return level >= p.level;
   }
   return false;
+}
+
+/** `condition/stunned|xphb` → `stunned`. */
+export function conditionName(id: Id): string {
+  return ((id.split('|')[0] ?? id).split('/').pop() ?? id).toLowerCase();
 }
