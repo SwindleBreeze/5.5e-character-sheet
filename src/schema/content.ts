@@ -337,7 +337,9 @@ export type RuleKind =
   | 'itemProperty'
   | 'condition'
   | 'disease'
-  | 'mastery';
+  | 'mastery'
+  /** The nine alignments, with what each means (2024 Player's Handbook, chapter 2). */
+  | 'alignment';
 
 export interface Rule extends BaseEntity {
   kind: 'rule';

@@ -36,6 +36,22 @@ describe.skipIf(!root)('5etools import (local data)', () => {
     expect(result.sources.find((s) => s.code === 'PHB')?.edition).toBe('2014');
   });
 
+  it("reads the nine alignments from the 2024 Player's Handbook text", () => {
+    const alignments = result.entities.rule.filter((r) => r.ruleKind === 'alignment');
+    expect(alignments.map((a) => a.name).sort()).toEqual([
+      'Chaotic Evil',
+      'Chaotic Good',
+      'Chaotic Neutral',
+      'Lawful Evil',
+      'Lawful Good',
+      'Lawful Neutral',
+      'Neutral',
+      'Neutral Evil',
+      'Neutral Good',
+    ]);
+    expect(alignments.every((a) => a.entries.length > 0)).toBe(true);
+  });
+
   it('has no table-key collisions in XPHB classes', () => {
     const collisions = result.report.warnings.filter(
       (w) => w.code === 'tableKeyCollision' && w.entity?.endsWith('|XPHB'),
