@@ -398,11 +398,20 @@ export function firstSentence(entries: readonly Entry[] | undefined, max = 180):
   return sentence.length > max ? `${sentence.slice(0, max - 1).trimEnd()}…` : sentence;
 }
 
+/** Text up to this many characters is shown whole rather than summed up (about three lines). */
+const SHORT_TEXT = 280;
+
 /**
  * A summary line and, when the text goes on, what the Read button would show: the list an
  * opening sentence leads into (`…as follows:`), or the rest of the text.
  */
 export function summaryOf(entries: readonly Entry[] | undefined): { text: string; more?: string } {
+  // Text short enough to read at a glance is shown whole: nothing to press Read for.
+  const paragraphs = entries ?? [];
+  if (paragraphs.length && paragraphs.every((e) => typeof e === 'string')) {
+    const whole = paragraphs.map((e) => stripTags(e as string).trim()).join(' ');
+    if (whole.length <= SHORT_TEXT) return { text: whole };
+  }
   const text = firstSentence(entries);
   if (!text) return { text };
   if (/[:…]$/.test(text) || /as follows\.?$/i.test(text))
