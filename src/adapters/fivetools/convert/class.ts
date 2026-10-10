@@ -267,16 +267,19 @@ export function convertClass(raw: RawEntity, ctx: ConvertContext): ClassDef {
   const featProg = featProgressions(raw);
   const optProg = optionalFeatureProgressions(raw);
   const mc = isObject(raw.multiclassing) ? raw.multiclassing : {};
+  const prereq = multiclassPrereq(raw);
+  const primary = abilityGroups(raw.primaryAbility);
 
   const cls: ClassDef = {
     ...base,
     hitDie: isObject(raw.hd) ? (num(raw.hd.faces) ?? 8) : 8,
-    primaryAbility: abilityGroups(raw.primaryAbility),
+    // A 2014 class lists no primary ability: its multiclassing requirement names it.
+    primaryAbility: primary.length ? primary : prereq,
     saves: strArray(raw.proficiency).filter((a): a is Ability => ABILITY_SET.has(a)),
     startingProficiencies: profGroup(raw.startingProficiencies, 'skills'),
     startingEquipment: equipmentOptions(raw.startingEquipment),
     multiclass: {
-      prereq: multiclassPrereq(raw),
+      prereq,
       gains: profGroup(mc.proficienciesGained, 'multiclassSkills'),
     },
     table: table.columns,
