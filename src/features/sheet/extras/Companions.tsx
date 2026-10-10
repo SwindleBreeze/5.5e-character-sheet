@@ -1,6 +1,7 @@
 // Familiars, steeds, companions and summons (step 7.6): one card each with its Armor Class,
-// hit points (tap to change them) and speed, the spell level a summon was cast at, and its
-// stat block a tap away.
+// hit points (tap to change them) and speed, the spell level a summon was cast at, what it can
+// do (its actions, bonus actions and reactions, with their rolls), and its whole stat block a
+// tap away.
 
 import {
   damageExtra,
@@ -13,10 +14,11 @@ import {
   setExtraSpellLevel,
   setExtraTempHp,
 } from '../../../engine/extras/extras.ts';
-import { scaledAc } from '../../../engine/extras/scaling.ts';
+import { scaleEntries, scaledAc } from '../../../engine/extras/scaling.ts';
 import { creatureSpeedText, creatureSubtitle } from '../../../richtext/entityMeta.ts';
+import { Entries } from '../../../richtext/Entries.tsx';
 import { InSheetContext } from '../../../richtext/inSheet.ts';
-import type { Creature, Extra } from '../../../schema/index.ts';
+import type { Creature, Entry, Extra } from '../../../schema/index.ts';
 import { Button } from '../../../ui/Button.tsx';
 import { useSheet } from '../../../ui/sheetContext.ts';
 import actions from '../actions/actions.module.css';
@@ -28,6 +30,15 @@ import styles from './extras.module.css';
 import { StatBlock } from './StatBlock.tsx';
 
 const SPELL_LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+/** The stat block's sections shown on the card: what the creature does on its turn. */
+const CARD_SECTIONS = new Set(['Actions', 'Bonus Actions', 'Reactions']);
+
+function cardSections(entries: readonly Entry[]): Entry[] {
+  return entries.filter(
+    (e) => typeof e === 'object' && e.type === 'entries' && CARD_SECTIONS.has(e.name ?? ''),
+  );
+}
 
 /** The stat block in the bottom sheet; follows changes made while it is open. */
 function ExtraStatBlock({ opened, uid }: { opened: SheetBindings; uid: string }) {
@@ -56,6 +67,7 @@ export function ExtraCard({ bindings, extra }: { bindings: SheetBindings; extra:
   const hp = extraHp(extra, creature, ctx);
   const ac = creature ? scaledAc(creature, ctx).value : undefined;
   const minLevel = creature?.summon?.spellId ? (creature.summon.spellLevel ?? 1) : undefined;
+  const moves = creature ? cardSections(scaleEntries(creature.entries, ctx)) : [];
 
   const openStatBlock = () =>
     ui.open({
@@ -129,6 +141,13 @@ export function ExtraCard({ bindings, extra }: { bindings: SheetBindings; extra:
           </div>
         )}
       </dl>
+      {moves.length > 0 && (
+        <div className={styles.moves}>
+          <InSheetContext.Provider value={true}>
+            <Entries entries={moves} />
+          </InSheetContext.Provider>
+        </div>
+      )}
       {minLevel !== undefined && (
         <label className={inventory.field}>
           <span className={inventory.fieldLabel}>Spell level</span>
@@ -160,6 +179,11 @@ export function ExtraCard({ bindings, extra }: { bindings: SheetBindings; extra:
         </label>
       )}
       <div className={styles.buttons}>
+        {creature && (
+          <Button size="sm" variant="ghost" onClick={openStatBlock}>
+            Stat block
+          </Button>
+        )}
         <Button size="sm" variant="ghost" onClick={() => apply((c) => resetExtra(c, extra.uid))}>
           Full HP
         </Button>

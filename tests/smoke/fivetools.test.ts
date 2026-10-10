@@ -37,7 +37,7 @@ describe.skipIf(!root)('5etools import (local data)', () => {
   });
 
   it("reads the nine alignments from the 2024 Player's Handbook text", () => {
-    const alignments = result.entities.rule.filter((r) => r.ruleKind === 'alignment');
+    const alignments = (result.entities.rule ?? []).filter((r) => r.ruleKind === 'alignment');
     expect(alignments.map((a) => a.name).sort()).toEqual([
       'Chaotic Evil',
       'Chaotic Good',
