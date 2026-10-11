@@ -27,7 +27,6 @@ import {
 } from '../../engine/build/wizard.ts';
 import { derive } from '../../engine/derive/derive.ts';
 import { featureEffects } from '../../engine/featureEffects/index.ts';
-import type { Character } from '../../schema/index.ts';
 import { Button } from '../../ui/Button.tsx';
 import { DescriptionTab } from '../sheet/DescriptionTab.tsx';
 import { useCharacterActions, type CharacterUpdate } from '../sheet/useCharacterActions.ts';
@@ -108,6 +107,7 @@ function Wizard({ id }: { id: string }) {
     [character, content, registry],
   );
   const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
 
   const index = content?.index;
   const rawApply = actions.apply;
@@ -158,11 +158,20 @@ function Wizard({ id }: { id: string }) {
   const change = (update: CharacterUpdate) =>
     apply((c) => changeDraft(c, update, content.index, registry));
 
+  // Everything still unsaved is written first, then the finished character in one write. If
+  // either fails, the draft stays as it is, the reason is shown, and Create can be pressed again.
   const create = async () => {
     if (creating || !character.log.length) return;
     setCreating(true);
-    rawApply((c: Character) => finishDraft(c, content.index, registry));
-    await actions.flush();
+    setCreateError(null);
+    try {
+      await actions.flush();
+      await repos().characters.save(finishDraft(character, content.index, registry));
+    } catch (err) {
+      setCreateError(err instanceof Error ? err.message : String(err));
+      setCreating(false);
+      return;
+    }
     // The wizard's steps leave the history with it: back from the sheet is the list.
     goBack(`/c/${id}/main`, `/new/${id}/`);
   };
@@ -253,6 +262,13 @@ function Wizard({ id }: { id: string }) {
         ))}
       </ol>
       <div className={`${page.content} ${styles.body}`}>
+        {(actions.saveError || createError) && (
+          <p className={styles.saveError} role="alert">
+            {createError
+              ? `The character couldn’t be created on this device (${createError}). Your choices are kept: try Create again.`
+              : `Your choices couldn’t be saved on this device yet (${actions.saveError}). They are kept and saving is tried again.`}
+          </p>
+        )}
         <header className={styles.stepHead}>
           <p className={styles.eyebrow}>{intro.rule}</p>
           <h2 ref={stepHeading} tabIndex={-1} className={styles.stepTitle}>
