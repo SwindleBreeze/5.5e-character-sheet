@@ -282,6 +282,8 @@ export interface DerivedCost {
   hitDice?: true;
   /** Charges of an item to spend: its inventory row, and how many it has left. */
   charges?: { rowUid: string; left: number };
+  /** The part of the turn it takes (switching on Rage: a Bonus Action). */
+  action?: ActionType;
 }
 
 /** P7/P8: what using something does to the character, with formulas already worked out. */

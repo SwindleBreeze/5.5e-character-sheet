@@ -5,42 +5,28 @@
 // its caster.
 
 import { Fragment, useRef, useState, type ReactNode } from 'react';
-import type { DerivedCaster, DerivedSheet, DerivedSlot } from '../../engine/derive/types.ts';
+import type { DerivedCaster, DerivedSlot } from '../../engine/derive/types.ts';
 import {
-  castWayLabel,
-  castWays,
-  isConcentration,
-  type CastWay,
-} from '../../engine/play/casting.ts';
-import {
-  castSpellAs,
   endTurn,
-  restoreResource,
   restoreSlot,
   setConcentration,
   setPrepared,
   spendSlot,
-  spendFreeCast,
 } from '../../engine/play/reducers.ts';
-import type { Character } from '../../schema/index.ts';
-import { Badge } from '../../ui/Badge.tsx';
 import { Button } from '../../ui/Button.tsx';
-import { Counter } from '../../ui/Counter.tsx';
-import { useRoller } from '../../ui/rollerContext.ts';
 import { useSheet } from '../../ui/sheetContext.ts';
 import { columnsFor, useContainerWidth } from '../../ui/useContainerWidth.ts';
 import { ABILITY_NAMES } from '../../schema/index.ts';
-import { ABILITY_ABBR } from './components/format.ts';
 import { RollButton } from './components/RollButton.tsx';
 import { SectionHeader } from './components/stats.tsx';
 import { useExplain } from './components/useExplain.tsx';
 import { nameOf, type SheetBindings } from './sheetBindings.ts';
-import { CastSheet } from './spells/CastSheet.tsx';
+import { useSpellCasting } from './spells/useSpellCasting.tsx';
 import { byLevel, spellLists, type SpellEntry } from './spells/entries.ts';
 import { CantripsSheet } from './spells/CantripsSheet.tsx';
 import { PrepareSheet } from './spells/PrepareSheet.tsx';
 import { SpellbookSheet } from './spells/SpellbookSheet.tsx';
-import { castingTime, castNotice, levelHeading, whereFrom } from './spells/spellText.ts';
+import { levelHeading } from './spells/spellText.ts';
 import mainStyles from './MainTab.module.css';
 import styles from './spells/spells.module.css';
 import { characterSources } from '../../sources/sourceFilter.ts';
@@ -73,87 +59,21 @@ function Section({
   );
 }
 
-/** Why a spell can't be cast right now. */
-function whyNot(e: SpellEntry): string {
-  const s = e.spell!;
-  if (e.from.caster?.status === 'spellbook') {
-    return 'Prepare it to cast it. From the spellbook you can only cast a spell with the Ritual tag, as a Ritual.';
-  }
-  if (e.from.granted?.resourceKey) return `No uses of ${e.sourceName} are left for it.`;
-  return `No spell slot of level ${s.level} or higher is left.`;
-}
-
 export function SpellsTab({ character, sheet, index, apply }: SheetBindings) {
   const ref = useRef<HTMLDivElement>(null);
   const columns = columnsFor(useContainerWidth(ref));
   const ui = useSheet();
   const explain = useExplain();
-  const roller = useRoller();
   const [openBooks, setOpenBooks] = useState<string[]>([]);
   const sc = sheet.spellcasting;
   const { ready, spellbooks } = spellLists(sheet, index);
   const issues = sheet.issues.filter((i) => SPELL_ISSUES.has(i.code));
   const concentration = character.state.concentration;
+  const casting = useSpellCasting({ character, sheet, index, apply });
 
   if (!sc.casters.length && !ready.length) {
     return <p className={mainStyles.muted}>This character has no spells.</p>;
   }
-
-  const armorUntrained = sheet.issues.some((i) => i.code === 'armorUntrained');
-
-  const cast = (e: SpellEntry, way: CastWay) => {
-    const s = e.spell;
-    if (!s) return;
-    const was = character.state.concentration;
-    const ended =
-      isConcentration(s) && was && !(was.kind === 'spell' && was.id === s.id)
-        ? ` · Concentration on ${nameOf(index, was.kind, was.id)} ends`
-        : '';
-    roller.notify({
-      label: `Cast ${s.name}`,
-      detail: `${castNotice(way, s, e.sourceName)}${isConcentration(s) ? ' · Concentrating' : ''}${ended}`,
-    });
-    apply((c) =>
-      castSpellAs(
-        c,
-        sheet,
-        {
-          ref: { kind: 'spell', id: s.id },
-          concentration: isConcentration(s),
-          ...(e.from.granted ? { granted: e.from.granted } : {}),
-        },
-        way,
-      ),
-    );
-  };
-
-  const openSpell = (e: SpellEntry) => {
-    const s = e.spell;
-    if (!s) return;
-    const ways = castWays(sheet, s, e.from);
-    const caster = sc.casters.find((c) => c.key === e.from.caster?.key);
-    ui.open({
-      key: `cast:${e.key}`,
-      title: s.name,
-      render: () => (
-        <CastSheet
-          spell={s}
-          ways={ways}
-          {...(armorUntrained ? { armorUntrained: true } : {})}
-          character={character}
-          index={index}
-          why={whyNot(e)}
-          from={whereFrom(e, s, sheet)}
-          attack={caster?.attack ?? e.from.granted?.attack}
-          dc={caster?.dc.value ?? e.from.granted?.dc}
-          onCast={(way: CastWay) => {
-            ui.close();
-            cast(e, way);
-          }}
-        />
-      ),
-    });
-  };
 
   const openPrepare = (caster: DerivedCaster) =>
     ui.open({
@@ -180,29 +100,7 @@ export function SpellsTab({ character, sheet, index, apply }: SheetBindings) {
           className={styles.rows}
           aria-label={`${label}: ${level < 0 ? 'not imported' : levelHeading(level)}`}
         >
-          {list.map((e) => (
-            <SpellRow
-              key={e.key}
-              entry={e}
-              name={nameOf(index, 'spell', e.id)}
-              character={character}
-              sheet={sheet}
-              many={sc.casters.length > 1 || !!sc.granted.length}
-              onOpen={() => openSpell(e)}
-              quick={!armorUntrained && e.spell ? quickWay(sheet, e) : undefined}
-              ritual={!armorUntrained && e.spell ? ritualWay(sheet, e) : undefined}
-              onCast={(way) => cast(e, way)}
-              onFreeUses={(left) =>
-                apply((c) => {
-                  const g = e.from.granted!;
-                  const now = g.usesMax! - (g.usesUsed ?? 0);
-                  return left < now
-                    ? spendFreeCast(c, sheet, g)
-                    : restoreResource(c, g.usesKey!, left - now);
-                })
-              }
-            />
-          ))}
+          {list.map((e) => casting.row(e))}
         </ul>
       </div>
     ));
@@ -484,132 +382,5 @@ function SlotRow({
         {left}/{slot.max} left{note ? ` · ${note}` : ''}
       </span>
     </div>
-  );
-}
-
-/**
- * The way a tap on a row's Cast button uses (plan step 4C.5): a free use first, else the lowest
- * slot; a ritual only when nothing else is left. The spell's sheet has every way.
- */
-function quickWay(sheet: DerivedSheet, e: SpellEntry): CastWay | undefined {
-  const ways = castWays(sheet, e.spell!, e.from);
-  return ways.find((w) => w.kind !== 'ritual') ?? ways[0];
-}
-
-/** Casting it as a Ritual, when that is a second way next to the quick one (no slot spent). */
-function ritualWay(sheet: DerivedSheet, e: SpellEntry): CastWay | undefined {
-  const ways = castWays(sheet, e.spell!, e.from);
-  const ritual = ways.find((w) => w.kind === 'ritual');
-  return ritual && ways[0] !== ritual ? ritual : undefined;
-}
-
-/** `Cast`, `Cast · L1`, `Cast · Pact`, `Cast · free`, `Ritual`. */
-function quickLabel(way: CastWay): string {
-  switch (way.kind) {
-    case 'slot':
-      return way.pact ? 'Cast · Pact' : `Cast · L${way.level}`;
-    case 'free':
-      return way.charges !== undefined
-        ? `Cast · ${way.charges} ${way.charges === 1 ? 'charge' : 'charges'}`
-        : 'Cast · free';
-    case 'ritual':
-      return 'Ritual';
-    default:
-      return 'Cast';
-  }
-}
-
-function SpellRow({
-  entry: e,
-  name,
-  character,
-  sheet,
-  many,
-  onOpen,
-  onFreeUses,
-  quick,
-  ritual,
-  onCast,
-}: {
-  entry: SpellEntry;
-  /** Readable from the id when the spell isn't imported. */
-  name: string;
-  character: Character;
-  sheet: DerivedSheet;
-  /** Several sources of spells, so each row says where it comes from. */
-  many: boolean;
-  onOpen: () => void;
-  onFreeUses: (left: number) => void;
-  /** The way the row's Cast button uses; none when it can't be cast now. */
-  quick: CastWay | undefined;
-  /** A Ritual casting as well (a prepared ritual spell): a second button. */
-  ritual?: CastWay | undefined;
-  onCast: (way: CastWay) => void;
-}) {
-  const s = e.spell;
-  const g = e.from.granted;
-  const concentrating =
-    character.state.concentration?.kind === 'spell' && character.state.concentration.id === e.id;
-  const resource = g?.resourceKey
-    ? sheet.resources.find((r) => r.key === g.resourceKey)
-    : undefined;
-  return (
-    <li className={styles.row} aria-label={s?.name ?? e.id}>
-      <button type="button" className={styles.spellName} onClick={onOpen} disabled={!s}>
-        {s?.name ?? name}
-      </button>
-      <span className={styles.marks}>
-        {s && isConcentration(s) && (
-          <abbr className={styles.mark} title="Concentration">
-            C
-          </abbr>
-        )}
-        {s?.ritual && (
-          <abbr className={styles.mark} title="Ritual">
-            R
-          </abbr>
-        )}
-        {e.from.caster?.status === 'always' && <Badge>Always prepared</Badge>}
-        {e.from.caster?.status === 'spellbook' && <Badge>Not prepared</Badge>}
-        {concentrating && <Badge variant="accent">Concentrating</Badge>}
-        {!s && <Badge variant="warning">Not imported</Badge>}
-      </span>
-      {g?.usesKey && g.usesMax !== undefined && (
-        <Counter
-          label={`${s?.name ?? e.id} free uses left`}
-          value={g.usesMax - (g.usesUsed ?? 0)}
-          max={g.usesMax}
-          onChange={onFreeUses}
-        />
-      )}
-      {quick && (
-        <Button
-          size="sm"
-          className={styles.quickCast}
-          aria-label={`Cast ${s?.name ?? name}: ${castWayLabel(quick)}`}
-          onClick={() => onCast(quick)}
-        >
-          {quickLabel(quick)}
-        </Button>
-      )}
-      {ritual && (
-        <Button
-          size="sm"
-          className={styles.quickCast}
-          aria-label={`Cast ${s?.name ?? name}: ${castWayLabel(ritual)}`}
-          onClick={() => onCast(ritual)}
-        >
-          Ritual
-        </Button>
-      )}
-      <span className={styles.meta}>
-        {s ? castingTime(s) : ''}
-        {s?.attack && ' · spell attack'}
-        {s?.saves?.[0] && ` · ${s.saves.map((a) => ABILITY_ABBR[a]).join(' or ')} save`}
-        {many && ` · ${e.sourceName}`}
-        {g?.uses === 'atWill' && ' · at will'}
-        {resource && ` · ${g!.cost ?? 1} ${resource.name} per cast`}
-      </span>
-    </li>
   );
 }

@@ -82,6 +82,9 @@ export function AttackCard({
   const [chosen, setChosen] = useState<string[]>([]);
   const [crit, setCrit] = useState(false);
   const [ammoUid, setAmmoUid] = useState<string | null>(null);
+  // Properties, the mastery's text and the rules notes fold away, so a list of attacks stays
+  // short; what a roll needs (the numbers, extra damage to add) is always shown.
+  const [open, setOpen] = useState(false);
   const ammo = a.ammo?.sources.find((s) => s.rowUid === ammoUid) ?? a.ammo?.sources[0];
   const used = character.state.turn.ridersUsed;
   const usedThisTurn = (r: DerivedRider) => r.oncePerTurn && used.includes(r.id);
@@ -155,7 +158,18 @@ export function AttackCard({
           )}
           {stowed && <Badge>Stowed</Badge>}
         </div>
-        <span className={styles.use}>{attackUseLabel(a)}</span>
+        <span className={styles.headEnd}>
+          <span className={styles.use}>{attackUseLabel(a)}</span>
+          <button
+            type="button"
+            className={styles.more}
+            aria-expanded={open}
+            aria-label={`${a.name}: ${open ? 'fewer details' : 'more details'}`}
+            onClick={() => setOpen(!open)}
+          >
+            {open ? 'Less' : 'More'}
+          </button>
+        </span>
       </div>
 
       <div className={styles.rolls}>
@@ -261,9 +275,10 @@ export function AttackCard({
       <p className={styles.meta}>
         {reach(a)} · {ABILITY_ABBR[a.ability]}
         {a.critRange < 20 && <> · Critical Hit on {a.critRange}–20</>}
+        {!open && a.mastery && <> · Mastery: {a.mastery.name}</>}
       </p>
 
-      {a.propertyIds.length > 0 && (
+      {open && a.propertyIds.length > 0 && (
         <div className={styles.chips}>
           {a.propertyIds.map((id) => {
             const name = nameOf(index, 'rule', id);
@@ -281,7 +296,7 @@ export function AttackCard({
         </div>
       )}
 
-      {a.mastery && (
+      {open && a.mastery && (
         <MasteryLine
           mastery={a.mastery}
           index={index}
@@ -318,7 +333,7 @@ export function AttackCard({
         </div>
       )}
 
-      <AttackRules attack={a} stowed={stowed} thrown={thrown} openRule={openRule} />
+      {open && <AttackRules attack={a} stowed={stowed} thrown={thrown} openRule={openRule} />}
     </li>
   );
 }

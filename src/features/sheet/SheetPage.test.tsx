@@ -201,9 +201,9 @@ describe('sheet header and Main tab', () => {
 describe('Actions tab', () => {
   it('shows the attacks and the standard actions', async () => {
     renderApp(`/c/${character.id}/actions`);
-    const attacks = await screen.findByRole('region', { name: 'Attacks' });
+    const attacks = await screen.findByRole('tabpanel', { name: 'Turn: Actions' });
     expect(within(attacks).getByRole('listitem', { name: 'Unarmed Strike' })).toBeInTheDocument();
-    expect(screen.getByText('Standard actions')).toBeInTheDocument();
+    expect(within(attacks).getByText('Anyone can')).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Actions' })).toHaveAttribute('aria-selected', 'true');
   });
 });
