@@ -256,6 +256,10 @@ describe('Actions tab', () => {
     await part(user, 'Bonus');
     const fury = () => within(card('Fury'));
     expect(fury().getByText(/^Costs/)).toHaveTextContent('Costs 1 Furies (3 left), a Bonus Action');
+    // Where the 3 comes from.
+    expect(card('Fury')).toHaveTextContent(
+      'Furies: 3 uses, the Furies column of your class table. Recharge: Long Rest.',
+    );
     expect(fury().getByText('Ends on a Long Rest.')).toBeInTheDocument();
     await user.click(fury().getByRole('button', { name: 'Turn on Fury' }));
     expect(fury().getByText('On')).toBeInTheDocument();
