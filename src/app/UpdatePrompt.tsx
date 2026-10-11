@@ -1,4 +1,5 @@
 import { useRegisterSW } from 'virtual:pwa-register/react';
+import { flushAllSaves } from '../features/sheet/useCharacterActions.ts';
 import { Button } from '../ui/Button.tsx';
 import styles from './UpdatePrompt.module.css';
 
@@ -34,7 +35,14 @@ export function UpdatePrompt() {
   return (
     <div className={styles.toast} role="status">
       <span>A new version is ready.</span>
-      <Button size="sm" variant="primary" onClick={() => void updateServiceWorker()}>
+      <Button
+        size="sm"
+        variant="primary"
+        onClick={() =>
+          // Changes not yet written (a character being made) are saved before the reload.
+          void flushAllSaves().then(() => updateServiceWorker())
+        }
+      >
         Reload
       </Button>
       <Button size="sm" variant="ghost" onClick={() => setNeedRefresh(false)}>

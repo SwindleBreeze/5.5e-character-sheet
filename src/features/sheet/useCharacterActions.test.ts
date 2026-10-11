@@ -5,7 +5,12 @@ import { resetDb } from '../../db/db.ts';
 import { repos } from '../../db/repos.ts';
 import { setExhaustion, setHeroicInspiration } from '../../engine/play/reducers.ts';
 import type { Character } from '../../schema/index.ts';
-import { SAVE_DELAY_MS, useCharacterActions } from './useCharacterActions.ts';
+import {
+  flushAllSaves,
+  RETRY_MS,
+  SAVE_DELAY_MS,
+  useCharacterActions,
+} from './useCharacterActions.ts';
 
 let stored: Character;
 
@@ -63,5 +68,37 @@ describe('useCharacterActions', () => {
     const elsewhere = { ...stored, updatedAt: Date.now() + 10_000, name: 'Bea' };
     rerender({ c: elsewhere });
     expect(result.current.character?.name).toBe('Bea');
+  });
+
+  it('a save that fails keeps the change, says why, and tries again', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] });
+    const real = repos().characters.save.bind(repos().characters);
+    const save = vi
+      .spyOn(repos().characters, 'save')
+      .mockRejectedValueOnce(new Error('Database closed'))
+      .mockImplementation(real);
+    const { result } = renderHook(() => useCharacterActions(stored));
+    act(() => result.current.apply((c) => setExhaustion(c, 4)));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(SAVE_DELAY_MS);
+    });
+    expect(save).toHaveBeenCalledTimes(1);
+    expect(result.current.saveError).toBe('Database closed');
+    // Still shown, and saved on the next try.
+    expect(result.current.character?.state.exhaustion).toBe(4);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(RETRY_MS);
+    });
+    expect(save).toHaveBeenCalledTimes(2);
+    expect(result.current.saveError).toBeNull();
+    vi.useRealTimers();
+    expect((await repos().characters.get(stored.id))?.state.exhaustion).toBe(4);
+  });
+
+  it('before the app reloads for an update, pending changes are written', async () => {
+    const { result } = renderHook(() => useCharacterActions(stored));
+    act(() => result.current.apply((c) => setExhaustion(c, 2)));
+    await flushAllSaves();
+    expect((await repos().characters.get(stored.id))?.state.exhaustion).toBe(2);
   });
 });

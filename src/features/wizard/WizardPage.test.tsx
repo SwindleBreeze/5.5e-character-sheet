@@ -1,6 +1,6 @@
 import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { resetDb } from '../../db/db.ts';
 import { repos } from '../../db/repos.ts';
 import type { Character } from '../../schema/index.ts';
@@ -155,6 +155,43 @@ describe('creation wizard', () => {
     expect(c.baseScores.str).toBe(15);
     expect(c.inventory.map((r) => r.name)).toEqual(['Net Blade', 'Shiv', 'Torch']);
     expect(c.snapshots['class:brute|tst']).toBeDefined();
+  });
+
+  it('a Create that fails keeps the draft, says why, and can be pressed again', async () => {
+    const user = userEvent.setup();
+    renderApp('/new/draft/class');
+    await brute(user);
+    await user.click(next(/Background ›/));
+    await arenaHand(user);
+    await user.click(next(/Species ›/));
+    await deepMossling(user);
+    await user.click(next(/Ability scores ›/));
+    await user.click(await screen.findByRole('button', { name: 'Roll' }));
+    await user.click(next(/Details ›/));
+    await user.click(await screen.findByRole('link', { name: /Review/ }));
+
+    // The finished character's write fails once (the device's storage refused it).
+    const real = repos().characters.save.bind(repos().characters);
+    const save = vi
+      .spyOn(repos().characters, 'save')
+      .mockImplementation((c, now) =>
+        c.draft ? real(c, now) : Promise.reject(new Error('Storage refused')),
+      );
+    const create = await screen.findByRole('button', { name: 'Create character' });
+    await user.click(create);
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'The character couldn’t be created on this device (Storage refused)',
+    );
+    // Still the draft, with the rolled scores, and Create works again.
+    const draft = await stored((x) => !!x.draft);
+    expect(draft.draft?.rolls).toHaveLength(6);
+    expect(create).toHaveAttribute('aria-disabled', 'false');
+    save.mockImplementation(real);
+    await user.click(create);
+    expect(await screen.findByRole('tab', { name: 'Main' })).toBeInTheDocument();
+    const made = await stored((x) => x.id === draft.id && !x.draft);
+    expect(made.scoreMethod).toBe('rolled');
+    expect(made.baseScores).toEqual(draft.baseScores);
   });
 
   it('introduces each step and explains what the class, background and species give (plan §9.3b)', async () => {
