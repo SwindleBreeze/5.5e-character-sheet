@@ -266,6 +266,8 @@ export interface DerivedResource {
   die?: string;
   /** Spend any amount at once (Lay on Hands). */
   pool: boolean;
+  /** How the maximum is worked out, in words (`your Proficiency Bonus`), when it isn't a plain number. */
+  maxFrom?: string;
   /** Other ways to get uses back. */
   restoreWith: { amount: string; costs: string[] }[];
 }
