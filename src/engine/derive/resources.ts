@@ -12,6 +12,7 @@ import {
   evalValue,
   type DeriveContext,
 } from './context.ts';
+import { maxInWords } from './maxInWords.ts';
 import type { DerivedCost, DerivedResource } from './types.ts';
 
 /** Where a resource's spent uses are stored: unique per owner (every gift has `uses`). */
@@ -125,6 +126,8 @@ export function deriveResources(ctx: DeriveContext): DerivedResource[] {
     }
     const value = Math.max(0, Math.floor(evalNumber(ctx, max.formula, max.source)));
     r.max = { value, parts: [contribution(max.source.name, value, max.source)] };
+    const words = maxInWords(max.formula);
+    if (words) r.maxFrom = words;
     r.used = Math.min(value, Math.max(0, ctx.character.state.resourcesUsed[r.key] ?? 0));
     if (die) r.die = formatValue(evalValue(ctx, die.formula, die.source));
   });

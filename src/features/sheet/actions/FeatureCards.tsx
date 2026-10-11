@@ -25,20 +25,34 @@ import { sourceLabel } from './sourceLabel.ts';
 function Costs({ sheet, costs }: { sheet: DerivedSheet; costs: readonly DerivedCost[] }) {
   const shown = costs.filter((c) => c.label);
   if (!shown.length) return null;
+  // Where the uses come from, when it isn't a plain number: the trait that grants them is often
+  // another one (a Goliath's Giant Ancestry gives Stone's Endurance its uses).
+  const counted = shown.flatMap((c) => {
+    const r = c.resourceKey ? sheet.resources.find((x) => x.key === c.resourceKey) : undefined;
+    return r?.maxFrom ? [r] : [];
+  });
   return (
-    <p className={styles.meta}>
-      Costs{' '}
-      {shown.map((c, i) => {
-        const left = leftOf(sheet, c);
-        return (
-          <span key={i}>
-            {i > 0 && ', '}
-            {c.label}
-            {left !== undefined && <span className="numeric"> ({left} left)</span>}
-          </span>
-        );
-      })}
-    </p>
+    <>
+      <p className={styles.meta}>
+        Costs{' '}
+        {shown.map((c, i) => {
+          const left = leftOf(sheet, c);
+          return (
+            <span key={i}>
+              {i > 0 && ', '}
+              {c.label}
+              {left !== undefined && <span className="numeric"> ({left} left)</span>}
+            </span>
+          );
+        })}
+      </p>
+      {counted.map((r) => (
+        <p key={r.key} className={styles.meta}>
+          {r.name}: <span className="numeric">{r.max.value}</span>{' '}
+          {r.max.value === 1 ? 'use' : 'uses'}, {r.maxFrom}. Recharge: {RECHARGE_TEXT[r.recharge]}.
+        </p>
+      ))}
+    </>
   );
 }
 
@@ -267,6 +281,12 @@ export function ResourceCard({
           Recharge: {RECHARGE_TEXT[r.recharge]}
         </span>
       </div>
+      {r.maxFrom && (
+        <p className={styles.meta}>
+          <span className="numeric">{r.max.value}</span> {r.max.value === 1 ? 'use' : 'uses'}:{' '}
+          {r.maxFrom}.
+        </p>
+      )}
       <div className={styles.rolls}>
         <Counter
           label={`${r.name} left`}
