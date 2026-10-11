@@ -81,6 +81,16 @@ export function removeItem(c: Character, uid: string): Character {
   return n;
 }
 
+/** One of a row used up (a potion drunk): the row goes with the last one. */
+export function consumeOne(c: Character, uid: string): Character {
+  const row = find(c, uid);
+  if (!row) return c;
+  if (row.quantity <= 1) return removeItem(c, uid);
+  const n = clone(c);
+  find(n, uid)!.quantity = row.quantity - 1;
+  return n;
+}
+
 /** Set how many a row holds. Worn and held items are one each: more go to Carried. */
 export function setQuantity(
   c: Character,

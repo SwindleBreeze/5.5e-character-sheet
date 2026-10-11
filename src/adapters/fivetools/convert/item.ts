@@ -257,6 +257,7 @@ function fill(item: Item, raw: RawEntity): Item {
   chargeFields(item, raw);
   if (typeof raw.baseItem === 'string') item.baseItemId = uidToId.nameSource(raw.baseItem, 'DMG');
   item.effects = itemEffects(raw);
+  if (typeCode(raw.type) === 'P') item.consumable = 'potion';
   return item;
 }
 

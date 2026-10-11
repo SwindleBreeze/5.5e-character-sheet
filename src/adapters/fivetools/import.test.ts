@@ -51,7 +51,7 @@ describe('importFivetools (fixture tree)', () => {
       background: 2,
       feat: 5,
       species: 7,
-      item: 23,
+      item: 24,
       optionalFeature: 2,
       rule: 17,
       deity: 5,

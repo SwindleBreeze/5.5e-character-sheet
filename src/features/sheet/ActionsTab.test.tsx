@@ -72,11 +72,24 @@ const brute = (
 
 const card = (name: string) => screen.getByRole('listitem', { name });
 const rolls = () => screen.getByRole('status', { name: 'Rolls' });
+type User = ReturnType<typeof userEvent.setup>;
+/** Open a part of the turn: Action, Bonus, Reaction or Other. */
+const part = (user: User, name: string) =>
+  user.click(screen.getByRole('tab', { name: new RegExp(`^${name}`) }));
+/** Unfold an attack's details (properties, mastery, rules). */
+const more = (user: User, name: string) =>
+  user.click(within(card(name)).getByRole('button', { name: `${name}: more details` }));
+/** The limited-use counters, in their sheet. */
+async function limited(user: User) {
+  await user.click(screen.getByRole('button', { name: /^Limited use/ }));
+  return within(await screen.findByRole('dialog', { name: 'Limited use' }));
+}
 
 describe('Actions tab', () => {
-  it('lists attacks in hand, the Unarmed Strike, then stowed weapons, each with how it is made', () => {
+  it('lists attacks in hand, the Unarmed Strike, then stowed weapons, each with how it is made', async () => {
+    const user = userEvent.setup();
     renderTab(brute());
-    const attacks = within(screen.getByRole('region', { name: 'Attacks' }));
+    const attacks = within(screen.getByRole('tabpanel', { name: 'Turn: Actions' }));
     expect(attacks.getAllByRole('listitem').map((li) => li.getAttribute('aria-label'))).toEqual([
       'net blade',
       'Unarmed Strike',
@@ -93,6 +106,9 @@ describe('Actions tab', () => {
 
     const shiv = within(card('shiv'));
     expect(shiv.getByText('Stowed')).toBeInTheDocument();
+    // Its properties and rules are a tap away.
+    expect(shiv.queryByRole('button', { name: 'Light' })).toBeNull();
+    await more(user, 'shiv');
     expect(shiv.getByText('Melee 5 ft. · Thrown 20/60 ft. · STR')).toBeInTheDocument();
     expect(
       shiv.getByText(
@@ -101,12 +117,14 @@ describe('Actions tab', () => {
     ).toBeInTheDocument();
     expect(shiv.getByRole('button', { name: 'Light' })).toBeInTheDocument();
 
+    await more(user, 'Unarmed Strike');
     const strike = within(card('Unarmed Strike'));
     expect(strike.getByText(/against DC/).textContent).toContain('DC 15');
     expect(screen.getByRole('button', { name: '2 per Attack action' })).toBeInTheDocument();
   });
 
-  it('a weapon whose mastery the character uses says what the mastery does', () => {
+  it('a weapon whose mastery the character uses says what the mastery does', async () => {
+    const user = userEvent.setup();
     const c = testCharacter({
       classes: [{ classId: 'brute|tst', levels: 5 }],
       scores: { str: 18, dex: 13, con: 14, int: 8, wis: 10, cha: 10 },
@@ -121,6 +139,10 @@ describe('Actions tab', () => {
       ],
     });
     renderTab(c);
+    // Folded, it is named; unfolded, it says what it does.
+    expect(within(card('net blade')).getByText(/Mastery: Snare/)).toBeInTheDocument();
+    await more(user, 'net blade');
+    await more(user, 'shiv');
     const blade = card('net blade');
     expect(blade.querySelector('[data-kind="mastery"]')?.textContent).toBe(
       'Weapon mastery: SnareThe target is slowed.',
@@ -201,7 +223,8 @@ describe('Actions tab', () => {
     const c = brute();
     c.state.damage = 30;
     renderTab(c, fixedRng([face(4, 8)]));
-    const bonus = within(screen.getByRole('region', { name: 'Bonus Actions' }));
+    await part(user, 'Bonus');
+    const bonus = within(screen.getByRole('tabpanel', { name: 'Turn: Bonus Actions' }));
     const breath = within(bonus.getByRole('listitem', { name: 'Catch Breath' }));
     expect(breath.getByText(/^Costs/)).toHaveTextContent('Costs 1 Catch Breath (2 left)');
     expect(breath.getByText('Regain 1d8 + 5 Hit Points')).toBeInTheDocument();
@@ -218,31 +241,34 @@ describe('Actions tab', () => {
     expect(use).toHaveFocus();
     expect(breath.getByText('No uses left')).toBeInTheDocument();
     await user.click(use);
+    expect(screen.getByRole('button', { name: /^Limited use/ })).toHaveTextContent(
+      'Catch Breath 0/2',
+    );
     expect(
-      within(screen.getByRole('region', { name: 'Limited use' })).getByRole('group', {
-        name: 'Catch Breath left',
-      }),
+      (await limited(user)).getByRole('group', { name: 'Catch Breath left' }),
     ).toHaveTextContent('0 / 2');
   });
 
   it('turns a toggle on (paying for it) and off; spends and restores a counter', async () => {
     const user = userEvent.setup();
     renderTab(brute());
-    const fury = within(card('Fury'));
-    expect(fury.getByText(/^Costs/)).toHaveTextContent('Costs 1 Furies (3 left), a Bonus Action');
-    expect(fury.getByText('Ends on a Long Rest.')).toBeInTheDocument();
-    await user.click(fury.getByRole('button', { name: 'Turn on Fury' }));
-    expect(fury.getByText('On')).toBeInTheDocument();
+    // Switching Fury on takes a Bonus Action: it is under Bonus.
+    await part(user, 'Bonus');
+    const fury = () => within(card('Fury'));
+    expect(fury().getByText(/^Costs/)).toHaveTextContent('Costs 1 Furies (3 left), a Bonus Action');
+    expect(fury().getByText('Ends on a Long Rest.')).toBeInTheDocument();
+    await user.click(fury().getByRole('button', { name: 'Turn on Fury' }));
+    expect(fury().getByText('On')).toBeInTheDocument();
     // Fury adds its damage to Strength melee attacks.
+    await part(user, 'Action');
     expect(
       within(card('net blade')).getByRole('button', { name: /^Roll net blade damage, 1d8 \+ 5/ }),
     ).toBeInTheDocument();
-    await user.click(fury.getByRole('button', { name: 'Turn off Fury' }));
-    expect(fury.queryByText('On')).not.toBeInTheDocument();
+    await part(user, 'Bonus');
+    await user.click(fury().getByRole('button', { name: 'Turn off Fury' }));
+    expect(fury().queryByText('On')).not.toBeInTheDocument();
 
-    const counter = within(screen.getByRole('region', { name: 'Limited use' })).getByRole('group', {
-      name: 'Furies left',
-    });
+    const counter = (await limited(user)).getByRole('group', { name: 'Furies left' });
     expect(counter).toHaveTextContent('2 / 3');
     await user.click(within(counter).getByRole('button', { name: 'Increase Furies left' }));
     expect(counter).toHaveTextContent('3 / 3');
@@ -250,16 +276,66 @@ describe('Actions tab', () => {
     expect(counter).toHaveTextContent('2 / 3');
   });
 
-  it('standard actions are collapsed and list what Attack and Opportunity Attack can use', () => {
+  it('the actions everyone has; Opportunity Attack under Reaction, with what it can use', async () => {
+    const user = userEvent.setup();
     renderTab(brute());
-    const details = screen.getByText('Standard actions').closest('details')!;
-    expect(details).not.toHaveAttribute('open');
-    const list = within(details);
-    expect(list.getByText('2 attacks: net blade, Unarmed Strike, shiv')).toBeInTheDocument();
-    // An Attack action can draw the stowed Shiv; a Reaction can't.
+    const action = within(screen.getByRole('tabpanel', { name: 'Turn: Actions' }));
+    expect(action.getByText('One Action on your turn: one of these.')).toBeInTheDocument();
+    expect(action.getByRole('button', { name: 'Dash' })).toBeInTheDocument();
+    expect(action.queryByRole('button', { name: 'Opportunity Attack' })).toBeNull();
+
+    await part(user, 'Reaction');
+    const reaction = within(screen.getByRole('tabpanel', { name: 'Turn: Reactions' }));
+    expect(reaction.getByText(/One Reaction per round/)).toBeInTheDocument();
     // A stowed weapon can't be drawn for an Opportunity Attack.
-    expect(list.getByText('One melee attack: net blade, Unarmed Strike')).toBeInTheDocument();
-    expect(list.getByRole('button', { name: 'Opportunity Attack' })).toBeInTheDocument();
+    expect(reaction.getByText(/one melee attack, net blade, Unarmed Strike\./)).toBeInTheDocument();
+    expect(reaction.getByRole('button', { name: 'Opportunity Attack' })).toBeInTheDocument();
+  });
+
+  it('each part of the turn has its tab; an empty one says so', async () => {
+    const user = userEvent.setup();
+    renderTab(brute([row('net blade|tst', 'mainHand')]));
+    expect(screen.getAllByRole('tab').map((t) => t.textContent)).toEqual([
+      expect.stringMatching(/^Action\d+$/),
+      expect.stringMatching(/^Bonus\d+$/),
+      expect.stringMatching(/^Reaction\d+$/),
+      expect.stringMatching(/^Other\d+$/),
+    ]);
+    await part(user, 'Bonus');
+    expect(screen.getByText(/One Bonus Action on your turn/)).toBeInTheDocument();
+    await part(user, 'Other');
+    expect(screen.getByRole('tabpanel', { name: 'Turn: Other' })).toBeInTheDocument();
+  });
+
+  it('a potion is drunk as a Bonus Action: one is used up and its healing rolled', async () => {
+    const user = userEvent.setup();
+    const c = brute([
+      row('net blade|tst', 'mainHand'),
+      { ...row('draught of mending|tst'), uid: 'p', quantity: 2 },
+    ]);
+    c.state.damage = 20;
+    renderTab(c, fixedRng([face(3, 4), face(4, 4)]));
+    expect(screen.queryByRole('button', { name: 'Drink Draught of Mending' })).toBeNull();
+    await part(user, 'Bonus');
+    const potions = within(screen.getByRole('tabpanel', { name: 'Turn: Bonus Actions' }));
+    expect(potions.getByText('Heals 2d4 + 2')).toBeInTheDocument();
+    await user.click(potions.getByRole('button', { name: 'Drink Draught of Mending' }));
+    expect(last.inventory.find((r) => r.uid === 'p')?.quantity).toBe(1);
+    expect(last.state.damage).toBe(11);
+    // On 2014 rules it takes an action.
+  });
+
+  it('on 2014 rules a potion is drunk as an action', () => {
+    const c = {
+      ...brute([row('net blade|tst', 'mainHand'), { ...row('draught of mending|tst'), uid: 'p' }]),
+      ruleset: '2014' as const,
+    };
+    renderTab(c);
+    expect(
+      within(screen.getByRole('tabpanel', { name: 'Turn: Actions' })).getByRole('button', {
+        name: 'Drink Draught of Mending',
+      }),
+    ).toBeInTheDocument();
   });
 
   it('a spell-slot cost asks which slot, then pays it', async () => {
@@ -284,6 +360,7 @@ describe('Actions tab', () => {
       scores: { int: 16 },
     });
     renderTab(c, undefined, registry);
+    await part(user, 'Bonus');
     const jolt = within(card('Arcane Jolt'));
     expect(jolt.getByText(/^Costs/)).toHaveTextContent('Costs a level 2+ spell slot');
     await user.click(jolt.getByRole('button', { name: 'Use' }));
@@ -314,6 +391,7 @@ describe('Actions tab', () => {
       },
     ]);
     renderTab(brute(), undefined, registry);
+    await part(user, 'Bonus');
     await user.click(within(card('Steel Breath')).getByRole('button', { name: 'Use' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(Object.values(last.state.hitDiceUsed)).toEqual([1]);
@@ -379,8 +457,10 @@ describe('Actions tab', () => {
     expect(last.state.ammoUsed).toBeUndefined();
   });
 
-  it('no ammunition, and Loading with no hand free to load', () => {
+  it('no ammunition, and Loading with no hand free to load', async () => {
+    const user = userEvent.setup();
     renderTab(brute([row('wrist bow|tst', 'mainHand'), row('buckler|tst', 'shield')]));
+    await more(user, 'wrist bow');
     const bow = within(card('wrist bow'));
     expect(bow.getByText(/No Arrow ammunition/)).toBeInTheDocument();
     expect(bow.getByText('Loading it needs a free hand, and neither is free.')).toBeInTheDocument();

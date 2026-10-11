@@ -17,7 +17,12 @@
       "_copy": {
         "name": "Torch",
         "source": "TST",
-        "_mod": { "entries": { "mode": "appendArr", "items": "It never goes out." } }
+        "_mod": {
+          "entries": {
+            "mode": "appendArr",
+            "items": "It never goes out."
+          }
+        }
       },
       "name": "Everburning Torch",
       "source": "TST",
@@ -34,8 +39,12 @@
       "recharge": "dawn",
       "attachedSpells": {
         "will": ["glitter burst|tst"],
-        "charges": { "2": ["rolling boom|tst"] },
-        "daily": { "1": ["dim lantern|tst"] }
+        "charges": {
+          "2": ["rolling boom|tst"]
+        },
+        "daily": {
+          "1": ["dim lantern|tst"]
+        }
       },
       "detail1": "a tiny bell",
       "entries": ["{#itemEntry Ring of Shouting|TST}"]
@@ -47,8 +56,19 @@
       "rarity": "uncommon",
       "wondrous": true,
       "weight": 5,
-      "containerCapacity": { "weight": [500], "weightless": true },
+      "containerCapacity": {
+        "weight": [500],
+        "weightless": true
+      },
       "entries": ["It weighs 5 pounds, whatever it holds."]
+    },
+    {
+      "name": "Draught of Mending",
+      "source": "TST",
+      "page": 46,
+      "type": "P",
+      "rarity": "common",
+      "entries": ["You regain {@dice 2d4 + 2} Hit Points when you drink it."]
     }
   ],
   "itemGroup": [

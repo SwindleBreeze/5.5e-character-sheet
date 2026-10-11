@@ -172,7 +172,10 @@ describe('actions (P7) and toggles (P8)', () => {
         sourceName: 'Fury',
         active: false,
         options: [],
-        costs: [{ label: '1 Furies', amount: 1, resourceKey: FURY }, { label: 'a Bonus Action' }],
+        costs: [
+          { label: '1 Furies', amount: 1, resourceKey: FURY },
+          { label: 'a Bonus Action', action: 'bonus' },
+        ],
         onActivate: [],
         endsOn: ['longRest'],
       },

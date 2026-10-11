@@ -318,6 +318,8 @@ export interface Item extends BaseEntity {
   variant?: MagicVariant;
   /** For an item group (Arcane Focus, Artisan's Tools): the items it stands for. */
   groupItemIds?: Id[];
+  /** Used up when used: a potion (5etools type `P`, adapter 11). */
+  consumable?: 'potion';
 }
 
 export interface OptionalFeature extends BaseEntity {

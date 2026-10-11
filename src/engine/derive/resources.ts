@@ -93,7 +93,7 @@ export function costOf(
     reaction: 'your Reaction',
     other: '',
   };
-  return { label: names[cost.action] };
+  return { label: names[cost.action], action: cost.action };
 }
 
 export function deriveResources(ctx: DeriveContext): DerivedResource[] {
