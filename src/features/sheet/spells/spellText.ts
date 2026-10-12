@@ -114,3 +114,64 @@ export function castNotice(way: CastWay, spell: Spell, sourceName: string): stri
       return 'At will, no spell slot';
   }
 }
+
+/** Dice the text names, in order, once each: `{@damage 1d8}`, `{@dice 2d4}`. */
+function tagDice(entries: readonly unknown[], tag: 'damage' | 'dice', near?: RegExp): string[] {
+  const out: string[] = [];
+  const visit = (v: unknown): void => {
+    if (typeof v === 'string') {
+      if (near && !near.test(v)) return;
+      for (const m of v.matchAll(new RegExp(`\\{@${tag} ([^}|]+)`, 'g'))) {
+        const dice = m[1]!.trim();
+        if (!out.includes(dice)) out.push(dice);
+      }
+    } else if (Array.isArray(v)) v.forEach(visit);
+    else if (v && typeof v === 'object' && 'entries' in v)
+      visit((v as { entries: unknown }).entries);
+  };
+  visit(entries);
+  return out;
+}
+
+/**
+ * What a spell does at a glance, without opening it (play-test fix: Hunter's Mark, Toll the
+ * Dead): who rolls what and against which number, and its damage or healing. The caster's
+ * own DC and attack bonus are filled in; a cantrip's damage is the one for the character's
+ * level.
+ */
+export function spellNumbers(
+  spell: Spell,
+  caster: { dc?: number | undefined; attack?: number | undefined; charLevel: number },
+): string[] {
+  const out: string[] = [];
+  const abbr = (a: string) => a.toUpperCase();
+  if (spell.attack) {
+    const bonus = caster.attack;
+    out.push(
+      bonus === undefined
+        ? 'spell attack'
+        : `spell attack ${bonus < 0 ? '−' : '+'}${Math.abs(bonus)}`,
+    );
+  } else if (spell.saves?.length) {
+    out.push(
+      `${spell.saves.map(abbr).join(' or ')} save${caster.dc !== undefined ? ` DC ${caster.dc}` : ''}`,
+    );
+  }
+  const type = spell.damageTypes?.length ? ` ${spell.damageTypes.map(titleCase).join(' or ')}` : '';
+  const scaled = spell.scaling?.[0]?.byLevel;
+  if (scaled) {
+    const at = Object.keys(scaled)
+      .map(Number)
+      .filter((l) => l <= caster.charLevel)
+      .sort((a, b) => b - a)[0];
+    if (at !== undefined) out.push(`${scaled[at]}${type}`);
+  } else {
+    const damage = tagDice(spell.entries, 'damage');
+    if (damage.length) out.push(`${damage.join(' or ')}${type}`);
+    else {
+      const heal = tagDice(spell.entries, 'dice', /regains? .*Hit Points?|Hit Points?.* regain/i);
+      if (heal.length) out.push(`heals ${heal[0]}`);
+    }
+  }
+  return out;
+}

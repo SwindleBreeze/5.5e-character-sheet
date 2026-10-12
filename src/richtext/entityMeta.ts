@@ -70,7 +70,7 @@ function spellComponents(spell: Spell): string {
   return parts.join(', ');
 }
 
-function spellDuration(spell: Spell): string {
+export function spellDuration(spell: Spell): string {
   return spell.duration
     .map((d) => {
       if (d.type === 'instant') return 'Instantaneous';

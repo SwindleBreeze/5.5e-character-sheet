@@ -7,9 +7,9 @@ import type { Character } from '../../../schema/index.ts';
 import { Badge } from '../../../ui/Badge.tsx';
 import { Button } from '../../../ui/Button.tsx';
 import { Counter } from '../../../ui/Counter.tsx';
-import { ABILITY_ABBR } from '../components/format.ts';
 import type { SpellEntry } from './entries.ts';
-import { castingTime } from './spellText.ts';
+import { spellDuration, spellRange, summaryOf } from '../../../richtext/entityMeta.ts';
+import { castingTime, spellNumbers } from './spellText.ts';
 import styles from './spells.module.css';
 
 function quickLabel(way: CastWay): string {
@@ -61,6 +61,17 @@ export function SpellRow({
   const resource = g?.resourceKey
     ? sheet.resources.find((r) => r.key === g.resourceKey)
     : undefined;
+  // What it does, right on the row: the caster's DC or attack bonus, damage or healing, range
+  // and duration, and its opening line.
+  const caster = sheet.spellcasting.casters.find((c) => c.key === e.from.caster?.key);
+  const numbers = s
+    ? spellNumbers(s, {
+        dc: caster?.dc.value ?? g?.dc,
+        attack: caster?.attack.bonus.value ?? g?.attack?.bonus.value ?? g?.attackBonus,
+        charLevel: sheet.charLevel,
+      })
+    : [];
+  const effect = s ? summaryOf(s.entries).text : '';
   return (
     <li className={styles.row} aria-label={s?.name ?? e.id}>
       <button type="button" className={styles.spellName} onClick={onOpen} disabled={!s}>
@@ -110,14 +121,14 @@ export function SpellRow({
           Ritual
         </Button>
       )}
+      {numbers.length > 0 && <span className={styles.numbers}>{numbers.join(' · ')}</span>}
       <span className={styles.meta}>
-        {s ? castingTime(s) : ''}
-        {s?.attack && ' · spell attack'}
-        {s?.saves?.[0] && ` · ${s.saves.map((a) => ABILITY_ABBR[a]).join(' or ')} save`}
+        {s ? [castingTime(s), spellRange(s), spellDuration(s)].join(' · ') : ''}
         {many && ` · ${e.sourceName}`}
         {g?.uses === 'atWill' && ' · at will'}
         {resource && ` · ${g!.cost ?? 1} ${resource.name} per cast`}
       </span>
+      {effect && <span className={styles.effect}>{effect}</span>}
     </li>
   );
 }

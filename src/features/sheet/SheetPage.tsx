@@ -53,7 +53,7 @@ export function SheetPage() {
   useEffect(() => {
     if (!index) return;
     apply((saved) => {
-      const c = unstackHeld(saved);
+      const c = unstackHeld(saved, undefined, index);
       return c.log.length
         ? refreshSnapshots(c, index, derive(c, index, { registry: featureEffects() }))
         : c;
