@@ -213,9 +213,9 @@ function ItemDetails({ row, bindings }: { row: InventoryItem; bindings: SheetBin
           label={`${row.name} quantity`}
           value={row.quantity}
           min={1}
-          onChange={(q) => apply((c) => setQuantity(c, row.uid, q))}
+          onChange={(q) => apply((c) => setQuantity(c, row.uid, q, undefined, index))}
         />
-        {row.equipped && (
+        {row.equipped && item?.itemKind !== 'ammo' && (
           <p className={styles.help}>Worn and held items are one each: more go to Carried.</p>
         )}
       </div>

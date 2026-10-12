@@ -128,6 +128,18 @@ describe('equipping (one armor, one Shield, two hands)', () => {
     expect(equipItem(next, 'shivs', null, index).inventory[1]?.equipped).toBeUndefined();
   });
 
+  it('ammunition is held as a bunch: the stack stays whole and is counted down', () => {
+    const c = character([row('arrows', 'arrow|tst', { quantity: 20 })]);
+    const held = equipItem(c, 'arrows', 'offHand', index, uid);
+    expect(held.inventory.map((r) => [r.uid, r.quantity, r.equipped ?? '-'])).toEqual([
+      ['arrows', 20, 'offHand'],
+    ]);
+    expect(unstackHeld(held, uid, index)).toBe(held);
+    const fewer = setQuantity(held, 'arrows', 19, uid, index);
+    expect(fewer.inventory.map((r) => [r.quantity, r.equipped])).toEqual([[19, 'offHand']]);
+    expect(spendAmmo(fewer, 'arrows', 'arrow|tst', index).inventory[0]?.quantity).toBe(18);
+  });
+
   it('worn and held items are one each: more go to Carried', () => {
     // Saved with two Shivs in one hand: one stays, the other is carried.
     const pair = character([row('shivs', 'shiv|tst', { quantity: 2, equipped: 'mainHand' })]);

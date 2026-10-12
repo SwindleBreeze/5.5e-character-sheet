@@ -1,4 +1,4 @@
-import { act, screen, within } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { resetDb } from '../../db/db.ts';
@@ -154,15 +154,22 @@ describe('sheet header and Main tab', () => {
   it('a tapped skill, save, ability or passive says what it is for, under how it adds up', async () => {
     const user = userEvent.setup();
     renderApp(`/c/${character.id}/main`);
-    const about = async (button: RegExp | string, title: string) => {
+    const about = async (button: RegExp | string, title: string, loaded?: string) => {
       await user.click(await screen.findByRole('button', { name: button }));
       const dialog = await screen.findByRole('dialog', { name: title });
-      const text = within(dialog).getByRole('region', { name: 'What it’s for' }).textContent;
+      const region = within(dialog).getByRole('region', { name: 'What it’s for' });
+      // Imported text loads after the dialog opens.
+      if (loaded) await waitFor(() => expect(region.textContent).toContain(loaded));
+      const text = region.textContent;
       await user.keyboard('{Escape}');
       return text;
     };
     // A skill: its own imported description, then what a check with it means.
-    const performance = await about('Performance, show how it adds up', 'Performance');
+    const performance = await about(
+      'Performance, show how it adds up',
+      'Performance',
+      'Entertain.',
+    );
     expect(performance).toContain('Entertain.');
     expect(performance).toContain('When the DM asks for a Charisma (Performance) check');
     // A save: when it comes up, and what the DC is.

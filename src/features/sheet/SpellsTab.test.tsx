@@ -100,11 +100,12 @@ describe('Spells tab', () => {
     const lantern = within(screen.getByRole('listitem', { name: 'Dim Lantern' }));
     expect(lantern.getByTitle('Concentration')).toBeInTheDocument();
     expect(lantern.getByTitle('Ritual')).toBeInTheDocument();
-    // Whether it calls for a spell attack or a save.
-    expect(lantern.getByText(/Bonus Action · spell attack · Lorekeeper/)).toBeInTheDocument();
-    expect(
-      within(screen.getByRole('listitem', { name: 'Rolling Boom' })).getByText(/DEX save/),
-    ).toBeInTheDocument();
+    // Whether it calls for a spell attack or a save, with the caster's numbers in, then when
+    // and how far it reaches, then what it does: no need to open it.
+    expect(lantern.getByText(/^spell attack \+\d+/)).toBeInTheDocument();
+    expect(lantern.getByText(/^Bonus Action · .* · Lorekeeper/)).toBeInTheDocument();
+    const boom = within(screen.getByRole('listitem', { name: 'Rolling Boom' }));
+    expect(boom.getByText(/^DEX save DC \d+/)).toBeInTheDocument();
   });
 
   it('expends and restores slots with the pips', async () => {

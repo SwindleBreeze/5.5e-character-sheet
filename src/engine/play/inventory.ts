@@ -91,18 +91,28 @@ export function consumeOne(c: Character, uid: string): Character {
   return n;
 }
 
-/** Set how many a row holds. Worn and held items are one each: more go to Carried. */
+/**
+ * Ammunition is held as a bunch (arrows in the hand that draws them), not one each: a held
+ * stack of it stays whole. Without the content, nothing is known to be ammunition.
+ */
+function heldAsBunch(r: InventoryItem, index: ContentIndex | undefined): boolean {
+  const item = r.itemRef && index ? index.get({ kind: 'item', id: r.itemRef.id }) : undefined;
+  return item?.kind === 'item' && item.itemKind === 'ammo';
+}
+
+/** Set how many a row holds. Worn and held items are one each (but ammunition): more go to Carried. */
 export function setQuantity(
   c: Character,
   uid: string,
   quantity: number,
   makeUid: MakeUid = newUid,
+  index?: ContentIndex,
 ): Character {
   const n = clone(c);
   const row = find(n, uid);
   if (!row) return c;
   row.quantity = Math.max(0, Math.floor(quantity));
-  return unstackHeld(n, makeUid);
+  return unstackHeld(n, makeUid, index);
 }
 
 /**
@@ -111,10 +121,15 @@ export function setQuantity(
  * itself when there is none, so characters saved with a held stack are fixed without a write
  * otherwise.
  */
-export function unstackHeld(c: Character, makeUid: MakeUid = newUid): Character {
-  if (!c.inventory.some((r) => r.equipped && r.quantity > 1)) return c;
+export function unstackHeld(
+  c: Character,
+  makeUid: MakeUid = newUid,
+  index?: ContentIndex,
+): Character {
+  const split = (r: InventoryItem) => !!r.equipped && r.quantity > 1 && !heldAsBunch(r, index);
+  if (!c.inventory.some(split)) return c;
   const n = clone(c);
-  for (const held of n.inventory.filter((r) => r.equipped && r.quantity > 1)) {
+  for (const held of n.inventory.filter(split)) {
     const extra = held.quantity - 1;
     held.quantity = 1;
     const stack = n.inventory.find(
@@ -186,7 +201,7 @@ export function equipItem(
     return n;
   }
   if (row.equipped === slot) return c;
-  if (row.quantity > 1) {
+  if (row.quantity > 1 && !heldAsBunch(row, index)) {
     const rest: InventoryItem = {
       ...structuredClone(row),
       uid: makeUid(),
