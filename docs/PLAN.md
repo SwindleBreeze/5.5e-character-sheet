@@ -45,10 +45,35 @@ Rules that every step follows:
 | 8     | 2014 content, from every book                                                          | Done (snapshots across rulesets left) |
 | 9     | Public release: SRD bundle, import your own content, legal pages                       | When publishing is decided (§5)       |
 
-Numbers on `main`: 864 unit tests in 101 files; 233 real-data checks in 21 files
+Numbers on `main`: 902 unit tests in 108 files; 233 real-data checks in 21 files
 (`FIVETOOLS_DATA=… npm run test:smoke`).
 
 ## 3. Now: play and fix (7.10)
+
+### 3.1 Next: say who rolls for a spell (play test, 2026-10-12)
+
+The spell row's "spell attack +7" reads like damage, and nothing says which spells need it. Only
+spells marked as an attack in the content use it; a save spell has the target roll; many spells
+need neither.
+
+- **Row:** one plain line for how the spell lands. An attack spell shows a "Roll to hit +7 vs AC"
+  button that rolls the d20. A save spell shows "Target makes a WIS save, DC 15", with no roll for
+  you. A spell with neither says "No roll to hit or save".
+- **Damage:** label it by when it applies: "on a hit", "on a failed save", or none. Make it a roll
+  button of its own, apart from the to-hit.
+- **Spells tab header:** rename "Spell attack" to "To hit with spell attacks" and "Save DC" to
+  "Your spell save DC". Each explanation says it applies only to spells that call for it.
+- **Tests:** an attack cantrip, a save cantrip, a spell with neither, and a spell with both a
+  save and damage.
+
+### 3.2 Then: a Combat tab in place of Actions (proposed, waiting for approval)
+
+A combat bar with Initiative (tap to roll), AC, HP (keypad), Speed, Concentration and conditions.
+At 0 HP, death saves replace HP in the bar. Below it, the turn tabs Action · Bonus · Reaction ·
+Move · Other, each with its note that is information only. Move lists your speeds and anything
+that changes them. Limited uses stay as they are. Old Actions links open Combat.
+
+### 3.3 The buffer
 
 The campaign is the test. Anything that reads wrong, adds up wrong or gets in the way at the
 table goes into this buffer and is fixed with a test that would have caught it, checked against
