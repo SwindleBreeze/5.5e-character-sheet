@@ -50,28 +50,25 @@ Numbers on `main`: 902 unit tests in 108 files; 233 real-data checks in 21 files
 
 ## 3. Now: play and fix (7.10)
 
-### 3.1 Next: say who rolls for a spell (play test, 2026-10-12)
+### 3.1 Done: say who rolls for a spell (play test, 2026-10-12)
 
-The spell row's "spell attack +7" reads like damage, and nothing says which spells need it. Only
-spells marked as an attack in the content use it; a save spell has the target roll; many spells
-need neither.
+Each spell row now says how the spell lands:
 
-- **Row:** one plain line for how the spell lands. An attack spell shows a "Roll to hit +7 vs AC"
-  button that rolls the d20. A save spell shows "Target makes a WIS save, DC 15", with no roll for
-  you. A spell with neither says "No roll to hit or save".
-- **Damage:** label it by when it applies: "on a hit", "on a failed save", or none. Make it a roll
-  button of its own, apart from the to-hit.
-- **Spells tab header:** rename "Spell attack" to "To hit with spell attacks" and "Save DC" to
-  "Your spell save DC". Each explanation says it applies only to spells that call for it.
-- **Tests:** an attack cantrip, a save cantrip, a spell with neither, and a spell with both a
-  save and damage.
+- an attack spell has a "Roll to hit +7 vs AC" button;
+- a save spell says "Target makes a WIS save, DC 15";
+- a spell with dice but neither roll says "No roll to hit or save".
 
-### 3.2 Then: a Combat tab in place of Actions (proposed, waiting for approval)
+Damage and healing roll on their own buttons, labelled "on a hit" or "on a failed save". The
+Spells tab header reads "Your spell save DC" and "To hit with spell attacks". Each says, when
+tapped, that it applies only to spells that call for it.
 
-A combat bar with Initiative (tap to roll), AC, HP (keypad), Speed, Concentration and conditions.
-At 0 HP, death saves replace HP in the bar. Below it, the turn tabs Action · Bonus · Reaction ·
-Move · Other, each with its note that is information only. Move lists your speeds and anything
-that changes them. Limited uses stay as they are. Old Actions links open Combat.
+### 3.2 Done: a Combat tab in place of Actions (2026-10-13)
+
+Initiative (tap to roll), Speed, and the death saves at 0 HP sit on top. HP, AC, Concentration
+and conditions stay in the header, which shows above every tab. Below are the turn tabs Action ·
+Bonus · Reaction · Move · Other, each with its note, which is information only. Move lists the
+speeds (tap for where each comes from) and links the rules on moving. Main and Combat share the
+Initiative, Speed and death-save pieces. Old Actions links open Combat.
 
 ### 3.3 The buffer
 

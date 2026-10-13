@@ -79,7 +79,7 @@ describe('Spells tab', () => {
     const lore = within(screen.getByRole('region', { name: 'Lorekeeper' }));
     expect(lore.getByText('13')).toBeInTheDocument();
     expect(
-      lore.getByRole('button', { name: 'Roll Lorekeeper spell attack, +5' }),
+      lore.getByRole('button', { name: 'Roll Lorekeeper to hit with spell attacks, +5' }),
     ).toBeInTheDocument();
     expect(lore.getByText(/any number of prepared spells/)).toBeInTheDocument();
     expect(lore.getByRole('button', { name: 'Change prepared' })).toBeInTheDocument();
@@ -100,12 +100,20 @@ describe('Spells tab', () => {
     const lantern = within(screen.getByRole('listitem', { name: 'Dim Lantern' }));
     expect(lantern.getByTitle('Concentration')).toBeInTheDocument();
     expect(lantern.getByTitle('Ritual')).toBeInTheDocument();
-    // Whether it calls for a spell attack or a save, with the caster's numbers in, then when
+    // Who rolls: you to hit, or the target to save, with the caster's numbers in; then when
     // and how far it reaches, then what it does: no need to open it.
-    expect(lantern.getByText(/^spell attack \+\d+/)).toBeInTheDocument();
+    expect(
+      lantern.getByRole('button', { name: /^Roll Dim Lantern to hit, \+\d+/ }),
+    ).toBeInTheDocument();
+    expect(lantern.getByText('vs AC', { exact: false })).toBeInTheDocument();
     expect(lantern.getByText(/^Bonus Action · .* · Lorekeeper/)).toBeInTheDocument();
     const boom = within(screen.getByRole('listitem', { name: 'Rolling Boom' }));
-    expect(boom.getByText(/^DEX save DC \d+/)).toBeInTheDocument();
+    expect(boom.getByText(/^Target makes a DEX save, DC \d+/)).toBeInTheDocument();
+    // Its damage rolls on its own, and says when it applies.
+    expect(
+      boom.getByRole('button', { name: 'Roll Rolling Boom: damage, 4d6' }),
+    ).toBeInTheDocument();
+    expect(boom.getByText('Thunder on a failed save')).toBeInTheDocument();
   });
 
   it('expends and restores slots with the pips', async () => {
@@ -128,10 +136,9 @@ describe('Spells tab', () => {
         'Prepared as a Lorekeeper spell: cast with a spell slot of its level or higher.',
       ),
     ).toBeInTheDocument();
-    expect(screen.getByText(/It calls for a ranged spell attack/)).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: 'Roll Dim Lantern: spell attack, +5' }),
-    ).toBeInTheDocument();
+    const dialog = within(screen.getByRole('dialog'));
+    expect(dialog.getByText(/It calls for a ranged spell attack/)).toBeInTheDocument();
+    expect(dialog.getByRole('button', { name: 'Roll Dim Lantern to hit, +5' })).toBeInTheDocument();
     const ways = within(await screen.findByRole('group', { name: 'Cast Dim Lantern' }));
     expect(ways.getAllByRole('button').map((b) => b.textContent)).toEqual([
       'Level 1 slot (4 left)',
@@ -291,14 +298,18 @@ describe('Spells tab', () => {
     ).toEqual(['As a Ritual (10 minutes longer, no slot)']);
   });
 
-  it('the spell attack and save DC say what they are and where they come from', async () => {
+  it('the spell attack and save DC say what they are, when they apply and where they come from', async () => {
     const user = userEvent.setup();
     renderTab(duo());
     const lore = within(screen.getByRole('region', { name: 'Lorekeeper' }));
-    await user.click(lore.getByRole('button', { name: 'Spell attack' }));
-    const sheet = within(await screen.findByRole('dialog', { name: 'Lorekeeper: spell attack' }));
+    await user.click(lore.getByRole('button', { name: 'To hit with spell attacks' }));
+    const sheet = within(
+      await screen.findByRole('dialog', { name: 'Lorekeeper: to hit with spell attacks' }),
+    );
     expect(
-      sheet.getByText(/calls for a spell attack, roll a d20 and add this bonus/),
+      sheet.getByText(
+        /Only for spells that call for a spell attack .* roll a d20 and add this bonus/,
+      ),
     ).toBeInTheDocument();
     expect(sheet.getByRole('rowheader', { name: 'Proficiency' })).toBeInTheDocument();
   });

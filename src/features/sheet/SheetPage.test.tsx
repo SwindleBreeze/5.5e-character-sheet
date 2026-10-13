@@ -205,13 +205,17 @@ describe('sheet header and Main tab', () => {
   });
 });
 
-describe('Actions tab', () => {
-  it('shows the attacks and the standard actions', async () => {
+describe('Combat tab', () => {
+  it('shows Initiative and Speed over the attacks and the standard actions', async () => {
+    // The old Actions address lands on the Combat tab.
     renderApp(`/c/${character.id}/actions`);
     const attacks = await screen.findByRole('tabpanel', { name: 'Turn: Actions' });
     expect(within(attacks).getByRole('listitem', { name: 'Unarmed Strike' })).toBeInTheDocument();
     expect(within(attacks).getByText('Anyone can')).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Actions' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: 'Combat' })).toHaveAttribute('aria-selected', 'true');
+    const combat = within(screen.getByRole('tabpanel', { name: 'Combat' }));
+    expect(combat.getByRole('group', { name: 'Initiative' })).toBeInTheDocument();
+    expect(combat.getByRole('button', { name: /^Speed/ })).toBeInTheDocument();
   });
 });
 

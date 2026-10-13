@@ -342,14 +342,25 @@
   font-size: var(--font-size-sm);
 }
 
-/* What a spell does, on its row: the roll and number (save DC, attack bonus) and its damage
-   or healing, then its opening line. */
-.numbers {
+/* What a spell does, on its row: who rolls and against what, then its damage or healing and
+   when it applies, then its opening line. */
+.landing {
+  display: flex;
   flex-basis: 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
   color: var(--color-text);
-  font-family: var(--numeric);
   font-size: var(--font-size-sm);
   font-weight: 600;
+}
+
+.dice {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-text-muted);
 }
 
 .effect {

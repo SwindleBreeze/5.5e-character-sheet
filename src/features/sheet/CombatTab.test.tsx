@@ -13,7 +13,7 @@ import { fixtureIndex } from '../../test/fixtureIndex.ts';
 import { face, fixedRng } from '../../test/rng.ts';
 import { SheetProvider } from '../../ui/BottomSheet.tsx';
 import { RollerProvider } from '../../ui/Roller.tsx';
-import { ActionsTab } from './ActionsTab.tsx';
+import { CombatTab } from './CombatTab.tsx';
 import type { CharacterUpdate } from './useCharacterActions.ts';
 
 let index: ContentIndex;
@@ -32,7 +32,7 @@ function Harness({ initial, registry }: { initial: Character; registry: FeatureE
     last = latest.current;
     setCharacter(latest.current);
   };
-  return <ActionsTab character={character} sheet={sheet} index={index} apply={apply} />;
+  return <CombatTab character={character} sheet={sheet} index={index} apply={apply} />;
 }
 
 function renderTab(character: Character, rng?: Rng, registry = FIXTURE_FEATURE_EFFECTS) {
@@ -85,7 +85,7 @@ async function limited(user: User) {
   return within(await screen.findByRole('dialog', { name: 'Limited use' }));
 }
 
-describe('Actions tab', () => {
+describe('Combat tab', () => {
   it('lists attacks in hand, the Unarmed Strike, then stowed weapons, each with how it is made', async () => {
     const user = userEvent.setup();
     renderTab(brute());
@@ -303,12 +303,27 @@ describe('Actions tab', () => {
       expect.stringMatching(/^Action\d+$/),
       expect.stringMatching(/^Bonus\d+$/),
       expect.stringMatching(/^Reaction\d+$/),
+      expect.stringMatching(/^Move\d+$/),
       expect.stringMatching(/^Other\d+$/),
     ]);
     await part(user, 'Bonus');
     expect(screen.getByText(/One Bonus Action on your turn/)).toBeInTheDocument();
     await part(user, 'Other');
     expect(screen.getByRole('tabpanel', { name: 'Turn: Other' })).toBeInTheDocument();
+  });
+
+  it('Initiative rolls on top; Move lists the speeds, each saying where it comes from', async () => {
+    const user = userEvent.setup();
+    renderTab(brute(), fixedRng([face(12, 20)]));
+    const initiative = within(screen.getByRole('group', { name: 'Initiative' }));
+    await user.click(initiative.getByRole('button', { name: /^Roll Initiative/ }));
+    expect(screen.getByRole('button', { name: /^Initiative: \d+\. Dismiss/ })).toBeInTheDocument();
+
+    await part(user, 'Move');
+    const move = within(screen.getByRole('tabpanel', { name: 'Turn: Move' }));
+    expect(move.getByText(/Move up to your Speed/)).toBeInTheDocument();
+    await user.click(move.getByRole('button', { name: 'Walk' }));
+    expect(await screen.findByRole('dialog', { name: 'Walk speed' })).toBeInTheDocument();
   });
 
   it('a potion is drunk as a Bonus Action: one is used up and its healing rolled', async () => {
