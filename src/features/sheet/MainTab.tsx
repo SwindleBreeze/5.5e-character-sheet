@@ -22,7 +22,7 @@ import { useSkillRule } from '../../content/hooks.ts';
 import { columnsFor, useContainerWidth } from '../../ui/useContainerWidth.ts';
 import { signed, situationalLines, skillName, titleCase } from './components/format.ts';
 import { AbilityCard, RollRow, SectionHeader, StatPill, ValueRow } from './components/stats.tsx';
-import { DeathSavesBlock, InitiativePill, SpeedPill } from './components/combatStats.tsx';
+import { DeathSavesBlock, HpTile, InitiativePill, SpeedPill } from './components/combatStats.tsx';
 import { paragraphs, useStatExplain } from './components/useStatExplain.tsx';
 import {
   ABILITY_ABOUT,
@@ -38,11 +38,9 @@ import {
   ConditionChips,
   ExhaustionStepper,
   HitDice,
-  HpWidget,
   Tiles,
   type ConditionOption,
 } from './components/vitals.tsx';
-import { useHpActions } from './play/useHpActions.tsx';
 import { nameOf, type SheetBindings } from './sheetBindings.ts';
 import styles from './MainTab.module.css';
 
@@ -103,14 +101,12 @@ export interface MainTabProps extends SheetBindings {
 export function MainTab({ character, sheet, index, apply, conditionOptions }: MainTabProps) {
   const ref = useRef<HTMLDivElement>(null);
   const columns = columnsFor(useContainerWidth(ref));
-  const hpActions = useHpActions({ character, sheet, index, apply });
 
   const { explainNumber, explainRoll } = useStatExplain(apply);
 
   const names = (kind: EntityKind, list: SourcedValue[]) =>
     list.map((v) => (v.value.includes('|') ? nameOf(index, kind, v.value) : titleCase(v.value)));
 
-  const hp = sheet.hp;
   const conditionName = (id: string) =>
     conditionOptions.find((o) => o.id === id)?.name ?? nameOf(index, 'rule', id);
   const sharedSaves = sharedSituational(ABILITIES.map((a) => sheet.saves[a]));
@@ -233,24 +229,7 @@ export function MainTab({ character, sheet, index, apply, conditionOptions }: Ma
     vitals: (
       <Section id="vitals" title="Health">
         <Tiles>
-          <HpWidget
-            values={{
-              current: hp.current,
-              max: hp.max.value,
-              temp: hp.temp,
-              ward: hp.ward && {
-                name: hp.ward.name,
-                current: hp.ward.current,
-                max: hp.ward.max.value,
-              },
-            }}
-            actions={hpActions}
-            onExplainMax={() =>
-              explainNumber('hpMax', 'Hit point maximum', hp.max, {
-                about: paragraphs(OTHER_ABOUT.hpMax),
-              })
-            }
-          />
+          <HpTile character={character} sheet={sheet} index={index} apply={apply} />
           <HitDice
             dice={sheet.hitDice}
             onChange={(faces, used) => apply((c) => setHitDiceUsed(c, sheet, faces, used))}

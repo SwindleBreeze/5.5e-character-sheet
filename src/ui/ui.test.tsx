@@ -192,6 +192,12 @@ describe('BottomSheet', () => {
     // jsdom has no AnimationEvent, so React listens for the prefixed name there.
     fireEvent(sheet, new Event('webkitAnimationEnd', { bubbles: true }));
     expect(sheet).toHaveAttribute('data-settled', 'true');
+    // A finger on it puts it back on its layer, so a pull down can close it (vaul reads the
+    // drag from its transform); a tap that didn't move it settles it again.
+    fireEvent.pointerDown(sheet);
+    expect(sheet).toHaveAttribute('data-settled', 'false');
+    fireEvent.pointerUp(sheet);
+    expect(sheet).toHaveAttribute('data-settled', 'true');
     // Closed and opened again: it slides in again first.
     await user.click(screen.getByRole('button', { name: 'Close' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());

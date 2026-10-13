@@ -381,10 +381,10 @@ button.name {
   min-width: 0;
 }
 
-/* Initiative and Speed, above the parts of the turn. */
+/* Hit Points, Initiative and Speed, above the parts of the turn. */
 .combatBar {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 11rem));
   gap: var(--space-2);
 }
 

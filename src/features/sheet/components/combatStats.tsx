@@ -1,5 +1,6 @@
-// The fight numbers the Main tab and the Combat tab share: Initiative (tap to roll), Speed, and
-// the death saves at 0 Hit Points. One place, so both tabs read and act the same.
+// The fight numbers the Main tab and the Combat tab share: Hit Points (tap for the damage and
+// healing keypad), Initiative (tap to roll), Speed, and the death saves at 0 Hit Points. One
+// place, so both tabs read and act the same.
 
 import { OTHER_ABOUT } from '../../../engine/explain/stats.ts';
 import { deathSave, setDeathSaves } from '../../../engine/play/reducers.ts';
@@ -8,10 +9,33 @@ import type { SheetBindings } from '../sheetBindings.ts';
 import { extraDice } from './format.ts';
 import { StatPill } from './stats.tsx';
 import { paragraphs, useStatExplain } from './useStatExplain.tsx';
-import { DeathSaves } from './vitals.tsx';
+import { useHpActions } from '../play/useHpActions.tsx';
+import { DeathSaves, HpWidget } from './vitals.tsx';
 import styles from './vitals.module.css';
 
 type Bindings = Pick<SheetBindings, 'character' | 'sheet' | 'apply'>;
+
+export function HpTile(bindings: SheetBindings) {
+  const { explainNumber } = useStatExplain(bindings.apply);
+  const actions = useHpActions(bindings);
+  const hp = bindings.sheet.hp;
+  return (
+    <HpWidget
+      values={{
+        current: hp.current,
+        max: hp.max.value,
+        temp: hp.temp,
+        ward: hp.ward && { name: hp.ward.name, current: hp.ward.current, max: hp.ward.max.value },
+      }}
+      actions={actions}
+      onExplainMax={() =>
+        explainNumber('hpMax', 'Hit point maximum', hp.max, {
+          about: paragraphs(OTHER_ABOUT.hpMax),
+        })
+      }
+    />
+  );
+}
 
 export function InitiativePill({ sheet, apply }: Omit<Bindings, 'character'>) {
   const { explainRoll } = useStatExplain(apply);
