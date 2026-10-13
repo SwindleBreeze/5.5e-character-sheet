@@ -381,16 +381,23 @@ button.name {
   min-width: 0;
 }
 
-/* Action · Bonus · Reaction · Other: stays in view while the list scrolls (the panel scrolls,
-   so it is pinned to the panel's top, over its padding). */
+/* Initiative and Speed, above the parts of the turn. */
+.combatBar {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: var(--space-2);
+}
+
+/* Action · Bonus · Reaction · Move · Other: stays in view while the list scrolls (the panel
+   scrolls, so it is pinned to the panel's top, over its padding). */
 .turnBar {
   position: sticky;
   top: calc(-1 * var(--space-4));
   z-index: 1;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: var(--space-1);
-  margin: calc(-1 * var(--space-4)) calc(-1 * var(--space-4)) 0;
+  margin: 0 calc(-1 * var(--space-4));
   padding: var(--space-2) var(--space-4);
   border-bottom: 1px solid var(--color-border);
   background: var(--color-bg);
@@ -537,6 +544,16 @@ button.name {
   font-size: var(--font-size-sm);
   font-weight: 600;
   cursor: pointer;
+}
+
+/* Numbers that explain themselves (the speeds), in one card. */
+.valueRows {
+  margin: 0;
+  padding: 0 var(--card-padding);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  list-style: none;
 }
 
 .rows {

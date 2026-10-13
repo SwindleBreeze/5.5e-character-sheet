@@ -147,18 +147,18 @@ export function SpellsTab({ character, sheet, index, apply }: SheetBindings) {
             onExplainDc={() =>
               explain({
                 key: `spells.${c.key}.dc`,
-                title: `${c.name}: spell save DC`,
+                title: `${c.name}: your spell save DC`,
                 derived: c.dc,
-                note: 'When one of your spells calls for a saving throw, the target rolls against this number.',
+                note: 'Only for spells that call for a saving throw: the target rolls, and needs this number or more to resist. You roll nothing.',
               })
             }
             onExplainAttack={() =>
               explain({
                 key: `spells.${c.key}.attack`,
-                title: `${c.name}: spell attack`,
+                title: `${c.name}: to hit with spell attacks`,
                 derived: c.attack.bonus,
                 bonus: true,
-                note: 'When one of your spells calls for a spell attack, roll a d20 and add this bonus. It hits when the total equals or exceeds the target’s Armor Class.',
+                note: 'Only for spells that call for a spell attack (each spell’s row says “Roll to hit”): roll a d20 and add this bonus. It hits when the total equals or exceeds the target’s Armor Class. Save spells and spells with neither don’t use it.',
               })
             }
             onPrepare={() => openPrepare(c)}
@@ -285,15 +285,15 @@ function CasterCard({
       <div className={styles.stats}>
         <span className={styles.stat}>
           <button type="button" className={styles.statButton} onClick={onExplainDc}>
-            Save DC
+            Your spell save DC
           </button>
           <span className={`${styles.dc} numeric`}>{c.dc.value}</span>
         </span>
         <span className={styles.stat}>
           <button type="button" className={styles.statButton} onClick={onExplainAttack}>
-            Spell attack
+            To hit with spell attacks
           </button>
-          <RollButton label={`${c.name} spell attack`} roll={c.attack} />
+          <RollButton label={`${c.name} to hit with spell attacks`} roll={c.attack} />
         </span>
       </div>
       <p className={styles.muted}>

@@ -11,7 +11,7 @@ import { derive } from '../../engine/derive/derive.ts';
 import { featureEffects } from '../../engine/featureEffects/index.ts';
 import { useRoller } from '../../ui/rollerContext.ts';
 import { SwipeTabs, type TabDef } from '../../ui/SwipeTabs.tsx';
-import { ActionsTab } from './ActionsTab.tsx';
+import { CombatTab } from './CombatTab.tsx';
 import { DescriptionTab } from './DescriptionTab.tsx';
 import { ExtrasTab } from './ExtrasTab.tsx';
 import { FeaturesTab } from './FeaturesTab.tsx';
@@ -60,6 +60,8 @@ export function SheetPage() {
     });
   }, [index, apply]);
 
+  // The Combat tab was the Actions tab: old links and bookmarks still land on it.
+  if (tab === 'actions') return <Navigate to={`/c/${id}/combat`} replace />;
   if (!SHEET_TABS.some((t) => t.id === tab)) return <Navigate to={`/c/${id}/main`} replace />;
   if (stored === undefined) return <TopBar title="" backTo="/" />;
   if (stored === null || !character) {
@@ -86,8 +88,8 @@ export function SheetPage() {
     switch (id) {
       case 'main':
         return <MainTab {...b} conditionOptions={options} />;
-      case 'actions':
-        return <ActionsTab {...b} />;
+      case 'combat':
+        return <CombatTab {...b} />;
       case 'spells':
         return <SpellsTab {...b} />;
       case 'inventory':

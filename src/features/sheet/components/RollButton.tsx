@@ -43,3 +43,28 @@ export function RollButton({ label, roll, size = 'md', critOn, onRolled }: RollB
     </button>
   );
 }
+
+/** Dice that roll when tapped, with no d20: a spell's damage or healing. */
+export function DiceButton({
+  label,
+  expr,
+  size = 'md',
+}: {
+  /** What is rolled: `Toll the Dead: damage`. */
+  label: string;
+  expr: string;
+  size?: 'sm' | 'md' | 'lg';
+}) {
+  const roller = useRoller();
+  return (
+    <button
+      type="button"
+      className={`${styles.roll} numeric`}
+      data-size={size}
+      aria-label={`Roll ${label}, ${expr}`}
+      onClick={() => roller.roll({ label, expr })}
+    >
+      {expr}
+    </button>
+  );
+}

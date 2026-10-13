@@ -3,7 +3,7 @@ import type { ContentIndex } from '../../../engine/content/contentIndex.ts';
 import type { DerivedSheet } from '../../../engine/derive/types.ts';
 import type { Character, Item, Spell } from '../../../schema/index.ts';
 import type { SpellEntry } from '../spells/entries.ts';
-import { attackPart, togglePart, turnGroups } from './turn.ts';
+import { attackPart, MOVE_RULES, togglePart, turnGroups } from './turn.ts';
 
 const attack = (id: string, use: object, extra: object = {}) =>
   ({ id, name: id, kind: 'weapon', use, ready: true, ...extra }) as never;
@@ -15,7 +15,7 @@ const spell = (id: string, unit: string): SpellEntry => ({
   sourceName: 'Caster',
 });
 
-describe('the Actions tab by part of the turn', () => {
+describe('the Combat tab by part of the turn', () => {
   it('attacks: the Attack action; the Light extra attack a Bonus Action unless Nick; cantrips by casting time', () => {
     expect(attackPart(attack('a', { kind: 'attackAction' }))).toBe('action');
     expect(attackPart(attack('b', { kind: 'lightExtra', nick: false }))).toBe('bonus');
@@ -69,5 +69,10 @@ describe('the Actions tab by part of the turn', () => {
     const old = turnGroups({ ...character, ruleset: '2014' }, sheet, index, ready);
     expect(old.action.potions).toHaveLength(1);
     expect(old.bonus.potions).toHaveLength(0);
+  });
+
+  it('Move links the rules on moving, as the 2024 rules name them', () => {
+    expect(MOVE_RULES.map((r) => r.ref.id)).toContain('variantrule/climbing|xphb');
+    expect(MOVE_RULES.map((r) => r.ref.id)).toContain('condition/prone|xphb');
   });
 });

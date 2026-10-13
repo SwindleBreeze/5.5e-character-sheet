@@ -1,9 +1,11 @@
-// The Actions tab (plan §9.2, step 3.17; play-test redesign): what the character can do in a
-// fight, by the part of the turn it takes. Four tabs (Action, Bonus, Reaction, Other), each a
-// short list: attacks with tap-to-roll numbers (details a tap away), feature actions, switches,
-// Bonus Action and Reaction spells, potions, and the actions everyone has. Limited-use counters
-// sit in one line above. Each tab says what the turn allows; nothing tracks it: that is the
-// player's to keep in mind. Side by side when there is room.
+// The Combat tab (plan §9.2, step 3.17; play-test redesigns, plan §3.2): everything for a fight
+// on one screen. On top, Initiative to roll and the Speed, and the death saves at 0 Hit Points
+// (HP, AC, Concentration and conditions are in the sheet's header, above every tab). Below, by
+// the part of the turn it takes, five tabs (Action, Bonus, Reaction, Move, Other), each a short
+// list: attacks with tap-to-roll numbers (details a tap away), feature actions, switches, Bonus
+// Action and Reaction spells, potions, the actions everyone has, and the speeds with the rules
+// on moving. Limited-use counters sit in one line above. Each tab says what the turn allows;
+// nothing tracks it: that is the player's to keep in mind. Side by side when there is room.
 
 import { useRef, useState, type ReactNode } from 'react';
 import {
@@ -35,13 +37,21 @@ import { ActionCard, ResourceCard, ToggleCard } from './actions/FeatureCards.tsx
 import actionStyles from './actions/actions.module.css';
 import {
   groupSize,
+  MOVE_RULES,
   TURN_NOTES,
   TURN_PARTS,
   turnGroups,
   type PotionRow,
+  type CombatPart,
   type TurnGroup,
   type TurnPart,
 } from './actions/turn.ts';
+import { DeathSavesBlock, InitiativePill, SpeedPill } from './components/combatStats.tsx';
+import { titleCase } from './components/format.ts';
+import { ValueRow } from './components/stats.tsx';
+import { paragraphs, useStatExplain } from './components/useStatExplain.tsx';
+import { OTHER_ABOUT } from '../../engine/explain/stats.ts';
+import type { MoveMode } from '../../schema/index.ts';
 import { useCostPicker } from './components/useCostPicker.tsx';
 import { useExplain } from './components/useExplain.tsx';
 import { useLiveBindings, usePublishBindings } from './liveBindings.ts';
@@ -77,7 +87,7 @@ function Heading({
   );
 }
 
-export function ActionsTab(bindings: SheetBindings) {
+export function CombatTab(bindings: SheetBindings) {
   const { character, sheet, index, apply } = bindings;
   usePublishBindings(bindings);
   const ref = useRef<HTMLDivElement>(null);
@@ -90,7 +100,8 @@ export function ActionsTab(bindings: SheetBindings) {
   const rollAmount: RollAmount = (expr, label) => roller.roll({ label, expr }).total;
   const pay = useCostPicker();
   const casting = useSpellCasting({ character, sheet, index, apply });
-  const [part, setPart] = useState<TurnPart>('action');
+  const { explainNumber } = useStatExplain(apply);
+  const [part, setPart] = useState<CombatPart>('action');
 
   const groups = turnGroups(character, sheet, index, spellLists(sheet, index).ready);
   const perAction = sheet.attacksPerAction.value;
@@ -349,7 +360,64 @@ export function ActionsTab(bindings: SheetBindings) {
     </button>
   ) : null;
 
-  const note = (p: TurnPart) => (
+  // Moving: each speed (tap for where it comes from: what changes it) and the rules on moving.
+  const speeds = (
+    Object.entries(sheet.speed) as [MoveMode, (typeof sheet.speed)[MoveMode]][]
+  ).filter((e): e is [MoveMode, NonNullable<(typeof e)[1]>] => !!e[1]);
+  const moveContent = (
+    <>
+      <section className={actionStyles.group}>
+        <Heading sub={wide}>Speed, in feet</Heading>
+        <ul className={actionStyles.valueRows}>
+          {speeds.map(([mode, d]) => (
+            <ValueRow
+              key={mode}
+              label={titleCase(mode)}
+              derived={d}
+              onExplain={() =>
+                explainNumber(`speed.${mode}`, `${titleCase(mode)} speed`, d, {
+                  about: paragraphs(OTHER_ABOUT.speed),
+                })
+              }
+            />
+          ))}
+        </ul>
+      </section>
+      <section className={actionStyles.group}>
+        <Heading sub={wide}>Rules for moving</Heading>
+        <div className={actionStyles.everyone}>
+          {MOVE_RULES.map((r) => (
+            <button
+              key={r.name}
+              type="button"
+              className={actionStyles.tag}
+              onClick={() => openRule(r.ref, r.name)}
+            >
+              {r.name}
+            </button>
+          ))}
+        </div>
+      </section>
+    </>
+  );
+  const partContent = (p: CombatPart) => (p === 'move' ? moveContent : content(p, groups[p]));
+  const partSize = (p: CombatPart) =>
+    p === 'move'
+      ? speeds.length
+      : groupSize(groups[p]) + (p === 'reaction' && groups.reaction.standard.length ? 1 : 0);
+
+  // What the header doesn't show: Initiative and Speed, and the death saves when they count.
+  const combatBar = (
+    <>
+      <div className={actionStyles.combatBar}>
+        <InitiativePill sheet={sheet} apply={apply} />
+        <SpeedPill sheet={sheet} apply={apply} />
+      </div>
+      <DeathSavesBlock character={character} sheet={sheet} apply={apply} />
+    </>
+  );
+
+  const note = (p: CombatPart) => (
     <p className={actionStyles.turnNote}>
       <span className={actionStyles.dot} data-part={p} aria-hidden="true" />
       {TURN_NOTES[p]}
@@ -360,6 +428,7 @@ export function ActionsTab(bindings: SheetBindings) {
   if (wide) {
     return (
       <div ref={ref} className={actionStyles.turn}>
+        {combatBar}
         {resources}
         <div className={actionStyles.turnColumns}>
           {(['action', 'bonus', 'reaction'] as const).map((p) => (
@@ -367,6 +436,13 @@ export function ActionsTab(bindings: SheetBindings) {
               <h2 className={actionStyles.columnTitle}>{TITLE[p]}</h2>
               {note(p)}
               {content(p, groups[p])}
+              {p === 'bonus' && (
+                <>
+                  <h2 className={actionStyles.columnTitle}>{TITLE.move}</h2>
+                  {note('move')}
+                  {moveContent}
+                </>
+              )}
               {p === 'reaction' && groupSize(groups.other) > 0 && (
                 <>
                   <h2 className={actionStyles.columnTitle}>Other</h2>
@@ -383,6 +459,8 @@ export function ActionsTab(bindings: SheetBindings) {
 
   return (
     <div ref={ref} className={actionStyles.turn}>
+      {combatBar}
+      {resources}
       <div className={actionStyles.turnBar} role="tablist" aria-label="Part of the turn">
         {TURN_PARTS.map(({ part: p, title }) => (
           <button
@@ -394,25 +472,23 @@ export function ActionsTab(bindings: SheetBindings) {
             onClick={() => setPart(p)}
           >
             {title}
-            <span className={actionStyles.turnCount}>
-              {groupSize(groups[p]) + (p === 'reaction' && groups.reaction.standard.length ? 1 : 0)}
-            </span>
+            <span className={actionStyles.turnCount}>{partSize(p)}</span>
           </button>
         ))}
       </div>
-      {resources}
       <div role="tabpanel" aria-label={`Turn: ${TITLE[part]}`} className={actionStyles.turnPanel}>
         {note(part)}
-        {content(part, groups[part])}
+        {partContent(part)}
       </div>
     </div>
   );
 }
 
-const TITLE: Record<TurnPart, string> = {
+const TITLE: Record<CombatPart, string> = {
   action: 'Actions',
   bonus: 'Bonus Actions',
   reaction: 'Reactions',
+  move: 'Move',
   other: 'Other',
 };
 

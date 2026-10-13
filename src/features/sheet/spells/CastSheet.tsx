@@ -60,7 +60,7 @@ export function CastSheet({
         <p className={styles.resolve}>
           <span>{resolveText(spell, dc)}</span>
           {spell.attack && attack && (
-            <RollButton label={`${spell.name}: spell attack`} roll={attack} size="sm" />
+            <RollButton label={`${spell.name} to hit`} roll={attack} size="sm" />
           )}
         </p>
       )}

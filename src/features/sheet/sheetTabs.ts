@@ -1,7 +1,7 @@
 /** Sheet tabs in their default order (plan §7). */
 export const SHEET_TABS = [
   { id: 'main', label: 'Main' },
-  { id: 'actions', label: 'Actions' },
+  { id: 'combat', label: 'Combat' },
   { id: 'spells', label: 'Spells' },
   { id: 'inventory', label: 'Inventory' },
   { id: 'features', label: 'Features' },

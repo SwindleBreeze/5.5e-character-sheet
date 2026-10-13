@@ -9,7 +9,8 @@ import { Button } from '../../../ui/Button.tsx';
 import { Counter } from '../../../ui/Counter.tsx';
 import type { SpellEntry } from './entries.ts';
 import { spellDuration, spellRange, summaryOf } from '../../../richtext/entityMeta.ts';
-import { castingTime, spellNumbers } from './spellText.ts';
+import { DiceButton, RollButton } from '../components/RollButton.tsx';
+import { castingTime, howText, spellLanding } from './spellText.ts';
 import styles from './spells.module.css';
 
 function quickLabel(way: CastWay): string {
@@ -61,16 +62,18 @@ export function SpellRow({
   const resource = g?.resourceKey
     ? sheet.resources.find((r) => r.key === g.resourceKey)
     : undefined;
-  // What it does, right on the row: the caster's DC or attack bonus, damage or healing, range
-  // and duration, and its opening line.
+  // What it does, right on the row: who rolls (you to hit, the target to save, or nobody) with
+  // the caster's numbers, the damage or healing and when it applies, range and duration, and
+  // its opening line.
   const caster = sheet.spellcasting.casters.find((c) => c.key === e.from.caster?.key);
-  const numbers = s
-    ? spellNumbers(s, {
+  const attackRoll = caster?.attack ?? g?.attack;
+  const landing = s
+    ? spellLanding(s, {
         dc: caster?.dc.value ?? g?.dc,
-        attack: caster?.attack.bonus.value ?? g?.attack?.bonus.value ?? g?.attackBonus,
+        attack: attackRoll?.bonus.value ?? g?.attackBonus,
         charLevel: sheet.charLevel,
       })
-    : [];
+    : undefined;
   const effect = s ? summaryOf(s.entries).text : '';
   return (
     <li className={styles.row} aria-label={s?.name ?? e.id}>
@@ -121,7 +124,31 @@ export function SpellRow({
           Ritual
         </Button>
       )}
-      {numbers.length > 0 && <span className={styles.numbers}>{numbers.join(' · ')}</span>}
+      {s && landing && (landing.how.kind !== 'none' || landing.dice.length > 0) && (
+        <span className={styles.landing}>
+          {landing.how.kind === 'attack' && attackRoll ? (
+            <>
+              Roll to hit <RollButton label={`${s.name} to hit`} roll={attackRoll} size="sm" /> vs
+              AC
+            </>
+          ) : (
+            howText(landing.how)
+          )}
+          {landing.dice.length > 0 && (
+            <span className={styles.dice}>
+              {landing.dice.map((d) => (
+                <DiceButton
+                  key={d}
+                  label={`${s.name}: ${landing.what === 'healing' ? 'healing' : 'damage'}`}
+                  expr={d}
+                  size="sm"
+                />
+              ))}
+              {[landing.what, landing.when].filter(Boolean).join(' ')}
+            </span>
+          )}
+        </span>
+      )}
       <span className={styles.meta}>
         {s ? [castingTime(s), spellRange(s), spellDuration(s)].join(' · ') : ''}
         {many && ` · ${e.sourceName}`}

@@ -133,45 +133,73 @@ function tagDice(entries: readonly unknown[], tag: 'damage' | 'dice', near?: Reg
   return out;
 }
 
+/** How a spell lands: who rolls, and against what. */
+export type SpellHow =
+  /** You roll a d20 to hit, against the target's Armor Class. */
+  | { kind: 'attack'; bonus?: number | undefined }
+  /** The target rolls a save against your DC; you roll nothing. */
+  | { kind: 'save'; abilities: string[]; dc?: number | undefined }
+  /** Nobody rolls to see whether it works. */
+  | { kind: 'none' };
+
+export interface SpellLanding {
+  how: SpellHow;
+  /** Its damage or healing dice; several when the text gives a choice (Toll the Dead). */
+  dice: string[];
+  /** Damage types, or `healing`. */
+  what?: string;
+  /** When the dice apply: `on a hit`, `on a failed save`. */
+  when?: string;
+}
+
 /**
  * What a spell does at a glance, without opening it (play-test fix: Hunter's Mark, Toll the
  * Dead): who rolls what and against which number, and its damage or healing. The caster's
  * own DC and attack bonus are filled in; a cantrip's damage is the one for the character's
  * level.
  */
-export function spellNumbers(
+export function spellLanding(
   spell: Spell,
   caster: { dc?: number | undefined; attack?: number | undefined; charLevel: number },
-): string[] {
-  const out: string[] = [];
-  const abbr = (a: string) => a.toUpperCase();
-  if (spell.attack) {
-    const bonus = caster.attack;
-    out.push(
-      bonus === undefined
-        ? 'spell attack'
-        : `spell attack ${bonus < 0 ? '−' : '+'}${Math.abs(bonus)}`,
-    );
-  } else if (spell.saves?.length) {
-    out.push(
-      `${spell.saves.map(abbr).join(' or ')} save${caster.dc !== undefined ? ` DC ${caster.dc}` : ''}`,
-    );
-  }
-  const type = spell.damageTypes?.length ? ` ${spell.damageTypes.map(titleCase).join(' or ')}` : '';
+): SpellLanding {
+  const how: SpellHow = spell.attack
+    ? { kind: 'attack', bonus: caster.attack }
+    : spell.saves?.length
+      ? { kind: 'save', abilities: spell.saves.map((a) => a.toUpperCase()), dc: caster.dc }
+      : { kind: 'none' };
+  const when =
+    how.kind === 'attack' ? 'on a hit' : how.kind === 'save' ? 'on a failed save' : undefined;
+  const types = spell.damageTypes?.length
+    ? spell.damageTypes.map(titleCase).join(' or ')
+    : undefined;
+  const damage = (dice: string[]): SpellLanding =>
+    dice.length
+      ? { how, dice, ...(types ? { what: types } : {}), ...(when ? { when } : {}) }
+      : { how, dice };
   const scaled = spell.scaling?.[0]?.byLevel;
   if (scaled) {
     const at = Object.keys(scaled)
       .map(Number)
       .filter((l) => l <= caster.charLevel)
       .sort((a, b) => b - a)[0];
-    if (at !== undefined) out.push(`${scaled[at]}${type}`);
-  } else {
-    const damage = tagDice(spell.entries, 'damage');
-    if (damage.length) out.push(`${damage.join(' or ')}${type}`);
-    else {
-      const heal = tagDice(spell.entries, 'dice', /regains? .*Hit Points?|Hit Points?.* regain/i);
-      if (heal.length) out.push(`heals ${heal[0]}`);
-    }
+    return damage(at !== undefined ? [scaled[at]!] : []);
   }
-  return out;
+  const dice = tagDice(spell.entries, 'damage');
+  if (dice.length) return damage(dice);
+  const heal = tagDice(spell.entries, 'dice', /regains? .*Hit Points?|Hit Points?.* regain/i);
+  return heal.length ? { how, dice: [heal[0]!], what: 'healing' } : { how, dice: [] };
+}
+
+/** `Roll to hit +7 vs AC`, `Target makes a WIS save, DC 15`, `No roll to hit or save`. */
+export function howText(how: SpellHow): string {
+  switch (how.kind) {
+    case 'attack':
+      return how.bonus === undefined
+        ? 'Roll to hit vs AC'
+        : `Roll to hit ${how.bonus < 0 ? '−' : '+'}${Math.abs(how.bonus)} vs AC`;
+    case 'save':
+      return `Target makes a ${how.abilities.join(' or ')} save${how.dc !== undefined ? `, DC ${how.dc}` : ''}`;
+    case 'none':
+      return 'No roll to hit or save';
+  }
 }

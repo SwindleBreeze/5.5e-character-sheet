@@ -1,51 +1,61 @@
 import { describe, expect, it } from 'vitest';
 import type { Spell } from '../../../schema/index.ts';
-import { spellNumbers } from './spellText.ts';
+import { howText, spellLanding } from './spellText.ts';
 
 const spell = (extra: Partial<Spell>) =>
   ({ entries: [], damageTypes: [], ...extra }) as unknown as Spell;
 const at = { dc: 14, attack: 6, charLevel: 5 };
 
+const line = (s: Spell) => {
+  const l = spellLanding(s, at);
+  return [howText(l.how), [...l.dice, l.what, l.when].filter(Boolean).join(' ')];
+};
+
 describe('a spell’s numbers on its row', () => {
-  it('a save: the abilities and the caster’s DC; its damage dice and type', () => {
+  it('a save: the target rolls against the caster’s DC; damage on a failed save', () => {
     expect(
-      spellNumbers(
+      line(
         spell({
           saves: ['wis'],
           damageTypes: ['necrotic'],
           entries: ['Take {@damage 1d8} damage, or {@damage 1d12} when hurt.'],
         }),
-        at,
       ),
-    ).toEqual(['WIS save DC 14', '1d8 or 1d12 Necrotic']);
+    ).toEqual(['Target makes a WIS save, DC 14', '1d8 1d12 Necrotic on a failed save']);
   });
 
-  it('an attack with the caster’s bonus; a cantrip’s damage for the character’s level', () => {
+  it('an attack: you roll to hit with the caster’s bonus; a cantrip’s damage on a hit', () => {
     expect(
-      spellNumbers(
+      line(
         spell({
           attack: 'ranged',
           damageTypes: ['fire'],
           scaling: [{ label: 'damage', byLevel: { 1: '1d10', 5: '2d10', 11: '3d10' } }],
         }),
-        at,
       ),
-    ).toEqual(['spell attack +6', '2d10 Fire']);
+    ).toEqual(['Roll to hit +6 vs AC', '2d10 Fire on a hit']);
   });
 
   it('a rider spell’s extra damage; healing; nothing to show', () => {
     expect(
-      spellNumbers(
+      line(
         spell({
           damageTypes: ['force'],
           entries: [{ type: 'entries', entries: ['Deal an extra {@damage 1d6} damage.'] }] as never,
         }),
-        at,
       ),
-    ).toEqual(['1d6 Force']);
-    expect(
-      spellNumbers(spell({ entries: ['A creature regains {@dice 2d4} Hit Points.'] }), at),
-    ).toEqual(['heals 2d4']);
-    expect(spellNumbers(spell({ entries: ['You can see in the dark.'] }), at)).toEqual([]);
+    ).toEqual(['No roll to hit or save', '1d6 Force']);
+    expect(line(spell({ entries: ['A creature regains {@dice 2d4} Hit Points.'] }))).toEqual([
+      'No roll to hit or save',
+      '2d4 healing',
+    ]);
+    expect(line(spell({ entries: ['You can see in the dark.'] }))).toEqual([
+      'No roll to hit or save',
+      '',
+    ]);
+    // A save with no dice says so; with no caster, no DC.
+    expect(howText(spellLanding(spell({ saves: ['con', 'str'] }), { charLevel: 1 }).how)).toBe(
+      'Target makes a CON or STR save',
+    );
   });
 });

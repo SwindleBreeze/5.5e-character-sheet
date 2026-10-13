@@ -3,38 +3,27 @@
 // two on tablets, three on wide screens. Every number explains itself when tapped; d20 numbers roll.
 
 import { useRef, type ReactNode } from 'react';
-import type { Derived, DerivedRoll, SourcedValue } from '../../engine/derive/types.ts';
+import type { DerivedRoll, SourcedValue } from '../../engine/derive/types.ts';
 import {
-  deathSave,
   addCondition,
   removeCondition,
-  setDeathSaves,
   setExhaustion,
   setHeroicInspiration,
   setHitDiceUsed,
-  setOverride,
 } from '../../engine/play/reducers.ts';
 import {
   ABILITIES,
   ABILITY_NAMES,
   SKILLS,
   type EntityKind,
-  type OverrideKey,
   type Skill,
 } from '../../schema/index.ts';
 import { useSkillRule } from '../../content/hooks.ts';
-import { useRoller, d20Expr } from '../../ui/rollerContext.ts';
 import { columnsFor, useContainerWidth } from '../../ui/useContainerWidth.ts';
-import {
-  extraDice,
-  rollNoteLines,
-  signed,
-  situationalLines,
-  skillName,
-  titleCase,
-} from './components/format.ts';
+import { signed, situationalLines, skillName, titleCase } from './components/format.ts';
 import { AbilityCard, RollRow, SectionHeader, StatPill, ValueRow } from './components/stats.tsx';
-import { useExplain } from './components/useExplain.tsx';
+import { DeathSavesBlock, InitiativePill, SpeedPill } from './components/combatStats.tsx';
+import { paragraphs, useStatExplain } from './components/useStatExplain.tsx';
 import {
   ABILITY_ABOUT,
   checkHow,
@@ -47,7 +36,6 @@ import {
 import { InlineText } from '../../richtext/InlineText.tsx';
 import {
   ConditionChips,
-  DeathSaves,
   ExhaustionStepper,
   HitDice,
   HpWidget,
@@ -73,11 +61,6 @@ const LAYOUTS: Record<1 | 2 | 3, SectionId[][]> = {
     ['skills', 'proficiencies'],
   ],
 };
-
-function rollNote(r: DerivedRoll): ReactNode {
-  const lines = rollNoteLines(r);
-  return lines.length ? lines.map((l) => <p key={l}>{l}</p>) : null;
-}
 
 /**
  * Situational lines every save has (Fey Ancestry: against being Charmed): said once under the
@@ -120,22 +103,9 @@ export interface MainTabProps extends SheetBindings {
 export function MainTab({ character, sheet, index, apply, conditionOptions }: MainTabProps) {
   const ref = useRef<HTMLDivElement>(null);
   const columns = columnsFor(useContainerWidth(ref));
-  const explain = useExplain();
-  const roller = useRoller();
   const hpActions = useHpActions({ character, sheet, index, apply });
 
-  const override = (key: OverrideKey) => (value: number | undefined) =>
-    apply((c) => setOverride(c, key, value));
-  const explainNumber = (
-    key: OverrideKey,
-    title: string,
-    derived: Derived,
-    opts: { bonus?: boolean; note?: ReactNode; about?: ReactNode } = {},
-  ) => explain({ key, title, derived, ...opts, onOverride: override(key) });
-  const explainRoll = (key: OverrideKey, title: string, r: DerivedRoll, about?: ReactNode) =>
-    explainNumber(key, title, r.bonus, { bonus: true, note: rollNote(r), about });
-  const paragraphs = (...lines: (ReactNode | undefined)[]) =>
-    lines.filter(Boolean).map((l, i) => <p key={i}>{l}</p>);
+  const { explainNumber, explainRoll } = useStatExplain(apply);
 
   const names = (kind: EntityKind, list: SourcedValue[]) =>
     list.map((v) => (v.value.includes('|') ? nameOf(index, kind, v.value) : titleCase(v.value)));
@@ -143,12 +113,6 @@ export function MainTab({ character, sheet, index, apply, conditionOptions }: Ma
   const hp = sheet.hp;
   const conditionName = (id: string) =>
     conditionOptions.find((o) => o.id === id)?.name ?? nameOf(index, 'rule', id);
-  const ds = character.state.deathSaves;
-  const speedModes = Object.entries(sheet.speed).filter(([mode]) => mode !== 'walk');
-  // Weight slows the character: said under the Speed, with the reason in its explanation.
-  const overloaded = sheet.issues.some(
-    (i) => i.code === 'overCapacity' || i.code === 'overDragLimit',
-  );
   const sharedSaves = sharedSituational(ABILITIES.map((a) => sheet.saves[a]));
 
   const sections: Record<SectionId, ReactNode> = {
@@ -240,38 +204,8 @@ export function MainTab({ character, sheet, index, apply, conditionOptions }: Ma
               })
             }
           />
-          <StatPill
-            label="Initiative"
-            roll={sheet.initiative}
-            derived={sheet.initiative.bonus}
-            onExplain={() =>
-              explainRoll(
-                'initiative',
-                'Initiative',
-                sheet.initiative,
-                paragraphs(OTHER_ABOUT.initiative),
-              )
-            }
-          />
-          {sheet.speed.walk && (
-            <StatPill
-              label="Speed"
-              value={sheet.speed.walk.value}
-              sub={
-                overloaded
-                  ? 'carrying too much'
-                  : speedModes.length
-                    ? speedModes.map(([m, d]) => `${m} ${d.value}`).join(', ')
-                    : 'ft.'
-              }
-              derived={sheet.speed.walk}
-              onExplain={() =>
-                explainNumber('speed.walk', 'Speed', sheet.speed.walk!, {
-                  about: paragraphs(OTHER_ABOUT.speed),
-                })
-              }
-            />
-          )}
+          <InitiativePill sheet={sheet} apply={apply} />
+          <SpeedPill sheet={sheet} apply={apply} />
           <StatPill
             label="Proficiency"
             value={signed(sheet.pb.value)}
@@ -327,25 +261,7 @@ export function MainTab({ character, sheet, index, apply, conditionOptions }: Ma
             onChange={(n) => apply((c) => setExhaustion(c, n))}
           />
         </Tiles>
-        {(hp.current === 0 || ds.successes > 0 || ds.failures > 0) && (
-          <div className={styles.block}>
-            <h3 className={styles.subTitle}>Death saves</h3>
-            <DeathSaves
-              successes={ds.successes}
-              failures={ds.failures}
-              onChange={(saves) => apply((c) => setDeathSaves(c, saves))}
-              onRoll={() => {
-                const r = roller.roll({
-                  label: 'Death save',
-                  expr: d20Expr(sheet.deathSave.bonus.value) + extraDice(sheet.deathSave),
-                  mode: sheet.deathSave.mode,
-                });
-                const natural = r.natural === 1 || r.natural === 20 ? r.natural : r.total;
-                apply((c) => deathSave(c, sheet, natural));
-              }}
-            />
-          </div>
-        )}
+        <DeathSavesBlock character={character} sheet={sheet} apply={apply} />
         <ConditionChips
           active={sheet.conditions.map((id) => ({ id, name: conditionName(id) }))}
           available={conditionOptions}

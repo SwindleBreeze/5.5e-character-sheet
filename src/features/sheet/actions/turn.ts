@@ -11,26 +11,54 @@ import type {
 } from '../../../engine/derive/types.ts';
 import { isPotion, potionHealing } from '../../../engine/items/potions.ts';
 import { isRules2014 } from '../../../engine/rules/legacy.ts';
-import type { ActionType, Character, InventoryItem, Item } from '../../../schema/index.ts';
+import {
+  ruleId,
+  type ActionType,
+  type Character,
+  type InventoryItem,
+  type Item,
+  type Ref,
+  type RuleKind,
+} from '../../../schema/index.ts';
 import type { SpellEntry } from '../spells/entries.ts';
 
 export type TurnPart = ActionType;
 
-export const TURN_PARTS: { part: TurnPart; title: string }[] = [
+/** The Combat tab's parts: the turn's, and moving. */
+export type CombatPart = TurnPart | 'move';
+
+export const TURN_PARTS: { part: CombatPart; title: string }[] = [
   { part: 'action', title: 'Action' },
   { part: 'bonus', title: 'Bonus' },
   { part: 'reaction', title: 'Reaction' },
+  { part: 'move', title: 'Move' },
   { part: 'other', title: 'Other' },
 ];
 
 /** What each part of the turn allows: for the player to keep in mind, never tracked. */
-export const TURN_NOTES: Record<TurnPart, string> = {
+export const TURN_NOTES: Record<CombatPart, string> = {
   action: 'One Action on your turn: one of these.',
   bonus: 'One Bonus Action on your turn, when something gives you one.',
   reaction:
     'One Reaction per round, when its trigger happens. It comes back at the start of your turn.',
+  move: 'Move up to your Speed on your turn, before, after or between the rest.',
   other: 'No action needed: these come on their own or cost nothing.',
 };
+
+/** The rules on moving the Move tab links to, like the actions everyone has (their text opens
+ * from the imported rules). */
+export const MOVE_RULES: { ref: Ref; name: string }[] = (
+  [
+    ['variantrule', 'Difficult Terrain'],
+    ['variantrule', 'Climbing'],
+    ['variantrule', 'Swimming'],
+    ['variantrule', 'Jumping'],
+    ['variantrule', 'Crawling'],
+    ['condition', 'Prone'],
+    ['variantrule', 'Flying'],
+    ['variantrule', 'Teleportation'],
+  ] as const satisfies readonly (readonly [RuleKind, string])[]
+).map(([kind, name]) => ({ ref: { kind: 'rule', id: ruleId(kind, name, 'XPHB') }, name }));
 
 export interface PotionRow {
   row: InventoryItem;
