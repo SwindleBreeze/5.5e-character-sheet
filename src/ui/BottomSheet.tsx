@@ -14,6 +14,12 @@ function typing(): boolean {
   return !['checkbox', 'radio', 'button', 'submit', 'range', 'color', 'file'].includes(el.type);
 }
 
+/** Whether the sheet is pulled down from where it rests (its transform, as vaul reads it). */
+function movedDown(el: Element): boolean {
+  const m = getComputedStyle(el).transform.match(/^matrix(3d)?\((.+)\)$/);
+  return !!m && parseFloat(m[2]!.split(',')[m[1] ? 13 : 5]!) !== 0;
+}
+
 /**
  * App-wide bottom sheet for rules text and quick details. One sheet at a time: a tap inside it
  * replaces the content and adds a back button, rather than stacking sheets (plan §6.4).
@@ -96,6 +102,17 @@ export function SheetProvider({ children }: { children: ReactNode }) {
               opener.current = null;
             }}
             onAnimationEnd={(e) => {
+              if (e.target === e.currentTarget && open) setSettled(true);
+            }}
+            // Back on its layer while a finger is on it: when the drag ends, vaul reads how far
+            // the sheet moved from its transform, which "settled" hides; pulled down, it then
+            // sprang back instead of closing. A tap that didn't move it settles it again; a drag
+            // let go short of closing does once it has slid back.
+            onPointerDown={() => setSettled(false)}
+            onPointerUp={(e) => {
+              if (open && !movedDown(e.currentTarget)) setSettled(true);
+            }}
+            onTransitionEnd={(e) => {
               if (e.target === e.currentTarget && open) setSettled(true);
             }}
             // A roll's toast sits above the sheet: tapping it (to dismiss it) is not a tap

@@ -312,9 +312,12 @@ describe('Combat tab', () => {
     expect(screen.getByRole('tabpanel', { name: 'Turn: Other' })).toBeInTheDocument();
   });
 
-  it('Initiative rolls on top; Move lists the speeds, each saying where it comes from', async () => {
+  it('HP and Initiative on top; Move lists the speeds and what Dash makes of them', async () => {
     const user = userEvent.setup();
     renderTab(brute(), fixedRng([face(12, 20)]));
+    expect(
+      screen.getByRole('button', { name: /^Hit points \d+ of \d+\. Change/ }),
+    ).toBeInTheDocument();
     const initiative = within(screen.getByRole('group', { name: 'Initiative' }));
     await user.click(initiative.getByRole('button', { name: /^Roll Initiative/ }));
     expect(screen.getByRole('button', { name: /^Initiative: \d+\. Dismiss/ })).toBeInTheDocument();
@@ -322,8 +325,13 @@ describe('Combat tab', () => {
     await part(user, 'Move');
     const move = within(screen.getByRole('tabpanel', { name: 'Turn: Move' }));
     expect(move.getByText(/Move up to your Speed/)).toBeInTheDocument();
-    await user.click(move.getByRole('button', { name: 'Walk' }));
-    expect(await screen.findByRole('dialog', { name: 'Walk speed' })).toBeInTheDocument();
+    // Running is the Dash action: the Speed again, shown with it.
+    const speed = Number(move.getByRole('button', { name: 'Speed' }).nextSibling!.textContent);
+    expect(move.getByRole('button', { name: 'With Dash' }).nextSibling).toHaveTextContent(
+      String(speed * 2),
+    );
+    await user.click(move.getByRole('button', { name: 'Speed' }));
+    expect(await screen.findByRole('dialog', { name: 'Speed' })).toBeInTheDocument();
   });
 
   it('a potion is drunk as a Bonus Action: one is used up and its healing rolled', async () => {

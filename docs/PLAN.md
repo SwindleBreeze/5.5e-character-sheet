@@ -64,11 +64,18 @@ tapped, that it applies only to spells that call for it.
 
 ### 3.2 Done: a Combat tab in place of Actions (2026-10-13)
 
-Initiative (tap to roll), Speed, and the death saves at 0 HP sit on top. HP, AC, Concentration
-and conditions stay in the header, which shows above every tab. Below are the turn tabs Action ·
-Bonus · Reaction · Move · Other, each with its note, which is information only. Move lists the
-speeds (tap for where each comes from) and links the rules on moving. Main and Combat share the
-Initiative, Speed and death-save pieces. Old Actions links open Combat.
+Hit Points, Initiative (tap to roll) and Speed sit on top, plus the death saves at 0 HP. Tap HP
+for the damage and healing keypad. AC, Concentration and conditions stay in the header, which
+shows above every tab.
+
+Below are the turn tabs Action · Bonus · Reaction · Move · Other, each with its note, which is
+information only. Move lists each Speed (tap for where it comes from) and the distance with Dash.
+It says that running means taking the Dash action, and links the rules on moving.
+
+Main and Combat share the HP, Initiative, Speed and death-save pieces. Old Actions links open
+Combat.
+
+Also fixed: a bottom sheet pulled down sprang back instead of closing, once it had settled.
 
 ### 3.3 The buffer
 

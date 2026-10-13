@@ -1,10 +1,11 @@
 // The Combat tab (plan §9.2, step 3.17; play-test redesigns, plan §3.2): everything for a fight
-// on one screen. On top, Initiative to roll and the Speed, and the death saves at 0 Hit Points
-// (HP, AC, Concentration and conditions are in the sheet's header, above every tab). Below, by
+// on one screen. On top, Hit Points (tap for the damage and healing keypad), Initiative to roll
+// and the Speed, and the death saves at 0 Hit Points (AC, Concentration and conditions are in the
+// sheet's header, above every tab). Below, by
 // the part of the turn it takes, five tabs (Action, Bonus, Reaction, Move, Other), each a short
 // list: attacks with tap-to-roll numbers (details a tap away), feature actions, switches, Bonus
 // Action and Reaction spells, potions, the actions everyone has, and the speeds with the rules
-// on moving. Limited-use counters sit in one line above. Each tab says what the turn allows;
+// on moving (and what Dash makes of the Speed). Limited-use counters sit in one line above. Each tab says what the turn allows;
 // nothing tracks it: that is the player's to keep in mind. Side by side when there is room.
 
 import { useRef, useState, type ReactNode } from 'react';
@@ -46,9 +47,10 @@ import {
   type TurnGroup,
   type TurnPart,
 } from './actions/turn.ts';
-import { DeathSavesBlock, InitiativePill, SpeedPill } from './components/combatStats.tsx';
+import { DeathSavesBlock, HpTile, InitiativePill, SpeedPill } from './components/combatStats.tsx';
 import { titleCase } from './components/format.ts';
 import { ValueRow } from './components/stats.tsx';
+import statStyles from './components/stats.module.css';
 import { paragraphs, useStatExplain } from './components/useStatExplain.tsx';
 import { OTHER_ABOUT } from '../../engine/explain/stats.ts';
 import type { MoveMode } from '../../schema/index.ts';
@@ -364,24 +366,44 @@ export function CombatTab(bindings: SheetBindings) {
   const speeds = (
     Object.entries(sheet.speed) as [MoveMode, (typeof sheet.speed)[MoveMode]][]
   ).filter((e): e is [MoveMode, NonNullable<(typeof e)[1]>] => !!e[1]);
+  const walk = sheet.speed.walk;
+  const dash = sheet.actions.find((a) => a.standard && a.name === 'Dash');
   const moveContent = (
     <>
       <section className={actionStyles.group}>
-        <Heading sub={wide}>Speed, in feet</Heading>
+        <Heading sub={wide}>How far you can move, in feet</Heading>
         <ul className={actionStyles.valueRows}>
           {speeds.map(([mode, d]) => (
             <ValueRow
               key={mode}
-              label={titleCase(mode)}
+              label={speedName(mode)}
               derived={d}
               onExplain={() =>
-                explainNumber(`speed.${mode}`, `${titleCase(mode)} speed`, d, {
+                explainNumber(`speed.${mode}`, speedName(mode), d, {
                   about: paragraphs(OTHER_ABOUT.speed),
                 })
               }
             />
           ))}
+          {walk && dash?.source && (
+            <li className={statStyles.row}>
+              <button
+                type="button"
+                className={statStyles.rowLabel}
+                onClick={() => openRule(dash.source!, dash.name)}
+              >
+                <span className={statStyles.rowName}>With Dash</span>
+              </button>
+              <span className={`${statStyles.rowValue} numeric`}>{walk.value * 2}</span>
+            </li>
+          )}
         </ul>
+        {walk && (
+          <p className={actionStyles.groupNote}>
+            To run, take the Dash action (under Action): it gives you your Speed again for this
+            turn.
+          </p>
+        )}
       </section>
       <section className={actionStyles.group}>
         <Heading sub={wide}>Rules for moving</Heading>
@@ -406,10 +428,12 @@ export function CombatTab(bindings: SheetBindings) {
       ? speeds.length
       : groupSize(groups[p]) + (p === 'reaction' && groups.reaction.standard.length ? 1 : 0);
 
-  // What the header doesn't show: Initiative and Speed, and the death saves when they count.
+  // Hit Points to change in a tap (the header has them too, small), Initiative and Speed, and
+  // the death saves when they count.
   const combatBar = (
     <>
       <div className={actionStyles.combatBar}>
+        <HpTile {...bindings} />
         <InitiativePill sheet={sheet} apply={apply} />
         <SpeedPill sheet={sheet} apply={apply} />
       </div>
@@ -483,6 +507,9 @@ export function CombatTab(bindings: SheetBindings) {
     </div>
   );
 }
+
+/** `Speed` for walking, as the rules call it; `Fly Speed`, `Climb Speed` for the others. */
+const speedName = (mode: MoveMode) => (mode === 'walk' ? 'Speed' : `${titleCase(mode)} Speed`);
 
 const TITLE: Record<CombatPart, string> = {
   action: 'Actions',
