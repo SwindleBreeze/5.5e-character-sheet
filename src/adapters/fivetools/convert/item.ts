@@ -182,6 +182,11 @@ function fill(item: Item, raw: RawEntity): Item {
   if (typeof raw.rarity === 'string' && raw.rarity !== 'none') item.rarity = raw.rarity;
 
   const code = typeCode(raw.type);
+  if (code) item.itemType = code;
+  const tags = (['light', 'poison', 'staff'] as const).filter(
+    (t) => raw[t] !== undefined && raw[t] !== false,
+  );
+  if (tags.length) item.itemTags = tags;
   const toolType = TOOL_TYPES[code];
   if (toolType) item.toolType = toolType;
   if (item.itemKind === 'weapon' && typeof raw.dmg1 === 'string') {

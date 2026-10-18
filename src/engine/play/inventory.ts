@@ -513,6 +513,16 @@ export function payCoins(purse: Currency, cp: number, prefer?: Coin): Currency |
   return out;
 }
 
+/**
+ * Buy an item: the row joins the carried items, and `priceCp` (when given) is paid from the
+ * purse. `null` when the purse holds too little; nothing changes then.
+ */
+export function buyItem(c: Character, row: InventoryItem, priceCp = 0): Character | null {
+  const purse = priceCp > 0 ? payCoins(c.currency, priceCp) : c.currency;
+  if (!purse) return null;
+  return setCurrency(addItem(c, row), purse);
+}
+
 /** Set the purse; counts are whole and not negative. */
 export function setCurrency(c: Character, purse: Currency): Character {
   const n = clone(c);

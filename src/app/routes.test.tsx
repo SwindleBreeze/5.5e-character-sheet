@@ -12,6 +12,7 @@ beforeEach(async () => {
 describe('routes', () => {
   it.each([
     ['/', 'Characters'],
+    ['/shop', 'Shop'],
     ['/library', 'Library'],
     ['/library/import', 'Import'],
     ['/settings', 'Settings'],

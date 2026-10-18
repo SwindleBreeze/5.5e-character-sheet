@@ -39,6 +39,7 @@
       "rarity": "none",
       "weight": 1,
       "value": 1,
+      "light": [{ "bright": 20, "dim": 20 }],
       "entries": ["A torch burns for 1 hour."]
     },
     {

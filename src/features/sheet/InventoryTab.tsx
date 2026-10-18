@@ -3,7 +3,7 @@
 // contents. Items open in place to change where they are, Attunement, charges and notes.
 
 import { useRef, useState, type ReactNode } from 'react';
-import { newRow, newUid, addItem } from '../../engine/play/inventory.ts';
+import { addItem } from '../../engine/play/inventory.ts';
 import { SLOT_NAMES } from '../../engine/items/items.ts';
 import type { EquipSlot, InventoryItem } from '../../schema/index.ts';
 import { Button } from '../../ui/Button.tsx';
@@ -13,6 +13,7 @@ import { columnsFor, useContainerWidth } from '../../ui/useContainerWidth.ts';
 import { SectionHeader } from './components/stats.tsx';
 import { useExplain } from './components/useExplain.tsx';
 import { AddItemSheet, type AddSpec } from './inventory/AddItemSheet.tsx';
+import { rowFromSpec } from './inventory/addSpec.ts';
 import { CoinsCard } from './inventory/CoinsCard.tsx';
 import { lb } from './inventory/format.ts';
 import { ItemRow } from './inventory/ItemRow.tsx';
@@ -99,12 +100,7 @@ export function InventoryTab(bindings: SheetBindings) {
   const carried = rows.filter((r) => !r.equipped && isTop(r));
 
   const add = (spec: AddSpec) => {
-    const row = newRow({ uid: newUid(), ...spec });
-    const dice = spec.item?.chargesDice ?? spec.variant?.chargesDice;
-    const fixed = spec.item?.charges ?? spec.variant?.charges;
-    if (dice && fixed === undefined) {
-      row.chargesMax = roller.roll({ label: `${row.name}: charges`, expr: dice }).total;
-    }
+    const row = rowFromSpec(spec, (expr, label) => roller.roll({ label, expr }).total);
     ui.close();
     apply((c) => addItem(c, row));
   };

@@ -320,6 +320,16 @@ export interface Item extends BaseEntity {
   groupItemIds?: Id[];
   /** Used up when used: a potion (5etools type `P`, adapter 11). */
   consumable?: 'potion';
+  /**
+   * The 5etools item type code (`G`, `TG`, `MNT`, `RG`, `$G`…), for sorting items by use in the
+   * Shop (adapter 12).
+   */
+  itemType?: string;
+  /**
+   * What it is for, from 5etools flags (adapter 12): `light` when lit (a torch, a lantern),
+   * `poison`, `staff`.
+   */
+  itemTags?: ('light' | 'poison' | 'staff')[];
 }
 
 export interface OptionalFeature extends BaseEntity {
