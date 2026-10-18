@@ -6,6 +6,7 @@ import { fixtureIndex } from '../../test/fixtureIndex.ts';
 import type { ContentIndex } from '../content/contentIndex.ts';
 import { derive } from '../derive/derive.ts';
 import {
+  buyItem,
   coinValueCp,
   loseAmmo,
   drawWeapon,
@@ -291,6 +292,17 @@ describe('coins (1 PP = 10 GP = 20 EP = 100 SP = 1,000 CP)', () => {
   it('refuses what the purse can’t cover', () => {
     expect(payCoins(purse({ gp: 1 }), 101)).toBeNull();
     expect(coinValueCp(purse({ cp: 1, sp: 1, ep: 1, gp: 1, pp: 1 }))).toBe(1161);
+  });
+
+  it('buying adds the item and pays for it, or changes nothing when the purse is short', () => {
+    const c = setCurrency(character([]), purse({ gp: 20 }));
+    const rope = newRow({ uid: 'r', name: 'Rope', quantity: 2 });
+    const bought = buyItem(c, rope, 150)!;
+    expect(bought.inventory.map((r) => [r.name, r.quantity])).toEqual([['Rope', 2]]);
+    expect(bought.currency).toEqual(purse({ gp: 18, sp: 5 }));
+    expect(buyItem(c, rope, 2001)).toBeNull();
+    // No price: a gift, or the DM's.
+    expect(buyItem(c, rope)!.currency).toEqual(c.currency);
   });
 
   it('setting the purse keeps whole, non-negative counts', () => {

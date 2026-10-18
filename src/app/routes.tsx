@@ -14,6 +14,7 @@ const SheetPage = named(() => import('../features/sheet/SheetPage.tsx'), 'SheetP
 const WizardPage = named(() => import('../features/wizard/WizardPage.tsx'), 'WizardPage');
 const LevelUpPage = named(() => import('../features/levelup/LevelUpPage.tsx'), 'LevelUpPage');
 const LibraryPage = named(() => import('../features/library/LibraryPage.tsx'), 'LibraryPage');
+const ShopPage = named(() => import('../features/shop/ShopPage.tsx'), 'ShopPage');
 const ImportPage = named(() => import('../features/import/ImportPage.tsx'), 'ImportPage');
 const SettingsPage = named(() => import('../features/settings/SettingsPage.tsx'), 'SettingsPage');
 const DesignGallery = named(() => import('../features/dev/DesignGallery.tsx'), 'DesignGallery');
@@ -43,6 +44,7 @@ export function AppRoutes() {
         <Route path="c/:id/level-up" element={<Later page={LevelUpPage} />} />
         <Route path="c/:id/:tab?" element={<Later page={SheetPage} />} />
         <Route path="new/:draftId/:step?" element={<Later page={WizardPage} />} />
+        <Route path="shop" element={<Later page={ShopPage} />} />
         <Route path="library" element={<Later page={LibraryPage} />} />
         <Route path="library/import" element={<Later page={ImportPage} />} />
         <Route path="settings" element={<Later page={SettingsPage} />} />

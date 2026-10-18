@@ -3,6 +3,7 @@ import styles from './BottomNav.module.css';
 
 const ITEMS = [
   { to: '/', label: 'Characters', icon: '☰', end: true },
+  { to: '/shop', label: 'Shop', icon: '⚖', end: false },
   { to: '/library', label: 'Library', icon: '❖', end: false },
   { to: '/settings', label: 'Settings', icon: '⚙', end: false },
 ] as const;

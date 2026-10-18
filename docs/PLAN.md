@@ -45,7 +45,7 @@ Rules that every step follows:
 | 8     | 2014 content, from every book                                                          | Done (snapshots across rulesets left) |
 | 9     | Public release: SRD bundle, import your own content, legal pages                       | When publishing is decided (§5)       |
 
-Numbers on `main`: 902 unit tests in 108 files; 233 real-data checks in 21 files
+Numbers on `main`: 913 unit tests in 110 files; 233 real-data checks in 21 files
 (`FIVETOOLS_DATA=… npm run test:smoke`).
 
 ## 3. Now: play and fix (7.10)
@@ -77,7 +77,27 @@ Combat.
 
 Also fixed: a bottom sheet pulled down sprang back instead of closing, once it had settled.
 
-### 3.3 The buffer
+### 3.3 Done: a Shop tab (2026-10-18)
+
+A fourth tab in the bottom bar, beside Characters, Library and Settings. It lists every item of
+the books switched on, in groups:
+
+- weapons by kind and reach;
+- armor by weight;
+- gear by use: packs, light, containers, food, focuses, explosives, poisons;
+- tools;
+- mounts and vehicles;
+- trade goods and treasure;
+- magic items by kind: potions, scrolls, rings, wands, rods, staffs and so on.
+
+Each item shows its price, weight and key numbers, and a search finds items by name. Tapping one
+shows its text and a "Buy" form, the sheet's add-item form with a buyer, a price (the item's own
+to start, changeable) and "Pay from their coins".
+
+The shelves come from the item's data only, never from names. Sorting gear by use needs content
+imported with adapter 12; older imports say so.
+
+### 3.4 The buffer
 
 The campaign is the test. Anything that reads wrong, adds up wrong or gets in the way at the
 table goes into this buffer and is fixed with a test that would have caught it, checked against

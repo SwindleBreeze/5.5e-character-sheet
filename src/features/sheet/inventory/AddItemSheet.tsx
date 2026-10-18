@@ -3,7 +3,7 @@
 // needs a base item, matched by the variant's 5etools `requires`/`excludes` filters. An item
 // group (Arcane Focus) is added as one of its members.
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { useEnabledSources, useEntitiesOfKind } from '../../../content/hooks.ts';
 import { variantApplies, variantName } from '../../../engine/items/items.ts';
 import type { Item, SourceCode } from '../../../schema/index.ts';
@@ -115,16 +115,25 @@ export function AddItemSheet({
   );
 }
 
-function PickedForm({
+/**
+ * The item picked: its base item (for a magic variant), which one (for a group), a magic variant
+ * (for a base item) and how many. Shared with the Shop, which adds a price and a buyer.
+ */
+export function PickedForm({
   picked,
   available,
   onBack,
   onAdd,
+  submitLabel = 'Add',
+  children,
 }: {
   picked: Item;
   available: Item[];
-  onBack: () => void;
+  onBack?: () => void;
   onAdd: (spec: AddSpec) => void;
+  submitLabel?: string;
+  /** More fields, above the buttons. */
+  children?: ReactNode;
 }) {
   const [baseId, setBaseId] = useState('');
   const [memberId, setMemberId] = useState(picked.groupItemIds?.[0] ?? '');
@@ -217,12 +226,15 @@ function PickedForm({
         <span className={styles.fieldLabel}>Quantity</span>
         <input inputMode="numeric" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
       </label>
+      {children}
       <div className={styles.actions}>
-        <Button variant="ghost" onClick={onBack}>
-          Back
-        </Button>
+        {onBack && (
+          <Button variant="ghost" onClick={onBack}>
+            Back
+          </Button>
+        )}
         <Button type="submit" variant="primary" aria-disabled={!ready}>
-          Add
+          {submitLabel}
         </Button>
       </div>
     </form>

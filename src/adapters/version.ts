@@ -1,5 +1,5 @@
 /** Bump when converted content changes shape or meaning, so packs and imports can be compared. */
-export const ADAPTER_VERSION = 11;
+export const ADAPTER_VERSION = 12;
 
 /**
  * What a re-import gains, by the version that brought it: shown when content on the device was
@@ -14,6 +14,7 @@ export const ADAPTER_CHANGES: Record<number, string> = {
   9: 'the 2014 classes’ primary abilities',
   10: 'what each alignment means',
   11: 'potions, to drink from the Actions tab',
+  12: 'items sorted by use in the Shop',
 };
 
 /** What content imported at `version` misses, newest last. */
