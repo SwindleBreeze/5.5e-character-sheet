@@ -5,11 +5,13 @@ import { Link } from 'react-router';
 import page from '../../app/Page.module.css';
 import { ADAPTER_VERSION, changesSince } from '../../adapters/version.ts';
 import { useSources } from '../../content/hooks.ts';
+import { SRD_SOURCE } from '../../content/srd.ts';
 
 export function StaleContentNotice() {
   const sources = useSources();
+  // The free rules update themselves (`ensureFreeRules`).
   const stale = (sources ?? []).filter(
-    (s) => s.origin !== 'homebrew' && s.adapterVersion < ADAPTER_VERSION,
+    (s) => s.origin !== 'homebrew' && s.code !== SRD_SOURCE && s.adapterVersion < ADAPTER_VERSION,
   );
   if (!stale.length) return null;
   const oldest = Math.min(...stale.map((s) => s.adapterVersion));

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { exportPack } from '../../adapters/pack/exportPack.ts';
 import page from '../../app/Page.module.css';
 import { shareOrDownload } from '../../app/shareFile.ts';
+import { restoreFreeRules } from '../../content/freeRules.ts';
 import { repos } from '../../db/repos.ts';
 import type { SourceInfo } from '../../schema/index.ts';
 import { Button } from '../../ui/Button.tsx';
@@ -25,6 +26,7 @@ async function removeSource(source: SourceInfo) {
     'enabledSources',
     enabled.filter((c) => c !== source.code),
   );
+  await restoreFreeRules();
 }
 
 /**

@@ -3,8 +3,9 @@ import { Link } from 'react-router';
 import { TopBar } from '../../app/TopBar.tsx';
 import page from '../../app/Page.module.css';
 import { useSources } from '../../content/hooks.ts';
+import { SRD_BUNDLED, SRD_SOURCE } from '../../content/srd.ts';
 import { repos } from '../../db/repos.ts';
-import type { Character } from '../../schema/index.ts';
+import type { Character, SourceInfo } from '../../schema/index.ts';
 import { Button } from '../../ui/Button.tsx';
 import { useSheet } from '../../ui/sheetContext.ts';
 import { InstallCard } from '../settings/InstallCard.tsx';
@@ -16,6 +17,14 @@ function summary(character: Character): string {
   if (character.draft) return 'Being created · Continue';
   const level = character.log.length;
   return level === 0 ? 'Not built yet' : `Level ${level}`;
+}
+
+/** The free rules are all there is, besides homebrew (plan 9.3). */
+function freeRulesOnly(sources: SourceInfo[]): boolean {
+  return (
+    sources.some((s) => s.code === SRD_SOURCE) &&
+    !sources.some((s) => s.code !== SRD_SOURCE && s.origin !== 'homebrew')
+  );
 }
 
 /** A draft opens the creation wizard where it was left (plan §9.3 step 4.4). */
@@ -80,7 +89,7 @@ export function CharactersPage() {
       <div className={page.content}>
         {/* Without content, importing it comes first; then the characters, with the button
             to start one, and the notices after them. */}
-        {sources !== undefined && sources.length === 0 && (
+        {sources !== undefined && sources.length === 0 && !SRD_BUNDLED && (
           <section className={page.card} aria-labelledby="first-run-title">
             <h2 id="first-run-title" className={page.cardTitle}>
               Import your group’s pack
@@ -91,6 +100,26 @@ export function CharactersPage() {
             </p>
             <p>
               <Link to="/library/import">Import content</Link>
+            </p>
+          </section>
+        )}
+        {sources !== undefined && sources.length === 0 && SRD_BUNDLED && (
+          <p className={page.muted} role="status">
+            Getting the free rules ready…
+          </p>
+        )}
+        {sources !== undefined && freeRulesOnly(sources) && (
+          <section className={page.card} aria-labelledby="free-rules-title">
+            <h2 id="free-rules-title" className={page.cardTitle}>
+              You’re using the free rules
+            </h2>
+            <p className={page.muted}>
+              The System Reference Document 5.2: twelve classes with one subclass each, nine
+              species, four backgrounds, a set of feats, and its spells, equipment and magic items.
+              Import your group’s pack or your own content to add more.
+            </p>
+            <p>
+              <Link to="/library/import">Import content</Link> · <Link to="/about">About</Link>
             </p>
           </section>
         )}

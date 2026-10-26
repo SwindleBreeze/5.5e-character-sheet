@@ -17,8 +17,9 @@ export interface Settings {
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-  // The Monster Manual holds the Beasts and familiars of the Extras tab (step 7.6).
-  enabledSources: ['XPHB', 'XDMG', 'XMM'],
+  // The Monster Manual holds the Beasts and familiars of the Extras tab (step 7.6); `SRD52` is
+  // the free rules the app ships (plan 9.3).
+  enabledSources: ['SRD52', 'XDMG', 'XMM', 'XPHB'],
   lastBackupAt: null,
   autoBackupHandle: null,
   lastImport: null,

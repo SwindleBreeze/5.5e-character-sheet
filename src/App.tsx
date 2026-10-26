@@ -3,6 +3,7 @@ import { HashRouter } from 'react-router';
 import { AutoBackup } from './app/AutoBackup.tsx';
 import { Durability } from './app/Durability.tsx';
 import { ErrorBoundary } from './app/ErrorScreen.tsx';
+import { FreeRules } from './app/FreeRules.tsx';
 import { HistoryTracker } from './app/history.ts';
 import { AppRoutes } from './app/routes.tsx';
 import { UpdatePrompt } from './app/UpdatePrompt.tsx';
@@ -26,6 +27,7 @@ export function App() {
             <AppRoutes />
             <UpdatePrompt />
             <AutoBackup />
+            <FreeRules />
             <Durability />
           </SheetProvider>
         </RollerProvider>

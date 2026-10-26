@@ -2,7 +2,7 @@
 // CC-BY-4.0, which asks for this attribution wherever the material is used.
 
 /** Whether this build carries the SRD pack (`public/srd/`). */
-export const SRD_BUNDLED = false;
+export const SRD_BUNDLED = true;
 
 /** The source code the SRD's content is imported under. */
 export const SRD_SOURCE = 'SRD52';

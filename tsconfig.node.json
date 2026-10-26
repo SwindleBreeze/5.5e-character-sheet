@@ -18,5 +18,5 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["vite.config.ts", "vitest.smoke.config.ts", "pwa-assets.config.ts", "tests"]
+  "include": ["vite.config.ts", "vitest.smoke.config.ts", "pwa-assets.config.ts", "tests", "tools"]
 }

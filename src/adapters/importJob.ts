@@ -13,6 +13,7 @@ import { importHomebrew, rawHomebrewUrl, type HomebrewFile } from './fivetools/h
 import { ImportError, importFivetools, type ImportStage } from './fivetools/index.ts';
 import type { ImportReport } from './fivetools/report.ts';
 import { readPack } from './pack/packFile.ts';
+import { storeSrdPack } from './srdPack.ts';
 
 export type FivetoolsInput =
   | { type: 'files'; files: File[] }
@@ -23,7 +24,9 @@ export type ImportJob =
   | { kind: 'fivetools'; input: FivetoolsInput; onlySources?: string[] }
   | { kind: 'pack'; file: Blob }
   /** 5etools-format homebrew: picked files, and URLs to fetch (plan step 7.3). */
-  | { kind: 'homebrew'; files?: File[]; urls?: string[] };
+  | { kind: 'homebrew'; files?: File[]; urls?: string[] }
+  /** The free rules the app ships, from where they are served (plan 9.3). */
+  | { kind: 'srd'; url: string };
 
 export type JobStage = ImportStage | 'unpack' | 'write';
 
@@ -96,6 +99,21 @@ export async function runImportJob(
   onProgress: (stage: JobStage) => void = () => {},
 ): Promise<ImportSummary> {
   const now = deps.now ?? Date.now;
+  if (job.kind === 'srd') {
+    onProgress('read');
+    const res = await fetch(job.url);
+    if (!res.ok) throw new ImportError(`Could not load the free rules (${res.status}).`);
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    onProgress('write');
+    const source = await storeSrdPack(bytes, deps, now());
+    // Loading the free rules is the app's own doing: the import screen's report stays as it was.
+    return {
+      origin: 'pack',
+      sources: [source],
+      report: { filesRead: 1, counts: source.counts, ignored: {}, warnings: [] },
+      finishedAt: now(),
+    };
+  }
   let entities: EntitiesByKind;
   let sources: SourceInfo[];
   let report: ImportReport;

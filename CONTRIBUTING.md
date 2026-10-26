@@ -6,6 +6,10 @@ The repo holds code only. Content is imported on each device and stored in that 
 commit data folders, `*.pack.json` files or archives. `npm run content-guard` (also run in CI)
 enforces this, and `npm run content-guard:dist` checks the built site the same way.
 
+The one exception is the free rules pack, `public/srd/srd52.pack.json.gz` (SRD 5.2, CC-BY-4.0,
+`LICENSE-SRD.md`), allowed at that path with its checksum. It is built by `tools/srd/` (see its
+README) and rebuilt whenever `ADAPTER_VERSION` goes up.
+
 Test fixtures under `tests/fixtures/` must be small, hand-written, invented examples, and every
 JSON fixture must include `"_fixture": true`.
 
