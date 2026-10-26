@@ -10,6 +10,7 @@ data/
 5etools-src-*/
 *.pack.json
 *.pack.json.gz
+!public/srd/srd52.pack.json.gz
 *.zip
 
 # Local env and editor files

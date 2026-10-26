@@ -53,7 +53,13 @@ const CONTENT_KEYS = new Set([
  * Allowed only at this path and with this SHA-256, so any other pack, or a changed one, fails.
  * Paths are as committed; in the built site the same file sits under `dist/`.
  */
-export const ALLOWED_CONTENT = [];
+export const ALLOWED_CONTENT = [
+  // The free rules (SRD 5.2, CC-BY-4.0; LICENSE-SRD.md), built by `node tools/srd/build.ts`.
+  {
+    path: 'public/srd/srd52.pack.json.gz',
+    sha256: 'd24efaf4c69ee9cde2780d3f607c25a9738b9fc3869ba35e1cd3d4252bc32965',
+  },
+];
 
 /** Folder for hand-written test fixtures; each JSON file there must declare itself. */
 export const FIXTURE_DIR = 'tests/fixtures/';

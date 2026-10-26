@@ -47,7 +47,8 @@ export default defineConfig(({ mode }) => {
           scope: base,
         },
         workbox: {
-          globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+          // The free rules pack too, so they load and come back offline (plan 9.3).
+          globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}', 'srd/*.pack.json.gz'],
           navigateFallback: `${base}index.html`,
           cleanupOutdatedCaches: true,
         },
