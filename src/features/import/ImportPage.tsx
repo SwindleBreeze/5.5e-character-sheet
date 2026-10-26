@@ -164,11 +164,11 @@ export function ImportPage() {
 
         <section className={page.card} aria-labelledby="fivetools-title">
           <h2 id="fivetools-title" className={page.cardTitle}>
-            5etools data
+            Data folder
           </h2>
           <p className={page.muted}>
-            On a computer, pick your 5etools folder (or its data folder), or the 5etools zip. Every
-            source is imported; you choose which ones to use in Sources.
+            On a computer, pick a folder of content you own in the 5etools JSON format, or a zip of
+            it. Every source in it is imported; you choose which ones to use in Sources.
           </p>
           <div className={page.row}>
             {picker ? (
@@ -203,7 +203,7 @@ export function ImportPage() {
               <input
                 type="text"
                 value={onlySources}
-                placeholder="e.g. XPHB, XDMG"
+                placeholder="e.g. ABC, DEF"
                 onChange={(e) => setOnlySources(e.target.value)}
               />
             </label>
@@ -215,8 +215,8 @@ export function ImportPage() {
             Homebrew
           </h2>
           <p className={page.muted}>
-            Open homebrew files in the 5etools format (.json), or paste a link to one, such as a
-            file from the 5etools homebrew repository. Import the books it builds on first.
+            Open homebrew files in the 5etools JSON format (.json), yours or ones their authors
+            share, or paste a link to one. Import what it builds on first.
           </p>
           <FileButton
             className={styles.fileButton}

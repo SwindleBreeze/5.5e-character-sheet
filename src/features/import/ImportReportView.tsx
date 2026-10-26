@@ -45,7 +45,7 @@ const WARNING_TITLES: Partial<Record<WarningCode, string>> = {
 
 const ORIGIN_LABELS: Record<ImportSummary['origin'], string> = {
   pack: 'Pack imported',
-  '5etools': '5etools data imported',
+  '5etools': 'Data imported',
   homebrew: 'Homebrew imported',
 };
 

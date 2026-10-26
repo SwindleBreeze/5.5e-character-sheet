@@ -68,3 +68,28 @@ describe('content guard', () => {
     ).toEqual(['src/huge.ts']);
   });
 });
+
+describe('allowed content (the free rules, plan 9.2)', () => {
+  const allowed = [{ path: 'public/srd/free.pack.json.gz', sha256: 'abc' }];
+  const run = (hash) =>
+    findViolations(
+      ['public/srd/free.pack.json.gz', 'public/other.pack.json.gz'],
+      () => '',
+      () => 1,
+      {
+        allowed,
+        hashOf: () => hash,
+      },
+    ).map((v) => [v.path, v.reason]);
+
+  it('lets the one allowed file through with its checksum; any other pack still fails', () => {
+    expect(run('abc')).toEqual([['public/other.pack.json.gz', 'pack files hold game content']]);
+  });
+
+  it('fails the allowed file once it changes', () => {
+    expect(run('changed')[0]).toEqual([
+      'public/srd/free.pack.json.gz',
+      'allowed content changed: check it and update its checksum',
+    ]);
+  });
+});

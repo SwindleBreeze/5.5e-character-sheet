@@ -34,6 +34,11 @@ jobs:
       - run: npm run format:check
       - run: npm test
       - run: npm run build
+        env:
+          # GitHub Pages serves the app from /<repo-name>/ (docs/HOSTING.md for your own domain).
+          VITE_BASE: /${{ github.event.repository.name }}/
+      - name: Content guard on the built site
+        run: npm run content-guard:dist
 
       - uses: actions/upload-pages-artifact@v4
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'

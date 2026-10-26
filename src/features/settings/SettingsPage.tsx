@@ -1,4 +1,5 @@
 import { Link } from 'react-router';
+import { RELEASE } from '../../app/release.ts';
 import { TopBar } from '../../app/TopBar.tsx';
 import page from '../../app/Page.module.css';
 import { useTheme } from '../../app/theme/useTheme.ts';
@@ -78,31 +79,35 @@ export function SettingsPage() {
         <BackupCard />
         <StorageCard />
 
-        <details className={page.card}>
-          <summary className={page.cardTitle}>Developer tools</summary>
-          <p className={page.muted}>
-            For checking the rules engine before the character sheet is finished.
-          </p>
-          <ul>
-            <li>
-              <Link to="/dev/build">Quick builder</Link>
-            </li>
-            <li>
-              <Link to="/dev/coverage">Mapping coverage</Link>
-            </li>
-            <li>
-              <Link to="/dev/design">Design gallery</Link>
-            </li>
-          </ul>
-        </details>
+        {RELEASE.devTools && (
+          <details className={page.card}>
+            <summary className={page.cardTitle}>Developer tools</summary>
+            <p className={page.muted}>
+              For checking the rules engine before the character sheet is finished.
+            </p>
+            <ul>
+              <li>
+                <Link to="/dev/build">Quick builder</Link>
+              </li>
+              <li>
+                <Link to="/dev/coverage">Mapping coverage</Link>
+              </li>
+              <li>
+                <Link to="/dev/design">Design gallery</Link>
+              </li>
+            </ul>
+          </details>
+        )}
 
         <section className={page.card} aria-labelledby="about-title">
           <h2 id="about-title" className={page.cardTitle}>
             About
           </h2>
           <p className={page.muted}>
-            Version {__APP_VERSION__}. This app ships no game content. Import your group’s pack to
-            get started.
+            {RELEASE.name}, version {RELEASE.version}.
+          </p>
+          <p>
+            <Link to="/about">About, legal and privacy</Link>
           </p>
         </section>
       </div>
