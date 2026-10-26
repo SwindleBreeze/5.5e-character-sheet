@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { HashRouter } from 'react-router';
 import { AutoBackup } from './app/AutoBackup.tsx';
 import { Durability } from './app/Durability.tsx';
+import { ErrorBoundary } from './app/ErrorScreen.tsx';
 import { HistoryTracker } from './app/history.ts';
 import { AppRoutes } from './app/routes.tsx';
 import { UpdatePrompt } from './app/UpdatePrompt.tsx';
@@ -17,16 +18,18 @@ export function App() {
   }, []);
 
   return (
-    <HashRouter>
-      <HistoryTracker />
-      <RollerProvider>
-        <SheetProvider>
-          <AppRoutes />
-          <UpdatePrompt />
-          <AutoBackup />
-          <Durability />
-        </SheetProvider>
-      </RollerProvider>
-    </HashRouter>
+    <ErrorBoundary>
+      <HashRouter>
+        <HistoryTracker />
+        <RollerProvider>
+          <SheetProvider>
+            <AppRoutes />
+            <UpdatePrompt />
+            <AutoBackup />
+            <Durability />
+          </SheetProvider>
+        </RollerProvider>
+      </HashRouter>
+    </ErrorBoundary>
   );
 }

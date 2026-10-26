@@ -17,9 +17,16 @@ const LibraryPage = named(() => import('../features/library/LibraryPage.tsx'), '
 const ShopPage = named(() => import('../features/shop/ShopPage.tsx'), 'ShopPage');
 const ImportPage = named(() => import('../features/import/ImportPage.tsx'), 'ImportPage');
 const SettingsPage = named(() => import('../features/settings/SettingsPage.tsx'), 'SettingsPage');
-const DesignGallery = named(() => import('../features/dev/DesignGallery.tsx'), 'DesignGallery');
-const QuickBuilder = named(() => import('../features/dev/QuickBuilder.tsx'), 'QuickBuilder');
-const CoverageScreen = named(() => import('../features/dev/CoverageScreen.tsx'), 'CoverageScreen');
+const AboutPage = named(() => import('../features/about/AboutPage.tsx'), 'AboutPage');
+// Developer screens (plan 9.0): written out in full so a release build leaves them out entirely.
+const DEV_TOOLS = import.meta.env.DEV || import.meta.env.VITE_DEV_TOOLS === '1';
+const devScreens = DEV_TOOLS
+  ? {
+      design: named(() => import('../features/dev/DesignGallery.tsx'), 'DesignGallery'),
+      build: named(() => import('../features/dev/QuickBuilder.tsx'), 'QuickBuilder'),
+      coverage: named(() => import('../features/dev/CoverageScreen.tsx'), 'CoverageScreen'),
+    }
+  : null;
 
 // The sheet is what's opened next nearly every time: fetched once the list is up.
 if (typeof window !== 'undefined') {
@@ -48,9 +55,12 @@ export function AppRoutes() {
         <Route path="library" element={<Later page={LibraryPage} />} />
         <Route path="library/import" element={<Later page={ImportPage} />} />
         <Route path="settings" element={<Later page={SettingsPage} />} />
-        <Route path="dev/design" element={<Later page={DesignGallery} />} />
-        <Route path="dev/build" element={<Later page={QuickBuilder} />} />
-        <Route path="dev/coverage" element={<Later page={CoverageScreen} />} />
+        <Route path="about" element={<Later page={AboutPage} />} />
+        {/* Developer screens: left out of a release build (plan 9.0). */}
+        {devScreens &&
+          Object.entries(devScreens).map(([path, screen]) => (
+            <Route key={path} path={`dev/${path}`} element={<Later page={screen} />} />
+          ))}
         <Route
           path="*"
           element={

@@ -175,25 +175,42 @@ not only at its terms):
 The importer stays as capable as it is; the public copy simply talks about the user's own
 content, as above.
 
-### 5.2 Steps
+### 5.2 Where it ships (decided 2026-10-26)
 
-| Step | Work                                                                                                                                                                                                                                                                                                                                                                                                                                                            | Est. |
-| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
-| 9.1  | **SRD spike (time-boxed).** Find CC-BY 4.0 structured conversions of SRD 5.2.1; check a sample (classes, subclasses, species, backgrounds, feats, spells, items) against the official PDF; choose one, or convert from the PDF ourselves.                                                                                                                                                                                                                       | 1    |
-| 9.2  | **The SRD bundle.** A converter in `tools/srd/` to our pack format; the committed `public/srd/srd52.pack.json.gz`; a content-guard exception for exactly that file (path and checksum); `LICENSE-SRD.md` with the attribution CC-BY 4.0 requires.                                                                                                                                                                                                               | 4    |
-| 9.3  | **First run.** The SRD loads on its own. The first screen says what is included (the free rules) and that more can be imported: a pack from your group, or your own homebrew.                                                                                                                                                                                                                                                                                   | 1    |
-| 9.4  | **SRD and imported books side by side.** When a user imports a book that the SRD overlaps, the book's entity supersedes its SRD twin (matched by kind and name, with a rename map); characters built on the SRD keep working (refs resolve through the twin); phase 6 mappings on XPHB keys apply to SRD twins.                                                                                                                                                 | 2.5  |
-| 9.5  | **Import copy for the public.** The Import screen and README talk about "your content": packs, homebrew files and links, and data folders in the 5etools JSON format (named as a format, with a link to the format's homebrew documentation, not to any book data). The developer smoke tests keep their `FIVETOOLS_DATA` variable; it is documented for contributors only.                                                                                     | 1    |
-| 9.6  | **Legal and About.** In the app and the repo: not affiliated with or endorsed by Wizards of the Coast; the SRD attribution text exactly as CC-BY asks; the app ships only the SRD; imported content is the user's own responsibility and never leaves their device; trademarks belong to their owners; a contact for takedown requests. A privacy note: no accounts, no tracking, nothing sent anywhere. A licence for the code (MIT unless decided otherwise). | 1    |
-| 9.7  | **Free, with an optional donation link.** No ads, no paid features, nothing behind a paywall. A "support the project" link (GitHub Sponsors or Ko-fi) in About only, for the work on the app, never tied to content. Check Wizards of the Coast's Fan Content Policy at release time for its current rules on donations and the use of its names, and follow it.                                                                                                | 0.5  |
-| 9.8  | **Release readiness.** An error screen with "copy details"; versioned releases with a changelog; the update prompt (done); a README for players; the content guard also checks the built site; a last check that no commit in the history holds content.                                                                                                                                                                                                        | 1.5  |
+The release leaves this dev repo:
 
-**Phase 9 total: about 12.5 days.** 9.1 can run early as a spike; 9.4 is worth most once phase 6
-mappings exist (they do). **Checkpoint:** someone outside the group installs it, starts with the
-SRD, imports homebrew, and builds a character without help.
+- **The code** moves to a new private repo, as a copy of the working tree without this repo's
+  history. History never leaves, so no old commit can carry content.
+- **The app** is a static site on the owner's own domain, at its root or under any path.
+- **Its settings** are build-time variables: name, base path, takedown contact, donation link.
+  They are set in the new repo, never edited in code.
 
-**Decisions needed before 9.6–9.7:** the public name (it must not use Wizards of the Coast's
-trademarks as its own), the code licence, and the donation platform.
+### 5.3 Steps
+
+Two batches: **A** gets the app ready to publish; **B** gives it the free rules.
+
+| Step | Work                                                                                                                                                                                                                                                                                                                                                                                                                       | Batch |
+| ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| 9.0  | **Release settings.** `VITE_APP_NAME`, `VITE_BASE` (default `/`), `VITE_CONTACT`, `VITE_DONATE_URL`. They feed the title, the PWA manifest, the About page and the service worker's scope. The developer screens (`/dev/*`) are left out of production builds unless `VITE_DEV_TOOLS=1`.                                                                                                                                   | A     |
+| 9.5  | **Import copy for the public.** The Import screen and notices talk about your own content: a pack from your group, homebrew files and links, or a data folder in the 5etools JSON format. The format is named as a format only, with no word on where book data comes from. A README for players; developer notes (smoke tests, `FIVETOOLS_DATA`) move to `CONTRIBUTING.md`.                                               | A     |
+| 9.6  | **About and legal.** A page under Settings with: what the app is; not affiliated with or endorsed by Wizards of the Coast; trademarks belong to their owners; the SRD attribution exactly as CC-BY asks; imported content is the user's own and never leaves the device; privacy (no accounts, no tracking, nothing sent); the code licence (MIT by default, `LICENSE`); a contact for takedown requests (`VITE_CONTACT`). | A     |
+| 9.7  | **Donation link.** Shown in About only when `VITE_DONATE_URL` is set, worded as support for the work on the app. Before setting it, check Wizards of the Coast's Fan Content Policy as it stands then.                                                                                                                                                                                                                     | A     |
+| 9.8  | **Release readiness.** An error screen with "Copy details" (version, route, message, stack; no content). The version shown in About; `CHANGELOG.md`. The content guard also checks the built site (`dist/`), allowing only the SRD pack. A hosting guide for a static site on your own domain. A deploy workflow that runs the checks and uploads `dist/`.                                                                 | A     |
+| 9.1  | **SRD source.** The SRD 5.2 compendium of the Foundry VTT dnd5e system, at a pinned commit. It is CC-BY-4.0, and every entry carries `license: CC-BY-4.0`. The converter reads a local clone given by path; the clone is never committed.                                                                                                                                                                                  | B     |
+| 9.2  | **The SRD bundle.** `tools/srd/` converts the compendium to our entities: classes, subclasses, features, species, backgrounds, feats, spells, items, conditions and rules. It writes `public/srd/srd52.pack.json.gz`, which is committed. The content guard allows that one path with its checksum. `LICENSE-SRD.md` holds the attribution. The source code is `SRD52`.                                                    | B     |
+| 9.3  | **First run.** With nothing imported, the app loads the SRD on its own. The Characters screen says what is included (the free rules) and that more can be imported.                                                                                                                                                                                                                                                        | B     |
+| 9.4  | **SRD beside imported books.** A book's entity supersedes its SRD twin, matched by kind and name with a rename map. Characters built on the SRD keep working, because refs resolve through the twin. The feature mappings written for the 2024 Player's Handbook apply to the SRD twins.                                                                                                                                   | B     |
+
+**Done when:** someone outside the group opens the site on their phone, makes a character with
+the SRD alone, imports a homebrew file, and levels the character up without help.
+
+### 5.4 Left to the owner
+
+- **The public name.** It must not use Wizards of the Coast's trademarks: no "D&D" or "Dungeons &
+  Dragons" in the name.
+- **The domain, and the contact address for takedown requests.**
+- **Whether to take donations,** and where.
+- **The final read of the About page.** It isn't legal advice.
 
 ## 6. Cut, and why
 

@@ -26,7 +26,7 @@ export function StaleContentNotice() {
         as they are.
       </p>
       <p className={page.muted}>
-        Use the 5etools files, or a pack made with this version of the app.
+        Import the same files again, or a pack made with this version of the app.
       </p>
       <p>
         <Link to="/library/import">Import content</Link>

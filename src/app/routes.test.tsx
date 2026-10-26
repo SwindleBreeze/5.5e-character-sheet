@@ -16,6 +16,7 @@ describe('routes', () => {
     ['/library', 'Library'],
     ['/library/import', 'Import'],
     ['/settings', 'Settings'],
+    ['/about', 'About'],
     ['/dev/design', 'Design gallery'],
     ['/nowhere', 'Not found'],
   ])('renders %s', async (path, heading) => {

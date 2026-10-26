@@ -15,6 +15,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "content-guard": "node scripts/content-guard.mjs",
+    "content-guard:dist": "node scripts/content-guard.mjs --dist",
     "generate-pwa-assets": "pwa-assets-generator"
   },
   "dependencies": {

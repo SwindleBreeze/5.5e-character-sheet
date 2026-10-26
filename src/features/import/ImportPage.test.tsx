@@ -56,7 +56,7 @@ describe('ImportPage', () => {
 
     await user.upload(await screen.findByLabelText('Choose zip'), file);
     const result = await screen.findByRole('region', { name: 'Import finished' });
-    expect(within(result).getByText(/5etools data imported/)).toBeInTheDocument();
+    expect(within(result).getByText(/^Data imported/)).toBeInTheDocument();
   });
 
   it('exports a pack of the imported content', async () => {

@@ -48,6 +48,13 @@ const CONTENT_KEYS = new Set([
   'entities',
 ]);
 
+/**
+ * The one piece of content the app may ship (plan 9.2): the free rules, released under CC-BY-4.0.
+ * Allowed only at this path and with this SHA-256, so any other pack, or a changed one, fails.
+ * Paths are as committed; in the built site the same file sits under `dist/`.
+ */
+export const ALLOWED_CONTENT = [];
+
 /** Folder for hand-written test fixtures; each JSON file there must declare itself. */
 export const FIXTURE_DIR = 'tests/fixtures/';
 export const FIXTURE_MARKER = '_fixture';
@@ -60,11 +67,24 @@ const SIZE_EXEMPT = new Set(['package-lock.json']);
  * @param {string[]} files repo-relative paths with forward slashes
  * @param {(path: string) => string} readText
  * @param {(path: string) => number} sizeOf
+ * @param {{ hashOf?: (path: string) => string, allowed?: { path: string, sha256: string }[], sizes?: boolean }} [opts]
+ *   `hashOf` (SHA-256, hex) checks the allowed content; `sizes: false` skips the size limit
+ *   (built bundles are large and hold no content of their own).
  * @returns {{ path: string, reason: string }[]}
  */
-export function findViolations(files, readText, sizeOf) {
+export function findViolations(files, readText, sizeOf, opts = {}) {
+  const { hashOf, allowed = ALLOWED_CONTENT, sizes = true } = opts;
   const violations = [];
   for (const path of files) {
+    const allow = allowed.find((a) => a.path === path);
+    if (allow) {
+      if (!hashOf || hashOf(path) !== allow.sha256)
+        violations.push({
+          path,
+          reason: 'allowed content changed: check it and update its checksum',
+        });
+      continue;
+    }
     const pathRule = FORBIDDEN_PATHS.find((rule) => rule.re.test(path));
     if (pathRule) {
       violations.push({ path, reason: pathRule.why });
@@ -73,7 +93,7 @@ export function findViolations(files, readText, sizeOf) {
 
     const size = sizeOf(path);
     const isFixture = path.startsWith(FIXTURE_DIR);
-    if (!SIZE_EXEMPT.has(path) && size > FILE_MAX_BYTES) {
+    if (sizes && !SIZE_EXEMPT.has(path) && size > FILE_MAX_BYTES) {
       violations.push({ path, reason: `file is larger than ${FILE_MAX_BYTES} bytes` });
     }
 
